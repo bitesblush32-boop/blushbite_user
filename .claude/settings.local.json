@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openssl rand:*)",
+      "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -60)",
+      "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && node -e \"require\\('./node_modules/next-auth'\\)\" 2>&1)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && pnpm add next-auth@latest 2>&1 | tail -20)",
+      "Bash(ls \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite/apps/web/\" -la 2>/dev/null || dir \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\")",
+      "Bash(cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite/apps/web/app/globals.css\" | head -15 && cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite/apps/web/postcss.config.js\" && node --version && pnpm --version 2>/dev/null || echo \"pnpm not found\")",
+      "Bash(xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/postcss.config.js\" | head -5 2>/dev/null; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/package.json\" | head -5 2>/dev/null; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/next.config.js\" | head -5 2>/dev/null; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/next.config.ts\" | head -5 2>/dev/null)",
+      "Bash(xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/tailwind.config.ts\" | head -5 2>/dev/null; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/tsconfig.json\" | head -5 2>/dev/null; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/.env.local\" | head -5 2>/dev/null)",
+      "Bash(xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/globals.css\" | head -5 2>/dev/null; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/pnpm-lock.yaml\" | head -3 2>/dev/null)",
+      "Bash(xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/auth.ts\" | head -5; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/auth.config.ts\" | head -5; echo \"---\"; xxd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/pnpm-workspace.yaml\" | head -3)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && pnpm dev 2>&1 | head -20)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && pnpm dev 2>&1 | head -30)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && timeout 15 pnpm dev 2>&1; echo \"EXIT: $?\")",
+      "Bash(cd '/c/Users/Ravi Desai/Downloads/BlushBite/apps/web' && node -e \"\nconst postgres = require\\('postgres'\\)\nconst sql = postgres\\('postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway'\\)\nasync function run\\(\\) {\n  await sql\\\\`ALTER TABLE \\\\\"user\\\\\" ADD COLUMN IF NOT EXISTS \\\\\"vibes\\\\\" text\\\\`\n  await sql\\\\`ALTER TABLE \\\\\"user\\\\\" ADD COLUMN IF NOT EXISTS \\\\\"gender\\\\\" text\\\\`\n  await sql\\\\`ALTER TABLE \\\\\"user\\\\\" ADD COLUMN IF NOT EXISTS \\\\\"desired_genders\\\\\" text\\\\`\n  await sql\\\\`ALTER TABLE \\\\\"user\\\\\" ADD COLUMN IF NOT EXISTS \\\\\"platform_role\\\\\" text\\\\`\n  await sql\\\\`ALTER TABLE \\\\\"user\\\\\" DROP COLUMN IF EXISTS \\\\\"age_verified\\\\\"\\\\`\n  console.log\\('done'\\)\n  await sql.end\\(\\)\n}\nrun\\(\\).catch\\(e => { console.error\\(e.message\\); process.exit\\(1\\) }\\)\n\")"
+    ]
+  }
+}

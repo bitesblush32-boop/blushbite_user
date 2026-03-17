@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erosphere · Private Fantasy & Companions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090f;
+    --bg2: #0d1117;
+    --card: #111620;
+    --card2: #161d2a;
+    --accent: #e8607a;
+    --accent2: #c4485e;
+    --gold: #c9a96e;
+    --text: #eeeef0;
+    --muted: #6b7280;
+    --border: #1c2333;
+    --glow: rgba(232,96,122,0.18);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 75px;
+    background: rgba(7,9,15,0.82);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .logo-mark {
+    padding-top: 5px;
+    padding-bottom: 0px;
+    width: 120px; height: 70px;
+    
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0px var(--glow);
+  }
+
+  .logo-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .logo-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .logo-tag {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .nav-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 400;
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+
+  .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+  .nav-link.active { color: var(--text); background: rgba(232,96,122,0.14); }
+
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 6px 14px 6px 8px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .user-pill:hover { border-color: var(--accent); }
+
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8607a, #9b5fe0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .user-handle { font-size: 12px; color: var(--muted); }
+
+  .user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 180px;
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  }
+  .user-pill:hover .user-dropdown { display: flex; }
+
+  .dropdown-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .dropdown-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding-top: 64px; }
+
+  /* ── PAGE SECTIONS ── */
+  .page-section {
+    display: none;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeUp 0.4s ease;
+  }
+  .page-section.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    margin-bottom: 56px;
+  }
+
+  .hero-companion-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    position: relative;
+    min-height: 360px;
+    transition: box-shadow 0.3s;
+  }
+  .hero-companion-card:hover { box-shadow: 0 0 40px var(--glow); }
+
+  .hero-img {
+    width: 260px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #1a1228 0%, #2d1a2e 50%, #1a1a2e 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-img-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-silhouette {
+    width: 120px;
+    opacity: 0.25;
+    filter: blur(0.5px);
+  }
+
+  .hero-gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 60%, var(--card) 100%);
+  }
+
+  .hero-content {
+    flex: 1;
+    padding: 32px 36px 32px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    background: rgba(232,96,122,0.12);
+    border: 1px solid rgba(232,96,122,0.25);
+    padding: 4px 10px;
+    border-radius: 20px;
+    width: fit-content;
+    margin-bottom: 14px;
+    letter-spacing: 0.04em;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    max-width: 360px;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .chip {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+    font-weight: 400;
+  }
+  .chip.gold { border-color: rgba(201,169,110,0.35); color: var(--gold); background: rgba(201,169,110,0.08); }
+  .chip.rose { border-color: rgba(232,96,122,0.3); color: var(--accent); background: rgba(232,96,122,0.08); }
+
+  .hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: fit-content;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,96,122,0.3); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: fit-content;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+  .trust-line {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  .trust-icon { color: var(--gold); font-size: 12px; }
+
+  /* ── MOOD PANEL ── */
+  .mood-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mood-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .mood-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+
+  .mood-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .mood-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .mood-item {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mood-item:hover { border-color: rgba(232,96,122,0.4); background: rgba(232,96,122,0.05); }
+
+  .mood-item-left { flex: 1; }
+  .mood-item-type { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; font-weight: 500; }
+  .mood-item-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+  .mood-item-meta { font-size: 11px; color: var(--muted); }
+
+  .mood-item-btn {
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(232,96,122,0.1);
+    border: 1px solid rgba(232,96,122,0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-left: 12px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mood-item-btn:hover { background: rgba(232,96,122,0.2); }
+
+  /* ── SECTION ROWS ── */
+  .feed-section { margin-bottom: 56px; }
+
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .section-subtitle { font-size: 12px; color: var(--muted); max-width: 480px; line-height: 1.5; }
+
+  .see-all {
+    font-size: 12.5px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  .see-all:hover { opacity: 1; }
+
+  /* ── HORIZONTAL SCROLL ROW ── */
+  .scroll-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .scroll-row::-webkit-scrollbar { display: none; }
+  .scroll-row > * { scroll-snap-align: start; flex-shrink: 0; }
+
+  /* ── COMPANION CARD ── */
+  .companion-card {
+    width: 220px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .companion-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2);
+  }
+
+  .card-media {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-media-bg {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .card-media-tag {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-size: 10px;
+    background: rgba(7,9,15,0.75);
+    backdrop-filter: blur(6px);
+    padding: 3px 8px;
+    border-radius: 20px;
+    color: var(--text);
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .card-media-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 42px; height: 42px;
+    background: rgba(232,96,122,0.85);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .companion-card:hover .card-media-play { opacity: 1; }
+
+  .card-body { padding: 14px; }
+  .card-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .card-meta { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* ── STORY / AUDIO / CONFESSION CARDS ── */
+  .story-card {
+    width: 240px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .story-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+
+  .story-media {
+    height: 130px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .story-body { padding: 14px; }
+
+  .audio-card {
+    width: 240px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .audio-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+
+  .audio-media {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 40px;
+    padding: 0 20px;
+  }
+
+  .wave-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: wave 1.2s ease-in-out infinite;
+    opacity: 0.6;
+  }
+
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+  }
+
+  .play-btn-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .audio-card:hover .play-btn-overlay { opacity: 1; }
+
+  .play-circle {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 24px var(--glow);
+  }
+
+  /* ── COMPANION PROFILE (modal) ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    z-index: 800;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 80px 20px 40px;
+    overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.25s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 860px;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-hero {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 360px;
+  }
+
+  .modal-img {
+    background: linear-gradient(135deg, #1a1228, #2a1a2a, #1a1a2e);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 24px;
+  }
+
+  .modal-img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(7,9,15,0.6) 100%);
+  }
+
+  .verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(201,169,110,0.15);
+    border: 1px solid rgba(201,169,110,0.35);
+    color: var(--gold);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .modal-info {
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .modal-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+
+  .modal-descriptors {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .descriptor {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .modal-about { font-size: 13.5px; color: var(--muted); line-height: 1.75; }
+
+  .modal-body { padding: 0 36px 36px; }
+
+  .sessions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+
+  .session-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .session-card:hover { border-color: rgba(232,96,122,0.4); }
+
+  .session-name { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: 8px; }
+  .session-desc { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+  .session-price { font-size: 18px; color: var(--accent); font-weight: 500; margin-bottom: 12px; }
+  .session-durations { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .duration-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .duration-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(232,96,122,0.08); }
+  .duration-pill:hover { border-color: rgba(232,96,122,0.5); color: var(--accent); }
+
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: rgba(232,96,122,0.15); color: var(--accent); }
+
+  .modal-wrapper { position: relative; }
+
+  .modal-gallery {
+    padding: 0 36px 32px;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .gallery-item {
+    aspect-ratio: 3/4;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .gallery-item-bg {
+    width: 100%; height: 100%;
+    transition: transform 0.3s;
+  }
+  .gallery-item:hover .gallery-item-bg { transform: scale(1.05); }
+
+  .gallery-item-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(7,9,15,0.85));
+    padding: 12px 8px 8px;
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .gallery-item:hover .gallery-item-label { opacity: 1; }
+
+  /* ── STORY DETAIL (modal) ── */
+  .story-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0 36px 24px;
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: #c4c8d0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .story-modal-header { padding: 36px 36px 20px; }
+
+  /* ── COMPANIONS DIRECTORY ── */
+  .directory-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    align-items: center;
+  }
+
+  .filter-label { font-size: 12px; color: var(--muted); margin-right: 4px; flex-shrink: 0; }
+
+  .filter-pill {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-pill:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .filter-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(232,96,122,0.08); }
+
+  .directory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+
+  .directory-grid .companion-card { width: 100%; }
+
+  /* ── MINI AUDIO PLAYER ── */
+  .mini-player {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 68px;
+    background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    z-index: 700;
+    display: none;
+    align-items: center;
+    padding: 0 40px;
+    gap: 20px;
+  }
+  .mini-player.visible { display: flex; animation: slideFromBottom 0.3s ease; }
+
+  @keyframes slideFromBottom {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  .mini-player-info { flex: 1; }
+  .mini-player-title { font-size: 13px; color: var(--text); font-weight: 500; }
+  .mini-player-meta { font-size: 11px; color: var(--muted); }
+
+  .mini-player-controls { display: flex; align-items: center; gap: 16px; }
+
+  .player-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.07);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .player-btn:hover { background: var(--accent); }
+  .player-btn.play-pause { background: var(--accent); width: 42px; height: 42px; }
+  .player-btn.play-pause:hover { background: var(--accent2); }
+
+  .scrubber {
+    flex: 1;
+    max-width: 320px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .scrubber-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 35%;
+    transition: width 0.1s;
+  }
+
+  .close-player {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    transition: color 0.2s;
+  }
+  .close-player:hover { color: var(--text); }
+
+  /* ── TONIGHT SLIDER ── */
+  .mood-slider-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 10px 20px;
+    margin-bottom: 32px;
+  }
+
+  .mood-label { font-size: 12px; color: var(--muted); }
+  .mood-slider { flex: 1; accent-color: var(--accent); cursor: pointer; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    margin-top: 80px;
+    padding: 40px;
+  }
+
+  .footer-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .footer-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .footer-link:hover { color: var(--text); }
+
+  .footer-trust { font-size: 12px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+
+  /* ── UTILITY ── */
+  .sub-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .gradient-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    header { padding: 0 20px; }
+    nav { display: none; }
+    .page-section { padding: 24px 20px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-img { width: 100%; height: 180px; position: relative; }
+    .hero-companion-card { flex-direction: column; }
+    .modal-hero { grid-template-columns: 1fr; }
+    .modal-img { min-height: 200px; }
+    .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    footer { padding: 24px 20px; }
+    .footer-inner { flex-direction: column; }
+    .mini-player { padding: 0 16px; gap: 10px; }
+  }
+
+  .gradient-fill-1 { background: linear-gradient(135deg, #1a1228 0%, #2a1535 40%, #1a2240 100%); }
+  .gradient-fill-2 { background: linear-gradient(135deg, #0f1a28 0%, #1f2840 50%, #2a1020 100%); }
+  .gradient-fill-3 { background: linear-gradient(135deg, #201228 0%, #1a2030 60%, #2a1a18 100%); }
+  .gradient-fill-4 { background: linear-gradient(135deg, #0a1620 0%, #1a1535 50%, #201a10 100%); }
+  .gradient-fill-5 { background: linear-gradient(135deg, #1a1020 0%, #2a1530 50%, #101820 100%); }
+  .gradient-fill-6 { background: linear-gradient(135deg, #101820 0%, #201028 50%, #102020 100%); }
+
+  .story-gradient-1 { background: linear-gradient(135deg, #1a0e20 0%, #2a1540 100%); }
+  .story-gradient-2 { background: linear-gradient(135deg, #0e1a18 0%, #101f30 100%); }
+  .story-gradient-3 { background: linear-gradient(135deg, #1a1010 0%, #2a1520 100%); }
+  .story-gradient-4 { background: linear-gradient(135deg, #0f1428 0%, #1a1040 100%); }
+
+  .audio-gradient-1 { background: linear-gradient(135deg, #16101e 0%, #2a1040 100%); }
+  .audio-gradient-2 { background: linear-gradient(135deg, #101622 0%, #201030 100%); }
+  .audio-gradient-3 { background: linear-gradient(135deg, #0e1820 0%, #1a1230 100%); }
+
+  /* Icon helpers via unicode */
+  .icon { display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- ─────────── HEADER ─────────── -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-mark">
+      <img src="logo_light.png" alt="Erosphere logo">
+    </div>
+    <!-- <div class="logo-text">
+      <span class="logo-name">BlushBite</span>
+      <span class="logo-tag">Private fantasy &amp; companions</span>
+    </div> -->
+  </a>
+
+  <nav>
+    <button class="nav-link active" onclick="switchPage('home')">Home</button>
+    <button class="nav-link" onclick="switchPage('stories')">Stories</button>
+    <button class="nav-link" onclick="switchPage('audio')">Audio</button>
+    <button class="nav-link" onclick="switchPage('companions')">Companions</button>
+    <button class="nav-link" onclick="switchPage('explore')">Explore</button>
+  </nav>
+
+  <div class="user-pill">
+    <div class="avatar">MW</div>
+    <span class="user-handle">@midnight‑wanderer</span>
+    <span style="color:var(--muted);font-size:12px;margin-left:4px;">▾</span>
+    <div class="user-dropdown">
+      <div class="dropdown-item">Profile &amp; Preferences</div>
+      <div class="dropdown-item">Safety &amp; Privacy</div>
+      <div class="dropdown-item" style="color:#e87070;">Sign out</div>
+    </div>
+  </div>
+</header>
+
+<!-- ─────────── MAIN ─────────── -->
+<main>
+
+  <!-- ════════ HOME PAGE ════════ -->
+  <div class="page-section active" id="page-home">
+
+    <!-- Tonight slider -->
+    <div class="mood-slider-bar" style="margin-top:0;">
+      <span class="mood-label">Tonight I want:</span>
+      <span class="mood-label" style="color:var(--text);font-size:11px;">Softer</span>
+      <input type="range" class="mood-slider" min="0" max="100" value="50">
+      <span class="mood-label" style="color:var(--text);font-size:11px;">Spicier</span>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+      <!-- Featured companion -->
+      <div class="hero-companion-card" onclick="openProfile(0)">
+        <div class="hero-img">
+          <div class="hero-img-inner">
+            <svg class="hero-silhouette" viewBox="0 0 80 180" fill="white">
+              <ellipse cx="40" cy="24" rx="18" ry="22"/>
+              <path d="M16 80 Q22 50 40 48 Q58 50 64 80 L68 160 Q58 170 40 172 Q22 170 12 160Z" fill="white"/>
+            </svg>
+          </div>
+          <div class="hero-gradient-overlay"></div>
+        </div>
+        <div class="hero-content">
+          <div>
+            <div class="hero-chip"><span class="dot"></span>For you · Verified companion</div>
+            <h1 class="hero-title">An intimate evening<br><em>with Ava</em></h1>
+            <p class="hero-subtitle">Curated for you based on your romantic, confident partner, and light roleplay preferences. Ava specialises in genuine connection.</p>
+            <div class="hero-meta">
+              <span class="chip rose">✦ Matches your taste</span>
+              <span class="chip">Amsterdam · In‑person</span>
+              <span class="chip gold">Sessions from €280</span>
+              <span class="chip">Romantic · Light roleplay</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn-primary" onclick="event.stopPropagation();openProfile(0)">View Ava's profile &amp; sessions</button>
+            <button class="btn-secondary" onclick="event.stopPropagation();switchPage('companions')">See more companions like this</button>
+            <div class="trust-line">
+              <span class="trust-item"><span class="trust-icon">🔒</span> Anonymous booking</span>
+              <span class="trust-item"><span class="trust-icon">✦</span> Verified &amp; licensed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mood panel -->
+      <div class="mood-panel">
+        <div class="mood-title">Tonight's mood mix</div>
+        <div class="mood-subtitle">Based on your choices: <em>romantic, slow burn, private</em></div>
+        <div class="mood-tags">
+          <span class="chip rose">Soft &amp; slow burn</span>
+          <span class="chip">Guided audio</span>
+          <span class="chip">Private confessions</span>
+        </div>
+        <div class="mood-items">
+          <div class="mood-item" onclick="openStoryModal(0)">
+            <div class="mood-item-left">
+              <div class="mood-item-type">Story</div>
+              <div class="mood-item-title">'The hotel bar piano'</div>
+              <div class="mood-item-meta">8 min · gentle tension &amp; slow build</div>
+            </div>
+            <button class="mood-item-btn">Read &amp; listen</button>
+          </div>
+          <div class="mood-item" onclick="playAudio('Husky goodnight','Soft guidance · 12 min · Femme voice')">
+            <div class="mood-item-left">
+              <div class="mood-item-type">Audio</div>
+              <div class="mood-item-title">'Husky goodnight'</div>
+              <div class="mood-item-meta">12 min · warm &amp; intimate voice</div>
+            </div>
+            <button class="mood-item-btn">Preview</button>
+          </div>
+          <div class="mood-item" onclick="switchPage('stories')">
+            <div class="mood-item-left">
+              <div class="mood-item-type">Confessions</div>
+              <div class="mood-item-title">Confessions like yours</div>
+              <div class="mood-item-meta">Anonymous fantasies from similar profiles</div>
+            </div>
+            <button class="mood-item-btn">Open feed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: Companions who match -->
+    <div class="feed-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Companions who match your taste</div>
+          <div class="section-subtitle">Curated from profiles you hovered and content you enjoyed.</div>
+        </div>
+        <a class="see-all" onclick="switchPage('companions')">See all →</a>
+      </div>
+      <div class="scroll-row" id="companions-row">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- SECTION 2: Stories for your mood -->
+    <div class="feed-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Stories for your current mood</div>
+          <div class="section-subtitle">Non-explicit, emotionally rich narratives tuned to your themes.</div>
+        </div>
+        <a class="see-all" onclick="switchPage('stories')">See all →</a>
+      </div>
+      <div class="scroll-row" id="stories-row">
+      </div>
+    </div>
+
+    <!-- SECTION 3: Audio -->
+    <div class="feed-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Voices you might like tonight</div>
+          <div class="section-subtitle">AI readings of real fantasies and confessions across different voice types.</div>
+        </div>
+        <a class="see-all" onclick="switchPage('audio')">See all →</a>
+      </div>
+      <div class="scroll-row" id="audio-row">
+      </div>
+    </div>
+
+    <!-- SECTION 4: Confessions + bridge cards -->
+    <div class="feed-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Confessions from people like you</div>
+          <div class="section-subtitle">Anonymous fantasies — and companions who can bring them to life.</div>
+        </div>
+      </div>
+      <div class="scroll-row" id="confessions-row">
+      </div>
+    </div>
+
+    <!-- SECTION 5: Trending nearby -->
+    <div class="feed-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Trending near Amsterdam</div>
+          <div class="section-subtitle">Highest engagement companions in your area this week.</div>
+        </div>
+        <a class="see-all" onclick="switchPage('companions')">See all →</a>
+      </div>
+      <div class="scroll-row" id="trending-row">
+      </div>
+    </div>
+
+  </div><!-- /home -->
+
+  <!-- ════════ STORIES PAGE ════════ -->
+  <div class="page-section" id="page-stories">
+    <h2 class="section-title" style="margin-bottom:6px;">Stories &amp; Confessions</h2>
+    <p class="section-subtitle" style="margin-bottom:28px;">Written fantasy, confession, and erotic fiction — emotionally rich, non-explicit.</p>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;">
+      <button class="filter-pill active">All</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Stories</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Confessions</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Romantic</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Intense</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Slow burn</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Experimental</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;" id="stories-grid">
+    </div>
+  </div>
+
+  <!-- ════════ AUDIO PAGE ════════ -->
+  <div class="page-section" id="page-audio">
+    <h2 class="section-title" style="margin-bottom:6px;">Audio Experiences</h2>
+    <p class="section-subtitle" style="margin-bottom:28px;">AI voices reading real fantasies and confessions. Choose a voice that resonates.</p>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;">
+      <button class="filter-pill active">All voices</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Husky femme</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Calm masc</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Neutral</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Soft guidance</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;" id="audio-grid">
+    </div>
+  </div>
+
+  <!-- ════════ COMPANIONS PAGE ════════ -->
+  <div class="page-section" id="page-companions">
+    <h2 class="section-title" style="margin-bottom:6px;">Companion Directory</h2>
+    <p class="section-subtitle" style="margin-bottom:24px;">Verified, licensed companions. All identities privacy-protected.</p>
+
+    <div class="directory-filters">
+      <span class="filter-label">Location:</span>
+      <button class="filter-pill active" onclick="toggleFilter(this)">All cities</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Amsterdam</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Paris</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">London</button>
+      <span class="filter-label" style="margin-left:16px;">Vibe:</span>
+      <button class="filter-pill" onclick="toggleFilter(this)">Romantic</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Intense</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Experimental</button>
+      <span class="filter-label" style="margin-left:16px;">Sort:</span>
+      <button class="filter-pill active" onclick="toggleFilter(this)">Recommended</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Price ↑</button>
+      <button class="filter-pill" onclick="toggleFilter(this)">Newest</button>
+    </div>
+
+    <div class="directory-grid" id="companions-grid">
+    </div>
+  </div>
+
+  <!-- ════════ EXPLORE PAGE ════════ -->
+  <div class="page-section" id="page-explore">
+    <h2 class="section-title" style="margin-bottom:6px;">Explore</h2>
+    <p class="section-subtitle" style="margin-bottom:32px;">Discover themes, moods, and experiences beyond your usual.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:48px;">
+      <div style="background:linear-gradient(135deg,#2a0a1a,#1a0a2a);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:28px;margin-bottom:10px;">🌹</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Romantic</div>
+        <div style="font-size:12px;color:var(--muted);">Slow intimacy, emotional connection, soft touch</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#0a1a2a,#1a0a20);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:28px;margin-bottom:10px;">⚡</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Intense</div>
+        <div style="font-size:12px;color:var(--muted);">Bold energy, confidence, directed experience</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#1a1a0a,#2a1020);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:28px;margin-bottom:10px;">🌙</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Voyeur</div>
+        <div style="font-size:12px;color:var(--muted);">Observation, storytelling, shared imagination</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#0a1a20,#200a2a);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:28px;margin-bottom:10px;">🎭</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Roleplay</div>
+        <div style="font-size:12px;color:var(--muted);">Scenario, character, safe fantasy space</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#1a0a0a,#2a1a30);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:28px;margin-bottom:10px;">🔬</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Experimental</div>
+        <div style="font-size:12px;color:var(--muted);">Push edges, explore new, consensual adventures</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#0f1a10,#1a102a);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+        <div style="font-size:28px;margin-bottom:10px;">🕊️</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Gentle</div>
+        <div style="font-size:12px;color:var(--muted);">Softness, care, unhurried presence</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:20px;">Trending themes this week</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <span class="chip rose" style="font-size:13px;padding:8px 16px;cursor:pointer;">Slow burn ↑ 24%</span>
+      <span class="chip gold" style="font-size:13px;padding:8px 16px;cursor:pointer;">First-timer friendly</span>
+      <span class="chip" style="font-size:13px;padding:8px 16px;cursor:pointer;">Power dynamic</span>
+      <span class="chip" style="font-size:13px;padding:8px 16px;cursor:pointer;">Sensory focus</span>
+      <span class="chip" style="font-size:13px;padding:8px 16px;cursor:pointer;">Hotel scenarios</span>
+      <span class="chip" style="font-size:13px;padding:8px 16px;cursor:pointer;">Confessions</span>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─────────── COMPANION PROFILE MODAL ─────────── -->
+<div class="modal-overlay" id="profile-modal" onclick="closeModal('profile-modal', event)">
+  <div class="modal-wrapper">
+    <button class="modal-close" onclick="closeModal('profile-modal')">✕</button>
+    <div class="modal" id="modal-content">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── STORY MODAL ─────────── -->
+<div class="modal-overlay" id="story-modal" onclick="closeModal('story-modal', event)">
+  <div class="modal-wrapper">
+    <button class="modal-close" onclick="closeModal('story-modal')">✕</button>
+    <div class="modal" id="story-modal-content" style="max-width:680px;">
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── MINI AUDIO PLAYER ─────────── -->
+<div class="mini-player" id="mini-player">
+  <div class="mini-player-controls">
+    <button class="player-btn">⟨⟨</button>
+    <button class="player-btn play-pause" id="play-btn" onclick="togglePlay()">▶</button>
+    <button class="player-btn">⟩⟩</button>
+  </div>
+  <div class="mini-player-info">
+    <div class="mini-player-title" id="player-title">—</div>
+    <div class="mini-player-meta" id="player-meta">—</div>
+  </div>
+  <div class="scrubber" onclick="scrub(event)">
+    <div class="scrubber-fill" id="scrubber-fill"></div>
+  </div>
+  <button class="close-player" onclick="closePlayer()">✕</button>
+</div>
+
+<!-- ─────────── FOOTER ─────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a class="footer-link">Safety &amp; Consent</a>
+      <a class="footer-link">Privacy &amp; Anonymity</a>
+      <a class="footer-link">Legal information</a>
+      <a class="footer-link">Report an issue</a>
+    </div>
+    <div class="footer-trust">
+      <span>🔒 Anonymous IDs</span>
+      <span>✦ Clear consent &amp; boundaries</span>
+      <span>💳 Transparent pricing</span>
+    </div>
+    <div style="font-size:11px;color:var(--muted);">© 2025 Erosphere · All companions verified · 18+</div>
+  </div>
+</footer>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const companions = [
+  { id:0, name:'Ava', vibe:'Romantic & in control', city:'Amsterdam', price:'€280', tags:['Romantic','Light roleplay','First-timer'], gradient:'gradient-fill-1', age:26 },
+  { id:1, name:'Nora', vibe:'Gentle but decisive', city:'Amsterdam', price:'€320', tags:['Soft dominance','Confessions','Intimate'], gradient:'gradient-fill-2', age:29 },
+  { id:2, name:'Seren', vibe:'Intellectual & intense', city:'Paris', price:'€350', tags:['Intense','Roleplay','Experimental'], gradient:'gradient-fill-3', age:31 },
+  { id:3, name:'Kai', vibe:'Warm & unhurried', city:'London', price:'€260', tags:['Gentle','Romantic','Sensory focus'], gradient:'gradient-fill-4', age:27 },
+  { id:4, name:'Maëve', vibe:'Mysterious & precise', city:'Paris', price:'€400', tags:['Power dynamic','Experimental','Luxury'], gradient:'gradient-fill-5', age:30 },
+  { id:5, name:'Irina', vibe:'Playful & confident', city:'Amsterdam', price:'€290', tags:['Roleplay','Light touch','Fun'], gradient:'gradient-fill-6', age:25 },
+  { id:6, name:'Sol', vibe:'Calm & attentive', city:'London', price:'€310', tags:['Sensory focus','Gentle','Slow burn'], gradient:'gradient-fill-1', age:28 },
+  { id:7, name:'Alara', vibe:'Bold & expressive', city:'Paris', price:'€380', tags:['Intense','Dominant energy','Confident'], gradient:'gradient-fill-3', age:33 },
+];
+
+const stories = [
+  { id:0, title:"The hotel bar piano", type:"Story", duration:"8 min", vibe:"Gentle tension & slow build", tags:["Slow burn","Romantic"], handle:"@still-figuring-it-out", gradient:"story-gradient-1", text:`The bar was almost empty by the time she sat down at the piano. I'd ordered my second whiskey and wasn't planning anything — wasn't looking for anything. She played something I didn't recognise, low and searching, and I found myself watching her hands instead of my phone.\n\nShe glanced at me once. Just once. And then kept playing as if she hadn't.\n\nI don't know how long I sat there. The city hummed outside. The ice in my glass melted to nothing. When she finished and the last note dissolved into the air-conditioning, she stood, smoothed her dress, and walked past without looking back.\n\nAt the elevator she paused — hand on the button, not turning — and said, "Room 412, if you want to hear the rest."` },
+  { id:1, title:"Tuesday afternoon", type:"Confession", duration:"5 min", vibe:"Unexpected intimacy", tags:["Confessions","Slice of life"], handle:"@not-what-you'd-think", gradient:"story-gradient-2", text:`I told myself it was practical. A massage, a few hours of company, professional warmth. I'd been travelling alone for three weeks. I didn't want anything complicated.\n\nBut when she laughed at something I said — genuinely laughed, not performed laughter — I felt something loosen in my chest I hadn't noticed was tight.\n\nWe talked for two hours. I told her things I'd never said aloud. She listened without performing understanding. It was the most honest conversation I'd had in months, and I left feeling embarrassed that something as simple as being truly listened to could unsettle me so completely.` },
+  { id:2, title:"The last train north", type:"Story", duration:"11 min", vibe:"Charged quiet & slow reveal", tags:["Intense","Slow burn","Romantic"], handle:"@northern-lights-27", gradient:"story-gradient-3", text:`We were the only two in the carriage after Cologne. She'd fallen asleep against the window, her book sliding from her hand, and I'd caught it without thinking.\n\nShe woke up, looked at the book in my hands, then at me. Didn't say thank you. Just held out her hand.\n\nThe rest of the journey we said almost nothing. But every so often I'd feel her eyes on me, and I'd look up too late to catch it. By the time we reached Hamburg I was profoundly aware of the two inches between our arms.` },
+  { id:3, title:"First night confession", type:"Confession", duration:"6 min", vibe:"Tender vulnerability", tags:["Confessions","First-timer","Gentle"], handle:"@january-light", gradient:"story-gradient-4", text:`I'd been anxious for days. I almost cancelled twice. But I rang the bell and she opened the door in a plain shirt and reading glasses, and somehow that made everything easier.\n\nShe didn't perform. She was just... there. Curious about me. We had tea first. She asked what I was hoping for and actually listened to the answer, even the parts I stumbled through.\n\nLater, she said something I keep returning to: "You're allowed to want things. That's not a failing."` },
+  { id:4, title:"Slow afternoon, Barcelona", type:"Story", duration:"9 min", vibe:"Sensory & present", tags:["Sensory focus","Romantic","Slow burn"], handle:"@harbour-fog", gradient:"story-gradient-1", text:`The shutters were half-closed against the heat. Somewhere below, a scooter. Somewhere distant, the sea. She moved through the room like someone who had always lived there and nowhere else at once — that particular ease that makes you feel, briefly, like you might belong somewhere too.\n\nTime moved differently. I noticed the light changing on the ceiling. I noticed the exact weight of her attention.` },
+  { id:5, title:"The question she asked", type:"Confession", duration:"4 min", vibe:"Quiet revelation", tags:["Confessions","Intense","Honest"], handle:"@quiet-room", gradient:"story-gradient-2", text:`She asked, "What do you actually want tonight?" and I didn't have an answer. I realised I'd spent so long thinking about what was allowed, what was appropriate, what I could admit to, that I'd stopped knowing what I wanted.\n\nShe waited. Not impatiently.\n\n"Take your time," she said. "There's no wrong answer."\n\nThat sentence changed something. I'm still thinking about what.` },
+];
+
+const audios = [
+  { id:0, title:"Husky goodnight", voice:"Femme · Husky", duration:"12 min", vibe:"Warm & intimate", tags:["Soft guidance","Popular"], gradient:"audio-gradient-1" },
+  { id:1, title:"The long commute", voice:"Masc · Calm", duration:"8 min", vibe:"Gentle & attentive", tags:["Slow build","Relaxing"], gradient:"audio-gradient-2" },
+  { id:2, title:"Late shift", voice:"Neutral", duration:"10 min", vibe:"Steady presence", tags:["Neutral","Grounding"], gradient:"audio-gradient-3" },
+  { id:3, title:"Unnamed wanting", voice:"Femme · Soft", duration:"15 min", vibe:"Slow confession", tags:["Confessions","Intimate"], gradient:"audio-gradient-1" },
+  { id:4, title:"Rain on windows", voice:"Masc · Low", duration:"6 min", vibe:"Present & still", tags:["Sensory","Relaxing"], gradient:"audio-gradient-2" },
+  { id:5, title:"Tuesday at three", voice:"Neutral", duration:"9 min", vibe:"Honest & close", tags:["Confessions","Soft guidance"], gradient:"audio-gradient-3" },
+];
+
+// ─── RENDER HELPERS ────────────────────────────────────
+
+function companionCard(c, clickable=true) {
+  const initials = c.name.slice(0,2).toUpperCase();
+  return `
+  <div class="companion-card" onclick="${clickable?`openProfile(${c.id})`:''}">
+    <div class="card-media ${c.gradient}">
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <svg width="70" height="140" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
+          <ellipse cx="35" cy="22" rx="16" ry="18"/>
+          <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+        </svg>
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(17,22,32,0.95) 100%)"></div>
+      <div class="card-media-tag">Verified · ${c.city}</div>
+      <div class="card-media-play">▶</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${c.name} · <span style="font-weight:300;color:var(--muted)">${c.vibe}</span></div>
+      <div class="card-meta">${c.city} · ${c.price} · Companion</div>
+      <div class="card-tags">
+        ${c.tags.map(t=>`<span class="chip" style="font-size:10px;padding:3px 8px;">${t}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function storyCard(s) {
+  return `
+  <div class="story-card" onclick="openStoryModal(${s.id})">
+    <div class="story-media ${s.gradient}">
+      <div style="position:absolute;inset:0;display:flex;align-items:flex-end;padding:12px;">
+        <span style="font-size:10px;background:rgba(7,9,15,0.7);backdrop-filter:blur(6px);padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);color:var(--text);">${s.type} · ${s.duration}</span>
+      </div>
+    </div>
+    <div class="story-body">
+      <div class="card-title" style="margin-bottom:4px;">${s.title}</div>
+      <div class="card-meta">${s.vibe} · ${s.handle}</div>
+      <div class="card-tags">
+        ${s.tags.map(t=>`<span class="chip" style="font-size:10px;padding:3px 8px;">${t}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function audioCard(a) {
+  const bars = Array.from({length:16}, (_,i) => {
+    const h = 20 + Math.random()*30;
+    const delay = (i*0.07).toFixed(2);
+    return `<div class="wave-bar" style="height:${h}px;animation-delay:${delay}s;"></div>`;
+  }).join('');
+  return `
+  <div class="audio-card" onclick="playAudio('${a.title}','${a.voice} · ${a.duration}')">
+    <div class="audio-media ${a.gradient}">
+      <div class="waveform">${bars}</div>
+      <div class="play-btn-overlay"><div class="play-circle" style="color:#fff;font-size:16px;">▶</div></div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${a.title}</div>
+      <div class="card-meta">${a.voice} · ${a.duration} · ${a.vibe}</div>
+      <div class="card-tags">
+        ${a.tags.map(t=>`<span class="chip" style="font-size:10px;padding:3px 8px;">${t}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function confessionCard(s) {
+  return `
+  <div class="story-card" onclick="openStoryModal(${s.id})" style="width:220px;">
+    <div class="story-media ${s.gradient}" style="height:100px;">
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.18;font-size:48px;">✍</div>
+      <div style="position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;">
+        <span style="font-size:10px;background:rgba(7,9,15,0.7);backdrop-filter:blur(6px);padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);color:var(--text);">Confession · ${s.duration}</span>
+      </div>
+    </div>
+    <div class="story-body">
+      <div class="card-title" style="font-size:13px;">${s.title}</div>
+      <div class="card-meta" style="font-size:11px;">${s.handle}</div>
+    </div>
+  </div>`;
+}
+
+// ─── POPULATE HOME ROWS ───────────────────────────────
+
+function populateHome() {
+  // Companions
+  document.getElementById('companions-row').innerHTML = companions.slice(0,6).map(c=>companionCard(c)).join('');
+  // Stories
+  document.getElementById('stories-row').innerHTML = stories.map(s=>storyCard(s)).join('');
+  // Audio
+  document.getElementById('audio-row').innerHTML = audios.map(a=>audioCard(a)).join('');
+  // Confessions (mix confession + companion bridge)
+  const confOnly = stories.filter(s=>s.type==='Confession');
+  let confHTML = '';
+  confOnly.forEach((c,i) => {
+    confHTML += confessionCard(c);
+    if(i < companions.length) {
+      const bridgeComp = companions[i % companions.length];
+      confHTML += `<div class="companion-card" onclick="openProfile(${bridgeComp.id})" style="width:200px;border-color:rgba(201,169,110,0.25);">
+        <div class="card-media ${bridgeComp.gradient}" style="height:130px;">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <svg width="50" height="100" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
+              <ellipse cx="35" cy="22" rx="16" ry="18"/>
+              <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+            </svg>
+          </div>
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(17,22,32,0.95) 100%)"></div>
+          <div class="card-media-tag" style="background:rgba(201,169,110,0.18);color:var(--gold);">From similar confessions</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title" style="font-size:13px;">${bridgeComp.name} · <span style="color:var(--muted);font-weight:300;">${bridgeComp.vibe}</span></div>
+          <div class="card-meta" style="font-size:11px;">${bridgeComp.city} · ${bridgeComp.price}</div>
+        </div>
+      </div>`;
+    }
+  });
+  document.getElementById('confessions-row').innerHTML = confHTML;
+  // Trending
+  document.getElementById('trending-row').innerHTML = [...companions].reverse().slice(0,6).map(c=>companionCard(c)).join('');
+}
+
+function populateStories() {
+  document.getElementById('stories-grid').innerHTML = stories.map(s=>storyCard(s)).join('');
+}
+
+function populateAudio() {
+  document.getElementById('audio-grid').innerHTML = audios.map(a=>audioCard(a)).join('');
+}
+
+function populateCompanions() {
+  document.getElementById('companions-grid').innerHTML = companions.map(c=>companionCard(c)).join('');
+}
+
+// ─── PROFILE MODAL ────────────────────────────────────
+
+function openProfile(id) {
+  const c = companions[id];
+  const sessions = [
+    { name:"Slow, intimate evening", desc:"Unhurried presence, genuine conversation, complete discretion.", price:`From ${c.price}`, durations:["1h","2h","Evening"] },
+    { name:"Social companion", desc:"Dinner, gallery, event — thoughtful company for any occasion.", price:`From ${c.price}`, durations:["2h","Half day","Full day"] },
+    { name:"Weekend retreat", desc:"Extended time away. Complete experience, complete privacy.", price:"On request", durations:["Weekend","Custom"] },
+  ];
+  const galleryItems = [
+    {label:"Arriving — hotel lobby", grad:"gradient-fill-1"},
+    {label:"Lingerie set", grad:"gradient-fill-2"},
+    {label:"Evening wear", grad:"gradient-fill-3"},
+    {label:"Candid — terrace", grad:"gradient-fill-5"},
+  ];
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-hero">
+      <div class="modal-img">
+        <div class="modal-img-overlay"></div>
+        <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);opacity:0.2;" width="100" height="200" viewBox="0 0 70 140" fill="white">
+          <ellipse cx="35" cy="22" rx="16" ry="18"/>
+          <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+        </svg>
+        <div class="verified-badge" style="position:relative;z-index:2;">✦ Verified &amp; Licensed</div>
+      </div>
+      <div class="modal-info">
+        <div>
+          <h2 class="modal-name">${c.name}</h2>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">${c.age} · ${c.city}</div>
+          <div class="modal-descriptors">
+            ${c.tags.map(t=>`<span class="descriptor">${t}</span>`).join('')}
+          </div>
+        </div>
+        <p class="modal-about">I believe genuine encounters start with real conversation. My sessions focus on connection, curiosity, and comfort — whatever that means to you. I enjoy thoughtful people, interesting spaces, and unhurried evenings.</p>
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">I do</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.8;">✓ Genuine companionship &amp; conversation &nbsp; ✓ Social occasions &nbsp; ✓ Overnight bookings &nbsp; ✓ First-timers welcome</div>
+          <div style="font-size:12px;color:var(--muted);margin:10px 0 8px;">I don't</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.8;">✕ Anything non-consensual &nbsp; ✕ Minors &nbsp; ✕ Unverified bookings</div>
+        </div>
+        <button class="btn-primary" style="width:100%;text-align:center;">Choose an experience &amp; book</button>
+        <button class="btn-secondary" style="width:100%;text-align:center;">Message first</button>
+        <div class="trust-line">
+          <span class="trust-item"><span class="trust-icon">🔒</span> Your identity stays private</span>
+          <span class="trust-item"><span class="trust-icon">✦</span> Transparent pricing</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-gallery">
+      <div class="sub-heading">Gallery</div>
+      <div class="gallery-grid">
+        ${galleryItems.map(g=>`
+          <div class="gallery-item ${g.grad}">
+            <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);opacity:0.15;" width="50" height="100" viewBox="0 0 70 140" fill="white">
+              <ellipse cx="35" cy="22" rx="16" ry="18"/>
+              <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+            </svg>
+            <div class="gallery-item-label">${g.label}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="sub-heading">Sessions &amp; Pricing</div>
+      <div class="sessions-grid">
+        ${sessions.map(s=>`
+          <div class="session-card">
+            <div class="session-name">${s.name}</div>
+            <div class="session-desc">${s.desc}</div>
+            <div class="session-price">${s.price}</div>
+            <div class="session-durations">
+              ${s.durations.map((d,i)=>`<span class="duration-pill ${i===0?'active':''}" onclick="selectDuration(this)">${d}</span>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('profile-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function selectDuration(el) {
+  el.parentElement.querySelectorAll('.duration-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── STORY MODAL ──────────────────────────────────────
+
+function openStoryModal(id) {
+  const s = stories[id];
+  const relatedComps = companions.slice(0,3);
+  document.getElementById('story-modal-content').innerHTML = `
+    <div class="story-modal-header">
+      <div style="font-size:11px;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">${s.type} · ${s.duration}</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:28px;margin-bottom:8px;">${s.title}</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+        ${s.tags.map(t=>`<span class="chip">${t}</span>`).join('')}
+        <span class="chip" style="color:var(--muted);">${s.handle}</span>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" style="font-size:12px;padding:8px 16px;">Read</button>
+        <button class="btn-secondary" style="font-size:12px;padding:8px 16px;" onclick="playAudio('${s.title} (narrated)','AI reading · ${s.voice||'Neutral voice'} · ${s.duration}')">▶ Listen in AI voice</button>
+      </div>
+    </div>
+    <div class="story-modal-body">${s.text.split('\n\n').map(p=>`<p style="margin-bottom:1.4em;">${p}</p>`).join('')}</div>
+    <div style="padding:24px 36px;border-top:1px solid var(--border);">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;font-style:italic;">Want to experience something like this in real life?</div>
+      <div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;">
+        ${relatedComps.map(c=>`
+          <div class="companion-card" onclick="closeModal('story-modal');openProfile(${c.id})" style="width:180px;flex-shrink:0;">
+            <div class="card-media ${c.gradient}" style="height:140px;">
+              <div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(17,22,32,0.95) 100%)"></div>
+            </div>
+            <div class="card-body" style="padding:10px 12px;">
+              <div class="card-title" style="font-size:12.5px;">${c.name}</div>
+              <div class="card-meta" style="font-size:11px;">${c.city} · ${c.price}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('story-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// ─── MODAL CONTROLS ───────────────────────────────────
+
+function closeModal(id, evt) {
+  if(evt && evt.target !== document.getElementById(id)) return;
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─── AUDIO PLAYER ─────────────────────────────────────
+
+let playing = false;
+let scrubPercent = 35;
+let scrubInterval = null;
+
+function playAudio(title, meta) {
+  document.getElementById('player-title').textContent = title;
+  document.getElementById('player-meta').textContent = meta;
+  document.getElementById('mini-player').classList.add('visible');
+  playing = true;
+  document.getElementById('play-btn').textContent = '⏸';
+  startScrub();
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('play-btn').textContent = playing ? '⏸' : '▶';
+  if(playing) startScrub(); else clearInterval(scrubInterval);
+}
+
+function startScrub() {
+  clearInterval(scrubInterval);
+  scrubInterval = setInterval(() => {
+    if(playing) {
+      scrubPercent = Math.min(100, scrubPercent + 0.1);
+      document.getElementById('scrubber-fill').style.width = scrubPercent + '%';
+    }
+  }, 200);
+}
+
+function scrub(e) {
+  const bar = e.currentTarget;
+  scrubPercent = (e.offsetX / bar.offsetWidth) * 100;
+  document.getElementById('scrubber-fill').style.width = scrubPercent + '%';
+}
+
+function closePlayer() {
+  document.getElementById('mini-player').classList.remove('visible');
+  clearInterval(scrubInterval);
+  playing = false;
+  scrubPercent = 35;
+}
+
+// ─── PAGE SWITCHING ────────────────────────────────────
+
+function switchPage(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.textContent.trim().toLowerCase() === page || 
+      (page==='home' && l.textContent.trim() === 'Home'));
+  });
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ─── FILTER PILLS ─────────────────────────────────────
+
+function toggleFilter(el) {
+  el.classList.toggle('active');
+}
+
+// ─── INIT ─────────────────────────────────────────────
+
+populateHome();
+populateStories();
+populateAudio();
+populateCompanions();
+</script>
+</body>
+</html>

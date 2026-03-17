@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+
+# Environment — NEVER commit these
+.env
+.env.local
+.env.*.local
+apps/web/.env
+apps/web/.env.local
+apps/web/.env.*.local
+
+# Drizzle migrations output
+apps/web/db/migrations/
+
+# Build output
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

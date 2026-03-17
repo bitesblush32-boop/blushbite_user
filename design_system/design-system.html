@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlushBite · Design System Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #07090f;
+  --bg2:     #0d1117;
+  --card:    #111620;
+  --card2:   #161d2a;
+  --accent:  #e8607a;
+  --accent2: #c4485e;
+  --gold:    #c9a96e;
+  --text:    #eeeef0;
+  --muted:   #6b7280;
+  --border:  #1c2333;
+  --glow:    rgba(232,96,122,0.18);
+  --radius:  14px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: 0.6;
+}
+
+/* ── DS LAYOUT ── */
+.ds-wrapper { max-width: 1200px; margin: 0 auto; padding: 60px 40px 120px; }
+.ds-header { margin-bottom: 80px; padding-bottom: 40px; border-bottom: 1px solid var(--border); }
+.ds-title { font-family: 'Playfair Display', serif; font-size: 42px; line-height: 1.1; margin-bottom: 10px; }
+.ds-title em { color: var(--accent); font-style: italic; }
+.ds-subtitle { font-size: 14px; color: var(--muted); }
+.ds-section { margin-bottom: 80px; }
+.ds-section-label {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 28px; font-weight: 500;
+}
+.ds-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+.ds-col { display: flex; flex-direction: column; gap: 12px; }
+.ds-note { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.ds-divider { height: 1px; background: var(--border); margin: 48px 0; }
+.ds-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.ds-3col { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+
+/* ── COLOR SWATCHES ── */
+.swatch-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.swatch {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 140px;
+}
+.swatch-block {
+  height: 64px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
+}
+.swatch-name { font-size: 11px; color: var(--text); font-weight: 500; }
+.swatch-value { font-size: 10px; color: var(--muted); font-family: monospace; }
+
+/* ── TYPOGRAPHY SHOWCASE ── */
+.type-row { padding: 16px 0; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 20px; }
+.type-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; width: 140px; flex-shrink: 0; text-transform: uppercase; }
+.type-sample { flex: 1; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  background: var(--accent); color: #fff; border: none;
+  padding: 12px 22px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,96,122,0.3); }
+.btn-secondary {
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+  padding: 10px 20px; border-radius: 10px; font-size: 13px;
+  cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+/* ── CHIPS ── */
+.chip {
+  font-size: 11px; padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border); color: var(--muted);
+  background: rgba(255,255,255,0.03); font-weight: 400;
+  display: inline-flex;
+}
+.chip.rose { border-color: rgba(232,96,122,0.3); color: var(--accent); background: rgba(232,96,122,0.08); }
+.chip.gold { border-color: rgba(201,169,110,0.35); color: var(--gold); background: rgba(201,169,110,0.08); }
+
+/* ── FILTER PILLS ── */
+.filter-pill {
+  font-size: 12px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+  color: var(--muted); background: transparent; cursor: pointer; transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.filter-pill:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.filter-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(232,96,122,0.08); }
+
+/* ── NAV LINK ── */
+.nav-link {
+  color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 400;
+  padding: 6px 14px; border-radius: 20px; transition: all 0.2s; cursor: pointer;
+  border: none; background: none; font-family: 'DM Sans', sans-serif;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.nav-link.active { color: var(--text); background: rgba(232,96,122,0.14); }
+
+/* ── COMPANION CARD ── */
+.companion-card {
+  width: 220px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all 0.25s;
+  position: relative;
+}
+.companion-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2);
+}
+.card-media { height: 200px; position: relative; overflow: hidden; }
+.card-media-tag {
+  position: absolute; top: 10px; left: 10px; font-size: 10px;
+  background: rgba(7,9,15,0.75); backdrop-filter: blur(6px);
+  padding: 3px 8px; border-radius: 20px; color: var(--text);
+  letter-spacing: 0.04em; border: 1px solid rgba(255,255,255,0.08);
+}
+.card-media-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 42px; height: 42px; background: rgba(232,96,122,0.85);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+}
+.companion-card:hover .card-media-play { opacity: 1; }
+.card-body { padding: 14px; }
+.card-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.card-meta { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── AUDIO CARD ── */
+.audio-card {
+  width: 240px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; cursor: pointer;
+  transition: all 0.25s; position: relative;
+}
+.audio-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+.audio-media { height: 100px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.waveform { display: flex; align-items: center; gap: 3px; height: 40px; padding: 0 20px; }
+.wave-bar {
+  width: 3px; border-radius: 2px; background: var(--accent);
+  animation: wave 1.2s ease-in-out infinite; opacity: 0.6;
+}
+@keyframes wave { 0%,100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+.play-btn-overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s;
+}
+.audio-card:hover .play-btn-overlay { opacity: 1; }
+.play-circle {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 24px var(--glow);
+}
+
+/* ── STORY CARD ── */
+.story-card {
+  width: 240px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all 0.25s;
+}
+.story-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+.story-media { height: 130px; position: relative; overflow: hidden; }
+.story-body { padding: 14px; }
+
+/* ── HERO CARD ── */
+.hero-companion-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+  overflow: hidden; display: flex; position: relative; min-height: 280px;
+  transition: box-shadow 0.3s; cursor: pointer;
+}
+.hero-companion-card:hover { box-shadow: 0 0 40px var(--glow); }
+.hero-img {
+  width: 200px; flex-shrink: 0;
+  background: linear-gradient(135deg, #1a1228 0%, #2d1a2e 50%, #1a1a2e 100%);
+  position: relative; overflow: hidden;
+}
+.hero-img-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.hero-gradient-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 60%, var(--card) 100%); }
+.hero-content { flex: 1; padding: 28px 28px 28px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500;
+  color: var(--accent); background: rgba(232,96,122,0.12); border: 1px solid rgba(232,96,122,0.25);
+  padding: 4px 10px; border-radius: 20px; width: fit-content; margin-bottom: 10px; letter-spacing: 0.04em;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+.hero-title { font-family: 'Playfair Display', serif; font-size: 26px; line-height: 1.2; color: var(--text); margin-bottom: 8px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; margin-top: 10px; }
+
+/* ── MOOD PANEL ── */
+.mood-panel { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; }
+.mood-title { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 4px; }
+.mood-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+.mood-item {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 10px;
+}
+.mood-item:hover { border-color: rgba(232,96,122,0.4); background: rgba(232,96,122,0.05); }
+.mood-item-type { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; font-weight: 500; }
+.mood-item-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+.mood-item-meta { font-size: 11px; color: var(--muted); }
+.mood-item-btn {
+  font-size: 11px; color: var(--accent); background: rgba(232,96,122,0.1);
+  border: 1px solid rgba(232,96,122,0.2); padding: 5px 10px; border-radius: 20px;
+  cursor: pointer; transition: all 0.2s; flex-shrink: 0; margin-left: 12px;
+  font-family: 'DM Sans', sans-serif;
+}
+.mood-item-btn:hover { background: rgba(232,96,122,0.2); }
+
+/* ── MOOD SLIDER BAR ── */
+.mood-slider-bar {
+  display: flex; align-items: center; gap: 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 40px; padding: 10px 20px;
+}
+.mood-label { font-size: 12px; color: var(--muted); }
+.mood-slider { flex: 1; accent-color: var(--accent); cursor: pointer; }
+
+/* ── VERIFIED BADGE ── */
+.verified-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.35);
+  color: var(--gold); font-size: 11px; padding: 4px 10px; border-radius: 20px;
+}
+
+/* ── USER PILL ── */
+.user-pill {
+  display: flex; align-items: center; gap: 8px; background: var(--card);
+  border: 1px solid var(--border); padding: 6px 14px 6px 8px; border-radius: 24px;
+  cursor: pointer; transition: border-color 0.2s;
+}
+.user-pill:hover { border-color: var(--accent); }
+.avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: linear-gradient(135deg, #e8607a, #9b5fe0);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600; color: #fff;
+}
+
+/* ── MINI PLAYER ── */
+.mini-player {
+  background: rgba(13,17,23,0.95); backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: 14px;
+  display: flex; align-items: center; padding: 14px 20px; gap: 16px;
+}
+.player-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.07); color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  font-size: 13px;
+}
+.player-btn:hover { background: var(--accent); }
+.player-btn.play-pause { background: var(--accent); width: 42px; height: 42px; }
+.scrubber { flex: 1; height: 4px; background: var(--border); border-radius: 2px; position: relative; cursor: pointer; max-width: 240px; }
+.scrubber-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 38%; }
+
+/* ── SESSION CARD ── */
+.session-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; transition: border-color 0.2s; cursor: pointer;
+}
+.session-card:hover { border-color: rgba(232,96,122,0.4); }
+.session-name { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: 8px; }
+.session-desc { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+.session-price { font-size: 18px; color: var(--accent); font-weight: 500; margin-bottom: 12px; }
+.duration-pill {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; transition: all 0.15s; display: inline-flex;
+}
+.duration-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(232,96,122,0.08); }
+
+/* ── THEME CARD ── */
+.theme-card {
+  border: 1px solid var(--border); border-radius: 16px; padding: 24px;
+  cursor: pointer; transition: transform 0.2s;
+}
+.theme-card:hover { transform: translateY(-4px); }
+
+/* ── HEADER PREVIEW ── */
+.header-preview {
+  background: rgba(7,9,15,0.82); backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 75px;
+}
+.logo-mark { width: 100px; height: 58px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.logo-mark img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ── GRADIENT FILLS ── */
+.gradient-fill-1 { background: linear-gradient(135deg, #1a1228 0%, #2d1a2e 50%, #1a1a2e 100%); }
+.gradient-fill-2 { background: linear-gradient(135deg, #0f1a28 0%, #1f2840 50%, #2a1020 100%); }
+.gradient-fill-3 { background: linear-gradient(135deg, #201228 0%, #1a2030 60%, #2a1a18 100%); }
+.gradient-fill-4 { background: linear-gradient(135deg, #0a1620 0%, #1a1535 50%, #201a10 100%); }
+.gradient-fill-5 { background: linear-gradient(135deg, #1a1020 0%, #2a1530 50%, #101820 100%); }
+.gradient-fill-6 { background: linear-gradient(135deg, #101820 0%, #201028 50%, #102020 100%); }
+.story-gradient-1 { background: linear-gradient(135deg, #1a0e20 0%, #2a1540 100%); }
+.story-gradient-2 { background: linear-gradient(135deg, #0e1a18 0%, #101f30 100%); }
+.story-gradient-3 { background: linear-gradient(135deg, #1a1010 0%, #2a1520 100%); }
+.audio-gradient-1 { background: linear-gradient(135deg, #16101e 0%, #2a1040 100%); }
+.audio-gradient-2 { background: linear-gradient(135deg, #101622 0%, #201030 100%); }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.ds-wrapper { animation: fadeUp 0.5s ease; }
+</style>
+</head>
+<body>
+<div class="ds-wrapper">
+
+  <!-- HEADER -->
+  <div class="ds-header">
+    <div class="ds-title">BlushBite <em>Design System</em></div>
+    <div class="ds-subtitle">Single source of truth for all UI tokens, components, and patterns · Based on finalized client theme (social2.html)</div>
+  </div>
+
+  <!-- ── 1. COLOR PALETTE ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">01 · Color Palette</div>
+    <div class="swatch-grid">
+      <div class="swatch">
+        <div class="swatch-block" style="background:#07090f;"></div>
+        <div class="swatch-name">bg (Page Root)</div>
+        <div class="swatch-value">--bg · #07090f</div>
+        <div class="swatch-value">bb-bg in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#0d1117;"></div>
+        <div class="swatch-name">bg2 (Modal / Sheet)</div>
+        <div class="swatch-value">--bg2 · #0d1117</div>
+        <div class="swatch-value">bb-bg2 in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#111620;"></div>
+        <div class="swatch-name">card</div>
+        <div class="swatch-value">--card · #111620</div>
+        <div class="swatch-value">bb-card in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#161d2a;"></div>
+        <div class="swatch-name">card2 (Nested)</div>
+        <div class="swatch-value">--card2 · #161d2a</div>
+        <div class="swatch-value">bb-card2 in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#e8607a;"></div>
+        <div class="swatch-name">accent (Primary)</div>
+        <div class="swatch-value">--accent · #e8607a</div>
+        <div class="swatch-value">accent in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#c4485e;"></div>
+        <div class="swatch-name">accent2 (Hover)</div>
+        <div class="swatch-value">--accent2 · #c4485e</div>
+        <div class="swatch-value">accent-hover in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#c9a96e;"></div>
+        <div class="swatch-name">gold (Premium)</div>
+        <div class="swatch-value">--gold · #c9a96e</div>
+        <div class="swatch-value">gold in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#eeeef0;"></div>
+        <div class="swatch-name">text (Primary)</div>
+        <div class="swatch-value">--text · #eeeef0</div>
+        <div class="swatch-value">text in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#6b7280;"></div>
+        <div class="swatch-name">muted (Secondary)</div>
+        <div class="swatch-value">--muted · #6b7280</div>
+        <div class="swatch-value">text-muted in Tailwind</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block" style="background:#1c2333;"></div>
+        <div class="swatch-name">border</div>
+        <div class="swatch-value">--border · #1c2333</div>
+        <div class="swatch-value">bb-border in Tailwind</div>
+      </div>
+    </div>
+    <div class="ds-note">Accent alpha variants: glow rgba(232,96,122,0.18) · subtle rgba(232,96,122,0.08) · border rgba(232,96,122,0.25)</div>
+    <div class="ds-note">Gold alpha variants: subtle rgba(201,169,110,0.08) · border rgba(201,169,110,0.35)</div>
+  </div>
+
+  <!-- ── 2. TYPOGRAPHY ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">02 · Typography</div>
+    <div style="margin-bottom:16px;">
+      <div class="ds-row" style="gap:32px;">
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Display Font</div>
+          <div style="font-family:'Playfair Display',serif;font-size:32px;line-height:1.2;">Playfair Display</div>
+          <div style="font-family:'Playfair Display',serif;font-size:20px;font-style:italic;color:var(--accent);line-height:1.3;">Italic variant for hero titles</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">Weights: 400, 600 · next/font: Playfair_Display</div>
+          <div style="font-size:11px;color:var(--muted);">Used on: section titles, modal names, hero h1, session names</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Body Font</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:24px;font-weight:300;line-height:1.3;">DM Sans Light</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:24px;font-weight:400;line-height:1.3;">DM Sans Regular</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:24px;font-weight:500;line-height:1.3;">DM Sans Medium</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">Weights: 300, 400, 500 · next/font: DM_Sans</div>
+          <div style="font-size:11px;color:var(--muted);">Used on: all UI text, buttons, chips, nav, body copy</div>
+        </div>
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Hero Title</div>
+      <div class="type-sample" style="font-family:'Playfair Display',serif;font-size:32px;line-height:1.2;">An intimate evening <em>with Ava</em></div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Section Title</div>
+      <div class="type-sample" style="font-family:'Playfair Display',serif;font-size:22px;">Companions who match your taste</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Modal Name</div>
+      <div class="type-sample" style="font-family:'Playfair Display',serif;font-size:34px;line-height:1.1;">Ava</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Card Title</div>
+      <div class="type-sample" style="font-size:14px;font-weight:500;">Ava · <span style="font-weight:300;color:var(--muted);">Romantic & in control</span></div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Card Meta</div>
+      <div class="type-sample" style="font-size:11.5px;color:var(--muted);">Amsterdam · €280 · Companion</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Body Text</div>
+      <div class="type-sample" style="font-size:13.5px;color:var(--muted);line-height:1.7;">I believe genuine encounters start with real conversation. My sessions focus on connection, curiosity, and comfort.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Label / Overline</div>
+      <div class="type-sample" style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Story · 8 min</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Footer / Legal</div>
+      <div class="type-sample" style="font-size:11px;color:var(--muted);">© 2025 BlushBite · All companions verified · 18+</div>
+    </div>
+  </div>
+
+  <!-- ── 3. BUTTONS ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">03 · Buttons</div>
+    <div class="ds-row">
+      <div class="ds-col">
+        <button class="btn-primary">View profile &amp; sessions</button>
+        <div class="ds-note">btn-primary · bg accent #e8607a → hover #c4485e + shadow glow</div>
+      </div>
+      <div class="ds-col">
+        <button class="btn-secondary">See more companions</button>
+        <div class="ds-note">btn-secondary · transparent + border → hover white/20 border</div>
+      </div>
+      <div class="ds-col">
+        <button class="btn-primary" style="width:100%;text-align:center;">Choose an experience &amp; book</button>
+        <div class="ds-note">btn-primary full-width (modal CTA)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. CHIPS & BADGES ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">04 · Chips, Tags &amp; Badges</div>
+    <div class="ds-row" style="align-items:center;">
+      <span class="chip">Amsterdam</span>
+      <span class="chip">Romantic</span>
+      <span class="chip rose">✦ Matches your taste</span>
+      <span class="chip rose">Soft &amp; slow burn</span>
+      <span class="chip gold">Sessions from €280</span>
+      <span class="chip gold">⭑ First-timer friendly</span>
+    </div>
+    <div class="ds-row" style="align-items:center;margin-top:8px;">
+      <span class="verified-badge">✦ Verified &amp; Licensed</span>
+      <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--accent);background:rgba(232,96,122,0.12);border:1px solid rgba(232,96,122,0.25);padding:4px 10px;border-radius:20px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+        For you · Verified companion
+      </div>
+    </div>
+    <div class="ds-row" style="align-items:center;margin-top:8px;">
+      <button class="filter-pill active">All</button>
+      <button class="filter-pill">Romantic</button>
+      <button class="filter-pill">Intense</button>
+      <button class="filter-pill">Slow burn</button>
+      <button class="filter-pill">Amsterdam</button>
+      <button class="filter-pill">Recommended</button>
+      <div class="ds-note" style="width:100%;margin-top:4px;">filter-pill · active = accent border + tint · toggle on click</div>
+    </div>
+  </div>
+
+  <!-- ── 5. NAVIGATION ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">05 · Navigation &amp; Header</div>
+    <div class="header-preview">
+      <div class="logo-mark">
+        <img src="logo_light.png" alt="BlushBite" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-family:Playfair Display,serif;font-size:20px;color:#e8607a;\'>BlushBite</span>'">
+      </div>
+      <nav style="display:flex;gap:6px;">
+        <button class="nav-link active">Home</button>
+        <button class="nav-link">Stories</button>
+        <button class="nav-link">Audio</button>
+        <button class="nav-link">Companions</button>
+        <button class="nav-link">Explore</button>
+      </nav>
+      <div class="user-pill">
+        <div class="avatar">MW</div>
+        <span style="font-size:12px;color:var(--muted);">@midnight‑wanderer</span>
+        <span style="color:var(--muted);font-size:12px;margin-left:4px;">▾</span>
+      </div>
+    </div>
+    <div class="ds-note">Header: 75px height · rgba(7,9,15,0.82) bg · backdrop-blur(20px) · border-bottom var(--border)</div>
+  </div>
+
+  <!-- ── 6. CARDS ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">06 · Cards</div>
+
+    <div style="margin-bottom:12px;font-size:11px;color:var(--muted);">Companion Cards · 220px wide · hover: translateY(-4px) + rose border glow</div>
+    <div class="ds-row" style="overflow-x:auto;flex-wrap:nowrap;padding-bottom:12px;">
+      <div class="companion-card">
+        <div class="card-media gradient-fill-1">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <svg width="60" height="120" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
+              <ellipse cx="35" cy="22" rx="16" ry="18"/>
+              <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+            </svg>
+          </div>
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(17,22,32,0.95) 100%)"></div>
+          <div class="card-media-tag">Verified · Amsterdam</div>
+          <div class="card-media-play">▶</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Ava · <span style="font-weight:300;color:var(--muted)">Romantic &amp; in control</span></div>
+          <div class="card-meta">Amsterdam · €280 · Companion</div>
+          <div class="card-tags">
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Romantic</span>
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Light roleplay</span>
+            <span class="chip" style="font-size:10px;padding:3px 8px;">First-timer</span>
+          </div>
+        </div>
+      </div>
+      <div class="companion-card">
+        <div class="card-media gradient-fill-3">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <svg width="60" height="120" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
+              <ellipse cx="35" cy="22" rx="16" ry="18"/>
+              <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+            </svg>
+          </div>
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(17,22,32,0.95) 100%)"></div>
+          <div class="card-media-tag">Verified · Paris</div>
+          <div class="card-media-play">▶</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Seren · <span style="font-weight:300;color:var(--muted)">Intellectual &amp; intense</span></div>
+          <div class="card-meta">Paris · €350 · Companion</div>
+          <div class="card-tags">
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Intense</span>
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Roleplay</span>
+          </div>
+        </div>
+      </div>
+      <div class="companion-card" style="border-color:rgba(201,169,110,0.25);">
+        <div class="card-media gradient-fill-5">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <svg width="60" height="120" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
+              <ellipse cx="35" cy="22" rx="16" ry="18"/>
+              <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+            </svg>
+          </div>
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(17,22,32,0.95) 100%)"></div>
+          <div class="card-media-tag" style="background:rgba(201,169,110,0.18);color:var(--gold);">From similar stories</div>
+          <div class="card-media-play">▶</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Maëve · <span style="font-weight:300;color:var(--muted)">Mysterious &amp; precise</span></div>
+          <div class="card-meta">Paris · €400 · Story-Bridge card</div>
+          <div class="card-tags">
+            <span class="chip gold" style="font-size:10px;padding:3px 8px;">Power dynamic</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-divider"></div>
+
+    <div style="margin-bottom:12px;font-size:11px;color:var(--muted);">Story Cards · Audio Cards · 240px wide</div>
+    <div class="ds-row" style="overflow-x:auto;flex-wrap:nowrap;padding-bottom:12px;">
+      <div class="story-card">
+        <div class="story-media story-gradient-1">
+          <div style="position:absolute;inset:0;display:flex;align-items:flex-end;padding:12px;">
+            <span style="font-size:10px;background:rgba(7,9,15,0.7);backdrop-filter:blur(6px);padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);color:var(--text);">Story · 8 min</span>
+          </div>
+        </div>
+        <div class="story-body">
+          <div class="card-title">The hotel bar piano</div>
+          <div class="card-meta">Gentle tension &amp; slow build · @still-figuring-it-out</div>
+          <div class="card-tags">
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Slow burn</span>
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Romantic</span>
+          </div>
+        </div>
+      </div>
+      <div class="story-card">
+        <div class="story-media story-gradient-2">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.18;font-size:48px;">✍</div>
+          <div style="position:absolute;inset:0;display:flex;align-items:flex-end;padding:12px;">
+            <span style="font-size:10px;background:rgba(7,9,15,0.7);backdrop-filter:blur(6px);padding:3px 8px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);color:var(--text);">Confession · 5 min</span>
+          </div>
+        </div>
+        <div class="story-body">
+          <div class="card-title">Tuesday afternoon</div>
+          <div class="card-meta">Unexpected intimacy · @not-what-you'd-think</div>
+          <div class="card-tags">
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Confessions</span>
+          </div>
+        </div>
+      </div>
+      <div class="audio-card">
+        <div class="audio-media audio-gradient-1">
+          <div class="waveform" id="waveform1"></div>
+          <div class="play-btn-overlay"><div class="play-circle" style="color:#fff;font-size:16px;">▶</div></div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Husky goodnight</div>
+          <div class="card-meta">Femme · Husky · 12 min · Warm &amp; intimate</div>
+          <div class="card-tags">
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Soft guidance</span>
+            <span class="chip rose" style="font-size:10px;padding:3px 8px;">Popular</span>
+          </div>
+        </div>
+      </div>
+      <div class="audio-card">
+        <div class="audio-media audio-gradient-2">
+          <div class="waveform" id="waveform2"></div>
+          <div class="play-btn-overlay"><div class="play-circle" style="color:#fff;font-size:16px;">▶</div></div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">The long commute</div>
+          <div class="card-meta">Masc · Calm · 8 min · Gentle &amp; attentive</div>
+          <div class="card-tags">
+            <span class="chip" style="font-size:10px;padding:3px 8px;">Slow build</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 7. HERO SECTION ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">07 · Hero Section (Home Feed)</div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">
+      <div class="hero-companion-card">
+        <div class="hero-img">
+          <div class="hero-img-inner">
+            <svg width="80" height="160" viewBox="0 0 80 180" fill="rgba(255,255,255,0.18)">
+              <ellipse cx="40" cy="24" rx="18" ry="22"/>
+              <path d="M16 80 Q22 50 40 48 Q58 50 64 80 L68 160 Q58 170 40 172 Q22 170 12 160Z" fill="rgba(255,255,255,0.18)"/>
+            </svg>
+          </div>
+          <div class="hero-gradient-overlay"></div>
+        </div>
+        <div class="hero-content">
+          <div>
+            <div class="hero-chip"><span class="dot"></span>For you · Verified companion</div>
+            <div class="hero-title">An intimate evening<br><em>with Ava</em></div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:4px;max-width:340px;">Curated for you based on your romantic and light roleplay preferences. Ava specialises in genuine connection.</div>
+            <div class="hero-meta">
+              <span class="chip rose">✦ Matches your taste</span>
+              <span class="chip">Amsterdam · In-person</span>
+              <span class="chip gold">Sessions from €280</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn-primary">View Ava's profile &amp; sessions</button>
+            <button class="btn-secondary">See more companions like this</button>
+            <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
+              <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);"><span style="color:var(--gold);">🔒</span> Anonymous booking</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);"><span style="color:var(--gold);">✦</span> Verified &amp; licensed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mood-panel">
+        <div class="mood-title">Tonight's mood mix</div>
+        <div class="mood-subtitle">Based on your choices: <em>romantic, slow burn, private</em></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+          <span class="chip rose">Soft &amp; slow burn</span>
+          <span class="chip">Guided audio</span>
+        </div>
+        <div class="mood-item">
+          <div>
+            <div class="mood-item-type">Story</div>
+            <div class="mood-item-title">'The hotel bar piano'</div>
+            <div class="mood-item-meta">8 min · gentle tension</div>
+          </div>
+          <button class="mood-item-btn">Read &amp; listen</button>
+        </div>
+        <div class="mood-item">
+          <div>
+            <div class="mood-item-type">Audio</div>
+            <div class="mood-item-title">'Husky goodnight'</div>
+            <div class="mood-item-meta">12 min · warm &amp; intimate</div>
+          </div>
+          <button class="mood-item-btn">Preview</button>
+        </div>
+        <div class="mood-item" style="margin-bottom:0;">
+          <div>
+            <div class="mood-item-type">Confessions</div>
+            <div class="mood-item-title">Confessions like yours</div>
+            <div class="mood-item-meta">Anonymous fantasies</div>
+          </div>
+          <button class="mood-item-btn">Open feed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 8. MOOD SLIDER ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">08 · Mood Slider Bar</div>
+    <div class="mood-slider-bar" style="max-width:600px;">
+      <span class="mood-label">Tonight I want:</span>
+      <span style="font-size:11px;color:var(--text);">Softer</span>
+      <input type="range" class="mood-slider" min="0" max="100" value="50">
+      <span style="font-size:11px;color:var(--text);">Spicier</span>
+    </div>
+    <div class="ds-note">Sticky bar above hero on home page. accent-color: var(--accent) for the thumb/track fill.</div>
+  </div>
+
+  <!-- ── 9. MINI PLAYER ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">09 · Mini Audio Player (Sticky Bottom)</div>
+    <div class="mini-player">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="player-btn">⟨⟨</button>
+        <button class="player-btn play-pause">⏸</button>
+        <button class="player-btn">⟩⟩</button>
+      </div>
+      <div>
+        <div style="font-size:13px;color:var(--text);font-weight:500;">Husky goodnight</div>
+        <div style="font-size:11px;color:var(--muted);">Femme · Husky · 12 min</div>
+      </div>
+      <div class="scrubber" style="max-width:280px;">
+        <div class="scrubber-fill"></div>
+      </div>
+      <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;">✕</button>
+    </div>
+    <div class="ds-note">Fixed to bottom of viewport · 68px height · backdrop-blur(20px) · slides in with animation · visible prop controlled by Zustand playerStore</div>
+  </div>
+
+  <!-- ── 10. SESSION CARDS ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">10 · Session Cards (Companion Profile)</div>
+    <div class="ds-3col" style="max-width:900px;">
+      <div class="session-card">
+        <div class="session-name">Slow, intimate evening</div>
+        <div class="session-desc">Unhurried presence, genuine conversation, complete discretion.</div>
+        <div class="session-price">From €280</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="duration-pill active">1h</span>
+          <span class="duration-pill">2h</span>
+          <span class="duration-pill">Evening</span>
+        </div>
+      </div>
+      <div class="session-card">
+        <div class="session-name">Social companion</div>
+        <div class="session-desc">Dinner, gallery, event — thoughtful company for any occasion.</div>
+        <div class="session-price">From €280</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="duration-pill active">2h</span>
+          <span class="duration-pill">Half day</span>
+          <span class="duration-pill">Full day</span>
+        </div>
+      </div>
+      <div class="session-card">
+        <div class="session-name">Weekend retreat</div>
+        <div class="session-desc">Extended time away. Complete experience, complete privacy.</div>
+        <div class="session-price">On request</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="duration-pill active">Weekend</span>
+          <span class="duration-pill">Custom</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 11. EXPLORE THEME CARDS ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">11 · Explore Theme Cards</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;max-width:900px;">
+      <div class="theme-card" style="background:linear-gradient(135deg,#2a0a1a,#1a0a2a);">
+        <div style="font-size:26px;margin-bottom:8px;">🌹</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;margin-bottom:5px;">Romantic</div>
+        <div style="font-size:11.5px;color:var(--muted);">Slow intimacy, emotional connection, soft touch</div>
+      </div>
+      <div class="theme-card" style="background:linear-gradient(135deg,#0a1a2a,#1a0a20);">
+        <div style="font-size:26px;margin-bottom:8px;">⚡</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;margin-bottom:5px;">Intense</div>
+        <div style="font-size:11.5px;color:var(--muted);">Bold energy, confidence, directed experience</div>
+      </div>
+      <div class="theme-card" style="background:linear-gradient(135deg,#1a1a0a,#2a1020);">
+        <div style="font-size:26px;margin-bottom:8px;">🌙</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;margin-bottom:5px;">Voyeur</div>
+        <div style="font-size:11.5px;color:var(--muted);">Observation, storytelling, shared imagination</div>
+      </div>
+      <div class="theme-card" style="background:linear-gradient(135deg,#0a1a20,#200a2a);">
+        <div style="font-size:26px;margin-bottom:8px;">🎭</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;margin-bottom:5px;">Roleplay</div>
+        <div style="font-size:11.5px;color:var(--muted);">Scenario, character, safe fantasy space</div>
+      </div>
+      <div class="theme-card" style="background:linear-gradient(135deg,#0f1a10,#1a102a);">
+        <div style="font-size:26px;margin-bottom:8px;">🕊️</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;margin-bottom:5px;">Gentle</div>
+        <div style="font-size:11.5px;color:var(--muted);">Softness, care, unhurried presence</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 12. PLACEHOLDER GRADIENTS ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">12 · Placeholder Gradients (No-Image States)</div>
+    <div style="margin-bottom:14px;font-size:11px;color:var(--muted);">Companion media — gradient-comp-1 through gradient-comp-6</div>
+    <div class="ds-row">
+      <div style="width:80px;height:80px;border-radius:10px;" class="gradient-fill-1"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="gradient-fill-2"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="gradient-fill-3"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="gradient-fill-4"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="gradient-fill-5"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="gradient-fill-6"></div>
+    </div>
+    <div style="margin-bottom:14px;margin-top:16px;font-size:11px;color:var(--muted);">Story cards — gradient-story-1 through gradient-story-4</div>
+    <div class="ds-row">
+      <div style="width:80px;height:80px;border-radius:10px;" class="story-gradient-1"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="story-gradient-2"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="story-gradient-3"></div>
+    </div>
+    <div style="margin-bottom:14px;margin-top:16px;font-size:11px;color:var(--muted);">Audio cards — gradient-audio-1 through gradient-audio-3</div>
+    <div class="ds-row">
+      <div style="width:80px;height:80px;border-radius:10px;" class="audio-gradient-1"></div>
+      <div style="width:80px;height:80px;border-radius:10px;" class="audio-gradient-2"></div>
+    </div>
+  </div>
+
+  <!-- ── 13. SPACING & RADII ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">13 · Spacing, Radii &amp; Borders</div>
+    <div class="ds-2col">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em;">Border Radii</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:60px;height:32px;background:var(--card2);border:1px solid var(--border);border-radius:8px;"></div>
+            <span style="font-size:12px;color:var(--muted);">radius-sm · 8px · chips, pills, small elements</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:80px;height:40px;background:var(--card2);border:1px solid var(--border);border-radius:14px;"></div>
+            <span style="font-size:12px;color:var(--muted);">radius · 14px · cards, buttons, modals sections</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:80px;height:40px;background:var(--card2);border:1px solid var(--border);border-radius:20px;"></div>
+            <span style="font-size:12px;color:var(--muted);">radius-xl · 20px · hero cards, modals, mood panel</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:120px;height:36px;background:var(--card2);border:1px solid var(--border);border-radius:9999px;"></div>
+            <span style="font-size:12px;color:var(--muted);">radius-full · nav links, filter pills, chips, slider bar</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em;">Key Measurements</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px;color:var(--muted);line-height:1.8;">
+          <div>Header height: <span style="color:var(--text);">75px</span> · glass bg + blur(20px)</div>
+          <div>Mini player height: <span style="color:var(--text);">68px</span> · fixed bottom</div>
+          <div>Companion card width: <span style="color:var(--text);">220px</span></div>
+          <div>Story/audio card width: <span style="color:var(--text);">240px</span></div>
+          <div>Card media height (companion): <span style="color:var(--text);">200px</span></div>
+          <div>Card media height (story): <span style="color:var(--text);">130px</span></div>
+          <div>Card media height (audio): <span style="color:var(--text);">100px</span></div>
+          <div>Page padding: <span style="color:var(--text);">40px</span> (desktop) · <span style="color:var(--text);">20px</span> (mobile)</div>
+          <div>Max content width: <span style="color:var(--text);">1400px</span></div>
+          <div>Feed section gap: <span style="color:var(--text);">56px margin-bottom</span></div>
+          <div>Horizontal card gap: <span style="color:var(--text);">16px</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 14. ANIMATIONS ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">14 · Animations &amp; Motion</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px;line-height:1.9;color:var(--muted);">
+      <div><span style="color:var(--accent);font-weight:500;">fadeUp</span> — page section enter: opacity 0→1 + translateY 12px→0 · 0.4s ease · used on every page switch</div>
+      <div><span style="color:var(--accent);font-weight:500;">fadeIn</span> — modal overlay: opacity 0→1 · 0.25s ease</div>
+      <div><span style="color:var(--accent);font-weight:500;">slideUp</span> — modal content: translateY 24px→0 + opacity · 0.3s ease</div>
+      <div><span style="color:var(--accent);font-weight:500;">slideFromBottom</span> — mini player: translateY 100%→0 · 0.3s ease</div>
+      <div><span style="color:var(--accent);font-weight:500;">wave</span> — waveform bars: scaleY 0.3→1→0.3 · 1.2s ease-in-out infinite · staggered animation-delay per bar</div>
+      <div><span style="color:var(--text);font-weight:500;">Card hover</span> — translateY(-4px) + box-shadow · 250ms · standard on all cards</div>
+      <div><span style="color:var(--text);font-weight:500;">Button hover</span> — translateY(-1px) + glow shadow · 200ms · btn-primary only</div>
+      <div><span style="color:var(--text);font-weight:500;">Framer Motion</span> — feed card entrances use motion.div with variants + spring physics · <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px;">staggerChildren: 0.06</code></div>
+    </div>
+  </div>
+
+  <!-- ── 15. FILES SUMMARY ── -->
+  <div class="ds-section">
+    <div class="ds-section-label">15 · Files Delivered</div>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;line-height:1.8;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;">
+        <div style="font-weight:500;color:var(--text);margin-bottom:4px;">📄 tailwind.config.ts</div>
+        <div style="color:var(--muted);font-size:12px;">All design tokens as Tailwind theme extensions — colors, fonts, shadows, animations, gradients, radii. Drop into the monorepo root.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;">
+        <div style="font-weight:500;color:var(--text);margin-bottom:4px;">🎨 globals.css</div>
+        <div style="color:var(--muted);font-size:12px;">CSS variables + base reset + Tailwind @layer components with all reusable class names + @layer utilities for gradients and scroll rows. Goes in apps/web/app/globals.css.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;">
+        <div style="font-weight:500;color:var(--text);margin-bottom:4px;">📖 design-system.html (this file)</div>
+        <div style="color:var(--muted);font-size:12px;">Full visual reference — every token, component, and pattern. Share with anyone building on BlushBite so they know exactly what to use.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Generate waveforms
+['waveform1','waveform2'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  for (let i = 0; i < 18; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    const h = 14 + Math.random() * 26;
+    bar.style.height = h + 'px';
+    bar.style.animationDelay = (i * 0.07).toFixed(2) + 's';
+    el.appendChild(bar);
+  }
+});
+</script>
+</body>
+</html>
