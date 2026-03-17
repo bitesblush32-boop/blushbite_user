@@ -21,14 +21,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-
-# Copy only what Next.js needs to run
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
-
-EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "apps/web/server.js"]
+# standalone output includes server.js + minimal node_modules + .next/server
+COPY --from=builder /app/apps/web/.next/standalone ./
+# static assets must sit at .next/static relative to server.js
+COPY --from=builder /app/apps/web/.next/static ./.next/static
+# public files relative to server.js
+COPY --from=builder /app/apps/web/public ./public
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
