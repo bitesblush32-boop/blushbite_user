@@ -25,7 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     accountsTable:           accounts,
     sessionsTable:           sessions,
     verificationTokensTable: verificationTokens,
-  }),
+  }) as any,
 
   session: { strategy: 'jwt' }, // REQUIRED for credentials provider
 
@@ -98,7 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role:                user.role,
           alias:               user.alias ?? '',
           onboarding_complete: user.onboarding_complete,
-          platform_role:       user.platform_role ?? null,
+          platform_role:       (user.platform_role ?? null) as 'dream' | 'dreamer' | null,
         }
       },
     }),

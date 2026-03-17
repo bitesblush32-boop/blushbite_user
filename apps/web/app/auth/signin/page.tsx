@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,7 +46,7 @@ const STRENGTH_COLOR = ['#6b7280', '#e8607a', '#f59e0b', '#4ade80', '#22c55e']
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function SignInPage() {
+function SignInContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl  = searchParams.get('callbackUrl') ?? '/'
@@ -639,6 +639,14 @@ export default function SignInPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
   )
 }
 

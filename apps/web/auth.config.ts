@@ -23,11 +23,11 @@ export const authConfig = {
     },
 
     session({ session, token }) {
-      session.user.id                  = token.id
-      session.user.role                = token.role
-      session.user.alias               = token.alias
-      session.user.onboarding_complete = token.onboarding_complete
-      session.user.platform_role       = token.platform_role
+      session.user.id                  = token.id as string
+      session.user.role                = token.role as any
+      session.user.alias               = token.alias as string
+      session.user.onboarding_complete = token.onboarding_complete as boolean
+      session.user.platform_role       = token.platform_role as any
       return session
     },
 

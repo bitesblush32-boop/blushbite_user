@@ -60,7 +60,6 @@ export async function POST(req: Request) {
       hashedPassword,
       alias,
       role:                'user',
-      age_verified:        false,
       onboarding_complete: false,
     })
 
