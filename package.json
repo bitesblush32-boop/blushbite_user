@@ -1,0 +1,9 @@
+{
+  "name": "blushbite",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "cd apps/web && pnpm install && pnpm run build",
+    "start": "cd apps/web && node_modules/.bin/next start"
+  }
+}
