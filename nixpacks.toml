@@ -1,6 +1,6 @@
 [phases.setup]
 nixPkgs = ["nodejs_20"]
-cmds = ["corepack enable", "corepack prepare pnpm@10 --activate"]
+cmds = ["npm install -g pnpm@10"]
 
 [phases.install]
 cmds = ["cd apps/web && pnpm install --frozen-lockfile"]
@@ -9,4 +9,4 @@ cmds = ["cd apps/web && pnpm install --frozen-lockfile"]
 cmds = ["cd apps/web && pnpm run build"]
 
 [start]
-cmd = "cd apps/web && ./node_modules/.bin/next start -p $PORT"
+cmd = "cd apps/web && node_modules/.bin/next start -p $PORT"
