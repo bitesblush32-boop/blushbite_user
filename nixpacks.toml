@@ -1,12 +1,2 @@
 [phases.setup]
 nixPkgs = ["nodejs_20"]
-cmds = ["npm config set prefix /usr/local && npm install -g pnpm@latest"]
-
-[phases.install]
-cmds = ["pnpm install"]
-
-[phases.build]
-cmds = ["pnpm --filter=blushbite-web run build"]
-
-[start]
-cmd = "pnpm --filter=blushbite-web run start"
