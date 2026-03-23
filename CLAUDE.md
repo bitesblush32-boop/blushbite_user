@@ -894,7 +894,206 @@ export const audios = [
 
 ---
 
-## 17. CODE RULES
+## 17. DATABASE SCHEMA — READ BEFORE WRITING ANY DB CODE
+
+### Connection
+```
+Provider:  Railway PostgreSQL (EU Frankfurt)
+Drizzle config: apps/web/drizzle.config.ts
+Schema file:    apps/web/db/schema.ts
+```
+
+### CRITICAL RULE — always check before creating
+```
+BEFORE writing any API route, server action, or Drizzle query:
+  1. Check the table list below — does the table you need already exist?
+  2. If YES → use it. Never duplicate or recreate existing tables.
+  3. If NO → ask before creating. State: "Table X does not exist in Phase 1
+             schema — should I create it or use [existing table] instead?"
+  4. Never SELECT * — always select specific columns.
+  5. Always use the exact column names below — no guessing.
+```
+
+### Architecture — two completely separate entities
+```
+DREAMERS  → live in: users, user_accounts, user_profiles, user_fantasy_tags
+COMPANIONS → live in: companions, companion_accounts, companion_profiles, companion_*
+
+NO cross-FK between the two sides EXCEPT:
+  booking_requests           (user_id → users, companion_profile_id → companion_profiles)
+  fantasy_tag_overlap_scores (user_id → users, companion_profile_id → companion_profiles)
+```
+
+### All 35 Phase 1 Tables
+
+#### DREAMER SIDE
+```
+users
+  id, email, email_verified, hashed_password, name, image,
+  alias, onboarding_complete, created_at, updated_at
+
+user_accounts
+  id, user_id→users, provider, provider_account_id, type,
+  refresh_token, access_token, expires_at, token_type, scope, id_token, session_state
+
+user_profiles
+  id, user_id→users(UNIQUE), gender, desired_genders(jsonb),
+  vibes(jsonb), mood_intensity, created_at, updated_at
+
+user_fantasy_tags
+  user_id→users (PK), fantasy_tag_id→fantasy_tags (PK), intensity
+```
+
+#### COMPANION SIDE
+```
+companions
+  id, email, email_verified, hashed_password, name, image, alias,
+  onboarding_complete, full_name, date_of_birth, country,
+  companion_stage, created_at, updated_at
+
+companion_accounts
+  id, companion_id→companions, provider, provider_account_id, type,
+  refresh_token, access_token, expires_at, token_type, scope, id_token, session_state
+
+companion_profiles
+  id, companion_id→companions(UNIQUE), bio, tagline, city, hourly_rate,
+  currency, availability_status, is_verified, verified_at,
+  is_live, approved_at, created_at, updated_at
+
+companion_photos
+  id, companion_profile_id→companion_profiles, url, storage_key,
+  alt_text, sort_order, is_primary, is_approved, deleted_at, created_at
+
+companion_videos
+  id, companion_profile_id→companion_profiles, url, storage_key,
+  duration_seconds(max 15), thumbnail_url, is_approved, deleted_at, created_at
+
+companion_languages  [junction]
+  companion_profile_id→companion_profiles (PK), language_id→languages (PK), fluency
+
+companion_vibe_tags  [junction]
+  companion_profile_id→companion_profiles (PK), vibe_tag_id→vibe_tags (PK)
+
+companion_fantasy_tags  [junction]
+  companion_profile_id→companion_profiles (PK), fantasy_tag_id→fantasy_tags (PK)
+
+session_cards
+  id, companion_profile_id→companion_profiles, title, description,
+  duration_minutes, price, currency, session_type, is_active,
+  sort_order, deleted_at, created_at, updated_at
+
+companion_onboarding_progress
+  id, companion_id→companions, stage(1-7), status, completed_at, notes
+  UNIQUE: (companion_id, stage)
+
+companion_verifications
+  id, companion_id→companions(UNIQUE), id_document_front_url, id_document_back_url,
+  selfie_url, liveness_check_passed, provider, provider_reference_id,
+  provider_status, provider_response(jsonb), verified_at, expires_at,
+  created_at, updated_at
+
+companion_legal_docs
+  id, companion_id→companions, document_type(tos|model_release|form_2257),
+  signed_at, ip_address, document_version, signature_data, pdf_url, created_at
+  UNIQUE: (companion_id, document_type)
+
+companion_payment_setup
+  id, companion_id→companions(UNIQUE), bank_country, bank_account_last4,
+  bank_account_verified, tax_form_type, tax_form_url, tax_form_submitted,
+  created_at, updated_at
+```
+
+#### SHARED LOOKUPS (read-only in most API routes — seeded at migration)
+```
+languages           id(serial), code(UNIQUE), name
+fantasy_categories  id(serial), name(UNIQUE), slug(UNIQUE), description, sort_order, is_active
+fantasy_tags        id(serial), category_id→fantasy_categories, name, slug(UNIQUE), description, is_active
+vibe_tags           id(serial), name(UNIQUE), slug(UNIQUE), emoji, is_active
+mood_tags           id(serial), name(UNIQUE), slug(UNIQUE), emoji, is_active
+orientation_tags    id(serial), name(UNIQUE), slug(UNIQUE), is_active
+story_categories    id(serial), name(UNIQUE), slug(UNIQUE), description, sort_order, is_active
+```
+
+#### CONTENT
+```
+stories
+  id, author_type(admin|companion|user), author_user_id→users(nullable),
+  author_companion_id→companions(nullable), category_id→story_categories,
+  title, body, excerpt, is_anonymous, is_published, is_featured,
+  moderation_status(pending|approved|rejected), moderated_at,
+  view_count, like_count, save_count, comment_count,
+  published_at, deleted_at, created_at, updated_at
+
+story_mood_tags         [junction] story_id→stories (PK), mood_tag_id→mood_tags (PK)
+story_orientation_tags  [junction] story_id→stories (PK), orientation_tag_id→orientation_tags (PK)
+story_fantasy_tags      [junction] story_id→stories (PK), fantasy_tag_id→fantasy_tags (PK)
+
+audio_recordings
+  id, author_type(companion|user), author_user_id→users(nullable),
+  author_companion_id→companions(nullable),
+  companion_profile_id→companion_profiles(nullable), story_id→stories(nullable),
+  title, description, url, storage_key, duration_seconds, file_size_bytes,
+  mime_type, is_original_voice, is_anonymous,
+  moderation_status(pending|approved|rejected),
+  listen_count, like_count, save_count, deleted_at, created_at, updated_at
+```
+
+#### ENGAGEMENT (dreamers only — user_id always → users)
+```
+likes
+  id, user_id→users, content_type(story|audio_recording|comment|companion_profile),
+  content_id(uuid), created_at
+  UNIQUE: (user_id, content_type, content_id)
+
+saves
+  id, user_id→users, content_type(story|audio_recording|companion_profile|session_card),
+  content_id(uuid), created_at
+  UNIQUE: (user_id, content_type, content_id)
+
+comments
+  id, user_id→users, content_type(story|audio_recording), content_id(uuid),
+  parent_id→comments(nullable, 1-level only), body, is_anonymous,
+  moderation_status(pending|approved|rejected), like_count,
+  deleted_at, created_at, updated_at
+```
+
+#### BOOKING + BRIDGE (intentional cross-side tables)
+```
+booking_requests
+  id, user_id→users, companion_profile_id→companion_profiles,
+  session_card_id→session_cards(nullable),
+  status(pending|accepted|declined|cancelled|completed),
+  requested_date, requested_time, requested_duration_minutes,
+  message, companion_notes, price_quoted, currency, created_at, updated_at
+
+fantasy_tag_overlap_scores
+  id, user_id→users, companion_profile_id→companion_profiles,
+  overlap_score(decimal 0-1), matching_tag_count, total_user_tags,
+  total_companion_tags, computed_at
+  UNIQUE: (user_id, companion_profile_id)
+```
+
+### Drizzle query rules
+```typescript
+// ALWAYS import from the correct schema path
+import { users, companions, stories } from '@/db/schema'
+import { eq, and, desc, isNull } from 'drizzle-orm'
+
+// ALWAYS filter soft-deleted rows
+.where(and(eq(stories.isPublished, true), isNull(stories.deletedAt)))
+
+// NEVER SELECT * — always name columns
+db.select({ id: stories.id, title: stories.title }).from(stories)
+
+// Author type pattern for stories
+// user-authored:      author_type='user',      author_user_id=user.id, author_companion_id=null
+// companion-authored: author_type='companion',  author_companion_id=companion.id, author_user_id=null
+// admin-seeded:       author_type='admin',      both null
+```
+
+---
+
+## 18. CODE RULES
 
 ```
 1. 'use client'      — only for hooks/events/browser APIs. Prefer server components.

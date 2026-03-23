@@ -2,14 +2,13 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Twitter from 'next-auth/providers/twitter'
 import Credentials from 'next-auth/providers/credentials'
-import { DrizzleAdapter } from '@auth/drizzle-adapter'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 
 import { authConfig } from './auth.config'
 import { db } from './db'
-import { users, accounts, sessions, verificationTokens } from './db/schema'
+import { users, userAccounts } from './db/schema'
 import { generateAlias } from './lib/alias'
 
 const credentialsSchema = z.object({
@@ -20,34 +19,86 @@ const credentialsSchema = z.object({
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
 
-  adapter: DrizzleAdapter(db, {
-    usersTable:              users,
-    accountsTable:           accounts,
-    sessionsTable:           sessions,
-    verificationTokensTable: verificationTokens,
-  }) as any,
+  // No adapter — sessions and verificationTokens tables removed.
+  // JWT strategy only. OAuth user creation is handled manually in jwt callback.
 
-  session: { strategy: 'jwt' }, // REQUIRED for credentials provider
+  session: { strategy: 'jwt' },
 
   callbacks: {
-    // Re-declare session callback from authConfig (jwt override below replaces the whole object)
-    session: authConfig.callbacks!.session as any,
+    session:    authConfig.callbacks!.session    as any,
     authorized: authConfig.callbacks!.authorized as any,
 
-    async jwt({ token, user }) {
-      // First sign-in — user object is present, copy fields into token
-      if (user) {
+    async jwt({ token, user, account, profile }) {
+
+      // ── Credentials sign-in ──────────────────────────────────────────────
+      // user is present and account.type === 'credentials' (or account is null)
+      if (user && (!account || account.type === 'credentials')) {
         token.id                  = user.id as string
-        token.role                = (user as any).role ?? 'user'
         token.alias               = (user as any).alias ?? ''
         token.onboarding_complete = (user as any).onboarding_complete ?? false
-        token.platform_role       = (user as any).platform_role ?? null
         return token
       }
 
-      // Subsequent requests — verify the user still exists in DB.
-      // If the DB row was manually deleted, this returns null which
-      // invalidates the session cookie → middleware redirects to sign-in.
+      // ── OAuth sign-in ────────────────────────────────────────────────────
+      // account is present with provider info — look up or create DB user
+      if (account && account.type !== 'credentials') {
+        const email = (token.email ?? (profile as any)?.email ?? '') as string
+        if (!email) return token
+
+        // Look up existing user by email
+        let dbUser = await db.query.users.findFirst({
+          where: eq(users.email, email),
+        })
+
+        if (!dbUser) {
+          // Create new user
+          const inserted = await db.insert(users).values({
+            email,
+            name:  (profile as any)?.name  ?? token.name  ?? null,
+            image: (profile as any)?.picture ?? (profile as any)?.image ?? null,
+          }).returning()
+          dbUser = inserted[0]
+
+          // Generate unique alias
+          let alias = generateAlias()
+          for (let i = 0; i < 10; i++) {
+            const conflict = await db.query.users.findFirst({ where: eq(users.alias, alias) })
+            if (!conflict) break
+            alias = generateAlias()
+          }
+          await db.update(users).set({ alias }).where(eq(users.id, dbUser.id))
+          dbUser = { ...dbUser, alias }
+        }
+
+        // Upsert user_accounts record
+        await db.insert(userAccounts).values({
+          user_id:             dbUser.id,
+          provider:            account.provider,
+          provider_account_id: account.providerAccountId,
+          type:                account.type,
+          refresh_token:       account.refresh_token       ?? null,
+          access_token:        account.access_token        ?? null,
+          expires_at:          account.expires_at          ?? null,
+          token_type:          account.token_type          ?? null,
+          scope:               account.scope               ?? null,
+          id_token:            account.id_token            ?? null,
+          session_state:       (account.session_state as string) ?? null,
+        }).onConflictDoUpdate({
+          target: [userAccounts.provider, userAccounts.provider_account_id],
+          set: {
+            access_token:  account.access_token  ?? null,
+            refresh_token: account.refresh_token ?? null,
+            expires_at:    account.expires_at    ?? null,
+          },
+        })
+
+        token.id                  = dbUser.id
+        token.alias               = dbUser.alias ?? ''
+        token.onboarding_complete = dbUser.onboarding_complete
+        return token
+      }
+
+      // ── Subsequent requests — verify user still exists ───────────────────
       if (token.id) {
         const row = await db
           .select({ id: users.id })
@@ -86,36 +137,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: eq(users.email, email),
         })
 
-        if (!user || !user.hashedPassword) return null
+        if (!user || !user.hashed_password) return null
 
-        const isValid = await bcrypt.compare(password, user.hashedPassword)
+        const isValid = await bcrypt.compare(password, user.hashed_password)
         if (!isValid) return null
 
         return {
           id:                  user.id,
           email:               user.email,
           name:                user.name,
-          role:                user.role,
-          alias:               user.alias ?? '',
+          alias:               user.alias               ?? '',
           onboarding_complete: user.onboarding_complete,
-          platform_role:       (user.platform_role ?? null) as 'dream' | 'dreamer' | null,
         }
       },
     }),
   ],
-
-  events: {
-    async createUser({ user }) {
-      if (!user.id) return
-      let alias = generateAlias()
-      let attempts = 0
-      while (attempts < 10) {
-        const conflict = await db.query.users.findFirst({ where: eq(users.alias, alias) })
-        if (!conflict) break
-        alias = generateAlias()
-        attempts++
-      }
-      await db.update(users).set({ alias }).where(eq(users.id, user.id))
-    },
-  },
 })

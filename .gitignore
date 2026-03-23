@@ -5,7 +5,7 @@ node_modules/
 # Next.js
 apps/web/.next/
 apps/web/out/
-
+documentation/*
 # Environment — NEVER commit these
 .env
 .env.local

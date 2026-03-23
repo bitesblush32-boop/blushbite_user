@@ -11,23 +11,18 @@ export const authConfig = {
 
   callbacks: {
     jwt({ token, user }) {
-      // On first sign-in, user object is present — copy custom fields into token
       if (user) {
         token.id                  = user.id as string
-        token.role                = (user as any).role ?? 'user'
         token.alias               = (user as any).alias ?? ''
         token.onboarding_complete = (user as any).onboarding_complete ?? false
-        token.platform_role       = (user as any).platform_role ?? null
       }
       return token
     },
 
     session({ session, token }) {
       session.user.id                  = token.id as string
-      session.user.role                = token.role as any
       session.user.alias               = token.alias as string
       session.user.onboarding_complete = token.onboarding_complete as boolean
-      session.user.platform_role       = token.platform_role as any
       return session
     },
 

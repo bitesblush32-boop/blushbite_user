@@ -53,13 +53,10 @@ export async function POST(req: Request) {
       attempts++
     } while (aliasConflict && attempts < 10)
 
-    // TODO: add DB insert
     await db.insert(users).values({
-      id:                  crypto.randomUUID(),
       email,
-      hashedPassword,
+      hashed_password:     hashedPassword,
       alias,
-      role:                'user',
       onboarding_complete: false,
     })
 

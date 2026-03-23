@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { z } from 'zod'
 import { db } from '@/db'
-import { users } from '@/db/schema'
+import { users, userProfiles, companions } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 const schema = z.object({
@@ -36,27 +36,43 @@ export async function POST(req: NextRequest) {
 
   const { vibes, gender, desiredGenders, role } = result.data
 
-  await db.update(users)
-    .set({
-      vibes:              JSON.stringify(vibes),
-      gender:             gender ?? null,
-      desired_genders:    desiredGenders ? JSON.stringify(desiredGenders) : null,
-      platform_role:      role,
-      onboarding_complete: true,
+  // Upsert user_profiles — vibes/gender/desired_genders live here in new schema
+  await db.insert(userProfiles)
+    .values({
+      user_id:         session.user.id,
+      vibes:           vibes,
+      gender:          gender          ?? null,
+      desired_genders: desiredGenders  ?? null,
     })
+    .onConflictDoUpdate({
+      target: userProfiles.user_id,
+      set: {
+        vibes:           vibes,
+        gender:          gender         ?? null,
+        desired_genders: desiredGenders ?? null,
+        updated_at:      new Date(),
+      },
+    })
+
+  // Mark onboarding complete on users table
+  await db.update(users)
+    .set({ onboarding_complete: true })
     .where(eq(users.id, session.user.id))
 
-  // Set cookie so middleware knows onboarding is done without waiting for JWT refresh
-  // (JWT onboarding_complete stays false until the user re-authenticates in Phase 2)
-  // Store the user's ID so middleware can match it against the current session.
-  // If the DB is wiped and a new account is created, the new user ID won't match
-  // this cookie — onboarding triggers again for the new account.
+  // If selecting companion role, seed a companions row so companion-verify can find them
+  if (role === 'dream' && session.user.email) {
+    await db.insert(companions)
+      .values({ email: session.user.email })
+      .onConflictDoNothing()
+  }
+
+  // platform_role drives routing only — not stored (dreamers = users, companions = companions)
   const response = NextResponse.json({ success: true, platform_role: role })
   response.cookies.set('bb_onboarded', session.user.id, {
     path:     '/',
     sameSite: 'lax',
     httpOnly: true,
-    maxAge:   60 * 60 * 24 * 365, // 1 year
+    maxAge:   60 * 60 * 24 * 365,
   })
   return response
 }
