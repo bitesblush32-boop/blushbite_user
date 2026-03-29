@@ -11,6 +11,7 @@ const PUBLIC_ROUTES = [
 ]
 const AUTH_API_PREFIX  = '/api/auth'
 const HEALTH_PATH      = '/api/health'
+const WEBHOOK_PREFIX   = '/api/webhooks'
 
 export default auth((req) => {
   const { nextUrl } = req
@@ -19,6 +20,7 @@ export default auth((req) => {
   // Always allow NextAuth API routes and health check
   if (path.startsWith(AUTH_API_PREFIX)) return
   if (path === HEALTH_PATH) return
+  if (path.startsWith(WEBHOOK_PREFIX)) return
 
   // Allow public pages (redirect logged-in users away from sign-in)
   const isPublic = PUBLIC_ROUTES.some(r => path.startsWith(r))
