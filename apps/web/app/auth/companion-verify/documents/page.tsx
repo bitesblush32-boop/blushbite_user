@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 
 // PersonaVerify must NOT be SSR'd — Persona SDK references `self` (browser global)
 const PersonaVerify = dynamic(() => import('@/components/PersonaVerify'), { ssr: false })
@@ -35,7 +35,9 @@ export default function CompanionDocumentsPage() {
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [showPersona,  setShowPersona]  = useState(false)
 
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollCountRef = useRef(0)
+  const [pollExpired, setPollExpired] = useState(false)
 
   // ─── Fetch initial status on mount ──────────────────────────────────────────
   useEffect(() => {
@@ -51,11 +53,23 @@ export default function CompanionDocumentsPage() {
     fetchStatus()
   }, [])
 
-  // ─── Poll every 3 s while status is pending ──────────────────────────────────
+  // ─── Poll every 3 s while status is pending — capped at 60 iterations (3 min) ─
   useEffect(() => {
     if (uiState !== 'pending') return
 
+    pollCountRef.current = 0
+    setPollExpired(false)
+
     pollRef.current = setInterval(async () => {
+      pollCountRef.current += 1
+
+      if (pollCountRef.current >= 60) {
+        clearInterval(pollRef.current!)
+        pollRef.current = null
+        setPollExpired(true)
+        return
+      }
+
       try {
         const res  = await fetch('/api/companion/verification/status')
         const json = await res.json()
@@ -73,6 +87,19 @@ export default function CompanionDocumentsPage() {
       }
     }
   }, [uiState])
+
+  // ─── Manual status check (shown after poll expires) ──────────────────────────
+  async function fetchStatus() {
+    setPollExpired(false)
+    try {
+      const res  = await fetch('/api/companion/verification/status')
+      const json = await res.json()
+      const next: UIState = json.status ?? 'pending'
+      setUiState(next)
+    } catch {
+      setPollExpired(true)
+    }
+  }
 
   // ─── Begin verification ───────────────────────────────────────────────────
   async function handleBegin() {
@@ -377,13 +404,24 @@ export default function CompanionDocumentsPage() {
                     This usually takes a moment. You can close this tab — we'll hold your place.
                   </p>
 
-                  <div
-                    className="inline-flex items-center gap-2 text-[12px] text-[#6b7280] px-4 py-2 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid #1c2333' }}
-                  >
-                    <Loader2 size={12} className="animate-spin text-[#e8607a]" />
-                    Checking automatically every few seconds…
-                  </div>
+                  {pollExpired ? (
+                    <button
+                      onClick={fetchStatus}
+                      className="inline-flex items-center gap-2 text-[12px] text-[#e8607a] px-4 py-2 rounded-full cursor-pointer transition-all duration-200 hover:opacity-80"
+                      style={{ background: 'rgba(232,96,122,0.08)', border: '1px solid rgba(232,96,122,0.25)' }}
+                    >
+                      <RefreshCw size={12} />
+                      Check my status
+                    </button>
+                  ) : (
+                    <div
+                      className="inline-flex items-center gap-2 text-[12px] text-[#6b7280] px-4 py-2 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid #1c2333' }}
+                    >
+                      <Loader2 size={12} className="animate-spin text-[#e8607a]" />
+                      Checking automatically every few seconds…
+                    </div>
+                  )}
                 </motion.div>
               )}
 

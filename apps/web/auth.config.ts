@@ -4,6 +4,8 @@ import type { NextAuthConfig } from 'next-auth'
 // Middleware imports this file directly.
 
 export const authConfig = {
+  trustHost: true,
+
   pages: {
     signIn: '/auth/signin',
     error:  '/auth/error',
