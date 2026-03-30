@@ -115,6 +115,8 @@ export const userProfiles = pgTable('user_profiles', {
   gender:          varchar('gender', { length: 50 }),
   desired_genders: jsonb('desired_genders'),
   vibes:           jsonb('vibes'),
+  // TODO Phase 2: index this column for user segmentation queries
+  platform_role:   varchar('platform_role', { length: 20 }),
   mood_intensity:  integer('mood_intensity').notNull().default(50),
   created_at:      timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:      timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

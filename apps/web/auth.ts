@@ -43,7 +43,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // account is present with provider info — look up or create DB user
       if (account && account.type !== 'credentials') {
         const email = (token.email ?? (profile as any)?.email ?? '') as string
-        if (!email) return token
+        if (!email) {
+          token.error = 'OAuthEmailMissing'
+          return token
+        }
 
         // Look up existing user by email
         let dbUser = await db.query.users.findFirst({

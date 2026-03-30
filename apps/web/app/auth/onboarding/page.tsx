@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 
@@ -395,6 +396,7 @@ function StepRole({
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { update } = useSession()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -446,17 +448,21 @@ export default function OnboardingPage() {
           role: data.role,
         }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}))
+        throw new Error(errJson.error ?? 'Something went wrong.')
+      }
       const result = await res.json()
+      await update()
       // Companions (dream) go to verification — Explorers (dreamer) go to the feed
       if (result.platform_role === 'dream') {
         router.push('/auth/companion-verify')
       } else {
         router.push('/')
       }
-    } catch {
+    } catch (err) {
       setSaving(false)
-      setSaveError('Something went wrong. Try again in a moment.')
+      setSaveError(err instanceof Error && err.message ? err.message : 'Something went wrong. Try again in a moment.')
     }
   }
 

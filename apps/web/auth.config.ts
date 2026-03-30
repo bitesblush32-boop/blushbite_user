@@ -25,6 +25,9 @@ export const authConfig = {
       session.user.id                  = token.id as string
       session.user.alias               = token.alias as string
       session.user.onboarding_complete = token.onboarding_complete as boolean
+      if (token.error) {
+        (session as any).error = token.error
+      }
       return session
     },
 

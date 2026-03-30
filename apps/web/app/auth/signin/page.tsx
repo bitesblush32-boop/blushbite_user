@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, Suspense } from 'react'
+import { useState, useCallback, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -51,6 +51,14 @@ function SignInContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl  = searchParams.get('callbackUrl') ?? '/'
+
+  // Surface token-level OAuth errors forwarded via searchParams
+  useEffect(() => {
+    const err = searchParams.get('error')
+    if (err === 'OAuthEmailMissing') {
+      setServerError("Twitter didn't share your email. Please use Google or email/password instead.")
+    }
+  }, [searchParams])
 
   const [mode, setMode]               = useState<'signin' | 'register'>('signin')
   const [emailOpen, setEmailOpen]     = useState(false)

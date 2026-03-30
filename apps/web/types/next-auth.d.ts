@@ -7,6 +7,7 @@ declare module 'next-auth' {
       alias: string
       onboarding_complete: boolean
     } & DefaultSession['user']
+    error?: string
   }
 
   interface User {

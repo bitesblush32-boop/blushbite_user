@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       vibes:           vibes,
       gender:          gender          ?? null,
       desired_genders: desiredGenders  ?? null,
+      platform_role:   role === 'dream' ? 'companion' : 'dreamer',
     })
     .onConflictDoUpdate({
       target: userProfiles.user_id,
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
         vibes:           vibes,
         gender:          gender         ?? null,
         desired_genders: desiredGenders ?? null,
+        platform_role:   role === 'dream' ? 'companion' : 'dreamer',
         updated_at:      new Date(),
       },
     })
@@ -60,7 +62,13 @@ export async function POST(req: NextRequest) {
     .where(eq(users.id, session.user.id))
 
   // If selecting companion role, seed a companions row so companion-verify can find them
-  if (role === 'dream' && session.user.email) {
+  if (role === 'dream') {
+    if (!session.user.email) {
+      return NextResponse.json(
+        { error: 'Your account has no email address. Companion registration requires email. Please sign in with Google or email/password instead.' },
+        { status: 400 },
+      )
+    }
     await db.insert(companions)
       .values({ email: session.user.email })
       .onConflictDoNothing()
@@ -73,6 +81,7 @@ export async function POST(req: NextRequest) {
     sameSite: 'lax',
     httpOnly: true,
     maxAge:   60 * 60 * 24 * 365,
+    secure:   process.env.NODE_ENV === 'production',
   })
   return response
 }
