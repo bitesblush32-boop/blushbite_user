@@ -8,6 +8,8 @@ const PUBLIC_ROUTES = [
   '/auth/signin',
   '/auth/error',
   '/auth/companion-verify',
+  '/privacy',
+  '/terms',
 ]
 const AUTH_API_PREFIX  = '/api/auth'
 const HEALTH_PATH      = '/api/health'

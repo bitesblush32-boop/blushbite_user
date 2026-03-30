@@ -39,7 +39,7 @@ export async function GET(_req: NextRequest) {
     uiStatus = 'pending'
   } else if (ps === 'approved' || ps === 'completed') {
     uiStatus = 'approved'
-  } else if (ps === 'failed' || ps === 'declined') {
+  } else if (ps === 'failed' || ps === 'declined' || ps === 'requires_action') {
     uiStatus = 'declined'
   } else {
     uiStatus = 'pending'

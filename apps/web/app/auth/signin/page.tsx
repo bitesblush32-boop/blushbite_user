@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 
 // ─── Schemas ────────────────────────────────────────────────────────────────
@@ -632,8 +633,8 @@ function SignInContent() {
             style={{ opacity: 0.6 }}
           >
             By continuing you confirm you are 18 or older and agree to our{' '}
-            <span className="text-[#e8607a] cursor-pointer hover:underline">Terms</span> and{' '}
-            <span className="text-[#e8607a] cursor-pointer hover:underline">Privacy Policy</span>.
+            <Link href="/terms" className="text-[#e8607a] hover:underline">Terms</Link> and{' '}
+            <Link href="/privacy" className="text-[#e8607a] hover:underline">Privacy Policy</Link>.
             Your identity stays private — always.
           </motion.p>
         </motion.div>

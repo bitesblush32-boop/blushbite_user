@@ -157,6 +157,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ─── inquiry.requires_action → record state, companion must re-verify ────────
+  else if (eventName === 'inquiry.requires_action') {
+    await db
+      .update(companionVerifications)
+      .set({
+        provider_status:   'requires_action',
+        provider_response: payload,
+        updated_at:        now,
+      })
+      .where(eq(companionVerifications.provider_reference_id, inquiryId))
+    // No stage advancement — companion stays at stage 3 and must retry
+  }
+
   // Always return 200 — Persona retries on non-2xx responses
   return new NextResponse('OK', { status: 200 })
 }
