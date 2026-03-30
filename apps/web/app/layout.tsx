@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import { playfair, dmSans } from '@/lib/fonts'
 import { Providers } from './providers'
 import './globals.css'
+
+const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { ssr: false })
+const BookingModal  = dynamic(() => import('@/components/ui/BookingModal'),  { ssr: false })
 
 export const metadata: Metadata = {
   title: 'BlushBite · Private Fantasy & Companions',
@@ -15,6 +19,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={dmSans.className}>
         <Providers>
           {children}
+          <ProfileDrawer />
+          <BookingModal />
         </Providers>
       </body>
     </html>
