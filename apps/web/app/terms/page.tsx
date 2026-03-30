@@ -123,7 +123,10 @@ export default function TermsPage() {
         {/* 2. The Platform */}
         <Section title="2. The Platform">
           <P>
-            BlushBite is a curated companion discovery and erotic fantasy content platform. It facilitates connections between consenting adults. BlushBite does not provide escort services and is not a party to any arrangements made between users and companions. All interactions facilitated through the platform are between adult users acting of their own free will.
+            BlushBite is operated by BlushBite (operated as a sole trader, incorporation pending), registered in the Netherlands. BlushBite is a curated companion discovery and erotic fantasy content platform. It facilitates connections between consenting adults. BlushBite does not provide escort services and is not a party to any arrangements made between users and companions. All interactions facilitated through the platform are between adult users acting of their own free will.
+          </P>
+          <P>
+            The platform also hosts user-generated stories and confessions submitted by both companions and registered users (Dreamers). This content constitutes literary erotica — emotionally rich adult fiction — and is moderated before publication.
           </P>
         </Section>
 
@@ -155,7 +158,7 @@ export default function TermsPage() {
             <>Impersonate another person or entity.</>,
             <>Share another person's personal information without their explicit consent.</>,
             <>Solicit or post illegal content of any kind.</>,
-            <>Use the platform in jurisdictions where such platforms are prohibited (see Section 9).</>,
+            <>Use the platform in jurisdictions where such platforms are prohibited (see Section 13).</>,
             <>Attempt to circumvent or undermine the age verification system.</>,
             <>Harass, threaten, or intimidate other users or companions.</>,
             <>Use automated tools, bots, or scrapers to extract content or data from the platform.</>,
@@ -172,8 +175,63 @@ export default function TermsPage() {
           </P>
         </Section>
 
-        {/* 7. User Responsibilities */}
-        <Section title="7. User Responsibilities">
+        {/* 7. User-Generated Content (UGC) */}
+        <Section title="7. User-Generated Content (UGC)">
+          <P>
+            Both companions ("The Dream") and users ("The Dreamer") may submit stories and confessions to the platform. The following rules apply to all UGC:
+          </P>
+          <UL items={[
+            <>All UGC must involve consenting adults only. No content depicting or implying minors under any circumstances.</>,
+            <>Submitters confirm they hold all rights to the content they submit and that no real individuals are identifiable without their explicit consent.</>,
+            <>By submitting UGC, you grant BlushBite a non-exclusive, royalty-free, worldwide licence to display and distribute the content on the platform.</>,
+            <>BlushBite may remove any UGC at any time without notice if it violates these Terms or applicable law.</>,
+            <>Repeat violators will be permanently banned from the platform.</>,
+          ]} />
+        </Section>
+
+        {/* 8. AI-Generated and Platform-Enhanced Content */}
+        <Section title="8. AI-Generated and Platform-Enhanced Content">
+          <P>
+            The platform may use AI tools to enhance content discovery and personalisation, including the generation of vector embeddings from content and user preference data. This processing is described in detail in our{' '}
+            <Link href="/privacy" className="text-[#e8607a] hover:underline">Privacy Policy</Link>{' '}
+            (see Sub-Processors & Third Parties).
+          </P>
+          <P>
+            Users may opt out of personalisation-based AI processing at any time by contacting{' '}
+            <span className="text-[#e8607a]">privacy@blushbite.co</span>. Opting out will not affect your access to the platform but may reduce the relevance of content recommendations.
+          </P>
+        </Section>
+
+        {/* 9. Content Moderation & Reporting */}
+        <Section title="9. Content Moderation & Reporting">
+          <P>
+            All companion profiles, stories, audio recordings, and confessions are reviewed by the BlushBite moderation team before publication. Content that violates these Terms or applicable law will be rejected or removed.
+          </P>
+          <UL items={[
+            <>Users may report content that violates these Terms via <span className="text-[#e8607a]">support@blushbite.co</span> or the in-platform report function.</>,
+            <>BlushBite will review and act on valid reports within 72 hours of receipt.</>,
+            <>For illegal content, including CSAM, we will report to relevant law enforcement authorities and the National Center for Missing & Exploited Children (NCMEC) immediately upon discovery.</>,
+            <>DSA notice-and-action requests should be submitted to: <span className="text-[#e8607a]">support@blushbite.co</span>.</>,
+          ]} />
+        </Section>
+
+        {/* 10. 2257 Compliance */}
+        <Section title="10. 2257 Compliance">
+          <P>
+            BlushBite maintains records pursuant to 18 USC 2257 (US federal record-keeping requirements for depictions of actual sexually explicit conduct) where applicable to content hosted on the platform.
+          </P>
+          <P>
+            The Custodian of Records is: BlushBite, c/o{' '}
+            <span className="text-[#e8607a]">privacy@blushbite.co</span>.
+            Records are available for inspection as required by law.
+          </P>
+          <P>
+            All performers depicted in content on this platform have confirmed they are 18 years of age or older at the time of production. Companions are required to provide valid proof of age as part of the identity verification process described in Section 4.
+          </P>
+        </Section>
+
+        {/* 11. User Responsibilities */}
+        <Section title="11. User Responsibilities">
           <P>
             You are solely responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately at{' '}
             <span className="text-[#e8607a]">support@blushbite.co</span>{' '}
@@ -184,8 +242,8 @@ export default function TermsPage() {
           </P>
         </Section>
 
-        {/* 8. Limitation of Liability */}
-        <Section title="8. Limitation of Liability">
+        {/* 12. Limitation of Liability */}
+        <Section title="12. Limitation of Liability">
           <P>
             BlushBite operates as a platform intermediary. We do not independently verify the accuracy of profile information beyond identity verification as described in Section 4. We are not liable for the conduct, statements, or actions of any user or companion on the platform.
           </P>
@@ -194,32 +252,38 @@ export default function TermsPage() {
           </P>
         </Section>
 
-        {/* 9. Jurisdictional Restrictions */}
-        <Section title="9. Jurisdictional Restrictions">
+        {/* 13. Jurisdictional Restrictions */}
+        <Section title="13. Jurisdictional Restrictions">
           <P>
             BlushBite is not available to residents of the following jurisdictions: Sweden, Norway, Iceland, Singapore, or Canada. Users located in the United States may only access the platform if they are in a state or jurisdiction where such platforms are lawful.
           </P>
           <P>
             It is your sole responsibility to determine whether your use of BlushBite is lawful in your jurisdiction. BlushBite accepts no liability for unlawful use of the platform.
           </P>
+          <P>
+            Users in the United States are solely responsible for determining the legality of this platform in their state or jurisdiction. BlushBite does not knowingly facilitate arrangements that violate US federal law, including 18 USC 2257 or FOSTA-SESTA.
+          </P>
         </Section>
 
-        {/* 10. Termination */}
-        <Section title="10. Termination">
+        {/* 14. Termination */}
+        <Section title="14. Termination">
           <P>
             We reserve the right to suspend or permanently terminate any account that violates these Terms, without prior notice and at our sole discretion. Accounts may also be terminated upon receipt of a valid legal order. You may delete your account at any time via your account settings. Upon deletion, your data will be handled per our Privacy Policy.
           </P>
         </Section>
 
-        {/* 11. Governing Law */}
-        <Section title="11. Governing Law">
+        {/* 15. Governing Law */}
+        <Section title="15. Governing Law">
           <P>
             These Terms are governed by and construed in accordance with the laws of the Netherlands. Any disputes arising from these Terms or your use of the platform shall be subject to the exclusive jurisdiction of the courts of Amsterdam, the Netherlands.
           </P>
+          <P>
+            For UK users, these Terms are also subject to applicable UK consumer protection legislation where it provides greater protection than Dutch law.
+          </P>
         </Section>
 
-        {/* 12. Contact */}
-        <Section title="12. Contact">
+        {/* 16. Contact */}
+        <Section title="16. Contact">
           <P>
             For questions about these Terms, contact us at{' '}
             <span className="text-[#e8607a]">support@blushbite.co</span>.

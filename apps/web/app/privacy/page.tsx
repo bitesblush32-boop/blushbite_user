@@ -117,7 +117,7 @@ export default function PrivacyPage() {
         {/* 1. Who We Are */}
         <Section title="1. Who We Are">
           <P>
-            BlushBite is operated by [Company Name], a company registered in the Netherlands. Our platform is EU-hosted and serves a global adult audience (18+). We are the data controller for personal data processed through this platform.
+            BlushBite is operated by BlushBite (operated as a sole trader, incorporation pending), a company registered in the Netherlands. Our platform is EU-hosted and serves a global adult audience (18+). We are the data controller for personal data processed through this platform.
           </P>
           <P>
             For privacy enquiries, please contact us at:{' '}
@@ -157,8 +157,33 @@ export default function PrivacyPage() {
           </P>
         </Section>
 
-        {/* 5. Data Storage & Security */}
-        <Section title="5. Data Storage & Security">
+        {/* 5. Sub-Processors & Third Parties */}
+        <Section title="5. Sub-Processors & Third Parties">
+          <P>
+            BlushBite uses the following third-party processors to operate the platform. Each is bound by a Data Processing Agreement or equivalent legal instrument where required by GDPR:
+          </P>
+          <UL items={[
+            <>
+              <strong className="text-[#eeeef0] font-medium">Persona</strong> (withpersona.com) — Identity verification for companions. EU GDPR Article 28 DPA in place. Privacy policy:{' '}
+              <span className="text-[#e8607a]">withpersona.com/legal/privacy-policy</span>. Legal transfer mechanism: intra-EU processing.
+            </>,
+            <>
+              <strong className="text-[#eeeef0] font-medium">OpenAI</strong> (openai.com) — Content embeddings for personalisation and discovery. Data processed outside the EU under Standard Contractual Clauses (SCCs). Privacy policy:{' '}
+              <span className="text-[#e8607a]">openai.com/policies/privacy-policy</span>. Legal transfer mechanism: SCCs (GDPR Art. 46(2)(c)).
+            </>,
+            <>
+              <strong className="text-[#eeeef0] font-medium">Railway</strong> (railway.app) — Infrastructure and database hosting. EU Frankfurt region. Data Processing Agreement in place. Privacy policy:{' '}
+              <span className="text-[#e8607a]">railway.app/legal/privacy</span>. Legal transfer mechanism: intra-EU processing.
+            </>,
+            <>
+              <strong className="text-[#eeeef0] font-medium">Cloudflare</strong> (cloudflare.com) — Media delivery and CDN. Data Processing Agreement in place. Privacy policy:{' '}
+              <span className="text-[#e8607a]">cloudflare.com/privacypolicy</span>. Legal transfer mechanism: DPA with SCCs for any non-EU edge nodes.
+            </>,
+          ]} />
+        </Section>
+
+        {/* 6. Data Storage & Security */}
+        <Section title="6. Data Storage & Security">
           <UL items={[
             <>All data stored on EU-based servers (Railway, Frankfurt region).</>,
             <>Passwords hashed with bcrypt at cost factor 12 — never stored in plain text.</>,
@@ -167,8 +192,8 @@ export default function PrivacyPage() {
           ]} />
         </Section>
 
-        {/* 6. Your Rights (GDPR) */}
-        <Section title="6. Your Rights (GDPR)">
+        {/* 7. Your Rights (GDPR) */}
+        <Section title="7. Your Rights (GDPR)">
           <P>
             As an EU data subject, you have the following rights under the General Data Protection Regulation:
           </P>
@@ -187,24 +212,66 @@ export default function PrivacyPage() {
           </P>
         </Section>
 
-        {/* 7. Data Retention */}
-        <Section title="7. Data Retention">
+        {/* 8. Data Retention */}
+        <Section title="8. Data Retention">
           <UL items={[
             <><strong className="text-[#eeeef0] font-medium">Active accounts:</strong> Data retained while your account is active.</>,
-            <><strong className="text-[#eeeef0] font-medium">Verification records:</strong> Retained for legal compliance for 3 years post-verification.</>,
+            <><strong className="text-[#eeeef0] font-medium">Verification records:</strong> Retained for legal compliance for 7 years post-verification.</>,
             <><strong className="text-[#eeeef0] font-medium">Deleted accounts:</strong> Anonymised within 30 days of a valid deletion request.</>,
           ]} />
-        </Section>
-
-        {/* 8. Cookies */}
-        <Section title="8. Cookies">
           <P>
-            We use strictly necessary session cookies only, required for authentication and maintaining your signed-in state. We do not use advertising cookies, third-party tracking cookies, or analytics cookies that identify you personally. No cookie consent banner is shown because we only set cookies that are technically essential.
+            Where US 18 USC 2257 records retention obligations apply, records are retained for a minimum of 7 years after production and 5 years after cessation of business, in compliance with federal law.
           </P>
         </Section>
 
-        {/* 9. Changes to This Policy */}
-        <Section title="9. Changes to This Policy">
+        {/* 9. Cookies */}
+        <Section title="9. Cookies">
+          <P>
+            We use strictly necessary session cookies only, required for authentication and maintaining your signed-in state. We do not use advertising cookies, third-party tracking cookies, or analytics cookies that identify you personally. No cookie consent banner is shown because we only set cookies that are technically essential.
+          </P>
+          <P>
+            If you have JavaScript enabled, anonymous session analytics may be recorded for platform stability and performance monitoring. These records are not linked to your identity and are used solely for technical diagnostics. No advertising or fingerprinting cookies are set under any circumstances.
+          </P>
+        </Section>
+
+        {/* 10. UK Users */}
+        <Section title="10. UK Users">
+          <P>
+            BlushBite processes personal data of UK residents under the UK GDPR (the retained EU GDPR as amended by the Data Protection Act 2018). UK users have the same rights as EU data subjects as described in Section 7 above, including rights of access, rectification, erasure, restriction, portability, and objection.
+          </P>
+          <P>
+            UK residents may also lodge a complaint with the UK Information Commissioner's Office (ICO) at{' '}
+            <span className="text-[#e8607a]">ico.org.uk</span>.
+          </P>
+        </Section>
+
+        {/* 11. User-Generated Content */}
+        <Section title="11. User-Generated Content">
+          <P>
+            Both companions ("The Dream") and registered users ("The Dreamer") may submit stories and confessions to the platform. All user-generated content (UGC) is moderated before publication. Submitters retain authorship of their original content but grant BlushBite a non-exclusive, royalty-free licence to display that content on the platform for as long as the submission remains live.
+          </P>
+          <P>
+            Content submitted anonymously is stored with a pseudonymous identifier and is not linked to your real identity in any public-facing display. Your alias is used in place of your real name at all times.
+          </P>
+          <P>
+            You may request removal of your UGC at any time by contacting us at{' '}
+            <span className="text-[#e8607a]">privacy@blushbite.co</span>. Removal requests are processed within 30 days.
+          </P>
+        </Section>
+
+        {/* 12. EU Digital Services Act (DSA) */}
+        <Section title="12. EU Digital Services Act (DSA)">
+          <P>
+            BlushBite complies with the EU Digital Services Act (Regulation (EU) 2022/2065). We operate a notice-and-action system for illegal content. Users may report illegal content or harmful material by contacting us at{' '}
+            <span className="text-[#e8607a]">support@blushbite.co</span>.
+          </P>
+          <P>
+            BlushBite is not currently a Very Large Online Platform (VLAP) and does not meet the 45 million monthly active users (MAU) threshold that triggers enhanced DSA obligations. We will reassess this status as the platform grows.
+          </P>
+        </Section>
+
+        {/* 13. Changes to This Policy */}
+        <Section title="13. Changes to This Policy">
           <P>
             We will notify users of any material changes to this Privacy Policy via email or an in-platform notice. Continued use of BlushBite after 30 days of notification constitutes acceptance of the updated policy.
           </P>
