@@ -35,7 +35,10 @@
       "Bash(ls \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\node_modules\\\\.pnpm\\\\@didit-protocol+sdk-web@0.1.8\\\\node_modules\\\\@didit-protocol\\\\sdk-web\" && cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\node_modules\\\\.pnpm\\\\@didit-protocol+sdk-web@0.1.8\\\\node_modules\\\\@didit-protocol\\\\sdk-web\\\\package.json\" | node -e \"const d=require\\('/dev/stdin'\\);console.log\\(JSON.stringify\\({main:d.main,module:d.module,exports:d.exports},null,2\\)\\)\")",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && cat package.json | node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(JSON.stringify\\(d.dependencies,null,2\\)\\)\" 2>&1 | grep -i persona)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm remove persona 2>&1)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1)",
+      "WebFetch(domain:docs.didit.me)",
+      "WebSearch",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -30)"
     ]
   }
 }

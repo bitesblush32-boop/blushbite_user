@@ -1,63 +1,48 @@
 'use client'
 
 import { useEffect } from 'react'
+import type { VerificationResult } from '@didit-protocol/sdk-web'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  sessionToken:    string
   verificationUrl: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSuccess: (session: any) => void
-  onCancel:  () => void
-  onError:   (code: string) => void
+  onComplete: (result: VerificationResult) => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-// Component renders null — the SDK owns its own modal UI.
-// Must be loaded via next/dynamic({ ssr: false }) — SDK references browser globals.
+// Renders null — the SDK owns its own modal UI.
+// Must be loaded via next/dynamic({ ssr: false }) — SDK references browser
+// globals at import time.
 
-export default function DiditVerify({
-  sessionToken,
-  verificationUrl,
-  onSuccess,
-  onCancel,
-  onError,
-}: Props) {
+export default function DiditVerify({ verificationUrl, onComplete }: Props) {
   useEffect(() => {
     let mounted = true
 
-    async function init() {
-      // .default is required — SDK uses a default export with dynamic import()
-      const DiditSdk = (await import('@didit-protocol/sdk-web')).default
-
+    async function start() {
+      const { DiditSdk } = await import('@didit-protocol/sdk-web')
       if (!mounted) return
 
-      DiditSdk.init({
-        session_token: sessionToken,
-        onSuccess: (session: unknown) => { if (mounted) onSuccess(session) },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onError:   (error: any)        => { if (mounted) onError(error?.code ?? 'unknown') },
-        onCancel:  ()                  => { if (mounted) onCancel() },
-      })
+      // SDK is a singleton accessed via DiditSdk.shared
+      DiditSdk.shared.onComplete = (result: VerificationResult) => {
+        if (mounted) onComplete(result)
+      }
 
-      DiditSdk.startVerification({ url: verificationUrl })
+      await DiditSdk.shared.startVerification({ url: verificationUrl })
     }
 
-    init().catch(err => {
-      console.error('[DiditVerify] init error:', err)
-      onError('init_failed')
+    start().catch(err => {
+      console.error('[DiditVerify] start error:', err)
+      onComplete({ type: 'failed', error: { type: 'unknown', message: String(err) } })
     })
 
     return () => {
       mounted = false
-      try {
-        import('@didit-protocol/sdk-web')
-          .then(m => { m.default.destroy?.() })
-          .catch(() => {})
-      } catch { /* no-op */ }
+      import('@didit-protocol/sdk-web')
+        .then(({ DiditSdk }) => DiditSdk.shared.destroy())
+        .catch(() => {})
     }
-  }, [sessionToken, verificationUrl]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [verificationUrl]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }
