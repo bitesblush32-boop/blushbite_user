@@ -25,7 +25,7 @@ type UIState =
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PROGRESS_PERCENT = (3 / 7) * 100
+const PROGRESS_PERCENT = 100 // step 2 of 2
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -52,19 +52,17 @@ export default function CompanionDocumentsPage() {
         const res  = await fetch('/api/companion/verification/status')
         const json = await res.json()
 
+        // Only skip session creation if already fully approved
         if (json.status === 'approved') {
           setUiState('approved')
           return
         }
-        if (json.status === 'pending') {
-          setUiState('submitted')
-          return
-        }
+        // Any other status (idle, pending/created, declined) → start fresh Didit session
+        // 'pending' here means a session was created but not completed — not "under review"
       } catch {
         // status check failed — proceed to start fresh
       }
 
-      // No prior approval/pending — fetch a new session and start SDK
       await startSession()
     }
 
@@ -211,7 +209,7 @@ export default function CompanionDocumentsPage() {
           <div className="p-8">
             {/* Stage indicator */}
             <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] mb-4">
-              Companion Profile · Stage 3 of 7
+              Companion Profile · Step 2 of 2
             </p>
 
             {/* Progress bar */}
@@ -225,10 +223,10 @@ export default function CompanionDocumentsPage() {
                 />
               </div>
               <div className="flex items-center justify-end gap-[6px]">
-                {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                {[1, 2].map(i => (
                   <div key={i} className="rounded-full transition-all duration-300" style={{
-                    width: i === 3 ? 18 : 6, height: 6,
-                    background: i <= 3 ? '#e8607a' : '#1c2333',
+                    width: i === 2 ? 18 : 6, height: 6,
+                    background: '#e8607a',
                   }} />
                 ))}
               </div>
