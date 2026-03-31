@@ -130,7 +130,7 @@ export default function PrivacyPage() {
           <UL items={[
             <><strong className="text-[#eeeef0] font-medium">Account data:</strong> Your email address and alias (an anonymised username automatically generated at signup — your real name is never used on the platform).</>,
             <><strong className="text-[#eeeef0] font-medium">Profile preferences:</strong> Gender, desired genders, and vibe preferences collected during onboarding. These are stored anonymously and used only for content personalisation.</>,
-            <><strong className="text-[#eeeef0] font-medium">Identity verification data:</strong> Government-issued ID, selfie photograph, and liveness check data — collected and processed exclusively by our third-party verification provider, Persona (withpersona.com). BlushBite does not store raw identity documents on our servers.</>,
+            <><strong className="text-[#eeeef0] font-medium">Identity verification data:</strong> Government-issued ID, selfie photograph, and liveness check data — collected and processed exclusively by our third-party verification provider, Didit (didit.me). BlushBite does not store raw identity documents on our servers.</>,
             <><strong className="text-[#eeeef0] font-medium">Usage data:</strong> Pages visited, feature interactions, and session length. Used for platform improvement only. Not sold or shared with advertisers.</>,
             <><strong className="text-[#eeeef0] font-medium">Communications:</strong> Any messages or support requests you send through the platform.</>,
           ]} />
@@ -147,13 +147,13 @@ export default function PrivacyPage() {
         </Section>
 
         {/* 4. Third-Party Identity Verification */}
-        <Section title="4. Third-Party Identity Verification (Persona)">
+        <Section title="4. Third-Party Identity Verification (Didit)">
           <P>
-            We use Persona Technologies Inc. (withpersona.com) to verify the identity of companions on our platform. When you submit identity verification, your government-issued ID and biometric data (selfie and liveness check) are transmitted directly to and processed by Persona under their own Privacy Policy, available at{' '}
-            <span className="text-[#e8607a]">withpersona.com/legal/privacy-policy</span>.
+            We use Didit (didit.me) to verify the identity of companions on our platform. When you submit identity verification, your government-issued ID and biometric data (selfie and liveness check) are transmitted directly to and processed by Didit under their own Privacy Policy, available at{' '}
+            <span className="text-[#e8607a]">didit.me/legal/privacy-policy</span>.
           </P>
           <P>
-            Persona acts as a data processor on our behalf under a Data Processing Agreement compliant with GDPR Article 28. Verification results (pass/fail status only) are returned to BlushBite. Raw documents are not stored by BlushBite.
+            Didit acts as a data processor on our behalf under a Data Processing Agreement compliant with GDPR Article 28. Verification results (pass/fail status only) are returned to BlushBite. Raw documents are not stored by BlushBite.
           </P>
         </Section>
 
@@ -164,8 +164,8 @@ export default function PrivacyPage() {
           </P>
           <UL items={[
             <>
-              <strong className="text-[#eeeef0] font-medium">Persona</strong> (withpersona.com) — Identity verification for companions. EU GDPR Article 28 DPA in place. Privacy policy:{' '}
-              <span className="text-[#e8607a]">withpersona.com/legal/privacy-policy</span>. Legal transfer mechanism: intra-EU processing.
+              <strong className="text-[#eeeef0] font-medium">Didit</strong> (didit.me) — Identity verification for companions. EU GDPR Article 28 DPA in place. Privacy policy:{' '}
+              <span className="text-[#e8607a]">didit.me/legal/privacy-policy</span>. Legal transfer mechanism: intra-EU processing.
             </>,
             <>
               <strong className="text-[#eeeef0] font-medium">OpenAI</strong> (openai.com) — Content embeddings for personalisation and discovery. Data processed outside the EU under Standard Contractual Clauses (SCCs). Privacy policy:{' '}

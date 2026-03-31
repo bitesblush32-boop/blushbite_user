@@ -22,33 +22,31 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ error: 'This path is for companions only.' }, { status: 403 })
   }
 
-  const PERSONA_API_KEY     = process.env.PERSONA_API_KEY
-  const PERSONA_TEMPLATE_ID = process.env.PERSONA_TEMPLATE_ID
+  const DIDIT_API_KEY     = process.env.DIDIT_API_KEY
+  const DIDIT_WORKFLOW_ID = process.env.DIDIT_WORKFLOW_ID
 
-  if (!PERSONA_API_KEY || !PERSONA_TEMPLATE_ID) {
+  if (!DIDIT_API_KEY || !DIDIT_WORKFLOW_ID) {
     return NextResponse.json(
       { error: 'Verification service is not yet configured. Try again soon.' },
       { status: 503 },
     )
   }
 
-  // ─── Call Persona API to create inquiry ───────────────────────────────────
-  let personaRes: Response
+  // ─── Call Didit API to create session ─────────────────────────────────────
+  let diditRes: Response
   try {
-    personaRes = await fetch('https://api.withpersona.com/api/v1/inquiries', {
+    diditRes = await fetch('https://verification.didit.me/v3/session/', {
       method: 'POST',
       headers: {
-        'Authorization':  `Bearer ${PERSONA_API_KEY}`,
-        'Persona-Version': '2023-01-05',
-        'Content-Type':    'application/json',
+        'Content-Type': 'application/json',
+        'x-api-key':    DIDIT_API_KEY,
       },
       body: JSON.stringify({
-        data: {
-          attributes: {
-            'inquiry-template-id': PERSONA_TEMPLATE_ID,
-            'reference-id':        companion.id,
-          },
-        },
+        workflow_id: DIDIT_WORKFLOW_ID,
+        vendor_data: companion.id,
+        // Derive origin from the request so this works in dev and prod
+        // without relying on a specific env var name (AUTH_URL vs NEXTAUTH_URL)
+        callback: new URL(_req.url).origin + '/auth/companion-verify/documents',
       }),
     })
   } catch {
@@ -58,22 +56,22 @@ export async function POST(_req: NextRequest) {
     )
   }
 
-  if (!personaRes.ok) {
-    const errText = await personaRes.text().catch(() => '')
-    console.error('[Persona] create inquiry failed:', personaRes.status, errText)
+  if (!diditRes.ok) {
+    const errText = await diditRes.text().catch(() => '')
+    console.error('[Didit] create session failed:', diditRes.status, errText)
     return NextResponse.json(
       { error: 'The verification service returned an unexpected error. Try again in a moment.' },
       { status: 502 },
     )
   }
 
-  const personaData = await personaRes.json()
-  const inquiryId   = personaData?.data?.id as string | undefined
-  const sessionToken: string | null =
-    personaData?.data?.attributes?.['session-token'] ?? null
+  const diditData                      = await diditRes.json()
+  const session_id: string | undefined       = diditData?.session_id
+  const session_token: string | undefined    = diditData?.session_token
+  const verification_url: string | undefined = diditData?.verification_url
 
-  if (!inquiryId) {
-    console.error('[Persona] missing inquiry id in response:', JSON.stringify(personaData))
+  if (!session_id) {
+    console.error('[Didit] missing session_id in response:', JSON.stringify(diditData))
     return NextResponse.json(
       { error: 'Verification service returned an unexpected response.' },
       { status: 502 },
@@ -88,20 +86,24 @@ export async function POST(_req: NextRequest) {
     .insert(companionVerifications)
     .values({
       companion_id:          companion.id,
-      provider:              'persona',
-      provider_reference_id: inquiryId,
+      provider:              'didit',
+      provider_reference_id: session_id,
       provider_status:       'created',
       updated_at:            now,
     })
     .onConflictDoUpdate({
       target: [companionVerifications.companion_id],
       set: {
-        provider:              'persona',
-        provider_reference_id: inquiryId,
+        provider:              'didit',
+        provider_reference_id: session_id,
         provider_status:       'created',
         updated_at:            now,
       },
     })
 
-  return NextResponse.json({ inquiryId, sessionToken })
+  return NextResponse.json({
+    session_id,
+    session_token,
+    verification_url,
+  })
 }

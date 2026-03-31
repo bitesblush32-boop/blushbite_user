@@ -133,7 +133,7 @@ export default function TermsPage() {
         {/* 3. Age Requirement */}
         <Section title="3. Age Requirement">
           <P>
-            You must be 18 years of age or older to use BlushBite in any capacity — including browsing content, creating an account, or engaging with companions. We use third-party identity verification (Persona) to confirm the age of companions before their profiles are made live.
+            You must be 18 years of age or older to use BlushBite in any capacity — including browsing content, creating an account, or engaging with companions. We use third-party identity verification (Didit) to confirm the age of companions before their profiles are made live.
           </P>
           <P>
             Users who misrepresent their age will be permanently banned from the platform and reported to relevant law enforcement authorities.
@@ -143,7 +143,7 @@ export default function TermsPage() {
         {/* 4. Companion Verification */}
         <Section title="4. Companion Verification Requirement">
           <P>
-            All companions ("The Dream") must complete identity verification via our third-party provider, Persona (withpersona.com), before their profile is made live on the platform. Verification includes submission of a government-issued photo ID and a liveness selfie check.
+            All companions ("The Dream") must complete identity verification via our third-party provider, Didit (didit.me), before their profile is made live on the platform. Verification includes submission of a government-issued photo ID and a liveness selfie check.
           </P>
           <P>
             Unverified profiles are not visible to any users on the platform under any circumstances. Verification data is handled in accordance with our{' '}

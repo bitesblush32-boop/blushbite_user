@@ -7,8 +7,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Loader2, RefreshCw } from 'lucide-react'
 
-// PersonaVerify must NOT be SSR'd — Persona SDK references `self` (browser global)
-const PersonaVerify = dynamic(() => import('@/components/PersonaVerify'), { ssr: false })
+// DiditVerify must NOT be SSR'd — attaches window event listeners (browser-only)
+const DiditVerify = dynamic(() => import('@/components/DiditVerify'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,9 +31,10 @@ export default function CompanionDocumentsPage() {
   const [uiState,      setUiState]      = useState<UIState>('loading')
   const [starting,     setStarting]     = useState(false)
   const [startError,   setStartError]   = useState('')
-  const [inquiryId,    setInquiryId]    = useState<string | null>(null)
-  const [sessionToken, setSessionToken] = useState<string | null>(null)
-  const [showPersona,  setShowPersona]  = useState(false)
+  const [sessionId,        setSessionId]        = useState<string | null>(null)
+  const [sessionToken,     setSessionToken]     = useState<string | undefined>(undefined)
+  const [verificationUrl,  setVerificationUrl]  = useState<string | null>(null)
+  const [showDidit,        setShowDidit]        = useState(false)
 
   const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollCountRef = useRef(0)
@@ -116,29 +117,31 @@ export default function CompanionDocumentsPage() {
         return
       }
 
-      setInquiryId(json.inquiryId)
-      setSessionToken(json.sessionToken)
-      setShowPersona(true)
+      const { session_id, session_token, verification_url } = json
+      setSessionId(session_id)
+      setSessionToken(session_token)
+      setVerificationUrl(verification_url)
+      setShowDidit(true)
     } catch {
       setStartError('Something slipped — try again in a moment.')
       setStarting(false)
     }
   }
 
-  // ─── PersonaVerify callbacks ──────────────────────────────────────────────
-  function handlePersonaComplete() {
-    setShowPersona(false)
+  // ─── DiditVerify callbacks ────────────────────────────────────────────────
+  function handleDiditSuccess(_session: unknown) {
+    setShowDidit(false)
     setStarting(false)
     setUiState('pending')
   }
 
-  function handlePersonaCancel() {
-    setShowPersona(false)
+  function handleDiditCancel() {
+    setShowDidit(false)
     setStarting(false)
   }
 
-  function handlePersonaError(code: string) {
-    setShowPersona(false)
+  function handleDiditError(code: string) {
+    setShowDidit(false)
     setStarting(false)
     setStartError(`Verification encountered an issue (${code}). Please try again.`)
   }
@@ -147,8 +150,9 @@ export default function CompanionDocumentsPage() {
   function handleRetry() {
     setUiState('idle')
     setStartError('')
-    setInquiryId(null)
-    setSessionToken(null)
+    setSessionId(null)
+    setSessionToken(undefined)
+    setVerificationUrl(null)
   }
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -156,14 +160,14 @@ export default function CompanionDocumentsPage() {
   return (
     <div className="min-h-screen bg-[#07090f] flex flex-col items-center justify-center px-5 py-10 relative overflow-hidden">
 
-      {/* Persona iframe modal (renders null until instantiated) */}
-      {showPersona && (
-        <PersonaVerify
-          inquiryId={inquiryId}
-          sessionToken={sessionToken}
-          onComplete={handlePersonaComplete}
-          onCancel={handlePersonaCancel}
-          onError={handlePersonaError}
+      {/* Didit SDK modal — SDK owns its own UI, renders null here */}
+      {showDidit && verificationUrl && (
+        <DiditVerify
+          sessionToken={sessionToken ?? ''}
+          verificationUrl={verificationUrl}
+          onSuccess={handleDiditSuccess}
+          onCancel={handleDiditCancel}
+          onError={handleDiditError}
         />
       )}
 
@@ -358,7 +362,7 @@ export default function CompanionDocumentsPage() {
                       <span className="text-[#c9a96e]">🔒</span>Your data stays private
                     </span>
                     <span className="flex items-center gap-[6px] text-[11.5px] text-[#6b7280]">
-                      <span className="text-[#c9a96e]">✦</span>Powered by Persona
+                      <span className="text-[#c9a96e]">✦</span>Powered by Didit
                     </span>
                   </div>
                 </motion.div>
@@ -556,7 +560,7 @@ export default function CompanionDocumentsPage() {
           className="text-[11px] text-[#6b7280] mt-5 text-center"
           style={{ opacity: 0.6 }}
         >
-          Your identity is verified by Persona and never shown publicly.
+          Your identity is verified by Didit and never shown publicly.
         </p>
       </motion.div>
 

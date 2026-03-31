@@ -14,6 +14,9 @@ importers:
       '@auth/drizzle-adapter':
         specifier: ^1.7.4
         version: 1.11.1
+      '@didit-protocol/sdk-web':
+        specifier: ^0.1.8
+        version: 0.1.8
       '@hookform/resolvers':
         specifier: ^3.9.0
         version: 3.10.0(react-hook-form@7.71.2(react@18.3.1))
@@ -150,6 +153,10 @@ packages:
 
   '@auth/drizzle-adapter@1.11.1':
     resolution: {integrity: sha512-cQTvDZqsyF7RPhDm/B6SvqdVP9EzQhy3oM4Muu7fjjmSYFLbSR203E6dH631ZHSKDn2b4WZkfMnjPDzRsPSAeA==}
+
+  '@didit-protocol/sdk-web@0.1.8':
+    resolution: {integrity: sha512-AOnhdFBtTMyqc0mMLKd3E2K/Ri1uqDYG9dcdxj/k/BMACwZV3TCyk2DqJR8Nc3entdPLPfHz+iIqgiJDVroqhA==}
+    engines: {node: '>=16.0.0'}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -2450,6 +2457,8 @@ snapshots:
       - '@simplewebauthn/browser'
       - '@simplewebauthn/server'
       - nodemailer
+
+  '@didit-protocol/sdk-web@0.1.8': {}
 
   '@drizzle-team/brocli@0.10.2': {}
 
