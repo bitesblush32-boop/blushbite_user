@@ -7,30 +7,6 @@ import { eq } from 'drizzle-orm'
 // ─── POST /api/webhooks/didit ──────────────────────────────────────────────────
 // Public endpoint — no auth. Signature is verified via HMAC-SHA256.
 
-// ─── Signature helpers ────────────────────────────────────────────────────────
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function shortenFloats(data: any): any {
-  if (Array.isArray(data)) return data.map(shortenFloats)
-  if (data !== null && typeof data === 'object')
-    return Object.fromEntries(Object.entries(data).map(([k, v]) => [k, shortenFloats(v)]))
-  if (typeof data === 'number' && !Number.isInteger(data) && data % 1 === 0)
-    return Math.trunc(data)
-  return data
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function sortKeys(data: any): any {
-  if (Array.isArray(data)) return data.map(sortKeys)
-  if (data !== null && typeof data === 'object')
-    return Object.fromEntries(
-      Object.entries(data)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => [k, sortKeys(v)]),
-    )
-  return data
-}
-
 export async function POST(req: NextRequest) {
   // Read raw body BEFORE any other parsing — needed for signature verification
   const rawBody = await req.text()
@@ -42,25 +18,27 @@ export async function POST(req: NextRequest) {
     return new NextResponse('OK', { status: 200 })
   }
 
+  // ─── Replay attack protection ─────────────────────────────────────────────
+  const timestamp = req.headers.get('x-timestamp')
+  if (timestamp) {
+    const ts      = parseInt(timestamp, 10)
+    const nowSecs = Math.floor(Date.now() / 1000)
+    if (isNaN(ts) || Math.abs(nowSecs - ts) > 300) {
+      return new NextResponse('Request expired', { status: 401 })
+    }
+  }
+
   // ─── Verify signature ─────────────────────────────────────────────────────
+  // Didit signs the raw request body with HMAC-SHA256, sending the hex digest
+  // in x-signature-v2. We must hash the raw bytes — no JSON processing.
   const receivedSig = req.headers.get('x-signature-v2') ?? ''
 
   if (!receivedSig) {
     return new NextResponse('Invalid signature', { status: 401 })
   }
 
-  // Parse body → shortenFloats → sortKeys → JSON.stringify (unicode preserved)
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(rawBody)
-  } catch {
-    return new NextResponse('Bad request', { status: 400 })
-  }
-
-  const processedBody = JSON.stringify(sortKeys(shortenFloats(parsed)))
-
   const expectedSig = createHmac('sha256', DIDIT_WEBHOOK_SECRET)
-    .update(processedBody)
+    .update(rawBody)
     .digest('hex')
 
   let sigValid: boolean
@@ -78,6 +56,14 @@ export async function POST(req: NextRequest) {
   }
 
   // ─── Parse payload ────────────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(rawBody)
+  } catch {
+    return new NextResponse('Bad request', { status: 400 })
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload = parsed as Record<string, any>
 

@@ -70,8 +70,8 @@ export async function POST(_req: NextRequest) {
   const session_token: string | undefined    = diditData?.session_token
   const verification_url: string | undefined = diditData?.verification_url
 
-  if (!session_id) {
-    console.error('[Didit] missing session_id in response:', JSON.stringify(diditData))
+  if (!session_id || !verification_url) {
+    console.error('[Didit] missing session_id or verification_url in response:', JSON.stringify(diditData))
     return NextResponse.json(
       { error: 'Verification service returned an unexpected response.' },
       { status: 502 },
