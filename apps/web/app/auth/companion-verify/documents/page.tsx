@@ -143,7 +143,7 @@ export default function CompanionDocumentsPage() {
   function handleDiditError(code: string) {
     setShowDidit(false)
     setStarting(false)
-    setStartError(`Verification encountered an issue (${code}). Please try again.`)
+    setStartError(`Verification error (${code}). Please try again.`)
   }
 
   // ─── Retry after decline ──────────────────────────────────────────────────
