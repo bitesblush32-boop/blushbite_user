@@ -38,7 +38,10 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1)",
       "WebFetch(domain:docs.didit.me)",
       "WebSearch",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -30)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -30)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && railway logs --tail 50 2>&1 | head -100)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\" && railway logs --tail 50 2>&1 | head -100)",
+      "Bash(railway list:*)"
     ]
   }
 }
