@@ -24,7 +24,11 @@
       "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && node -e \"\nconst { Pool } = require\\('pg'\\)\nconst pool = new Pool\\({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/blushbite' }\\)\npool.query\\(\\\\`\n  ALTER TABLE \\\\\"user\\\\\"\n    ADD COLUMN IF NOT EXISTS full_name text,\n    ADD COLUMN IF NOT EXISTS date_of_birth text,\n    ADD COLUMN IF NOT EXISTS country text,\n    ADD COLUMN IF NOT EXISTS companion_stage integer NOT NULL DEFAULT 0;\n\\\\`\\).then\\(\\(\\) => { console.log\\('done'\\); pool.end\\(\\) }\\).catch\\(e => { console.error\\(e.message\\); pool.end\\(\\) }\\)\n\" 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm db:push 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -60)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && echo \"\" | pnpm db:push 2>&1 || true)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && echo \"\" | pnpm db:push 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"\nconst { Pool } = require\\('pg'\\);\nconst pool = new Pool\\({ connectionString: 'postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway' }\\);\npool.query\\('ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS platform_role varchar\\(20\\)', \\(err, res\\) => {\n  if \\(err\\) console.error\\('Error:', err.message\\);\n  else console.log\\('Success:', res.command\\);\n  pool.end\\(\\);\n}\\);\n\" 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"\nconst { drizzle } = require\\('./node_modules/drizzle-orm/node-postgres'\\);\n\" 2>&1 | head -5 && ls node_modules | grep -E \"^\\(postgres|pg|drizzle\\)\" 2>&1)"
     ]
   }
 }
