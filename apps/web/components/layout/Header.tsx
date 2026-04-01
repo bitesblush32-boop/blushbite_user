@@ -2,19 +2,9 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 
-const NAV_LINKS = [
-  { label: 'Home',       href: '/' },
-  { label: 'Stories',    href: '/stories' },
-  { label: 'Audio',      href: '/audio' },
-  { label: 'Companions', href: '/companions' },
-  { label: 'Explore',    href: '/explore' },
-]
-
 export default function Header() {
-  const pathname = usePathname()
   const { data: session } = useSession()
 
   const alias = session?.user?.alias ?? '??'
@@ -41,39 +31,7 @@ export default function Header() {
         />
       </Link>
 
-      {/* Centre nav — desktop only */}
-      <nav className="hidden md:flex items-center gap-1">
-        {NAV_LINKS.map(({ label, href }) => {
-          const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
-          return (
-            <Link key={href} href={href}>
-              <button
-                className="text-[13.5px] px-[14px] py-[6px] rounded-[20px] border-none cursor-pointer transition-all duration-200"
-                style={{
-                  color: active ? '#eeeef0' : '#6b7280',
-                  background: active ? 'rgba(232,96,122,0.14)' : 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
-                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLButtonElement).style.color = '#6b7280'
-                    ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                  }
-                }}
-              >
-                {label}
-              </button>
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* Right — user pill with hover dropdown */}
+      {/* User pill + dropdown */}
       <div className="group relative flex-shrink-0">
         <div className="flex items-center gap-2 bg-[#111620] border border-[#1c2333] py-[6px] pl-2 pr-[14px] rounded-[24px] cursor-pointer transition-colors duration-200 hover:border-[#e8607a]">
           {/* Avatar */}

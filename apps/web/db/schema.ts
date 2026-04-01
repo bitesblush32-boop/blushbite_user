@@ -118,6 +118,12 @@ export const userProfiles = pgTable('user_profiles', {
   // TODO Phase 2: index this column for user segmentation queries
   platform_role:   varchar('platform_role', { length: 20 }),
   mood_intensity:  integer('mood_intensity').notNull().default(50),
+  display_name:    varchar('display_name', { length: 100 }),
+  avatar_url:      text('avatar_url'),
+  bio:             text('bio'),
+  date_of_birth:   date('date_of_birth'),
+  country:         varchar('country', { length: 100 }),
+  city:            varchar('city', { length: 100 }),
   created_at:      timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:      timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
