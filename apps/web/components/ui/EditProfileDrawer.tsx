@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
+import { FileUpload } from '@/components/FileUpload'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ export default function EditProfileDrawer({
 }: EditProfileDrawerProps) {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
 
   const {
     register,
@@ -135,6 +137,33 @@ export default function EditProfileDrawer({
               onSubmit={handleSubmit(onSubmit)}
               className="px-5 py-6 flex flex-col gap-5"
             >
+
+              
+              {/* Photo upload */}
+              <div className="flex flex-col gap-[6px] mt-2">
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
+                  Profile photo
+                </label>
+                <FileUpload
+                  contentFor="companion_photo"
+                  onSuccess={async (cdnUrl) => {
+                    setPhotoUrl(cdnUrl)
+                    // Auto-save photo to profile
+                    try {
+                      await fetch('/api/user/photos', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cdnUrl, s3Key: cdnUrl }),
+                        credentials: 'include',
+                      })
+                    } catch (err) {
+                      console.error('Failed to save photo:', err)
+                    }
+                  }}
+                  label="Drop photo or click to upload"
+                  acceptedTypes="image/jpeg,image/png,image/webp"
+                />
+              </div>
 
               {/* Display name */}
               <div className="flex flex-col gap-[6px]">

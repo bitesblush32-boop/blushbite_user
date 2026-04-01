@@ -78,7 +78,7 @@ export default function ProfilePage() {
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/user/profile')
+    fetch('/api/user/profile', { credentials: 'include' })
       .then(r => r.json())
       .then(({ data }) => setProfile(data ?? null))
       .catch(() => {})
