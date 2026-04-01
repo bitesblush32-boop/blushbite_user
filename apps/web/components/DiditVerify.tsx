@@ -1,63 +1,61 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import type { VerificationResult } from '@didit-protocol/sdk-web'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  sessionToken:    string
   verificationUrl: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSuccess: (session: any) => void
-  onCancel:  () => void
-  onError:   (code: string) => void
+  onComplete: (result: VerificationResult) => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-// Component renders null — the SDK owns its own modal UI.
-// Must be loaded via next/dynamic({ ssr: false }) — SDK references browser globals.
+// Renders null — the SDK owns its own modal UI.
+// Must be loaded via next/dynamic({ ssr: false }) — SDK references browser
+// globals at import time.
 
-export default function DiditVerify({
-  sessionToken,
-  verificationUrl,
-  onSuccess,
-  onCancel,
-  onError,
-}: Props) {
+export default function DiditVerify({ verificationUrl, onComplete }: Props) {
+  // Guard against React StrictMode's simulated unmount/remount:
+  // StrictMode mounts → runs effect → unmounts → runs cleanup → remounts.
+  // Without this ref the cleanup would call destroy() before the user ever
+  // sees the modal, causing the "running" message to show with nothing open.
+  // The ref persists across the StrictMode remount so startVerification() is
+  // only called once per real component instance.
+  const startedRef = useRef(false)
+
   useEffect(() => {
-    let mounted = true
+    if (startedRef.current) return
+    startedRef.current = true
 
-    async function init() {
-      // .default is required — SDK uses a default export with dynamic import()
-      const DiditSdk = (await import('@didit-protocol/sdk-web')).default
+    let alive = true
 
-      if (!mounted) return
+    async function start() {
+      const { DiditSdk } = await import('@didit-protocol/sdk-web')
+      if (!alive) return
 
-      DiditSdk.init({
-        session_token: sessionToken,
-        onSuccess: (session: unknown) => { if (mounted) onSuccess(session) },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onError:   (error: any)        => { if (mounted) onError(error?.code ?? 'unknown') },
-        onCancel:  ()                  => { if (mounted) onCancel() },
-      })
+      DiditSdk.shared.onComplete = (result: VerificationResult) => {
+        if (alive) onComplete(result)
+      }
 
-      DiditSdk.startVerification({ url: verificationUrl })
+      await DiditSdk.shared.startVerification({ url: verificationUrl })
     }
 
-    init().catch(err => {
-      console.error('[DiditVerify] init error:', err)
-      onError('init_failed')
+    start().catch(err => {
+      console.error('[DiditVerify] start error:', err)
+      if (alive) {
+        onComplete({ type: 'failed', error: { type: 'unknown', message: String(err) } })
+      }
     })
 
     return () => {
-      mounted = false
-      try {
-        import('@didit-protocol/sdk-web')
-          .then(m => { m.default.destroy?.() })
-          .catch(() => {})
-      } catch { /* no-op */ }
+      alive = false
+      // Do NOT call destroy() here.
+      // React StrictMode's cleanup fires on the simulated unmount — calling
+      // destroy() would kill the modal before the user interacts with it.
+      // The SDK closes itself when the user completes, cancels, or fails.
     }
-  }, [sessionToken, verificationUrl]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [verificationUrl]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }

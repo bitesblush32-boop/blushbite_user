@@ -91,7 +91,7 @@ export default function CompanionVerifyPage() {
   })
 
   const maxDate = max18YearsAgo()
-  const progressPercent = useMemo(() => (2 / 7) * 100, [])
+  const progressPercent = useMemo(() => 50, []) // step 1 of 2
 
   return (
     <div className="min-h-screen bg-[#07090f] flex flex-col items-center justify-center px-5 py-10 relative overflow-hidden">
@@ -153,7 +153,7 @@ export default function CompanionVerifyPage() {
 
             {/* Stage indicator */}
             <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] mb-4">
-              Companion Profile · Stage 2 of 7
+              Companion Profile · Step 1 of 2
             </p>
 
             {/* Progress bar */}
@@ -167,14 +167,14 @@ export default function CompanionVerifyPage() {
                 />
               </div>
               <div className="flex items-center justify-end gap-[6px]">
-                {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                {[1, 2].map(i => (
                   <div
                     key={i}
                     className="rounded-full transition-all duration-300"
                     style={{
-                      width: i === 2 ? 18 : 6,
+                      width: i === 1 ? 18 : 6,
                       height: 6,
-                      background: i <= 2 ? '#e8607a' : '#1c2333',
+                      background: i === 1 ? '#e8607a' : '#1c2333',
                     }}
                   />
                 ))}

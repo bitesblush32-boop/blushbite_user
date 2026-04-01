@@ -44,9 +44,11 @@ export async function POST(_req: NextRequest) {
       body: JSON.stringify({
         workflow_id: DIDIT_WORKFLOW_ID,
         vendor_data: companion.id,
-        // Derive origin from the request so this works in dev and prod
-        // without relying on a specific env var name (AUTH_URL vs NEXTAUTH_URL)
-        callback: new URL(_req.url).origin + '/auth/companion-verify/documents',
+        // Use AUTH_URL (NextAuth v5) or NEXTAUTH_URL as the public base URL.
+        // Never derive from _req.url — behind Railway's proxy that gives
+        // http://localhost:8080, not the real public domain.
+        callback: (process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? '').replace(/\/$/, '')
+          + '/auth/companion-verify/documents',
       }),
     })
   } catch {
@@ -68,10 +70,11 @@ export async function POST(_req: NextRequest) {
   const diditData                      = await diditRes.json()
   const session_id: string | undefined       = diditData?.session_id
   const session_token: string | undefined    = diditData?.session_token
-  const verification_url: string | undefined = diditData?.verification_url
+  // Didit v3 returns the verification URL in the "url" field (not "verification_url")
+  const verification_url: string | undefined = diditData?.url ?? diditData?.verification_url
 
-  if (!session_id) {
-    console.error('[Didit] missing session_id in response:', JSON.stringify(diditData))
+  if (!session_id || !verification_url) {
+    console.error('[Didit] missing session_id or url in response:', JSON.stringify(diditData))
     return NextResponse.json(
       { error: 'Verification service returned an unexpected response.' },
       { status: 502 },
