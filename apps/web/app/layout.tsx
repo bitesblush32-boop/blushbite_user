@@ -6,6 +6,7 @@ import './globals.css'
 
 const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { ssr: false })
 const BookingModal  = dynamic(() => import('@/components/ui/BookingModal'),  { ssr: false })
+const BottomNav     = dynamic(() => import('@/components/layout/BottomNav'), { ssr: false })
 
 export const metadata: Metadata = {
   title: 'BlushBite · Private Fantasy & Companions',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <ProfileDrawer />
           <BookingModal />
+          <BottomNav />
         </Providers>
       </body>
     </html>
