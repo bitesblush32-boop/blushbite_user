@@ -121,7 +121,7 @@ function StepGender({
         className="text-[24px] text-[#eeeef0] mb-2 leading-tight"
         style={{ fontFamily: "'Playfair Display', serif" }}
       >
-        Tell us who's stepping into the dark.
+        Tell us who&apos;s stepping into the dark.
       </h2>
       <p
         className="text-[20px] text-[#e8607a] mb-3"
@@ -241,7 +241,7 @@ function StepDesiredGenders({
         className="text-[12px] text-[#6b7280] cursor-pointer mt-3 text-center hover:text-[#eeeef0] transition-colors"
         style={{ textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px' }}
       >
-        I'm open to everyone
+        I&apos;m open to everyone
       </p>
     </div>
   )
@@ -371,9 +371,7 @@ function StepRole({
             )}
           </AnimatePresence>
 
-          <span
-            className="text-[10px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280]"
-          >
+          <span className="text-[10px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280]">
             Explorer
           </span>
           <div
@@ -384,7 +382,7 @@ function StepRole({
           </div>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] italic">
             Every explorer needs a destination.
-            Yours is somewhere warm, private, and exactly what you've been imagining.
+            Yours is somewhere warm, private, and exactly what you&apos;ve been imagining.
           </p>
         </button>
       </div>
@@ -442,10 +440,10 @@ export default function OnboardingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          vibes: data.vibes,
-          gender: data.gender,
+          vibes:          data.vibes,
+          gender:         data.gender,
           desiredGenders: data.desiredGenders,
-          role: data.role,
+          role:           data.role,
         }),
       })
       if (!res.ok) {
@@ -454,9 +452,9 @@ export default function OnboardingPage() {
       }
       const result = await res.json()
       await update()
-      // Companions (dream) go to verification — Explorers (dreamer) go to the feed
+      // Companions (dream) go to identity verification — Dreamers go to the feed
       if (result.platform_role === 'dream') {
-        router.push('/auth/companion-verify')
+        router.push('/companion/onboarding/identity')
       } else {
         router.push('/')
       }
@@ -628,7 +626,7 @@ export default function OnboardingPage() {
                 onClick={handleSkip}
                 className="text-center text-[11.5px] text-[#6b7280] mt-3 cursor-pointer hover:text-[#eeeef0] transition-colors"
               >
-                Skip for now — I'll set this later
+                Skip for now — I&apos;ll set this later
               </p>
             )}
 
@@ -647,12 +645,11 @@ export default function OnboardingPage() {
           </div>
         </motion.div>
 
-        {/* Footer note */}
         <p
           className="text-center text-[11px] text-[#6b7280] mt-5"
           style={{ opacity: 0.5 }}
         >
-          Your answers stay private — they're only used to shape your feed.
+          Your answers stay private — they&apos;re only used to shape your feed.
         </p>
       </motion.div>
     </div>
