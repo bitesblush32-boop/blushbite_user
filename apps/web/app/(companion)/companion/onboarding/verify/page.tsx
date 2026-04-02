@@ -1,5 +1,9 @@
 'use client'
 
+// Companion onboarding — Step 2: Didit identity verification
+// Route: /companion/onboarding/verify
+// Previous location: /auth/companion-verify/documents
+
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
@@ -9,7 +13,7 @@ import { Loader2, RefreshCw } from 'lucide-react'
 import type { VerificationResult } from '@didit-protocol/sdk-web'
 
 // DiditVerify must NOT be SSR'd — SDK references browser globals at import time
-const DiditVerify = dynamic(() => import('@/components/DiditVerify'), { ssr: false })
+const DiditVerify = dynamic(() => import('@/components/ui/DiditVerify'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +38,7 @@ const cardVariants = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function CompanionDocumentsPage() {
+export default function CompanionVerifyPage() {
   const router = useRouter()
 
   const [uiState,          setUiState]          = useState<UIState>('checking')
@@ -49,7 +53,7 @@ export default function CompanionDocumentsPage() {
   useEffect(() => {
     async function init() {
       try {
-        const res  = await fetch('/api/companion/verification/status')
+        const res  = await fetch('/api/companions/onboarding/verify/status')
         const json = await res.json()
 
         // Only skip session creation if already fully approved
@@ -57,8 +61,6 @@ export default function CompanionDocumentsPage() {
           setUiState('approved')
           return
         }
-        // Any other status (idle, pending/created, declined) → start fresh Didit session
-        // 'pending' here means a session was created but not completed — not "under review"
       } catch {
         // status check failed — proceed to start fresh
       }
@@ -74,7 +76,7 @@ export default function CompanionDocumentsPage() {
     setUiState('starting')
     setErrorMessage('')
     try {
-      const res  = await fetch('/api/companion/verification/start', { method: 'POST' })
+      const res  = await fetch('/api/companions/onboarding/verify/start', { method: 'POST' })
       const json = await res.json()
 
       if (!res.ok) {
@@ -94,7 +96,6 @@ export default function CompanionDocumentsPage() {
   // ─── Handle Didit SDK onComplete ──────────────────────────────────────────
   function handleComplete(result: VerificationResult) {
     if (result.type === 'completed') {
-      // Didit has the submission — show "under review" and poll for webhook
       if (result.session?.status === 'Declined') {
         setUiState('declined')
       } else {
@@ -103,7 +104,6 @@ export default function CompanionDocumentsPage() {
     } else if (result.type === 'cancelled') {
       setUiState('cancelled')
     } else {
-      // failed
       setErrorMessage(`Verification could not be completed (${result.error?.type ?? 'unknown'}). Please try again.`)
       setUiState('error')
     }
@@ -127,7 +127,7 @@ export default function CompanionDocumentsPage() {
       }
 
       try {
-        const res  = await fetch('/api/companion/verification/status')
+        const res  = await fetch('/api/companions/onboarding/verify/status')
         const json = await res.json()
         if      (json.status === 'approved') setUiState('approved')
         else if (json.status === 'declined') setUiState('declined')
@@ -139,11 +139,11 @@ export default function CompanionDocumentsPage() {
     }
   }, [uiState])
 
-  // ─── Manual status refresh (shown after poll expires) ────────────────────
+  // ─── Manual status refresh ────────────────────────────────────────────────
   async function checkStatus() {
     setPollExpired(false)
     try {
-      const res  = await fetch('/api/companion/verification/status')
+      const res  = await fetch('/api/companions/onboarding/verify/status')
       const json = await res.json()
       if      (json.status === 'approved') setUiState('approved')
       else if (json.status === 'declined') setUiState('declined')
@@ -235,7 +235,7 @@ export default function CompanionDocumentsPage() {
             {/* State-driven content */}
             <AnimatePresence mode="wait">
 
-              {/* CHECKING / STARTING — loading spinner */}
+              {/* CHECKING / STARTING */}
               {(uiState === 'checking' || uiState === 'starting') && (
                 <motion.div key="loading"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -249,7 +249,7 @@ export default function CompanionDocumentsPage() {
                 </motion.div>
               )}
 
-              {/* RUNNING — SDK modal is active, show a subtle waiting message */}
+              {/* RUNNING */}
               {uiState === 'running' && (
                 <motion.div key="running"
                   variants={cardVariants} initial="hidden" animate="show"
@@ -268,7 +268,7 @@ export default function CompanionDocumentsPage() {
                 </motion.div>
               )}
 
-              {/* SUBMITTED — waiting for webhook */}
+              {/* SUBMITTED */}
               {uiState === 'submitted' && (
                 <motion.div key="submitted"
                   variants={cardVariants} initial="hidden" animate="show"

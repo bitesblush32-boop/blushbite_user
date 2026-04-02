@@ -7,7 +7,6 @@ const { auth } = NextAuth(authConfig)
 const PUBLIC_ROUTES = [
   '/auth/signin',
   '/auth/error',
-  '/auth/companion-verify',
   '/privacy',
   '/terms',
 ]

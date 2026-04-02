@@ -1,5 +1,9 @@
 'use client'
 
+// Companion onboarding — Step 1: Legal identity
+// Route: /companion/onboarding/identity
+// Previous location: /auth/companion-verify
+
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -53,7 +57,7 @@ const COUNTRIES = [
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function CompanionVerifyPage() {
+export default function CompanionIdentityPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -68,7 +72,7 @@ export default function CompanionVerifyPage() {
     setSaving(true)
     setSaveError('')
     try {
-      const res = await fetch('/api/companion/profile/basic', {
+      const res = await fetch('/api/companions/onboarding/identity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -83,7 +87,7 @@ export default function CompanionVerifyPage() {
         setSaving(false)
         return
       }
-      router.push('/auth/companion-verify/documents')
+      router.push('/companion/onboarding/verify')
     } catch {
       setSaveError('Something went wrong. Try again in a moment.')
       setSaving(false)
@@ -189,7 +193,6 @@ export default function CompanionVerifyPage() {
               Tell us who you are.
             </h2>
 
-            {/* Subheading */}
             <p
               className="text-[18px] text-[#e8607a] mb-3"
               style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic' }}
@@ -197,7 +200,6 @@ export default function CompanionVerifyPage() {
               This stays between us — always.
             </p>
 
-            {/* Body copy */}
             <p className="text-[13px] text-[#6b7280] mb-7 leading-[1.65]">
               Used only for identity verification. Never shown on your profile.
             </p>
@@ -282,7 +284,6 @@ export default function CompanionVerifyPage() {
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
-                  {/* Custom arrow */}
                   <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">
                     ▾
                   </div>
@@ -335,7 +336,6 @@ export default function CompanionVerifyPage() {
           </div>
         </motion.div>
 
-        {/* Privacy note */}
         <p
           className="text-[11px] text-[#6b7280] mt-5 text-center"
           style={{ opacity: 0.6 }}

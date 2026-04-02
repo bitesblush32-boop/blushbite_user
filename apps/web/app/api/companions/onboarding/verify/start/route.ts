@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { companions, companionVerifications } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-// ─── POST /api/companion/verification/start ───────────────────────────────────
+// ─── POST /api/companions/onboarding/verify/start ─────────────────────────────
 
 export async function POST(_req: NextRequest) {
   const session = await auth()
@@ -13,7 +13,7 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Look up companion by email (same pattern as profile/basic route)
+  // Look up companion by email (same pattern as identity route)
   const companion = await db.query.companions.findFirst({
     where: eq(companions.email, session.user.email),
   })
@@ -48,7 +48,7 @@ export async function POST(_req: NextRequest) {
         // Never derive from _req.url — behind Railway's proxy that gives
         // http://localhost:8080, not the real public domain.
         callback: (process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? '').replace(/\/$/, '')
-          + '/auth/companion-verify/documents',
+          + '/companion/onboarding/verify',
       }),
     })
   } catch {
@@ -67,10 +67,9 @@ export async function POST(_req: NextRequest) {
     )
   }
 
-  const diditData                      = await diditRes.json()
+  const diditData                            = await diditRes.json()
   const session_id: string | undefined       = diditData?.session_id
   const session_token: string | undefined    = diditData?.session_token
-  // Didit v3 returns the verification URL in the "url" field (not "verification_url")
   const verification_url: string | undefined = diditData?.url ?? diditData?.verification_url
 
   if (!session_id || !verification_url) {
@@ -84,7 +83,6 @@ export async function POST(_req: NextRequest) {
   const now = new Date()
 
   // ─── Upsert companion_verifications ───────────────────────────────────────
-  // UNIQUE constraint is on companion_id — use ON CONFLICT DO UPDATE
   await db
     .insert(companionVerifications)
     .values({

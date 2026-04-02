@@ -1,12 +1,14 @@
 import type { Metadata } from 'next'
-import dynamic from 'next/dynamic'
 import { playfair, dmSans } from '@/lib/fonts'
 import { Providers } from './providers'
 import './globals.css'
 
-const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { ssr: false })
-const BookingModal  = dynamic(() => import('@/components/ui/BookingModal'),  { ssr: false })
-const BottomNav     = dynamic(() => import('@/components/layout/BottomNav'), { ssr: false })
+// ─── Root layout ──────────────────────────────────────────────────────────────
+// Minimal: fonts, providers, metadata only.
+// Per-role chrome (Header, MiniPlayer, modals) lives in each route group layout:
+//   app/(dreamer)/layout.tsx  — dreamer feed + profile pages
+//   app/(auth)/layout.tsx     — sign-in, onboarding (no chrome)
+//   app/(companion)/layout.tsx — companion portal (no dreamer chrome)
 
 export const metadata: Metadata = {
   title: 'BlushBite · Private Fantasy & Companions',
@@ -20,9 +22,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={dmSans.className}>
         <Providers>
           {children}
-          <ProfileDrawer />
-          <BookingModal />
-          <BottomNav />
         </Providers>
       </body>
     </html>

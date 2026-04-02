@@ -8,7 +8,6 @@ import {
   Camera, Lock, HelpCircle, LogOut,
   MapPin, Calendar, Mail, Edit2, ChevronRight,
 } from 'lucide-react'
-import Header from '@/components/layout/Header'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -72,13 +71,13 @@ export default function ProfilePage() {
 
   const [profile, setProfile]       = useState<UserProfile | null>(null)
   const [loading, setLoading]       = useState(true)
-  const [editOpen, setEditOpen]     = useState(false) // Phase 3 edit drawer
+  const [editOpen, setEditOpen]     = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError]         = useState<string | null>(null)
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/user/profile', { credentials: 'include' })
+    fetch('/api/users/profile', { credentials: 'include' })
       .then(r => r.json())
       .then(({ data }) => setProfile(data ?? null))
       .catch(() => {})
@@ -90,7 +89,6 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Client-side pre-validation
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       setAvatarError('Please upload a JPG or PNG image.')
       return
@@ -107,7 +105,7 @@ export default function ProfilePage() {
     formData.append('file', file)
 
     try {
-      const res  = await fetch('/api/user/avatar', { method: 'POST', body: formData })
+      const res  = await fetch('/api/users/avatar', { method: 'POST', body: formData })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
       setProfile(p => p ? { ...p, avatar_url: json.data.avatarUrl } : p)
@@ -121,29 +119,12 @@ export default function ProfilePage() {
   // ── Derived values ─────────────────────────────────────────────────────────
   const alias    = profile?.alias ?? session?.user?.alias ?? '@you'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
-  const vibes    = profile?.vibes?.length       ? profile.vibes       : []
+  const vibes    = profile?.vibes?.length           ? profile.vibes           : []
   const desires  = profile?.desired_genders?.length ? profile.desired_genders : []
   const moods    = FALLBACK_MOODS // Phase 2: from user_mood_tags
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#07090f]">
-
-      {/* Noise texture */}
-      <div
-        className="fixed inset-0 pointer-events-none z-[1000] opacity-60"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Ambient rose glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 30%, rgba(232,96,122,0.06) 0%, transparent 70%)' }}
-      />
-
-      <Header />
-
+    <>
       {loading ? (
         <Skeleton />
       ) : (
@@ -164,7 +145,6 @@ export default function ProfilePage() {
               style={{ width: 80, height: 80 }}
               onClick={() => !avatarUploading && fileInputRef.current?.click()}
             >
-              {/* Circle */}
               {profile?.avatar_url ? (
                 <div
                   style={{
@@ -186,7 +166,7 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Uploading spinner overlay — always visible when uploading */}
+              {/* Uploading spinner overlay */}
               {avatarUploading && (
                 <div
                   className="absolute inset-0 rounded-full flex items-center justify-center"
@@ -203,7 +183,7 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Camera overlay on hover (hidden while uploading) */}
+              {/* Camera overlay on hover */}
               {!avatarUploading && (
                 <div
                   className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -214,14 +194,12 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Avatar error */}
             {avatarError && (
               <p style={{ fontSize: 11, color: '#e87070', textAlign: 'center', marginTop: 4 }}>
                 {avatarError}
               </p>
             )}
 
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -256,10 +234,7 @@ export default function ProfilePage() {
           </div>
 
           {/* ── Section 2: Account details ───────────────────── */}
-          <div
-            className="bg-[#111620] border border-[#1c2333] rounded-[14px] overflow-hidden mb-5"
-          >
-            {/* Title row */}
+          <div className="bg-[#111620] border border-[#1c2333] rounded-[14px] overflow-hidden mb-5">
             <div
               className="px-5 pt-5 pb-3 border-b border-[#1c2333]"
               style={{ fontSize: 13, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em' }}
@@ -267,7 +242,6 @@ export default function ProfilePage() {
               account
             </div>
 
-            {/* Email — read only */}
             <div className="flex items-center justify-between px-5 py-[14px] border-b border-[#1c2333]">
               <span className="flex items-center gap-[10px]">
                 <Mail size={15} color="#6b7280" />
@@ -278,8 +252,6 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Date of Birth */}
-            {/* TODO Phase 2: Google OAuth does not return birthdate — prompt user to fill in manually */}
             <div
               className="flex items-center justify-between px-5 py-[14px] border-b border-[#1c2333] cursor-pointer hover:bg-white/[0.02] transition-colors"
               onClick={() => setEditOpen(true)}
@@ -296,7 +268,6 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Location */}
             <div
               className="flex items-center justify-between px-5 py-[14px] border-b border-[#1c2333] cursor-pointer hover:bg-white/[0.02] transition-colors"
               onClick={() => setEditOpen(true)}
@@ -315,7 +286,6 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Member since — read only */}
             <div className="flex items-center justify-between px-5 py-[14px]">
               <span style={{ fontSize: 13, color: '#6b7280' }}>Member since</span>
               <span style={{ fontSize: 13, color: '#eeeef0' }}>
@@ -334,7 +304,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Vibes */}
           <div className="mb-5">
             <div className="text-[10px] uppercase tracking-widest text-[#4b5563] mb-2">vibes</div>
             {vibes.length > 0 ? (
@@ -348,7 +317,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Moods */}
           <div className="mb-5">
             <div className="text-[10px] uppercase tracking-widest text-[#4b5563] mb-2">moods</div>
             <div className="flex flex-wrap gap-2">
@@ -358,7 +326,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Desires */}
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-widest text-[#4b5563] mb-2">desires</div>
             {desires.length > 0 ? (
@@ -401,7 +368,6 @@ export default function ProfilePage() {
 
           {/* ── Section 5: Account actions ───────────────────── */}
           <div className="flex flex-col gap-2">
-
             <button
               onClick={() => router.push('/privacy')}
               className="flex justify-between items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-white/10 w-full"
@@ -431,7 +397,6 @@ export default function ProfilePage() {
               <LogOut size={15} color="#e87070" />
               <span style={{ fontSize: 13, color: '#e87070' }}>Sign out</span>
             </button>
-
           </div>
 
         </motion.main>
@@ -449,6 +414,6 @@ export default function ProfilePage() {
           city:        profile?.city         ?? undefined,
         }}
       />
-    </div>
+    </>
   )
 }

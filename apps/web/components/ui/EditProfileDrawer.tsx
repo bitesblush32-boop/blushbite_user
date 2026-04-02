@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileUpload } from '@/components/FileUpload'
+import { FileUpload } from '@/components/ui/FileUpload'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ export default function EditProfileDrawer({
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const res = await fetch('/api/user/profile', {
+      const res = await fetch('/api/users/profile', {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(values),
@@ -150,7 +150,7 @@ export default function EditProfileDrawer({
                     setPhotoUrl(cdnUrl)
                     // Auto-save photo to profile
                     try {
-                      await fetch('/api/user/photos', {
+                      await fetch('/api/users/photos', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ cdnUrl, s3Key: cdnUrl }),
