@@ -58,11 +58,15 @@ export async function GET() {
 // ─── PATCH /api/user/profile ──────────────────────────────────────────────────
 
 const patchSchema = z.object({
-  displayName:   z.string().max(100).optional(),
-  bio:           z.string().max(300).optional(),
-  dateOfBirth:   z.string().optional(),
-  country:       z.string().max(100).optional(),
-  city:          z.string().max(100).optional(),
+  displayName:    z.string().max(100).optional(),
+  bio:            z.string().max(300).optional(),
+  dateOfBirth:    z.string().optional(),
+  country:        z.string().max(100).optional(),
+  city:           z.string().max(100).optional(),
+  // Taste fields
+  vibes:          z.array(z.string()).max(10).optional(),
+  gender:         z.string().max(60).optional(),
+  desiredGenders: z.array(z.string()).optional(),
 })
 
 export async function PATCH(req: NextRequest) {
@@ -87,29 +91,35 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: firstError }, { status: 400 })
     }
 
-    const { displayName, bio, dateOfBirth, country, city } = result.data
+    const { displayName, bio, dateOfBirth, country, city, vibes, gender, desiredGenders } = result.data
     const now = new Date()
 
     // TODO DB: Phase 2 — trigger pgvector embedding recompute on vibe/tag change
     const updated = await db
       .insert(userProfiles)
       .values({
-        user_id:       userId,
-        display_name:  displayName ?? null,
-        bio:           bio ?? null,
-        date_of_birth: dateOfBirth ?? null,
-        country:       country ?? null,
-        city:          city ?? null,
-        updated_at:    now,
+        user_id:         userId,
+        display_name:    displayName ?? null,
+        bio:             bio ?? null,
+        date_of_birth:   dateOfBirth ?? null,
+        country:         country ?? null,
+        city:            city ?? null,
+        vibes:           vibes ?? null,
+        gender:          gender ?? null,
+        desired_genders: desiredGenders ?? null,
+        updated_at:      now,
       })
       .onConflictDoUpdate({
         target: userProfiles.user_id,
         set: {
-          ...(displayName  !== undefined && { display_name:  displayName }),
-          ...(bio          !== undefined && { bio }),
-          ...(dateOfBirth  !== undefined && { date_of_birth: dateOfBirth }),
-          ...(country      !== undefined && { country }),
-          ...(city         !== undefined && { city }),
+          ...(displayName    !== undefined && { display_name:    displayName }),
+          ...(bio            !== undefined && { bio }),
+          ...(dateOfBirth    !== undefined && { date_of_birth:   dateOfBirth }),
+          ...(country        !== undefined && { country }),
+          ...(city           !== undefined && { city }),
+          ...(vibes          !== undefined && { vibes }),
+          ...(gender         !== undefined && { gender }),
+          ...(desiredGenders !== undefined && { desired_genders: desiredGenders }),
           updated_at: now,
         },
       })

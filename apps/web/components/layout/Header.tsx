@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
+import { useUIStore } from '@/store/uiStore'
 
 export default function Header() {
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const avatarUrl = useUIStore(s => s.avatarUrl)
 
   const alias = session?.user?.alias ?? '??'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
@@ -37,7 +39,7 @@ export default function Header() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-[900] flex items-center justify-between px-5 md:px-10 h-[75px] border-b border-[#1c2333]"
+      className="fixed top-0 left-0 right-0 z-[900] flex items-center justify-between px-5 md:px-10 h-[75px] py-4 border-b border-[#1c2333]"
       style={{
         background: 'rgba(7,9,15,0.82)',
         backdropFilter: 'blur(20px)',
@@ -48,8 +50,8 @@ export default function Header() {
         <Image
           src="/logo_light.png"
           alt="BlushBite"
-          width={120}
-          height={56}
+          width={96}
+          height={36}
           priority
           style={{ objectFit: 'contain', objectPosition: 'left center' }}
         />
@@ -63,12 +65,23 @@ export default function Header() {
           onClick={() => setMenuOpen((open) => !open)}
           className="flex items-center gap-2 bg-[#111620] border border-[#1c2333] py-[6px] pl-2 pr-[14px] rounded-[24px] cursor-pointer transition-colors duration-200 hover:border-[#e8607a]"
         >
-          <div
-            className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#e8607a,#9b5fe0)' }}
-          >
-            {initials}
-          </div>
+          {avatarUrl ? (
+            <div
+              className="w-[26px] h-[26px] rounded-full flex-shrink-0"
+              style={{
+                backgroundImage: `url(${avatarUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+          ) : (
+            <div
+              className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg,#e8607a,#9b5fe0)' }}
+            >
+              {initials}
+            </div>
+          )}
           <span className="text-[12px] text-[#6b7280]">{alias}</span>
           <span className="ml-1 text-[12px] text-[#6b7280]">{menuOpen ? '▴' : '▾'}</span>
         </button>

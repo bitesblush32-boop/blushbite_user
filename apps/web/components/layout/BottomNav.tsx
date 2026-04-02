@@ -20,15 +20,16 @@ export default function BottomNav() {
 
   return (
     <motion.div
-      className="fixed left-0 right-0 z-[800] md:hidden"
+      className="fixed left-0 right-0 z-[800]"
       style={{
         height: 64,
         background: 'rgba(7,9,15,0.96)',
         backdropFilter: 'blur(24px)',
         borderTop: '1px solid #1c2333',
         willChange: 'transform',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5,1fr)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       initial={{ y: 64, opacity: 0 }}
       animate={{
@@ -42,6 +43,11 @@ export default function BottomNav() {
         bottom: { type: 'spring', stiffness: 380, damping: 30 },
       }}
     >
+      {/* On mobile: full-width grid. On desktop: centered pill, max 400px */}
+      <div
+        className="grid h-full w-full md:w-auto md:h-auto md:flex md:items-center md:gap-3"
+        style={{ gridTemplateColumns: 'repeat(5,1fr)' }}
+      >
       {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
         const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
         const color = active ? '#e8607a' : '#4b5563'
@@ -51,6 +57,7 @@ export default function BottomNav() {
             key={href}
             whileTap={{ scale: 0.80 }}
             onClick={() => router.push(href)}
+            className="md:w-[80px] md:h-[48px] md:rounded-[12px]"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -91,6 +98,7 @@ export default function BottomNav() {
           </motion.button>
         )
       })}
+      </div>
     </motion.div>
   )
 }

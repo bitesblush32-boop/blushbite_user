@@ -102,6 +102,10 @@ h1, h2, h3, .font-display {
   50%       { transform: scaleY(1); }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @keyframes slideFromBottom {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
