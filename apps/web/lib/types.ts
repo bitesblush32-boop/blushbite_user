@@ -20,6 +20,35 @@ export interface Story {
   gradient: string
 }
 
+export interface StoryReply {
+  id: string
+  alias: string
+  avatarGradient: string
+  text: string
+  likes: number
+  timeAgo: string
+}
+
+export interface StoryComment {
+  id: string
+  alias: string
+  avatarGradient: string
+  text: string
+  likes: number
+  timeAgo: string
+  replies: StoryReply[]
+}
+
+export interface StoryFull extends Story {
+  pages: string[]
+  authorAlias: string
+  postedAt: string
+  likeCount: number
+  saveCount: number
+  commentCount: number
+  comments: StoryComment[]
+}
+
 export interface Audio {
   id: string
   title: string
