@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera, Lock, HelpCircle, LogOut,
-  UserRound, BookOpen, Headphones, Pencil,
+  Heart, Bookmark, LayoutGrid, MoreHorizontal, Pencil,
 } from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
@@ -34,7 +34,8 @@ interface UserProfile {
   platform_role:   string | null
 }
 
-type SavedTab = 'companions' | 'stories' | 'audio'
+type MainTab     = 'posts' | 'likes' | 'saved'
+type SavedSubTab = 'all' | 'collections' | 'companions' | 'posts' | 'audio'
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -48,14 +49,12 @@ function Skeleton() {
   )
 }
 
-// ─── Saved grid cells ─────────────────────────────────────────────────────────
+// ─── Grid cells ───────────────────────────────────────────────────────────────
 
 function CompanionCell({ name, gradient }: { name: string; gradient: string }) {
   return (
-    <div
-      className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}
-    >
+    <div className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}>
       <div className="absolute inset-0 flex items-end p-3"
         style={{ background: 'linear-gradient(transparent 50%, rgba(7,9,15,0.85) 100%)' }}>
         <span style={{ fontSize: 13, color: '#eeeef0', fontFamily: "'Playfair Display', serif" }}>{name}</span>
@@ -66,10 +65,8 @@ function CompanionCell({ name, gradient }: { name: string; gradient: string }) {
 
 function StoryCell({ title, gradient }: { title: string; gradient: string }) {
   return (
-    <div
-      className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}
-    >
+    <div className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}>
       <div className="absolute inset-0 flex items-end p-3"
         style={{ background: 'linear-gradient(transparent 40%, rgba(7,9,15,0.9) 100%)' }}>
         <span style={{ fontSize: 12, color: '#eeeef0', lineHeight: 1.35 }}>{title}</span>
@@ -80,11 +77,8 @@ function StoryCell({ title, gradient }: { title: string; gradient: string }) {
 
 function AudioCell({ title, voice, gradient }: { title: string; voice: string; gradient: string }) {
   return (
-    <div
-      className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}
-    >
-      {/* Waveform bars */}
+    <div className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="flex items-center gap-[3px] h-[32px]">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -107,19 +101,34 @@ function AudioCell({ title, voice, gradient }: { title: string; voice: string; g
   )
 }
 
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-3">
+      <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 14, color: '#4b5563', textAlign: 'center' }}>
+        {message}
+      </p>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const menuRef      = useRef<HTMLDivElement>(null)
   const setAvatarUrl = useUIStore(s => s.setAvatarUrl)
 
   const [profile, setProfile]             = useState<UserProfile | null>(null)
   const [loading, setLoading]             = useState(true)
   const [editOpen, setEditOpen]           = useState(false)
   const [tasteOpen, setTasteOpen]         = useState(false)
-  const [activeTab, setActiveTab]         = useState<SavedTab>('companions')
+  const [menuOpen, setMenuOpen]           = useState(false)
+  const [activeTab, setActiveTab]         = useState<MainTab>('posts')
+  const [savedSubTab, setSavedSubTab]     = useState<SavedSubTab>('all')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError]     = useState<string | null>(null)
 
@@ -134,6 +143,18 @@ export default function ProfilePage() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [setAvatarUrl])
+
+  // ── Close 3-dot menu on outside click ─────────────────────────────────────
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
 
   // ── Avatar upload ──────────────────────────────────────────────────────────
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -170,10 +191,18 @@ export default function ProfilePage() {
   const vibes    = profile?.vibes?.length           ? profile.vibes           : []
   const desires  = profile?.desired_genders?.length ? profile.desired_genders : []
 
-  const TABS: { id: SavedTab; icon: React.ReactNode }[] = [
-    { id: 'companions', icon: <UserRound size={20} /> },
-    { id: 'stories',    icon: <BookOpen size={20} /> },
-    { id: 'audio',      icon: <Headphones size={20} /> },
+  const MAIN_TABS: { id: MainTab; icon: React.ReactNode }[] = [
+    { id: 'posts', icon: <LayoutGrid size={19} /> },
+    { id: 'likes', icon: <Heart size={19} /> },
+    { id: 'saved', icon: <Bookmark size={19} /> },
+  ]
+
+  const SAVED_SUB_TABS: { id: SavedSubTab; label: string }[] = [
+    { id: 'all',         label: 'All' },
+    { id: 'collections', label: 'Collections' },
+    { id: 'companions',  label: 'Companions' },
+    { id: 'posts',       label: 'Posts' },
+    { id: 'audio',       label: 'Audio' },
   ]
 
   return (
@@ -187,7 +216,67 @@ export default function ProfilePage() {
           style={{ maxWidth: 640 }}
         >
 
-          {/* ── Section 1: Hero identity ─────────────────────── */}
+          {/* ── 3-dot menu ──────────────────────────────────────── */}
+          <div ref={menuRef} className="flex justify-end mb-[-8px] relative">
+            <button
+              onClick={() => setMenuOpen(m => !m)}
+              className="w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-200"
+              style={{
+                background: menuOpen ? 'rgba(232,96,122,0.1)' : 'transparent',
+                color: menuOpen ? '#e8607a' : '#6b7280',
+              }}
+            >
+              <MoreHorizontal size={20} />
+            </button>
+
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full right-0 mt-2 w-[210px] rounded-[14px] overflow-hidden z-50"
+                  style={{
+                    background: '#0d1117',
+                    border: '1px solid #1c2333',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                  }}
+                >
+                  <button
+                    onClick={() => { setEditOpen(true); setMenuOpen(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-[13px] transition-colors duration-150 hover:bg-white/[0.04] border-b border-[#1c2333]"
+                  >
+                    <Pencil size={14} color="#6b7280" />
+                    <span style={{ fontSize: 13, color: '#eeeef0' }}>Edit profile</span>
+                  </button>
+                  <button
+                    onClick={() => { router.push('/privacy'); setMenuOpen(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-[13px] transition-colors duration-150 hover:bg-white/[0.04] border-b border-[#1c2333]"
+                  >
+                    <Lock size={14} color="#6b7280" />
+                    <span style={{ fontSize: 13, color: '#eeeef0' }}>Privacy &amp; safety</span>
+                  </button>
+                  <button
+                    onClick={() => { router.push('/help'); setMenuOpen(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-[13px] transition-colors duration-150 hover:bg-white/[0.04] border-b border-[#1c2333]"
+                  >
+                    <HelpCircle size={14} color="#6b7280" />
+                    <span style={{ fontSize: 13, color: '#eeeef0' }}>Help &amp; support</span>
+                  </button>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                    className="w-full flex items-center gap-3 px-4 py-[13px] transition-colors duration-150 hover:bg-white/[0.04]"
+                  >
+                    <LogOut size={14} color="#e87070" />
+                    <span style={{ fontSize: 13, color: '#e87070' }}>Sign out</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* ── Section 1: Hero identity ─────────────────────────── */}
           <div className="flex flex-col items-center gap-3 mb-6">
 
             {/* Avatar */}
@@ -238,7 +327,7 @@ export default function ProfilePage() {
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
               style={{ display: 'none' }} onChange={handleAvatarChange} />
 
-            {/* Alias — hero name */}
+            {/* Alias */}
             <div style={{
               fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#e8607a',
               letterSpacing: '-0.01em',
@@ -246,14 +335,12 @@ export default function ProfilePage() {
               {alias}
             </div>
 
-            {/* Display name */}
             {profile?.display_name && (
               <div style={{ fontSize: 13, color: '#6b7280', marginTop: -6 }}>
                 {profile.display_name}
               </div>
             )}
 
-            {/* Bio */}
             {profile?.bio && (
               <p style={{
                 fontSize: 13, color: '#9ca3af', textAlign: 'center', lineHeight: 1.6,
@@ -263,42 +350,15 @@ export default function ProfilePage() {
               </p>
             )}
 
-            {/* Role chip */}
             <span className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
               style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>
               The Dreamer
             </span>
-
-            {/* Edit profile button */}
-            <button
-              onClick={() => setEditOpen(true)}
-              className="flex items-center gap-[6px] bg-transparent text-[#6b7280] border border-[#1c2333] px-[18px] py-[8px] rounded-[10px] text-[13px] cursor-pointer transition-all duration-200 hover:border-white/20 hover:text-[#eeeef0] mt-1"
-            >
-              <Pencil size={13} />
-              Edit profile
-            </button>
-          </div>
-
-          {/* ── Section 2: Stats ─────────────────────────────── */}
-          <div className="flex items-center justify-center gap-0 mb-7">
-            {[
-              { n: '12', label: 'companions' },
-              { n: '34', label: 'stories' },
-              { n: '8',  label: 'audio' },
-            ].map(({ n, label }, i) => (
-              <div key={label} className="flex items-center">
-                <div className="flex flex-col items-center px-6 py-2">
-                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#eeeef0' }}>{n}</span>
-                  <span style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{label}</span>
-                </div>
-                {i < 2 && <div style={{ width: 1, height: 32, background: '#1c2333' }} />}
-              </div>
-            ))}
           </div>
 
           <div style={{ height: 1, background: '#1c2333', marginBottom: 28 }} />
 
-          {/* ── Section 3: Your taste ────────────────────────── */}
+          {/* ── Section 2: Your taste ────────────────────────────── */}
           <div className="mb-7">
             <div className="flex items-center justify-between mb-4">
               <span style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -314,7 +374,6 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {/* Vibes */}
             <div className="mb-4">
               <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
                 vibes
@@ -334,7 +393,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Desires */}
             <div>
               <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
                 desires
@@ -358,12 +416,11 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div style={{ height: 1, background: '#1c2333', marginBottom: 0 }} />
+          <div style={{ height: 1, background: '#1c2333' }} />
 
-          {/* ── Section 4: Saved tabs ────────────────────────── */}
-          {/* Tab bar — icon only, Instagram style */}
+          {/* ── Section 3: Main tabs ─────────────────────────────── */}
           <div className="flex border-b border-[#1c2333]">
-            {TABS.map(({ id, icon }) => (
+            {MAIN_TABS.map(({ id, icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
@@ -378,68 +435,71 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Tab content */}
+          {/* ── Tab content ──────────────────────────────────────── */}
           <div className="pt-4 mb-8">
-            {activeTab === 'companions' && (
+
+            {/* Posts — user's own posts */}
+            {activeTab === 'posts' && (
+              <EmptyState message="Nothing posted yet. Your stories will appear here." />
+            )}
+
+            {/* Likes — companions + posts mixed in one grid */}
+            {activeTab === 'likes' && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {companions.map(c => (
-                  <CompanionCell key={c.id} name={c.name} gradient={c.gradient} />
+                {companions.slice(0, 3).map(c => (
+                  <CompanionCell key={`c-${c.id}`} name={c.name} gradient={c.gradient} />
+                ))}
+                {stories.slice(0, 4).map(s => (
+                  <StoryCell key={`s-${s.id}`} title={s.title} gradient={s.gradient} />
                 ))}
               </div>
             )}
-            {activeTab === 'stories' && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {stories.map(s => (
-                  <StoryCell key={s.id} title={s.title} gradient={s.gradient} />
-                ))}
-              </div>
+
+            {/* Saved — sub-tabs */}
+            {activeTab === 'saved' && (
+              <>
+                {/* Sub-tab pills */}
+                <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                  {SAVED_SUB_TABS.map(({ id, label }) => (
+                    <button
+                      key={id}
+                      onClick={() => setSavedSubTab(id)}
+                      className="text-[12px] px-[14px] py-[6px] rounded-full border cursor-pointer transition-all duration-150 flex-shrink-0"
+                      style={{
+                        borderColor: savedSubTab === id ? '#e8607a' : '#1c2333',
+                        color:       savedSubTab === id ? '#e8607a' : '#6b7280',
+                        background:  savedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub-tab content — all empty for now */}
+                {savedSubTab === 'all' && (
+                  <EmptyState message="Nothing saved yet. Your taste is still forming." />
+                )}
+                {savedSubTab === 'posts' && (
+                  <EmptyState message="Saved posts will appear here." />
+                )}
+                {savedSubTab === 'audio' && (
+                  <EmptyState message="Saved audio will appear here." />
+                )}
+                {savedSubTab === 'collections' && (
+                  <EmptyState message="No collections yet. Save posts into named collections to find them here." />
+                )}
+                {savedSubTab === 'companions' && (
+                  <EmptyState message="Saved companions will appear here." />
+                )}
+              </>
             )}
-            {activeTab === 'audio' && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {audios.map(a => (
-                  <AudioCell key={a.id} title={a.title} voice={a.voice} gradient={a.gradient} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div style={{ height: 1, background: '#1c2333', marginBottom: 20 }} />
-
-          {/* ── Section 5: Account actions ───────────────────── */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => router.push('/privacy')}
-              className="flex justify-between items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-white/10 w-full"
-            >
-              <span className="flex items-center gap-[10px]">
-                <Lock size={15} color="#6b7280" />
-                <span style={{ fontSize: 13, color: '#6b7280' }}>Privacy &amp; safety</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => router.push('/help')}
-              className="flex justify-between items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-white/10 w-full"
-            >
-              <span className="flex items-center gap-[10px]">
-                <HelpCircle size={15} color="#6b7280" />
-                <span style={{ fontSize: 13, color: '#6b7280' }}>Help &amp; support</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-              className="flex items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-[rgba(232,96,122,0.2)] w-full gap-[10px]"
-            >
-              <LogOut size={15} color="#e87070" />
-              <span style={{ fontSize: 13, color: '#e87070' }}>Sign out</span>
-            </button>
           </div>
 
         </motion.main>
       )}
 
-      {/* ── Edit profile drawer ───────────────────────────────── */}
+      {/* ── Edit profile drawer ───────────────────────────────────── */}
       <EditProfileDrawer
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -457,7 +517,7 @@ export default function ProfilePage() {
         }}
       />
 
-      {/* ── Taste drawer ─────────────────────────────────────── */}
+      {/* ── Taste drawer ─────────────────────────────────────────── */}
       <TasteDrawer
         open={tasteOpen}
         onClose={() => setTasteOpen(false)}
