@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     unoptimized: false,
   },
+  serverExternalPackages: ['postgres', 'pg', 'drizzle-orm'],
 }
 
 module.exports = nextConfig

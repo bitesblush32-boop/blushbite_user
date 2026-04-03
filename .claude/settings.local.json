@@ -49,7 +49,16 @@
       "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1 || echo \"not available at top level\" && cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1)",
       "Bash(node_modules/.bin/next build:*)",
       "Bash(npm run:*)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(pnpm tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(node -e \"require\\('./app/api/companions/onboarding/identity/route.ts'\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in d.get\\('pages',{}\\).keys\\(\\) if 'companion' in k]\")",
+      "Bash(node -e ':*)"
     ]
   }
 }
