@@ -36,3 +36,7 @@ Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
 db.xlsx
+reddit-scrape.ts
+scraped_stories.ndjson
+wattpad-scrape.ts
+wattpad-stories.ndjson

@@ -46,7 +46,8 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner sharp 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm approve-builds 2>&1 || true)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm rebuild sharp 2>&1)",
-      "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1 || echo \"not available at top level\" && cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1)"
+      "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1 || echo \"not available at top level\" && cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add -D tsx)"
     ]
   }
 }
