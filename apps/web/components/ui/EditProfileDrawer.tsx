@@ -1,20 +1,54 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileUpload } from '@/components/ui/FileUpload'
+import { Camera } from 'lucide-react'
+
+// ─── Location data (EU-focused) ───────────────────────────────────────────────
+
+const LOCATIONS: Record<string, string[]> = {
+  'Netherlands':      ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven', 'Tilburg', 'Groningen', 'Almere', 'Breda', 'Nijmegen', 'Leiden', 'Haarlem', 'Maastricht', 'Delft', 'Arnhem'],
+  'Germany':          ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dresden', 'Dortmund', 'Essen', 'Bremen', 'Hannover', 'Nuremberg'],
+  'France':           ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Bordeaux', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Lille', 'Rennes', 'Cannes'],
+  'Belgium':          ['Brussels', 'Antwerp', 'Ghent', 'Bruges', 'Liège', 'Leuven', 'Namur'],
+  'United Kingdom':   ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Bristol', 'Leeds', 'Glasgow', 'Liverpool', 'Newcastle', 'Brighton', 'Oxford', 'Cambridge'],
+  'Spain':            ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Bilbao', 'Málaga', 'Granada', 'Ibiza', 'Palma', 'San Sebastián'],
+  'Italy':            ['Rome', 'Milan', 'Florence', 'Venice', 'Turin', 'Naples', 'Bologna', 'Verona', 'Genoa'],
+  'Portugal':         ['Lisbon', 'Porto', 'Faro', 'Braga', 'Cascais', 'Funchal'],
+  'Switzerland':      ['Zurich', 'Geneva', 'Basel', 'Bern', 'Lausanne', 'Lucerne'],
+  'Austria':          ['Vienna', 'Salzburg', 'Graz', 'Innsbruck', 'Linz'],
+  'Sweden':           ['Stockholm', 'Gothenburg', 'Malmö', 'Uppsala'],
+  'Denmark':          ['Copenhagen', 'Aarhus', 'Odense', 'Aalborg'],
+  'Norway':           ['Oslo', 'Bergen', 'Trondheim', 'Stavanger'],
+  'Finland':          ['Helsinki', 'Tampere', 'Turku', 'Espoo'],
+  'Poland':           ['Warsaw', 'Krakow', 'Gdańsk', 'Wrocław', 'Poznań'],
+  'Czech Republic':   ['Prague', 'Brno', 'Ostrava'],
+  'Hungary':          ['Budapest', 'Debrecen'],
+  'Greece':           ['Athens', 'Thessaloniki', 'Mykonos', 'Santorini'],
+  'Ireland':          ['Dublin', 'Cork', 'Galway', 'Limerick'],
+  'Luxembourg':       ['Luxembourg City'],
+  'United Arab Emirates': ['Dubai', 'Abu Dhabi'],
+  'Australia':        ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide'],
+  'New Zealand':      ['Auckland', 'Wellington', 'Christchurch'],
+  'Japan':            ['Tokyo', 'Osaka', 'Kyoto', 'Yokohama', 'Nagoya'],
+  'Canada':           ['Toronto', 'Montreal', 'Vancouver', 'Calgary'],
+  'United States':    ['New York', 'Los Angeles', 'Chicago', 'Miami', 'San Francisco', 'Seattle', 'Austin', 'Boston'],
+  'Other':            [],
+}
+
+const COUNTRY_LIST = Object.keys(LOCATIONS)
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  displayName:  z.string().max(100).optional(),
-  bio:          z.string().max(300).optional(),
-  dateOfBirth:  z.string().optional(),
-  country:      z.string().max(100).optional(),
-  city:         z.string().max(100).optional(),
+  displayName: z.string().max(100).optional(),
+  bio:         z.string().max(300).optional(),
+  dateOfBirth: z.string().optional(),
+  country:     z.string().max(100).optional(),
+  city:        z.string().max(100).optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -22,10 +56,11 @@ type FormValues = z.infer<typeof schema>
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface EditProfileDrawerProps {
-  open:     boolean
-  onClose:  () => void
-  onSaved:  (data: Partial<FormValues>) => void
-  defaults?: Partial<FormValues>
+  open:           boolean
+  onClose:        () => void
+  onSaved:        (data: Partial<FormValues> & { avatar_url?: string }) => void
+  defaults?:      Partial<FormValues>
+  currentAvatar?: string | null
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -35,22 +70,93 @@ export default function EditProfileDrawer({
   onClose,
   onSaved,
   defaults,
+  currentAvatar,
 }: EditProfileDrawerProps) {
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [submitting, setSubmitting]             = useState(false)
+  const [submitError, setSubmitError]           = useState<string | null>(null)
+  const [avatarPreview, setAvatarPreview]       = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading]   = useState(false)
+  const [avatarError, setAvatarError]           = useState<string | null>(null)
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null)
+  const [isMobile, setIsMobile]                 = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
     handleSubmit,
     watch,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaults ?? {},
   })
 
-  const bioLength = watch('bio')?.length ?? 0
+  const bioLength      = watch('bio')?.length ?? 0
+  const selectedCountry = watch('country') ?? ''
+  const cityOptions    = LOCATIONS[selectedCountry] ?? []
+
+  // Re-populate form fields every time the drawer opens
+  useEffect(() => {
+    if (open) {
+      reset(defaults ?? {})
+      setAvatarPreview(null)
+      setUploadedAvatarUrl(null)
+      setAvatarError(null)
+      setSubmitError(null)
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Detect mobile for animation direction
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768) }
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // When country changes, reset city if it's not in the new list
+  useEffect(() => {
+    const current = watch('city')
+    if (current && cityOptions.length && !cityOptions.includes(current)) {
+      setValue('city', '')
+    }
+  }, [selectedCountry]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Avatar upload ───────────────────────────────────────────────────────────
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError('JPG, PNG or WebP only.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Image must be under 5 MB.')
+      return
+    }
+
+    setAvatarPreview(URL.createObjectURL(file))
+    setAvatarUploading(true)
+    setAvatarError(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res  = await fetch('/api/users/avatar', { method: 'POST', body: formData })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+      setUploadedAvatarUrl(json.data.avatarUrl)
+    } catch (err: unknown) {
+      setAvatarError(err instanceof Error ? err.message : 'Upload failed.')
+      setAvatarPreview(null)
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true)
@@ -67,7 +173,7 @@ export default function EditProfileDrawer({
         return
       }
       const { data } = await res.json()
-      onSaved(data)
+      onSaved({ ...data, ...(uploadedAvatarUrl ? { avatar_url: uploadedAvatarUrl } : {}) })
       onClose()
     } catch {
       setSubmitError('Something went wrong. Try again.')
@@ -75,6 +181,26 @@ export default function EditProfileDrawer({
       setSubmitting(false)
     }
   }
+
+  const displayedAvatar = avatarPreview ?? currentAvatar
+
+  // Animation: slide up on mobile, slide in from right on desktop
+  const motionProps = isMobile
+    ? {
+        initial:    { y: '100%' },
+        animate:    { y: 0 },
+        exit:       { y: '100%' },
+        transition: { type: 'spring' as const, stiffness: 380, damping: 38 },
+      }
+    : {
+        initial:    { x: '100%' },
+        animate:    { x: 0 },
+        exit:       { x: '100%' },
+        transition: { type: 'spring' as const, stiffness: 380, damping: 38 },
+      }
+
+  const inputClass =
+    'bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full'
 
   return (
     <AnimatePresence>
@@ -91,20 +217,24 @@ export default function EditProfileDrawer({
             onClick={onClose}
           />
 
-          {/* Sheet */}
+          {/* Panel — bottom sheet on mobile, right panel on desktop */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 z-[860] overflow-y-auto"
+            {...motionProps}
+            className={[
+              'fixed z-[860] overflow-y-auto',
+              // Mobile: bottom sheet
+              'bottom-0 left-0 right-0',
+              // Desktop: right-side panel, fixed width
+              'md:bottom-0 md:top-0 md:left-auto md:right-0 md:w-[480px]',
+            ].join(' ')}
             style={{
               background:   '#0d1117',
-              borderTop:    '1px solid #1c2333',
-              borderRadius: '20px 20px 0 0',
-              maxHeight:    '92vh',
+              borderTop:    isMobile ? '1px solid #1c2333' : 'none',
+              borderLeft:   isMobile ? 'none' : '1px solid #1c2333',
+              borderRadius: isMobile ? '20px 20px 0 0' : 0,
+              maxHeight:    isMobile ? '92vh' : '100vh',
               willChange:   'transform',
             }}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 38 }}
           >
             {/* Header */}
             <div
@@ -133,163 +263,199 @@ export default function EditProfileDrawer({
             </div>
 
             {/* Form */}
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="px-5 py-6 flex flex-col gap-5"
-            >
+            <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-6 flex flex-col gap-5">
 
-              
-              {/* Photo upload */}
-              <div className="flex flex-col gap-[6px] mt-2">
+              {/* ── Avatar ────────────────────────────────────────── */}
+              <div className="flex flex-col gap-[6px]">
                 <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
                   Profile photo
                 </label>
-                <FileUpload
-                  contentFor="companion_photo"
-                  onSuccess={async (cdnUrl) => {
-                    setPhotoUrl(cdnUrl)
-                    // Auto-save photo to profile
-                    try {
-                      await fetch('/api/users/photos', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ cdnUrl, s3Key: cdnUrl }),
-                        credentials: 'include',
-                      })
-                    } catch (err) {
-                      console.error('Failed to save photo:', err)
-                    }
-                  }}
-                  label="Drop photo or click to upload"
-                  acceptedTypes="image/jpeg,image/png,image/webp"
+                <div className="flex items-center gap-4">
+                  <div
+                    className="relative group cursor-pointer flex-shrink-0"
+                    style={{ width: 64, height: 64 }}
+                    onClick={() => !avatarUploading && fileInputRef.current?.click()}
+                  >
+                    {displayedAvatar ? (
+                      <div style={{
+                        width: 64, height: 64, borderRadius: '50%',
+                        backgroundImage: `url(${displayedAvatar})`,
+                        backgroundSize: 'cover', backgroundPosition: 'center',
+                        border: '1px solid #1c2333',
+                      }} />
+                    ) : (
+                      <div style={{
+                        width: 64, height: 64, borderRadius: '50%',
+                        background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '1px solid #1c2333',
+                      }}>
+                        <Camera size={20} color="rgba(255,255,255,0.8)" />
+                      </div>
+                    )}
+                    {avatarUploading ? (
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(0,0,0,0.55)' }}>
+                        <div style={{
+                          width: 20, height: 20, borderRadius: '50%',
+                          border: '2px solid rgba(255,255,255,0.2)',
+                          borderTopColor: '#fff',
+                          animation: 'spin 0.7s linear infinite',
+                        }} />
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        style={{ background: 'rgba(7,9,15,0.65)' }}>
+                        <Camera size={16} color="#eeeef0" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      style={{ fontSize: 12, color: '#e8607a', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0, textAlign: 'left', opacity: avatarUploading ? 0.5 : 1 }}
+                    >
+                      {avatarUploading ? 'Processing…' : uploadedAvatarUrl ? 'Change photo' : 'Upload photo'}
+                    </button>
+                    <span style={{ fontSize: 11, color: '#4b5563' }}>JPG, PNG or WebP · max 5 MB</span>
+                    {avatarError && <span style={{ fontSize: 11, color: '#e87070' }}>{avatarError}</span>}
+                  </div>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarChange}
                 />
               </div>
 
-              {/* Display name */}
+              {/* ── Display name ───────────────────────────────────── */}
               <div className="flex flex-col gap-[6px]">
-                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                  Display name
-                </label>
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Display name</label>
                 <input
                   {...register('displayName')}
                   placeholder="How you'd like to be called"
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563]"
+                  className={inputClass}
                 />
-                {errors.displayName && (
-                  <span style={{ fontSize: 11, color: '#e87070' }}>{errors.displayName.message}</span>
-                )}
+                {errors.displayName && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.displayName.message}</span>}
               </div>
 
-              {/* Bio */}
+              {/* ── Bio ────────────────────────────────────────────── */}
               <div className="flex flex-col gap-[6px]">
-                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                  Bio
-                </label>
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Bio</label>
                 <div className="relative">
                   <textarea
                     {...register('bio')}
                     rows={3}
                     placeholder="A little about your desires…"
-                    className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full resize-none"
+                    className={`${inputClass} resize-none`}
                   />
-                  <span
-                    className="absolute bottom-2 right-3"
-                    style={{ fontSize: 10, color: '#4b5563', pointerEvents: 'none' }}
-                  >
+                  <span className="absolute bottom-2 right-3" style={{ fontSize: 10, color: '#4b5563', pointerEvents: 'none' }}>
                     {bioLength}/300
                   </span>
                 </div>
-                {errors.bio && (
-                  <span style={{ fontSize: 11, color: '#e87070' }}>{errors.bio.message}</span>
-                )}
+                {errors.bio && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.bio.message}</span>}
               </div>
 
-              {/* Date of birth */}
+              {/* ── Date of birth ──────────────────────────────────── */}
               <div className="flex flex-col gap-[6px]">
-                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                  Date of birth
-                </label>
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Date of birth</label>
                 <input
                   {...register('dateOfBirth')}
                   type="date"
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563]"
+                  className={inputClass}
                   style={{ colorScheme: 'dark' }}
                 />
-                {errors.dateOfBirth && (
-                  <span style={{ fontSize: 11, color: '#e87070' }}>{errors.dateOfBirth.message}</span>
-                )}
+                {errors.dateOfBirth && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.dateOfBirth.message}</span>}
               </div>
 
-              {/* Country */}
+              {/* ── Country dropdown ───────────────────────────────── */}
               <div className="flex flex-col gap-[6px]">
-                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                  Country
-                </label>
-                <input
-                  {...register('country')}
-                  type="text"
-                  placeholder="e.g. India"
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563]"
-                />
-                {errors.country && (
-                  <span style={{ fontSize: 11, color: '#e87070' }}>{errors.country.message}</span>
-                )}
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Country</label>
+                <div className="relative">
+                  <select
+                    {...register('country')}
+                    className={inputClass}
+                    style={{ colorScheme: 'dark', appearance: 'none', paddingRight: 36 }}
+                  >
+                    <option value="">Select your country</option>
+                    {COUNTRY_LIST.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">▾</div>
+                </div>
+                {errors.country && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.country.message}</span>}
               </div>
 
-              {/* City / Area */}
+              {/* ── City dropdown (dependent on country) ──────────── */}
               <div className="flex flex-col gap-[6px]">
-                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                  City / Area
-                </label>
-                <input
-                  {...register('city')}
-                  type="text"
-                  placeholder="e.g. Mumbai, Bandra"
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563]"
-                />
-                {errors.city && (
-                  <span style={{ fontSize: 11, color: '#e87070' }}>{errors.city.message}</span>
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">City</label>
+                {cityOptions.length > 0 ? (
+                  <div className="relative">
+                    <select
+                      {...register('city')}
+                      className={inputClass}
+                      style={{ colorScheme: 'dark', appearance: 'none', paddingRight: 36 }}
+                      disabled={!selectedCountry}
+                    >
+                      <option value="">Select your city</option>
+                      {cityOptions.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      <option value="Other">Other</option>
+                    </select>
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">▾</div>
+                  </div>
+                ) : (
+                  <input
+                    {...register('city')}
+                    type="text"
+                    placeholder={selectedCountry ? 'Enter your city' : 'Select a country first'}
+                    disabled={!selectedCountry}
+                    className={inputClass}
+                    style={{ opacity: selectedCountry ? 1 : 0.5 }}
+                  />
                 )}
+                {errors.city && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.city.message}</span>}
               </div>
 
-              {/* Submit error */}
+              {/* ── Submit error ───────────────────────────────────── */}
               {submitError && (
-                <p style={{ fontSize: 12, color: '#e87070', textAlign: 'center' }}>
-                  {submitError}
-                </p>
+                <p style={{ fontSize: 12, color: '#e87070', textAlign: 'center' }}>{submitError}</p>
               )}
 
-              {/* Submit button */}
+              {/* ── Save button ────────────────────────────────────── */}
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 mt-2 rounded-[10px] py-[12px] text-[13.5px] font-medium text-white cursor-pointer transition-all duration-200"
+                className="w-full flex items-center justify-center gap-2 mt-2 rounded-[10px] py-[12px] text-[13.5px] font-medium text-white transition-all duration-200"
                 style={{
                   background:    submitting ? '#c4485e' : '#e8607a',
                   border:        'none',
                   opacity:       submitting ? 0.8 : 1,
                   pointerEvents: submitting ? 'none' : 'auto',
+                  cursor:        submitting ? 'not-allowed' : 'pointer',
                 }}
                 onMouseEnter={e => { if (!submitting) (e.currentTarget as HTMLButtonElement).style.background = '#c4485e' }}
                 onMouseLeave={e => { if (!submitting) (e.currentTarget as HTMLButtonElement).style.background = '#e8607a' }}
               >
                 {submitting ? (
                   <>
-                    <span
-                      style={{
-                        width: 20, height: 20, borderRadius: '50%',
-                        border: '2px solid rgba(255,255,255,0.2)',
-                        borderTopColor: '#fff',
-                        animation: 'spin 0.7s linear infinite',
-                        display: 'inline-block',
-                        flexShrink: 0,
-                      }}
-                    />
+                    <span style={{
+                      width: 20, height: 20, borderRadius: '50%',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#fff',
+                      animation: 'spin 0.7s linear infinite',
+                      display: 'inline-block', flexShrink: 0,
+                    }} />
                     Saving…
                   </>
-                ) : (
-                  'Save changes'
-                )}
+                ) : 'Save changes'}
               </button>
 
             </form>

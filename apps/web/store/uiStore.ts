@@ -5,12 +5,15 @@ interface UIStore {
   modalOpen: boolean
   activeCompanionId: string | null
   bookingModalOpen: boolean
+  // Dreamer avatar — set on profile load, updated on avatar change
+  avatarUrl: string | null
   openDrawer: () => void
   closeDrawer: () => void
   openModal: (companionId: string) => void
   closeModal: () => void
   openBookingModal: () => void
   closeBookingModal: () => void
+  setAvatarUrl: (url: string | null) => void
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -18,6 +21,7 @@ export const useUIStore = create<UIStore>((set) => ({
   modalOpen: false,
   activeCompanionId: null,
   bookingModalOpen: false,
+  avatarUrl: null,
 
   openDrawer: () => set({ drawerOpen: true }),
   closeDrawer: () => set({ drawerOpen: false }),
@@ -27,4 +31,6 @@ export const useUIStore = create<UIStore>((set) => ({
 
   openBookingModal: () => set({ bookingModalOpen: true }),
   closeBookingModal: () => set({ bookingModalOpen: false }),
+
+  setAvatarUrl: (url) => set({ avatarUrl: url }),
 }))
