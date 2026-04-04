@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { PlusCircle } from 'lucide-react'
+import { PlusCircle, Menu, X } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 
 export default function Header() {
@@ -15,6 +15,8 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null)
   const avatarUrl = useUIStore(s => s.avatarUrl)
   const router = useRouter()
+  const pathname = usePathname()
+  const isProfile = pathname === '/profile'
 
   const alias = session?.user?.alias ?? '??'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
@@ -87,7 +89,7 @@ export default function Header() {
           </button>
         </div>
 
-        {/* CENTER — logo, guaranteed exact center via grid */}
+        {/* CENTER — logo */}
         <div style={{ justifySelf: 'center' }}>
           <Link href="/" className="flex-shrink-0 block">
             <Image
@@ -101,75 +103,132 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* RIGHT — user pill dropdown */}
+        {/* RIGHT — hamburger on /profile, user pill everywhere else */}
         <div style={{ justifySelf: 'end' }}>
-          <div ref={menuRef} className="relative flex-shrink-0">
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(open => !open)}
-              className="flex items-center gap-2 bg-[#111620] border border-[#1c2333] py-[6px] pl-2 pr-[14px] rounded-[24px] cursor-pointer transition-colors duration-200 hover:border-[#e8607a]"
-            >
-              {avatarUrl ? (
+          {isProfile ? (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(v => !v)}
+                className="flex items-center justify-center rounded-full transition-all duration-150"
+                style={{
+                  width: 40, height: 40, background: 'transparent', border: 'none',
+                  color: menuOpen ? '#e8607a' : '#6b7280', cursor: 'pointer',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+              >
+                {menuOpen
+                  ? <X size={22} strokeWidth={1.5} />
+                  : <Menu size={22} strokeWidth={1.5} />
+                }
+              </button>
+
+              {menuOpen && (
                 <div
-                  className="w-[26px] h-[26px] rounded-full flex-shrink-0"
-                  style={{
-                    backgroundImage: `url(${avatarUrl})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                />
-              ) : (
-                <div
-                  className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg,#e8607a,#9b5fe0)' }}
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+10px)] z-10 flex flex-col gap-[2px] rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-2"
+                  style={{ minWidth: 180, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
                 >
-                  {initials}
+                  <Link
+                    href="/privacy"
+                    role="menuitem"
+                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors hover:bg-white/[0.06] hover:text-[#eeeef0]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Privacy &amp; safety
+                  </Link>
+                  <Link
+                    href="/help"
+                    role="menuitem"
+                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors hover:bg-white/[0.06] hover:text-[#eeeef0]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Help &amp; support
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="rounded-[8px] px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/[0.06]"
+                    style={{ color: '#e87070' }}
+                    onClick={() => {
+                      setMenuOpen(false)
+                      signOut({ callbackUrl: '/auth/signin' })
+                    }}
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
-              {/* Hide alias text on mobile — avatar + chevron only */}
-              <span className="hidden md:inline text-[12px] text-[#6b7280]">{alias}</span>
-              <span className="ml-1 text-[12px] text-[#6b7280]">{menuOpen ? '▴' : '▾'}</span>
-            </button>
-
-            {menuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-[calc(100%+10px)] z-10 flex w-[180px] flex-col gap-[2px] rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-2"
-                style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
+            </div>
+          ) : (
+            <div ref={menuRef} className="relative flex-shrink-0">
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen(open => !open)}
+                className="flex items-center gap-2 bg-[#111620] border border-[#1c2333] py-[6px] pl-2 pr-[14px] rounded-[24px] cursor-pointer transition-colors duration-200 hover:border-[#e8607a]"
               >
-                <Link
-                  href="/profile"
-                  role="menuitem"
-                  className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#eeeef0]"
-                  onClick={() => setMenuOpen(false)}
+                {avatarUrl ? (
+                  <div
+                    className="w-[26px] h-[26px] rounded-full flex-shrink-0"
+                    style={{
+                      backgroundImage: `url(${avatarUrl})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg,#e8607a,#9b5fe0)' }}
+                  >
+                    {initials}
+                  </div>
+                )}
+                <span className="hidden md:inline text-[12px] text-[#6b7280]">{alias}</span>
+                <span className="ml-1 text-[12px] text-[#6b7280]">{menuOpen ? '▴' : '▾'}</span>
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+10px)] z-10 flex w-[180px] flex-col gap-[2px] rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-2"
+                  style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
                 >
-                  Profile &amp; Preferences
-                </Link>
-                <Link
-                  href="/privacy"
-                  role="menuitem"
-                  className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#eeeef0]"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Safety &amp; Privacy
-                </Link>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="rounded-[8px] px-3 py-2 text-left text-[13px] transition-colors duration-150 hover:bg-white/[0.06]"
-                  style={{ color: '#e87070' }}
-                  onClick={() => {
-                    setMenuOpen(false)
-                    signOut({ callbackUrl: '/auth/signin' })
-                  }}
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
-          </div>
+                  <Link
+                    href="/profile"
+                    role="menuitem"
+                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#eeeef0]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Profile &amp; Preferences
+                  </Link>
+                  <Link
+                    href="/privacy"
+                    role="menuitem"
+                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#eeeef0]"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Safety &amp; Privacy
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="rounded-[8px] px-3 py-2 text-left text-[13px] transition-colors duration-150 hover:bg-white/[0.06]"
+                    style={{ color: '#e87070' }}
+                    onClick={() => {
+                      setMenuOpen(false)
+                      signOut({ callbackUrl: '/auth/signin' })
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>

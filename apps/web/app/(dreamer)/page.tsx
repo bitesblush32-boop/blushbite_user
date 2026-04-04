@@ -54,19 +54,41 @@ export default function HomePage() {
     >
 
       {/* ── BLOCK 1: Mood Slider ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-[14px] bg-[#111620] border border-[#1c2333] rounded-[40px] py-[10px] px-5 mb-8">
-        <span className="text-[12px] text-[#6b7280] whitespace-nowrap">Tonight I want:</span>
-        <span className="text-[11px] text-[#eeeef0] whitespace-nowrap">Softer</span>
+      <div
+        className="flex items-center gap-[14px] mb-8"
+        style={{
+          background: '#111620',
+          border: '1px solid #1c2333',
+          borderRadius: 40,
+          padding: '10px 20px',
+        }}
+      >
+        <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          Tonight I want:
+        </span>
+        <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          Softer
+        </span>
         <input
           type="range"
           min={0}
           max={100}
           value={intensity}
           onChange={(e) => setIntensity(Number(e.target.value))}
-          className="flex-1 cursor-pointer"
-          style={{ accentColor: '#e8607a' }}
+          style={{
+            flex: 1,
+            accentColor: '#e8607a',
+            cursor: 'pointer',
+            margin: 0,
+            padding: 0,
+            height: 4,
+            appearance: 'auto',
+            WebkitAppearance: 'auto',
+          }}
         />
-        <span className="text-[11px] text-[#eeeef0] whitespace-nowrap">Spicier</span>
+        <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          Spicier
+        </span>
       </div>
 
       {/* ── BLOCK 2: Hero ────────────────────────────────────────────────────── */}

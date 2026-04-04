@@ -1,17 +1,17 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  Camera, Lock, HelpCircle, LogOut,
-  UserRound, BookOpen, Headphones, Pencil,
+  Camera,
+  LayoutGrid, BookOpen, Headphones, Pencil,
 } from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { useUIStore } from '@/store/uiStore'
-import { companions, stories, audios } from '@/lib/data'
+import { stories, audios } from '@/lib/data'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,22 @@ interface UserProfile {
   platform_role:   string | null
 }
 
-type SavedTab = 'companions' | 'stories' | 'audio'
+interface UserPost {
+  id:               string
+  title:            string | null
+  excerpt:          string | null
+  firstImage:       string | null
+  pageImageUrls:    string[]
+  categories:       string[]
+  likeCount:        number
+  saveCount:        number
+  viewCount:        number
+  commentCount:     number
+  moderationStatus: string
+  createdAt:        string
+}
+
+type SavedTab = 'posts' | 'stories' | 'audio'
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -48,21 +63,123 @@ function Skeleton() {
   )
 }
 
-// ─── Saved grid cells ─────────────────────────────────────────────────────────
+// ─── PostCell ─────────────────────────────────────────────────────────────────
 
-function CompanionCell({ name, gradient }: { name: string; gradient: string }) {
+function PostCell({
+  post,
+  isDeleting,
+  onDelete,
+}: {
+  post: UserPost
+  isDeleting: boolean
+  onDelete: () => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <div
-      className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-      style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}
+      style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden',
+               background: '#111620', cursor: 'pointer' }}
+      onClick={() => !menuOpen && setMenuOpen(false)}
     >
-      <div className="absolute inset-0 flex items-end p-3"
-        style={{ background: 'linear-gradient(transparent 50%, rgba(7,9,15,0.85) 100%)' }}>
-        <span style={{ fontSize: 13, color: '#eeeef0', fontFamily: "'Playfair Display', serif" }}>{name}</span>
+      {post.firstImage ? (
+        <img
+          src={post.firstImage}
+          alt={post.title ?? 'Confession'}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{
+          width: '100%', height: '100%',
+          background: 'linear-gradient(160deg, #0d1117 0%, #07090f 60%, #0d0a12 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '12px',
+        }}>
+          <p style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 11, color: '#6b7280', lineHeight: 1.6,
+            textAlign: 'center', overflow: 'hidden',
+            display: '-webkit-box', WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
+          }}>
+            {post.excerpt ?? ''}
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
+        style={{
+          position: 'absolute', top: 6, right: 6,
+          width: 28, height: 28, borderRadius: '50%',
+          background: 'rgba(7,9,15,0.72)', border: 'none',
+          color: '#eeeef0', fontSize: 16, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(4px)',
+        }}
+      >
+        ⋯
+      </button>
+
+      {menuOpen && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+            onClick={e => { e.stopPropagation(); setMenuOpen(false) }}
+          />
+          <div style={{
+            position: 'absolute', top: 36, right: 6, zIndex: 50,
+            background: '#161d2a', border: '1px solid #1c2333',
+            borderRadius: 10, overflow: 'hidden', minWidth: 140,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+          }}>
+            <button
+              onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete() }}
+              disabled={isDeleting}
+              style={{
+                width: '100%', padding: '10px 14px', background: 'transparent',
+                border: 'none', textAlign: 'left', fontSize: 13,
+                color: isDeleting ? '#6b7280' : '#e87070',
+                cursor: isDeleting ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}
+              onMouseEnter={e => { if (!isDeleting) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.08)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+            >
+              {isDeleting ? '⏳ Deleting…' : '🗑 Delete'}
+            </button>
+          </div>
+        </>
+      )}
+
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        background: 'linear-gradient(transparent, rgba(7,9,15,0.85))',
+        padding: '16px 8px 8px',
+        display: 'flex', gap: 10, alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}>
+          ♥ {post.likeCount}
+        </span>
+        <span style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}>
+          💬 {post.commentCount}
+        </span>
+        {post.moderationStatus === 'pending' && (
+          <span style={{
+            fontSize: 9, color: '#c9a96e', marginLeft: 'auto',
+            background: 'rgba(201,169,110,0.12)',
+            border: '1px solid rgba(201,169,110,0.25)',
+            borderRadius: 20, padding: '1px 6px',
+          }}>
+            pending
+          </span>
+        )}
       </div>
     </div>
   )
 }
+
+// ─── Saved grid cells ─────────────────────────────────────────────────────────
 
 function StoryCell({ title, gradient }: { title: string; gradient: string }) {
   return (
@@ -84,7 +201,6 @@ function AudioCell({ title, voice, gradient }: { title: string; voice: string; g
       className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
       style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}
     >
-      {/* Waveform bars */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="flex items-center gap-[3px] h-[32px]">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -115,13 +231,17 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const setAvatarUrl = useUIStore(s => s.setAvatarUrl)
 
-  const [profile, setProfile]             = useState<UserProfile | null>(null)
-  const [loading, setLoading]             = useState(true)
-  const [editOpen, setEditOpen]           = useState(false)
-  const [tasteOpen, setTasteOpen]         = useState(false)
-  const [activeTab, setActiveTab]         = useState<SavedTab>('companions')
+  const [profile, setProfile]               = useState<UserProfile | null>(null)
+  const [loading, setLoading]               = useState(true)
+  const [editOpen, setEditOpen]             = useState(false)
+  const [tasteOpen, setTasteOpen]           = useState(false)
+  const [activeTab, setActiveTab]           = useState<SavedTab>('posts')
   const [avatarUploading, setAvatarUploading] = useState(false)
-  const [avatarError, setAvatarError]     = useState<string | null>(null)
+  const [avatarError, setAvatarError]       = useState<string | null>(null)
+
+  const [posts, setPosts]               = useState<UserPost[]>([])
+  const [postsLoading, setPostsLoading] = useState(true)
+  const [deletingId, setDeletingId]     = useState<string | null>(null)
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -134,6 +254,15 @@ export default function ProfilePage() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [setAvatarUrl])
+
+  // ── Fetch posts ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/users/posts', { credentials: 'include' })
+      .then(r => r.json())
+      .then(({ data }) => setPosts(data ?? []))
+      .catch(() => {})
+      .finally(() => setPostsLoading(false))
+  }, [])
 
   // ── Avatar upload ──────────────────────────────────────────────────────────
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -164,6 +293,22 @@ export default function ProfilePage() {
     }
   }
 
+  // ── Delete post ────────────────────────────────────────────────────────────
+  async function handleDeletePost(postId: string) {
+    if (!confirm('Delete this confession? This cannot be undone.')) return
+    setDeletingId(postId)
+    try {
+      const res = await fetch(`/api/users/posts/${postId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (res.ok) {
+        setPosts(prev => prev.filter(p => p.id !== postId))
+      }
+    } catch {}
+    finally { setDeletingId(null) }
+  }
+
   // ── Derived values ─────────────────────────────────────────────────────────
   const alias    = profile?.alias ?? session?.user?.alias ?? '@you'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
@@ -171,9 +316,9 @@ export default function ProfilePage() {
   const desires  = profile?.desired_genders?.length ? profile.desired_genders : []
 
   const TABS: { id: SavedTab; icon: React.ReactNode }[] = [
-    { id: 'companions', icon: <UserRound size={20} /> },
-    { id: 'stories',    icon: <BookOpen size={20} /> },
-    { id: 'audio',      icon: <Headphones size={20} /> },
+    { id: 'posts',   icon: <LayoutGrid size={20} /> },
+    { id: 'stories', icon: <BookOpen size={20} /> },
+    { id: 'audio',   icon: <Headphones size={20} /> },
   ]
 
   return (
@@ -238,7 +383,7 @@ export default function ProfilePage() {
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
               style={{ display: 'none' }} onChange={handleAvatarChange} />
 
-            {/* Alias — hero name */}
+            {/* Alias */}
             <div style={{
               fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#e8607a',
               letterSpacing: '-0.01em',
@@ -246,14 +391,12 @@ export default function ProfilePage() {
               {alias}
             </div>
 
-            {/* Display name */}
             {profile?.display_name && (
               <div style={{ fontSize: 13, color: '#6b7280', marginTop: -6 }}>
                 {profile.display_name}
               </div>
             )}
 
-            {/* Bio */}
             {profile?.bio && (
               <p style={{
                 fontSize: 13, color: '#9ca3af', textAlign: 'center', lineHeight: 1.6,
@@ -263,13 +406,11 @@ export default function ProfilePage() {
               </p>
             )}
 
-            {/* Role chip */}
             <span className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
               style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>
               The Dreamer
             </span>
 
-            {/* Edit profile button */}
             <button
               onClick={() => setEditOpen(true)}
               className="flex items-center gap-[6px] bg-transparent text-[#6b7280] border border-[#1c2333] px-[18px] py-[8px] rounded-[10px] text-[13px] cursor-pointer transition-all duration-200 hover:border-white/20 hover:text-[#eeeef0] mt-1"
@@ -282,9 +423,9 @@ export default function ProfilePage() {
           {/* ── Section 2: Stats ─────────────────────────────── */}
           <div className="flex items-center justify-center gap-0 mb-7">
             {[
-              { n: '12', label: 'companions' },
-              { n: '34', label: 'stories' },
-              { n: '8',  label: 'audio' },
+              { n: posts.length.toString(),                                label: 'confessions' },
+              { n: posts.reduce((a, p) => a + p.likeCount, 0).toString(), label: 'likes' },
+              { n: posts.reduce((a, p) => a + p.saveCount, 0).toString(), label: 'saved' },
             ].map(({ n, label }, i) => (
               <div key={label} className="flex items-center">
                 <div className="flex flex-col items-center px-6 py-2">
@@ -314,7 +455,6 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {/* Vibes */}
             <div className="mb-4">
               <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
                 vibes
@@ -334,7 +474,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Desires */}
             <div>
               <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
                 desires
@@ -360,8 +499,7 @@ export default function ProfilePage() {
 
           <div style={{ height: 1, background: '#1c2333', marginBottom: 0 }} />
 
-          {/* ── Section 4: Saved tabs ────────────────────────── */}
-          {/* Tab bar — icon only, Instagram style */}
+          {/* ── Section 4: Tabs ──────────────────────────────── */}
           <div className="flex border-b border-[#1c2333]">
             {TABS.map(({ id, icon }) => (
               <button
@@ -378,14 +516,45 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Tab content */}
           <div className="pt-4 mb-8">
-            {activeTab === 'companions' && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {companions.map(c => (
-                  <CompanionCell key={c.id} name={c.name} gradient={c.gradient} />
-                ))}
-              </div>
+            {activeTab === 'posts' && (
+              postsLoading ? (
+                <div className="grid grid-cols-3 gap-[2px]">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} style={{
+                      aspectRatio: '3/4',
+                      background: '#111620',
+                      borderRadius: 4,
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }} />
+                  ))}
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <LayoutGrid size={32} color="#1c2333" />
+                  <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+                    Your confessions will appear here.
+                  </p>
+                  <button
+                    onClick={() => router.push('/create')}
+                    className="text-[12px] text-[#e8607a] px-4 py-2 rounded-full mt-1 cursor-pointer"
+                    style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+                  >
+                    Write your first confession →
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-[2px]">
+                  {posts.map(post => (
+                    <PostCell
+                      key={post.id}
+                      post={post}
+                      isDeleting={deletingId === post.id}
+                      onDelete={() => handleDeletePost(post.id)}
+                    />
+                  ))}
+                </div>
+              )
             )}
             {activeTab === 'stories' && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -401,39 +570,6 @@ export default function ProfilePage() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div style={{ height: 1, background: '#1c2333', marginBottom: 20 }} />
-
-          {/* ── Section 5: Account actions ───────────────────── */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => router.push('/privacy')}
-              className="flex justify-between items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-white/10 w-full"
-            >
-              <span className="flex items-center gap-[10px]">
-                <Lock size={15} color="#6b7280" />
-                <span style={{ fontSize: 13, color: '#6b7280' }}>Privacy &amp; safety</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => router.push('/help')}
-              className="flex justify-between items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-white/10 w-full"
-            >
-              <span className="flex items-center gap-[10px]">
-                <HelpCircle size={15} color="#6b7280" />
-                <span style={{ fontSize: 13, color: '#6b7280' }}>Help &amp; support</span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-              className="flex items-center bg-[#111620] border border-[#1c2333] rounded-[12px] px-4 py-[14px] cursor-pointer transition-colors duration-200 hover:border-[rgba(232,96,122,0.2)] w-full gap-[10px]"
-            >
-              <LogOut size={15} color="#e87070" />
-              <span style={{ fontSize: 13, color: '#e87070' }}>Sign out</span>
-            </button>
           </div>
 
         </motion.main>

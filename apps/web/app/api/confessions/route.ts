@@ -79,7 +79,6 @@ export async function GET(req: NextRequest) {
       eq(stories.is_published, true),
       isNull(stories.deleted_at),
       sql`${stories.moderation_status} IN ('approved', 'pending')`,
-      sql`${stories.author_user_id} IS DISTINCT FROM ${userId}::uuid`,
     )
 
     const cursorWhere = cursor

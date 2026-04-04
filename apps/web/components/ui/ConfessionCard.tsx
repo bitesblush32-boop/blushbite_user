@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Heart } from 'lucide-react'
 import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
@@ -33,9 +35,37 @@ interface Props {
 
 const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) {
   const [currentPage, setCurrentPage] = useState(0)
-  // Use rawBody for text pagination; fall back to body for legacy rows
   const pages    = paginateText(story.rawBody ?? story.body)
   const gradient = getGradient(story.categoryName, story.moodTags)
+
+  // Double-tap to like
+  const lastTapRef                    = useRef<number>(0)
+  const [heartVisible, setHeartVisible] = useState(false)
+  const [heartPos, setHeartPos]         = useState({ x: 0, y: 0 })
+
+  const isLiked = story.userHasLiked
+
+  function onLike() {
+    fetch(`/api/confessions/${story.id}/like`, {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => {})
+  }
+
+  function handleTap(e: React.TouchEvent | React.MouseEvent) {
+    const now   = Date.now()
+    const delta = now - lastTapRef.current
+    lastTapRef.current = now
+    if (delta < 300 && delta > 0) {
+      if (!isLiked) onLike()
+      const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX
+      const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY
+      setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
+      setHeartVisible(true)
+      setTimeout(() => setHeartVisible(false), 900)
+    }
+  }
 
   // Reset page when card scrolls off-screen
   useEffect(() => {
@@ -71,8 +101,12 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         }}
       />
 
-      {/* Story text content */}
-      <div className="absolute inset-0 z-[10]">
+      {/* Story text content — double-tap target */}
+      <div
+        className="absolute inset-0 z-[10]"
+        onTouchEnd={handleTap}
+        onClick={handleTap}
+      >
         <StoryPageContent
           pages={pages}
           pageImageUrls={story.pageImageUrls}
@@ -81,7 +115,37 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         />
       </div>
 
-      {/* Bottom gradient scrim — legibility (handled inside StoryMeta but also here for belt-and-suspenders) */}
+      {/* Double-tap heart animation */}
+      <AnimatePresence>
+        {heartVisible && (
+          <motion.div
+            key="double-tap-heart"
+            initial={{ scale: 0, opacity: 0.9 }}
+            animate={{ scale: [0, 1.4, 1.1], opacity: [0.9, 1, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.85, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              left: heartPos.x - 40,
+              top: heartPos.y - 40,
+              width: 80, height: 80,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 25,
+            }}
+          >
+            <Heart
+              size={72}
+              fill="#e8607a"
+              color="#e8607a"
+              strokeWidth={0}
+              style={{ filter: 'drop-shadow(0 0 16px rgba(232,96,122,0.7))' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom gradient scrim */}
       <div
         className="absolute bottom-0 left-0 right-0 pointer-events-none z-[15]"
         style={{

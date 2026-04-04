@@ -6,11 +6,11 @@ import { Home, BookOpen, Users, BookHeart, User } from 'lucide-react'
 import { usePlayerStore } from '@/store/playerStore'
 
 const NAV_ITEMS = [
-  { label: 'Home',       href: '/',            icon: Home },
-  { label: 'Stories',    href: '/stories',     icon: BookOpen },
-  { label: 'Companions', href: '/companions',  icon: Users },
+  { label: 'Home',        href: '/',            icon: Home },
+  { label: 'Stories',     href: '/stories',     icon: BookOpen },
+  { label: 'Companions',  href: '/companions',  icon: Users },
   { label: 'Confessions', href: '/confessions', icon: BookHeart },
-  { label: 'Me',         href: '/profile',     icon: User },
+  { label: 'Me',          href: '/profile',     icon: User },
 ]
 
 export default function BottomNav() {
@@ -23,13 +23,11 @@ export default function BottomNav() {
       className="bb-bottom-nav fixed left-0 right-0 z-[800]"
       style={{
         height: 64,
+        width: '100%',
         background: 'rgba(7,9,15,0.96)',
         backdropFilter: 'blur(24px)',
         borderTop: '1px solid #1c2333',
         willChange: 'transform',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
       initial={{ y: 64, opacity: 0 }}
       animate={{
@@ -43,61 +41,65 @@ export default function BottomNav() {
         bottom: { type: 'spring', stiffness: 380, damping: 30 },
       }}
     >
-      {/* On mobile: full-width grid. On desktop: centered pill, max 400px */}
       <div
-        className="grid h-full w-full md:w-auto md:h-auto md:flex md:items-center md:gap-3"
-        style={{ gridTemplateColumns: 'repeat(5,1fr)' }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          width: '100%',
+          height: '100%',
+          alignItems: 'center',
+        }}
       >
-      {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-        const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
-        const color = active ? '#e8607a' : '#4b5563'
+        {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+          const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
+          const color = active ? '#e8607a' : '#4b5563'
 
-        return (
-          <motion.button
-            key={href}
-            whileTap={{ scale: 0.80 }}
-            onClick={() => router.push(href)}
-            className="md:w-[80px] md:h-[48px] md:rounded-[12px]"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 3,
-              height: '100%',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-          >
-            <Icon size={22} strokeWidth={1.5} color={color} />
-            <span
+          return (
+            <motion.button
+              key={href}
+              whileTap={{ scale: 0.80 }}
+              onClick={() => router.push(href)}
               style={{
-                fontSize: 10,
-                fontWeight: 500,
-                letterSpacing: '0.03em',
-                color,
-                lineHeight: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 3,
+                width: '100%',
+                height: '100%',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
               }}
             >
-              {label}
-            </span>
-            {active && (
+              <Icon size={22} strokeWidth={1.5} color={color} />
               <span
                 style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: '50%',
-                  background: '#e8607a',
-                  display: 'block',
-                  marginTop: 4,
+                  fontSize: 10,
+                  fontWeight: 500,
+                  letterSpacing: '0.03em',
+                  color,
+                  lineHeight: 1,
                 }}
-              />
-            )}
-          </motion.button>
-        )
-      })}
+              >
+                {label}
+              </span>
+              {active && (
+                <span
+                  style={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: '50%',
+                    background: '#e8607a',
+                    display: 'block',
+                    marginTop: 4,
+                  }}
+                />
+              )}
+            </motion.button>
+          )
+        })}
       </div>
     </motion.div>
   )
