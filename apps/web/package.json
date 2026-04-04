@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.33.0",
     "framer-motion": "^11.3.24",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.446.0",
     "next": "14.2.35",
     "next-auth": "beta",
@@ -33,6 +34,7 @@
     "react-hook-form": "^7.53.0",
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.5.2",
+    "vaul": "^1.1.2",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },

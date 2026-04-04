@@ -49,7 +49,15 @@
       "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1 || echo \"not available at top level\" && cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\" 2>&1)",
       "Bash(node_modules/.bin/next build:*)",
       "Bash(npm run:*)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit --skipLibCheck 2>&1 | head -60)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add vaul 2>&1 | tail -5)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\confessions\" && mkdir -p \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\stories\\\\[id]\\\\like\" && mkdir -p \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\stories\\\\[id]\\\\save\" && mkdir -p \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\stories\\\\[id]\\\\comments\" && mkdir -p \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\stories\\\\views\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit --skipLibCheck 2>&1 | head -40)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add html-to-image 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\" && node -e \"const sharp = require\\('./apps/web/node_modules/sharp'\\); sharp\\('./apps/web/public/bb.png'\\).metadata\\(\\).then\\(m => console.log\\(m.width, m.height, m.format\\)\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -30)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -20)"
     ]
   }
 }

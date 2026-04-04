@@ -14,9 +14,18 @@ interface UIStore {
   openBookingModal: () => void
   closeBookingModal: () => void
   setAvatarUrl: (url: string | null) => void
+
+  // Confessions feed
+  activeStoryId: string | null
+  openComments: (storyId: string) => void
+  closeComments: () => void
+  // unmutedStoryIds — audio is OFF by default; add an id to unmute
+  unmutedStoryIds: Set<string>
+  toggleMute: (storyId: string) => void
+  isMuted: (storyId: string) => boolean
 }
 
-export const useUIStore = create<UIStore>((set) => ({
+export const useUIStore = create<UIStore>((set, get) => ({
   drawerOpen: false,
   modalOpen: false,
   activeCompanionId: null,
@@ -33,4 +42,18 @@ export const useUIStore = create<UIStore>((set) => ({
   closeBookingModal: () => set({ bookingModalOpen: false }),
 
   setAvatarUrl: (url) => set({ avatarUrl: url }),
+
+  // Confessions
+  activeStoryId: null,
+  openComments: (storyId) => set({ activeStoryId: storyId }),
+  closeComments: () => set({ activeStoryId: null }),
+
+  unmutedStoryIds: new Set<string>(),
+  toggleMute: (storyId) => set((s) => {
+    const next = new Set(s.unmutedStoryIds)
+    if (next.has(storyId)) next.delete(storyId)
+    else next.add(storyId)
+    return { unmutedStoryIds: next }
+  }),
+  isMuted: (storyId) => !get().unmutedStoryIds.has(storyId),
 }))

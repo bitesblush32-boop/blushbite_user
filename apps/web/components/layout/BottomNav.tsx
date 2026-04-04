@@ -2,14 +2,14 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Home, BookOpen, Users, Compass, User } from 'lucide-react'
+import { Home, BookOpen, Users, BookHeart, User } from 'lucide-react'
 import { usePlayerStore } from '@/store/playerStore'
 
 const NAV_ITEMS = [
   { label: 'Home',       href: '/',            icon: Home },
   { label: 'Stories',    href: '/stories',     icon: BookOpen },
   { label: 'Companions', href: '/companions',  icon: Users },
-  { label: 'Explore',    href: '/explore',     icon: Compass },
+  { label: 'Confessions', href: '/confessions', icon: BookHeart },
   { label: 'Me',         href: '/profile',     icon: User },
 ]
 
@@ -20,7 +20,7 @@ export default function BottomNav() {
 
   return (
     <motion.div
-      className="fixed left-0 right-0 z-[800]"
+      className="bb-bottom-nav fixed left-0 right-0 z-[800]"
       style={{
         height: 64,
         background: 'rgba(7,9,15,0.96)',

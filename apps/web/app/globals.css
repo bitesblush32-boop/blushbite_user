@@ -85,6 +85,12 @@ h1, h2, h3, .font-display {
   scrollbar-color: var(--border) transparent;
 }
 
+/* ── CONFESSION COMPOSER — textarea placeholder ─────────── */
+.confession-textarea::placeholder {
+  color: #2a3040;
+  opacity: 1;
+}
+
 /* ── SELECTION ──────────────────────────────────────────── */
 ::selection {
   background: rgba(232, 96, 122, 0.25);
@@ -134,6 +140,25 @@ h1, h2, h3, .font-display {
     scroll-snap-align: start;
     flex-shrink: 0;
   }
+}
+
+/* ── FEED MODE — full-screen story takeover ─────────────── */
+body.feed-mode {
+  overflow: hidden;
+}
+body.feed-mode .bb-header {
+  display: none !important;
+}
+body.feed-mode .bb-bottom-nav {
+  display: none !important;
+}
+
+/* ── VAUL DRAWER — dark theme ───────────────────────────── */
+[vaul-drawer] {
+  background: #0d1117 !important;
+}
+[vaul-drawer-overlay] {
+  background: rgba(0, 0, 0, 0.65) !important;
 }
 
 /* ── COMPONENT CLASSES ──────────────────────────────────── */
