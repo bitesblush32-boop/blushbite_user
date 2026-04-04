@@ -82,8 +82,6 @@ export default function HomePage() {
             margin: 0,
             padding: 0,
             height: 4,
-            appearance: 'auto',
-            WebkitAppearance: 'auto',
           }}
         />
         <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
