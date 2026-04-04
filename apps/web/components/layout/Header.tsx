@@ -5,12 +5,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { PlusCircle, Menu, X } from 'lucide-react'
+import { PlusCircle, Menu, X, PlusIcon, Plus, Bell } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 
 export default function Header() {
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const avatarUrl = useUIStore(s => s.avatarUrl)
@@ -80,9 +82,9 @@ export default function Header() {
               transition: 'background 0.15s',
             }}
           >
-            <PlusCircle
-              size={22}
-              strokeWidth={1.5}
+            <Plus
+              size={28}
+              strokeWidth={2}
               color={plusHover ? '#e8607a' : '#6b7280'}
               style={{ transition: 'color 0.15s' }}
             />
@@ -95,15 +97,15 @@ export default function Header() {
             <Image
               src="/bb.png"
               alt="BlushBite"
-              width={80}
-              height={44}
+              width={140}
+              height={1150}
               priority
               style={{ objectFit: 'contain', objectPosition: 'center', display: 'block' }}
             />
           </Link>
         </div>
 
-        {/* RIGHT — hamburger on /profile, user pill everywhere else */}
+        {/* RIGHT — hamburger on /profile, notification icon everywhere else */}
         <div style={{ justifySelf: 'end' }}>
           {isProfile ? (
             <div className="relative" ref={menuRef}>
@@ -162,71 +164,37 @@ export default function Header() {
               )}
             </div>
           ) : (
-            <div ref={menuRef} className="relative flex-shrink-0">
+            <div className="relative">
               <button
                 type="button"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen(open => !open)}
-                className="flex items-center gap-2 bg-[#111620] border border-[#1c2333] py-[6px] pl-2 pr-[14px] rounded-[24px] cursor-pointer transition-colors duration-200 hover:border-[#e8607a]"
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="flex items-center justify-center rounded-full transition-all duration-150"
+                style={{
+                  width: 40, height: 40, background: 'transparent', border: 'none',
+                  color: notificationsOpen ? '#e8607a' : '#6b7280', cursor: 'pointer',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
               >
-                {avatarUrl ? (
-                  <div
-                    className="w-[26px] h-[26px] rounded-full flex-shrink-0"
-                    style={{
-                      backgroundImage: `url(${avatarUrl})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg,#e8607a,#9b5fe0)' }}
-                  >
-                    {initials}
-                  </div>
-                )}
-                <span className="hidden md:inline text-[12px] text-[#6b7280]">{alias}</span>
-                <span className="ml-1 text-[12px] text-[#6b7280]">{menuOpen ? '▴' : '▾'}</span>
+                <Bell size={22} strokeWidth={1.5} />
               </button>
 
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-[calc(100%+10px)] z-10 flex w-[180px] flex-col gap-[2px] rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-2"
-                  style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
-                >
-                  <Link
-                    href="/profile"
-                    role="menuitem"
-                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#eeeef0]"
-                    onClick={() => setMenuOpen(false)}
+              <AnimatePresence>
+                {notificationsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="absolute right-0 top-[calc(100%+10px)] z-10 rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-4"
+                    style={{ minWidth: 320, maxHeight: 400, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
                   >
-                    Profile &amp; Preferences
-                  </Link>
-                  <Link
-                    href="/privacy"
-                    role="menuitem"
-                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#eeeef0]"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Safety &amp; Privacy
-                  </Link>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="rounded-[8px] px-3 py-2 text-left text-[13px] transition-colors duration-150 hover:bg-white/[0.06]"
-                    style={{ color: '#e87070' }}
-                    onClick={() => {
-                      setMenuOpen(false)
-                      signOut({ callbackUrl: '/auth/signin' })
-                    }}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
+                    <div className="text-[13px] text-[#6b7280] text-center py-8">
+                      No notifications yet
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>

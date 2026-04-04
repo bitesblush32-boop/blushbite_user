@@ -585,7 +585,7 @@ export default function ProfilePage() {
           if (d.avatar_url) setAvatarUrl(d.avatar_url)
         }}
         defaults={{
-          displayName: profile?.display_name ?? undefined,
+          alias:       profile?.alias         ?? undefined,
           bio:         profile?.bio          ?? undefined,
           dateOfBirth: profile?.date_of_birth ?? undefined,
           country:     profile?.country      ?? undefined,
