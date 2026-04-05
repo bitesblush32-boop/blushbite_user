@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useRef, useEffect, useState, forwardRef } from 'react'
+// @ts-ignore — react-pageflip types are loose
+import HTMLFlipBook from 'react-pageflip'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {
@@ -11,59 +12,64 @@ interface Props {
   onPageChange:   (n: number) => void
 }
 
+// react-pageflip clones each child with a ref — forwardRef required
+const FlipPage = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
+  ({ children }, ref) => (
+    <div
+      ref={ref}
+      style={{
+        width:      '100%',
+        height:     '100%',
+        background: '#07090f',
+        overflow:   'hidden',
+      }}
+    >
+      {children}
+    </div>
+  )
+)
+FlipPage.displayName = 'FlipPage'
+
 export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChange }: Props) {
-  const [direction, setDirection] = useState(0)
-  const touch = useRef({ startX: 0, startY: 0, dir: '', locked: false })
+  const bookRef      = useRef<any>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dims, setDims] = useState({ w: 0, h: 0 })
+  const prevPage     = useRef(currentPage)
 
   const useImages = Array.isArray(pageImageUrls) && pageImageUrls.length > 0
   const total     = useImages ? pageImageUrls!.length : pages.length
 
-  const goTo = (n: number) => {
-    if (n < 0 || n >= total) return
-    setDirection(n > currentPage ? 1 : -1)
-    onPageChange(n)
-  }
+  // Measure container once on mount
+  useEffect(() => {
+    if (!containerRef.current) return
+    const { width, height } = containerRef.current.getBoundingClientRect()
+    setDims({ w: Math.floor(width), h: Math.floor(height) })
+  }, [])
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touch.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, dir: '', locked: false }
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const t = touch.current
-    if (t.locked) {
-      if (t.dir === 'horizontal') e.preventDefault()
-      return
+  // Sync when ConfessionCard resets currentPage to 0 (card becomes inactive)
+  useEffect(() => {
+    if (currentPage !== prevPage.current && bookRef.current) {
+      bookRef.current.pageFlip().turnToPage(currentPage)
+      prevPage.current = currentPage
     }
-    const dx   = e.touches[0].clientX - t.startX
-    const dy   = e.touches[0].clientY - t.startY
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    if (dist < 10) return
-    const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI)
-    t.dir    = (angle < 30 || angle > 150) ? 'horizontal' : 'vertical'
-    t.locked = true
-    if (t.dir === 'horizontal') e.preventDefault()
-  }
+  }, [currentPage])
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const t  = touch.current
-    if (t.dir !== 'horizontal') return
-    const dx = e.changedTouches[0].clientX - t.startX
-    if (dx < -50) goTo(currentPage + 1)
-    else if (dx > 50) goTo(currentPage - 1)
-  }
-
-  const variants = {
-    enter:  (dir: number) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit:   (dir: number) => ({ x: dir > 0 ? -300 : 300, opacity: 0 }),
+  function goTo(n: number) {
+    if (n < 0 || n >= total) return
+    const pf = bookRef.current?.pageFlip()
+    if (!pf) return
+    // flipNext/flipPrev both play the full animated curl in the correct direction
+    if (n > currentPage) {
+      pf.flipNext('bottom')
+    } else {
+      pf.flipPrev('bottom')
+    }
   }
 
   return (
     <div
-      style={{ touchAction: 'pan-y', width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}
     >
       {/* Desktop prev arrow */}
       {currentPage > 0 && (
@@ -93,60 +99,79 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
         </button>
       )}
 
-      {/* Page content */}
-      <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-        <motion.div
-          key={currentPage}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-          style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
+      {/* Only render once we have real dimensions */}
+      {dims.w > 0 && dims.h > 0 && (
+        <HTMLFlipBook
+          ref={bookRef}
+          width={dims.w}
+          height={dims.h}
+          size="fixed"
+          minWidth={50}
+          maxWidth={4000}
+          minHeight={50}
+          maxHeight={4000}
+          drawShadow={true}
+          flippingTime={700}
+          usePortrait={true}
+          startZIndex={0}
+          autoSize={false}
+          showCover={false}
+          mobileScrollSupport={false}
+          useMouseEvents={true}
+          style={{ touchAction: 'none' }}
+          className=""
+          startPage={0}
+          onFlip={(e: { data: number }) => {
+            onPageChange(e.data)
+            prevPage.current = e.data
+          }}
         >
-          {useImages ? (
-            // Image mode — the pre-rendered JPG IS the page
-            <img
-              src={pageImageUrls![currentPage]}
-              alt=""
-              style={{
-                width:     '100%',
-                height:    '100%',
-                objectFit: 'contain',
-                display:   'block',
-              }}
-            />
-          ) : (
-            // Text mode — premium ereader layout
-            <div
-              style={{
-                height:   '100%',
-                display:  'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '48px 32px',
-              }}
-              className="md:px-[56px] md:py-[64px]"
-            >
-              <p
-                style={{
-                  fontFamily:    "'Playfair Display', serif",
-                  fontSize:      20,
-                  color:         '#eeeef0',
-                  lineHeight:    2.0,
-                  letterSpacing: '0.02em',
-                  whiteSpace:    'pre-wrap',
-                  width:         '100%',
-                }}
-              >
-                {pages[currentPage]}
-              </p>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
+          {useImages
+            ? pageImageUrls!.map((url, i) => (
+                <FlipPage key={i}>
+                  <img
+                    src={url}
+                    alt=""
+                    style={{
+                      width:     '100%',
+                      height:    '100%',
+                      objectFit: 'contain',
+                      display:   'block',
+                    }}
+                  />
+                </FlipPage>
+              ))
+            : pages.map((text, i) => (
+                <FlipPage key={i}>
+                  <div
+                    style={{
+                      height:         '100%',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      padding:        '48px 32px',
+                    }}
+                    className="md:px-[56px] md:py-[64px]"
+                  >
+                    <p
+                      style={{
+                        fontFamily:    "'Playfair Display', serif",
+                        fontSize:      20,
+                        color:         '#eeeef0',
+                        lineHeight:    2.0,
+                        letterSpacing: '0.02em',
+                        whiteSpace:    'pre-wrap',
+                        width:         '100%',
+                      }}
+                    >
+                      {text}
+                    </p>
+                  </div>
+                </FlipPage>
+              ))
+          }
+        </HTMLFlipBook>
+      )}
     </div>
   )
 }

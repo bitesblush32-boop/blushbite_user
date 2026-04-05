@@ -32,6 +32,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.53.0",
+    "react-pageflip": "^2.0.3",
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.5.2",
     "vaul": "^1.1.2",

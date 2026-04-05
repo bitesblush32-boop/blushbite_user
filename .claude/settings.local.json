@@ -57,7 +57,8 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add html-to-image 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\" && node -e \"const sharp = require\\('./apps/web/node_modules/sharp'\\); sharp\\('./apps/web/public/bb.png'\\).metadata\\(\\).then\\(m => console.log\\(m.width, m.height, m.format\\)\\)\")",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -30)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -20)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -20)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add react-pageflip 2>&1)"
     ]
   }
 }
