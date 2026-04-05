@@ -7,6 +7,7 @@ import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { StoryMeta } from './StoryMeta'
+import { useLikeMutation } from '@/hooks/useLikeMutation'
 import type { Story } from '@/hooks/useInfiniteConfessions'
 
 // ─── Gradient map ─────────────────────────────────────────────────────────────
@@ -43,27 +44,24 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
   const [heartVisible, setHeartVisible] = useState(false)
   const [heartPos, setHeartPos]         = useState({ x: 0, y: 0 })
 
-  const isLiked = story.userHasLiked
-
-  function onLike() {
-    fetch(`/api/confessions/${story.id}/like`, {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(() => {})
-  }
+  const isLiked      = story.userHasLiked
+  const likeMutation = useLikeMutation()
 
   function handleTap(e: React.TouchEvent | React.MouseEvent) {
     const now   = Date.now()
     const delta = now - lastTapRef.current
     lastTapRef.current = now
     if (delta < 300 && delta > 0) {
-      if (!isLiked) onLike()
-      const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
-      const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX
-      const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY
-      setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
-      setHeartVisible(true)
-      setTimeout(() => setHeartVisible(false), 900)
+      // Instagram behaviour: double-tap only triggers a new like, never toggles off
+      if (!isLiked) {
+        likeMutation.mutate({ storyId: story.id, currentlyLiked: false })
+        const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX
+        const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY
+        setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
+        setHeartVisible(true)
+        setTimeout(() => setHeartVisible(false), 900)
+      }
     }
   }
 

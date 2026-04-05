@@ -232,6 +232,12 @@ function StepCanvas({
   const [placeholder]                     = useState(() => PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)])
   const [direction, setDirection]         = useState(0)
 
+  // Lock page scroll while composing
+  useEffect(() => {
+    document.body.classList.add('canvas-mode')
+    return () => document.body.classList.remove('canvas-mode')
+  }, [])
+
   const currentText = pages[pageIndex] ?? ''
   const charCount   = currentText.length
   const hasContent  = pages.some(p => p.trim().length > 0)
@@ -293,7 +299,7 @@ function StepCanvas({
   return (
     <div
       className="flex flex-col items-center w-full"
-      style={{ paddingTop: 56, minHeight: '100vh', background: '#07090f' }}
+      style={{ paddingTop: 56, height: '100dvh', overflow: 'hidden', background: '#07090f' }}
     >
       <NoisGlow />
 
@@ -504,7 +510,6 @@ function StepMeta({
           transition={{ duration: 0.35, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         >
           <p style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 500 }}>Title</p>
-          <p style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', marginBottom: 12 }}>Optional — leave blank to post without a title.</p>
           <div className="relative">
             <input
               type="text"
@@ -536,14 +541,14 @@ function StepMeta({
           {/* Label row */}
           <div className="flex items-center justify-between mb-1">
             <p style={{ fontSize: 10, color: '#e8607a', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>
-              What is this about?
+              What is this about? *
             </p>
             <span style={{ fontSize: 10, color: '#4b5563' }}>
               {selectedCategories.length} selected
             </span>
           </div>
           <p style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', marginBottom: 16 }}>
-            Pick everything that fits.
+            Required — pick at least one.
           </p>
 
           {/* Chip grid — first 20 */}
@@ -892,12 +897,39 @@ function StepPreview({
 
       <div className="w-full max-w-[480px] mx-auto px-5 py-8 flex flex-col items-center">
 
+        {/* Title */}
+        {title && (
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: '#eeeef0', fontStyle: 'italic', textAlign: 'center', marginBottom: 12 }}>
+            {title}
+          </p>
+        )}
+
+        {/* Category chips */}
+        {selectedCategories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-5 justify-center">
+            {selectedCategories.slice(0, 4).map(cat => (
+              <span
+                key={cat}
+                className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+              >
+                {cat}
+              </span>
+            ))}
+            {selectedCategories.length > 4 && (
+              <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                +{selectedCategories.length - 4} more
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Image carousel */}
         <div
           className="relative w-full overflow-hidden"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          style={{ minHeight: 420 }}
+          style={{ minHeight: '55vh' }}
         >
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -921,7 +953,7 @@ function StepPreview({
 
         {/* Page dots */}
         {pageImageUrls.length > 1 && (
-          <div className="flex gap-[6px] mt-5">
+          <div className="flex gap-[6px] mt-4">
             {pageImageUrls.map((_, i) => (
               <button
                 key={i}
@@ -934,35 +966,8 @@ function StepPreview({
           </div>
         )}
 
-        {/* Category chips */}
-        {selectedCategories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-5 justify-center">
-            {selectedCategories.slice(0, 4).map(cat => (
-              <span
-                key={cat}
-                className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-                style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
-              >
-                {cat}
-              </span>
-            ))}
-            {selectedCategories.length > 4 && (
-              <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
-                +{selectedCategories.length - 4} more
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Title */}
-        {title && (
-          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: '#eeeef0', fontStyle: 'italic', textAlign: 'center', marginTop: 12 }}>
-            {title}
-          </p>
-        )}
-
         {/* Author */}
-        <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', marginTop: 8 }}>{alias}</p>
+        <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', marginTop: 10 }}>{alias}</p>
 
         {/* Error */}
         {publishError && (
@@ -1011,6 +1016,9 @@ type ComposerStep = 'canvas' | 'meta' | 'generating' | 'preview'
 export default function CreatePage() {
   const router            = useRouter()
   const { data: session } = useSession()
+
+  // Replace the current history entry so back-nav from / never returns here
+  useEffect(() => { router.replace('/create') }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [step, setStep]                           = useState<ComposerStep>('canvas')
   const [pages, setPages]                         = useState<string[]>([''])
@@ -1070,7 +1078,7 @@ export default function CreatePage() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Something went wrong.')
-      setTimeout(() => router.push('/confessions'), 600)
+      setTimeout(() => router.replace('/'), 600)
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : 'Something slipped. Try again.')
       setPublishing(false)

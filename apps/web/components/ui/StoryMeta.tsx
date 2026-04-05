@@ -5,15 +5,13 @@ interface Props {
   isAnonymous:  boolean
   moodTags:     string[]
   categoryName: string
-  body:         string
+  body?:        string
   rawBody?:     string
-  totalPages:   number
+  totalPages?:  number
 }
 
-export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName, body, rawBody, totalPages }: Props) {
+export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName }: Props) {
   const displayTags = moodTags.slice(0, 2)
-  const textForExcerpt = rawBody ?? body
-  const excerpt     = textForExcerpt.slice(0, 80).trim()
 
   return (
     <>
@@ -30,7 +28,7 @@ export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName, bo
       {/* Meta */}
       <div
         className="absolute flex flex-col"
-        style={{ bottom: 24, left: 16, right: 80, zIndex: 20, gap: 6 }}
+        style={{ bottom: 48, left: 16, right: 80, zIndex: 20, gap: 6 }}
       >
         {/* Author */}
         {isAnonymous || !authorAlias ? (
@@ -78,15 +76,6 @@ export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName, bo
           </div>
         )}
 
-        {/* Excerpt teaser — only for multi-page stories */}
-        {totalPages > 1 && excerpt && (
-          <p
-            className="line-clamp-2"
-            style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic', lineHeight: 1.5 }}
-          >
-            {excerpt}…
-          </p>
-        )}
       </div>
     </>
   )

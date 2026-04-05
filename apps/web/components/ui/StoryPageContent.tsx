@@ -68,25 +68,25 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Page indicator dots */}
+      {/* Page indicator dots — bottom-center */}
       {total > 1 && (
         <div
-          className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
-          style={{ top: 16, gap: 5 }}
+          className="flex items-center pointer-events-none"
+          style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 20, gap: 5 }}
         >
           {Array.from({ length: dotCount }).map((_, i) => (
             <div
               key={i}
               className="rounded-full transition-all duration-200"
               style={{
-                width:      i === currentPage ? 6 : 4,
-                height:     i === currentPage ? 6 : 4,
-                background: i === currentPage ? '#e8607a' : '#2a3040',
+                width:      i === currentPage ? 6 : 5,
+                height:     i === currentPage ? 6 : 5,
+                background: i === currentPage ? '#e8607a' : 'rgba(255,255,255,0.25)',
               }}
             />
           ))}
           {total > MAX_DOTS && (
-            <span style={{ fontSize: 10, color: '#2a3040', marginLeft: 2 }}>…</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 2 }}>…</span>
           )}
         </div>
       )}
@@ -96,8 +96,10 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
         <button
           type="button"
           onClick={() => goTo(currentPage - 1)}
-          className="absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"
-          style={{ left: 8, width: 36, height: 36, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.25)', border: 'none', cursor: 'pointer' }}
+          className="absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center rounded-full transition-opacity duration-200"
+          style={{ left: 8, width: 36, height: 36, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', opacity: 0.15 }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.5' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.15' }}
         >
           <ChevronLeft size={20} />
         </button>
@@ -108,8 +110,10 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
         <button
           type="button"
           onClick={() => goTo(currentPage + 1)}
-          className="absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"
-          style={{ right: 8, width: 36, height: 36, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.25)', border: 'none', cursor: 'pointer' }}
+          className="absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center rounded-full transition-opacity duration-200"
+          style={{ right: 8, width: 36, height: 36, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', opacity: 0.15 }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.5' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.15' }}
         >
           <ChevronRight size={20} />
         </button>
@@ -141,19 +145,27 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
               }}
             />
           ) : (
-            // Text mode — legacy fallback
-            <div style={{ overflowY: 'auto', padding: '32px 24px', height: '100%' }} className="md:px-10 md:py-10">
+            // Text mode — premium ereader layout
+            <div
+              style={{
+                height:   '100%',
+                display:  'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px 32px',
+              }}
+              className="md:px-[56px] md:py-[64px]"
+            >
               <p
                 style={{
                   fontFamily:    "'Playfair Display', serif",
-                  fontSize:      19,
+                  fontSize:      20,
                   color:         '#eeeef0',
-                  lineHeight:    1.95,
-                  letterSpacing: '0.01em',
+                  lineHeight:    2.0,
+                  letterSpacing: '0.02em',
                   whiteSpace:    'pre-wrap',
-                  paddingTop:    total > 1 ? 24 : 0,
+                  width:         '100%',
                 }}
-                className="md:text-[19px] text-[17px]"
               >
                 {pages[currentPage]}
               </p>
@@ -162,14 +174,6 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
         </motion.div>
       </AnimatePresence>
 
-      {/* Page turn label (text mode only) */}
-      {!useImages && total > 1 && (
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10">
-          <span style={{ fontSize: 10, color: '#2a3040' }}>
-            Page {currentPage + 1} of {total}
-          </span>
-        </div>
-      )}
     </div>
   )
 }

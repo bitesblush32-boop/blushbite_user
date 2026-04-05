@@ -153,6 +153,11 @@ body.feed-mode .bb-bottom-nav {
   display: none !important;
 }
 
+/* ── CANVAS MODE — confession composer, no page scroll ───── */
+body.canvas-mode {
+  overflow: hidden;
+}
+
 /* ── VAUL DRAWER — dark theme ───────────────────────────── */
 [vaul-drawer] {
   background: #0d1117 !important;
