@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 import { Heart, MessageCircle, Bookmark, Volume2, VolumeX } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
@@ -13,6 +14,7 @@ interface Props {
   commentCount: number
   userHasLiked: boolean
   userHasSaved: boolean
+  layout?:      'vertical' | 'horizontal'
 }
 
 function fmt(n: number): string {
@@ -25,10 +27,12 @@ function ActionBtn({
   children,
   onTap,
   label,
+  horizontal,
 }: {
-  children: React.ReactNode
-  onTap: () => void
-  label: string
+  children:    React.ReactNode
+  onTap:       () => void
+  label:       string
+  horizontal?: boolean
 }) {
   return (
     <button
@@ -37,9 +41,9 @@ function ActionBtn({
       onClick={onTap}
       className="flex flex-col items-center"
       style={{
-        gap:        6,
-        minWidth:   48,
-        minHeight:  48,
+        gap:        horizontal ? 4 : 6,
+        minWidth:   horizontal ? 44 : 48,
+        minHeight:  horizontal ? 44 : 48,
         background: 'transparent',
         border:     'none',
         cursor:     'pointer',
@@ -54,6 +58,7 @@ function ActionBtn({
 
 export function ActionPill({
   storyId, likeCount, saveCount, commentCount, userHasLiked, userHasSaved,
+  layout = 'vertical',
 }: Props) {
   const { openComments, toggleMute, isMuted } = useUIStore()
   const muted        = isMuted(storyId)
@@ -61,6 +66,9 @@ export function ActionPill({
   const saveAnim     = useAnimation()
   const likeMutation = useLikeMutation()
   const saveMutation = useSaveMutation()
+
+  // Phase 2 audio stub — local state for horizontal layout
+  const [audioOn, setAudioOn] = useState(true)
 
   const springTap = { scale: [1, 1.35, 0.9, 1] as number[], transition: { type: 'spring' as const, stiffness: 400, damping: 12 } }
 
@@ -73,16 +81,20 @@ export function ActionPill({
     saveMutation.mutate({ storyId, currentlySaved: userHasSaved })
   }
 
-  return (
-    <div
-      className="absolute flex flex-col items-center"
-      style={{ right: 12, bottom: 120, zIndex: 20, gap: 24 }}
-    >
+  const iconSize  = layout === 'horizontal' ? 22 : 26
+  const countStyle: React.CSSProperties = layout === 'horizontal'
+    ? { fontSize: 11, color: '#9ca3af' }
+    : { fontSize: 12, color: '#eeeef0' }
+
+  const isHorizontal = layout === 'horizontal'
+
+  const buttons = (
+    <>
       {/* Like */}
-      <ActionBtn onTap={handleLike} label="Like">
+      <ActionBtn onTap={handleLike} label="Like" horizontal={isHorizontal}>
         <motion.div animate={likeAnim}>
           <Heart
-            size={26}
+            size={iconSize}
             strokeWidth={1.8}
             style={{
               color: userHasLiked ? '#e8607a' : '#eeeef0',
@@ -90,30 +102,24 @@ export function ActionPill({
             }}
           />
         </motion.div>
-        <span
-          className="font-semibold drop-shadow-sm"
-          style={{ fontSize: 12, color: '#eeeef0' }}
-        >
+        <span className="font-semibold drop-shadow-sm" style={countStyle}>
           {fmt(likeCount)}
         </span>
       </ActionBtn>
 
       {/* Comment */}
-      <ActionBtn onTap={() => openComments(storyId)} label="Comments">
-        <MessageCircle size={26} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-        <span
-          className="font-semibold drop-shadow-sm"
-          style={{ fontSize: 12, color: '#eeeef0' }}
-        >
+      <ActionBtn onTap={() => openComments(storyId)} label="Comments" horizontal={isHorizontal}>
+        <MessageCircle size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+        <span className="font-semibold drop-shadow-sm" style={countStyle}>
           {fmt(commentCount)}
         </span>
       </ActionBtn>
 
       {/* Save */}
-      <ActionBtn onTap={handleSave} label="Save">
+      <ActionBtn onTap={handleSave} label="Save" horizontal={isHorizontal}>
         <motion.div animate={saveAnim}>
           <Bookmark
-            size={26}
+            size={iconSize}
             strokeWidth={1.8}
             style={{
               color: userHasSaved ? '#c9a96e' : '#eeeef0',
@@ -121,21 +127,51 @@ export function ActionPill({
             }}
           />
         </motion.div>
-        <span
-          className="font-semibold drop-shadow-sm"
-          style={{ fontSize: 12, color: '#eeeef0' }}
-        >
+        <span className="font-semibold drop-shadow-sm" style={countStyle}>
           {fmt(saveCount)}
         </span>
       </ActionBtn>
 
-      {/* Mute toggle (Phase 2 audio placeholder) */}
-      <ActionBtn onTap={() => toggleMute(storyId)} label={muted ? 'Unmute' : 'Mute'}>
-        {muted
-          ? <VolumeX size={26} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-          : <Volume2 size={26} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-        }
-      </ActionBtn>
+      {/* Mute / audio toggle */}
+      {isHorizontal ? (
+        <ActionBtn onTap={() => setAudioOn(v => !v)} label={audioOn ? 'Mute' : 'Unmute'} horizontal>
+          {audioOn
+            ? <Volume2 size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+            : <VolumeX size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+          }
+        </ActionBtn>
+      ) : (
+        <ActionBtn onTap={() => toggleMute(storyId)} label={muted ? 'Unmute' : 'Mute'}>
+          {muted
+            ? <VolumeX size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+            : <Volume2 size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+          }
+        </ActionBtn>
+      )}
+    </>
+  )
+
+  if (isHorizontal) {
+    return (
+      <div
+        style={{
+          display:        'flex',
+          flexDirection:  'row',
+          justifyContent: 'space-around',
+          width:          '100%',
+        }}
+      >
+        {buttons}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="absolute flex flex-col items-center"
+      style={{ right: 12, bottom: 120, zIndex: 20, gap: 24 }}
+    >
+      {buttons}
     </div>
   )
 }

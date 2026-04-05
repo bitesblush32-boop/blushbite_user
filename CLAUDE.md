@@ -1165,3 +1165,194 @@ db.select({ id: stories.id, title: stories.title }).from(stories)
 - [ ] components/ui/AudioCard.tsx (React.memo)
 - [ ] components/ui/BookingModal.tsx (next/dynamic)
 - [ ] components/ui/ProfileDrawer.tsx (next/dynamic)
+
+---
+
+## 19. CURRENT FILE STRUCTURE (as-built — updated 2026-04-05)
+
+```
+BlushBite/                                  ← monorepo root
+├── .dockerignore
+├── .gitattributes
+├── .gitignore
+├── .npmrc                                  ← shamefully-hoist=true
+├── Dockerfile                              ← multi-stage node:20-alpine build
+├── nixpacks.toml                           ← nixPkgs = ["nodejs_20"]
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml                     ← packages: ['apps/*']
+├── railway.json                            ← builder: DOCKERFILE
+│
+├── apps/
+│   └── web/                               ← Next.js 14 App Router
+│       ├── .env.local
+│       ├── auth.config.ts                 ← edge-safe, no bcrypt/db
+│       ├── auth.ts                        ← full Node.js, all 3 providers
+│       ├── drizzle.config.ts
+│       ├── middleware.ts                  ← 3-gate auth middleware
+│       ├── next.config.js
+│       ├── next-env.d.ts
+│       ├── package.json                   ← name: blushbite-web
+│       ├── postcss.config.js
+│       ├── tailwind.config.ts
+│       ├── tsconfig.json
+│       │
+│       ├── app/                           ← Next.js App Router root
+│       │   ├── globals.css                ← Tailwind base + design tokens + body.feed-mode + body.canvas-mode
+│       │   ├── layout.tsx                 ← root layout, fonts, providers
+│       │   ├── providers.tsx              ← QueryClientProvider + SessionProvider
+│       │   │
+│       │   ├── (auth)/                    ← auth route group
+│       │   │   ├── layout.tsx
+│       │   │   └── auth/
+│       │   │       ├── signin/page.tsx    ← Google + Credentials, register toggle
+│       │   │       └── onboarding/page.tsx
+│       │   │
+│       │   ├── (dreamer)/                 ← main app route group
+│       │   │   ├── layout.tsx             ← Header + BottomNav + MiniPlayer + pt-[95px]
+│       │   │   ├── page.tsx               ← home feed
+│       │   │   ├── confessions/page.tsx   ← full-screen reel (feed-mode, no padding)
+│       │   │   ├── create/page.tsx        ← composer: canvas → meta → preview/publish
+│       │   │   └── profile/page.tsx
+│       │   │
+│       │   ├── (companion)/               ← companion onboarding route group
+│       │   │   ├── layout.tsx
+│       │   │   └── companion/onboarding/
+│       │   │       ├── identity/page.tsx
+│       │   │       └── verify/page.tsx    ← Didit liveness check
+│       │   │
+│       │   ├── privacy/page.tsx
+│       │   ├── terms/page.tsx
+│       │   │
+│       │   └── api/
+│       │       ├── auth/
+│       │       │   ├── [...nextauth]/route.ts
+│       │       │   ├── register/route.ts
+│       │       │   └── complete-onboarding/route.ts
+│       │       ├── companions/onboarding/
+│       │       │   ├── identity/route.ts
+│       │       │   └── verify/
+│       │       │       ├── start/route.ts
+│       │       │       └── status/route.ts
+│       │       ├── confessions/route.ts   ← GET paginated feed
+│       │       ├── stories/
+│       │       │   ├── route.ts           ← POST create story
+│       │       │   ├── views/route.ts     ← POST bulk view tracking
+│       │       │   └── [id]/
+│       │       │       ├── comments/route.ts
+│       │       │       ├── like/route.ts   ← POST like / DELETE unlike
+│       │       │       └── save/route.ts
+│       │       ├── tags/route.ts
+│       │       ├── users/
+│       │       │   ├── profile/route.ts
+│       │       │   ├── avatar/route.ts
+│       │       │   ├── photos/route.ts
+│       │       │   └── posts/
+│       │       │       ├── route.ts
+│       │       │       └── [id]/route.ts
+│       │       ├── upload/
+│       │       │   ├── file/route.ts      ← PUT direct upload → R2
+│       │       │   └── presigned-url/route.ts
+│       │       ├── webhooks/didit/route.ts
+│       │       ├── health/route.ts
+│       │       └── dev/reset-test-user/route.ts
+│       │
+│       ├── components/
+│       │   ├── layout/
+│       │   │   ├── Header.tsx             ← fixed 75px, .bb-header, glassmorphism
+│       │   │   ├── BottomNav.tsx          ← .bb-bottom-nav, hidden in feed-mode
+│       │   │   └── MiniPlayer.tsx         ← fixed bottom-0 68px, playerStore
+│       │   └── ui/
+│       │       ├── ActionPill.tsx         ← like/comment/save/mute, useLikeMutation
+│       │       ├── AudioCard.tsx          ← React.memo, 240px, CSS waveform
+│       │       ├── BookingModal.tsx       ← next/dynamic ssr:false
+│       │       ├── CommentsSheet.tsx      ← vaul drawer, uiStore.activeStoryId
+│       │       ├── CompanionCard.tsx      ← React.memo, 220px
+│       │       ├── ConfessionCard.tsx     ← memo, double-tap → useLikeMutation
+│       │       ├── ConfessionsFeed.tsx    ← fixed inset-0, snap-y, body.feed-mode
+│       │       ├── DiditVerify.tsx        ← Didit liveness SDK wrapper
+│       │       ├── EditProfileDrawer.tsx
+│       │       ├── FileUpload.tsx         ← useUploadToR2
+│       │       ├── ProfileDrawer.tsx      ← next/dynamic ssr:false
+│       │       ├── StoryCard.tsx          ← React.memo, 240px
+│       │       ├── StoryMeta.tsx          ← author + tags, bottom:48, no excerpt
+│       │       ├── StoryPageContent.tsx   ← swipe pages, dots bottom-center
+│       │       └── TasteDrawer.tsx
+│       │
+│       ├── db/
+│       │   ├── index.ts                   ← Drizzle + postgres connection
+│       │   ├── schema.ts                  ← all 35 Phase 1 tables
+│       │   └── migrations/
+│       │       └── add_profile_fields.sql
+│       │
+│       ├── hooks/
+│       │   ├── useInfiniteConfessions.ts  ← TanStack Query infinite scroll, ['confessions','feed']
+│       │   ├── useLikeMutation.ts         ← optimistic update on ['confessions','feed'] cache
+│       │   ├── useSaveMutation.ts
+│       │   ├── useUploadToR2.ts
+│       │   └── useViewTracking.ts         ← IntersectionObserver + batch queue
+│       │
+│       ├── lib/
+│       │   ├── alias.ts                   ← @adjective-noun generator
+│       │   ├── data.ts                    ← dummy companions/stories/audios
+│       │   ├── fonts.ts                   ← next/font: Playfair Display + DM Sans
+│       │   ├── paginateText.ts            ← split body into 700-char pages
+│       │   ├── r2.ts                      ← Cloudflare R2 S3 client
+│       │   ├── types.ts
+│       │   └── viewTrackingQueue.ts       ← batched view event queue
+│       │
+│       ├── public/
+│       │   ├── bb.png
+│       │   └── logo_light.png
+│       │
+│       ├── store/
+│       │   ├── moodStore.ts               ← intensity 0-100
+│       │   ├── playerStore.ts             ← audio player state
+│       │   └── uiStore.ts                 ← drawer/modal/comments/mute state
+│       │
+│       └── types/
+│           └── next-auth.d.ts             ← Session + JWT augmentation
+│
+├── demo_designs/                          ← reference HTML + logo assets
+│   ├── social2.html                       ← master design reference
+│   ├── logo_light.png
+│   └── logos/                             ← a.png … logo_dark.png
+│
+├── design_system/                         ← locked design tokens reference
+│   ├── design-system.html
+│   ├── globals.css
+│   └── tailwind.config.ts
+│
+└── documentation/                         ← PDFs: PRD, agreements, tech stack
+    ├── BlushBite_Development_Agreement.pdf
+    ├── BlushBite_Master_PRD.pdf
+    ├── BlushBite_PRD.pdf
+    ├── BlushBite_Proposal.pdf
+    ├── BlushBite_TechStack_v2.pdf
+    ├── Signed_BlushBite-MSDS_Agreement_Updated.pdf
+    └── Signed_Document_20260319_123843.pdf
+```
+
+### Key path aliases (apps/web/tsconfig.json)
+```
+@/*  →  apps/web/* (root of the web app)
+
+Examples:
+  @/components/ui/ConfessionCard   →  apps/web/components/ui/ConfessionCard.tsx
+  @/hooks/useLikeMutation          →  apps/web/hooks/useLikeMutation.ts
+  @/store/uiStore                  →  apps/web/store/uiStore.ts
+  @/db/schema                      →  apps/web/db/schema.ts
+  @/lib/data                       →  apps/web/lib/data.ts
+```
+
+### Route → file map
+```
+/                          →  app/(dreamer)/page.tsx
+/confessions               →  app/(dreamer)/confessions/page.tsx
+/create                    →  app/(dreamer)/create/page.tsx
+/profile                   →  app/(dreamer)/profile/page.tsx
+/auth/signin               →  app/(auth)/auth/signin/page.tsx
+/auth/onboarding           →  app/(auth)/auth/onboarding/page.tsx
+/companion/onboarding/…    →  app/(companion)/companion/onboarding/…/page.tsx
+/privacy                   →  app/privacy/page.tsx
+/terms                     →  app/terms/page.tsx
+```

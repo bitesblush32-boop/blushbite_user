@@ -58,9 +58,6 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
     exit:   (dir: number) => ({ x: dir > 0 ? -300 : 300, opacity: 0 }),
   }
 
-  const MAX_DOTS = 8
-  const dotCount = Math.min(total, MAX_DOTS)
-
   return (
     <div
       style={{ touchAction: 'pan-y', width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}
@@ -68,29 +65,6 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Page indicator dots — bottom-center */}
-      {total > 1 && (
-        <div
-          className="flex items-center pointer-events-none"
-          style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 20, gap: 5 }}
-        >
-          {Array.from({ length: dotCount }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full transition-all duration-200"
-              style={{
-                width:      i === currentPage ? 6 : 5,
-                height:     i === currentPage ? 6 : 5,
-                background: i === currentPage ? '#e8607a' : 'rgba(255,255,255,0.25)',
-              }}
-            />
-          ))}
-          {total > MAX_DOTS && (
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 2 }}>…</span>
-          )}
-        </div>
-      )}
-
       {/* Desktop prev arrow */}
       {currentPage > 0 && (
         <button
