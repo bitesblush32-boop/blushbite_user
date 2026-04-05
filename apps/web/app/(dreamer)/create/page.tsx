@@ -19,13 +19,15 @@ const PLACEHOLDERS = [
   "It started so quietly. Then it didn't.",
 ]
 
+// Keep in sync with ConfessionCard.tsx GRADIENT_MAP — same gradient renders
+// in the card and is baked into the image so the body zone looks seamless.
 const GRADIENT_MAP: Record<string, string> = {
-  Romantic:     'linear-gradient(160deg, #1a0e20 0%, #07090f 50%, #0a0a14 100%)',
-  Intense:      'linear-gradient(160deg, #0d0a14 0%, #07090f 50%, #100810 100%)',
-  Confessions:  'linear-gradient(160deg, #0e0d18 0%, #07090f 50%, #0a0810 100%)',
-  'Dark Romance':'linear-gradient(160deg, #1a0a18 0%, #07090f 50%, #0d0814 100%)',
-  BDSM:         'linear-gradient(160deg, #0d0a14 0%, #07090f 50%, #120810 100%)',
-  default:      'linear-gradient(160deg, #0d1117 0%, #07090f 60%, #0d0a12 100%)',
+  Romantic:     'linear-gradient(180deg, #1c0c1e 0%, #07090f 35%, #07090f 65%, #120818 100%)',
+  Intense:      'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #10091a 100%)',
+  Confessions:  'linear-gradient(180deg, #11101e 0%, #07090f 35%, #07090f 65%, #0d0a1a 100%)',
+  'Dark Romance':'linear-gradient(180deg, #1a0c1c 0%, #07090f 35%, #07090f 65%, #130818 100%)',
+  BDSM:         'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #100918 100%)',
+  default:      'linear-gradient(180deg, #10101e 0%, #07090f 35%, #07090f 65%, #0d0b1c 100%)',
 }
 
 const LOADING_PHRASES = [
@@ -705,65 +707,40 @@ function StepMeta({
 
 async function generatePageImage(
   pageText:   string,
-  pageNum:    number,
-  totalPages: number,
-  alias:      string,
   gradient:   string,
 ): Promise<string | null> {
   const container = document.createElement('div')
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:750px;height:1000px;overflow:hidden;'
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:750px;height:1120px;overflow:hidden;'
   document.body.appendChild(container)
 
   const card = document.createElement('div')
-  card.style.cssText = `position:relative;width:750px;height:1000px;background:#07090f;overflow:hidden;font-family:'DM Sans',sans-serif;`
+  card.style.cssText = `position:relative;width:750px;height:1120px;background:#07090f;overflow:hidden;font-family:'DM Sans',sans-serif;`
   container.appendChild(card)
 
   const bgGradient = document.createElement('div')
   bgGradient.style.cssText = `position:absolute;inset:0;background:${gradient};`
   card.appendChild(bgGradient)
 
+  // Rose brand glow — lower-centre, matches ConfessionCard rose glow
   const glow = document.createElement('div')
-  glow.style.cssText = `position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 50% 85%, rgba(232,96,122,0.07) 0%, transparent 70%);`
+  glow.style.cssText = `position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 35% at 50% 90%, rgba(232,96,122,0.10) 0%, transparent 70%);`
   card.appendChild(glow)
 
-  const accent = document.createElement('div')
-  accent.style.cssText = `position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg, transparent, rgba(232,96,122,0.4), transparent);`
-  card.appendChild(accent)
-
-  if (totalPages > 1) {
-    const indicator = document.createElement('div')
-    indicator.style.cssText = `position:absolute;top:28px;left:50%;transform:translateX(-50%);font-size:14px;color:#4b5563;letter-spacing:0.08em;font-family:'DM Sans',sans-serif;white-space:nowrap;`
-    indicator.textContent = `— page ${pageNum} of ${totalPages} —`
-    card.appendChild(indicator)
-  }
-
+  // Equal 72px margins on all four sides
   const content = document.createElement('div')
-  content.style.cssText = `position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:60px 64px;`
+  content.style.cssText = `position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:72px;`
   card.appendChild(content)
 
   const text = document.createElement('p')
-  text.style.cssText = `font-family:'Playfair Display',serif;font-size:28px;color:#eeeef0;line-height:2.0;letter-spacing:0.01em;text-align:left;width:100%;margin:0;white-space:pre-wrap;`
+  text.style.cssText = `font-family:'Playfair Display',serif;font-size:26px;color:#eeeef0;line-height:2.0;letter-spacing:0.01em;text-align:left;width:100%;margin:0;white-space:pre-wrap;`
   text.textContent = pageText
   content.appendChild(text)
-
-  const strip = document.createElement('div')
-  strip.style.cssText = `position:absolute;bottom:0;left:0;right:0;height:56px;background:linear-gradient(transparent, rgba(7,9,15,0.9));`
-  card.appendChild(strip)
-
-  const brandText = document.createElement('span')
-  brandText.style.cssText = `position:absolute;bottom:20px;left:40px;font-size:16px;color:#6b7280;font-family:'DM Sans',sans-serif;`
-  brandText.textContent = `${alias} · blushbite.co`
-  strip.appendChild(brandText)
-
-  const dot = document.createElement('span')
-  dot.style.cssText = `position:absolute;bottom:28px;right:40px;width:6px;height:6px;border-radius:50%;background:#e8607a;display:inline-block;`
-  strip.appendChild(dot)
 
   try {
     const dataUrl = await toJpeg(card, {
       quality:         0.92,
       width:           750,
-      height:          1000,
+      height:          1120,
       pixelRatio:      2,
       backgroundColor: '#07090f',
       fontEmbedCSS:    '',
@@ -1045,7 +1022,7 @@ export default function CreatePage() {
     const total        = filledPages.length
 
     for (let i = 0; i < total; i++) {
-      const dataUrl = await generatePageImage(filledPages[i], i + 1, total, alias, gradient)
+      const dataUrl = await generatePageImage(filledPages[i], gradient)
       if (dataUrl) {
         const cdnUrl = await uploadImageDataUrl(dataUrl, i + 1)
         urls.push(cdnUrl ?? dataUrl)
@@ -1057,7 +1034,7 @@ export default function CreatePage() {
 
     setGeneratedImages(urls)
     setStep('preview')
-  }, [pages, alias, selectedCategories])
+  }, [pages, selectedCategories])
 
   // ─── Publish ────────────────────────────────────────────────────────────────
 

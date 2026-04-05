@@ -1,9 +1,7 @@
 'use client'
 
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useInfiniteConfessions } from '@/hooks/useInfiniteConfessions'
 import { useViewTracking } from '@/hooks/useViewTracking'
 import { useUIStore } from '@/store/uiStore'
@@ -11,7 +9,6 @@ import { ConfessionCard } from '@/components/ui/ConfessionCard'
 import { CommentsSheet } from '@/components/ui/CommentsSheet'
 
 export function ConfessionsFeed() {
-  const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const { activeStoryId, closeComments } = useUIStore()
@@ -173,25 +170,6 @@ export function ConfessionsFeed() {
           </div>
         )}
       </div>
-
-      {/* Back button */}
-      <motion.button
-        type="button"
-        onClick={() => router.back()}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay: 0.4 }}
-        className="fixed z-[50] flex items-center gap-1 rounded-full px-3 py-2 border border-[#1c2333] transition-colors duration-150 hover:border-[#e8607a]"
-        style={{
-          top:             'max(16px, env(safe-area-inset-top))',
-          left:            16,
-          background:      'rgba(7,9,15,0.7)',
-          backdropFilter:  'blur(8px)',
-        }}
-      >
-        <ChevronLeft size={16} style={{ color: '#eeeef0' }} />
-        <span style={{ fontSize: 12, color: '#eeeef0' }}>Back</span>
-      </motion.button>
 
       {/* Comments sheet — single instance at feed level */}
       <CommentsSheet storyId={activeStoryId} onClose={closeComments} />

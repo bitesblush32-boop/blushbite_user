@@ -9,16 +9,21 @@ import { ActionPill } from './ActionPill'
 import { useLikeMutation } from '@/hooks/useLikeMutation'
 import type { Story } from '@/hooks/useInfiniteConfessions'
 
-// Story type doesn't yet include title — extend locally for forward-compat
-type StoryWithTitle = Story & { title?: string }
+// ─── Design-system tokens ─────────────────────────────────────────────────────
+// --bg: #07090f  --card: #111620  --card2: #161d2a
+// --accent: #e8607a  --text: #eeeef0  --muted: #6b7280  --border: #1c2333
 
-// ─── Gradient map ─────────────────────────────────────────────────────────────
+// ─── Category → mood gradient (body zone background) ─────────────────────────
+// 180° vertical keeps the colour flowing top→bottom through all three zones.
+// Middle anchors at #07090f so the image's #07090f base matches seamlessly.
 
 const GRADIENT_MAP: Record<string, string> = {
-  Romantic:    'linear-gradient(160deg, #1a0e20 0%, #07090f 50%, #0a0a14 100%)',
-  Intense:     'linear-gradient(160deg, #0d0a14 0%, #07090f 50%, #100810 100%)',
-  Confessions: 'linear-gradient(160deg, #0e0d18 0%, #07090f 50%, #0a0810 100%)',
-  default:     'linear-gradient(160deg, #0d1117 0%, #07090f 60%, #0d0a12 100%)',
+  Romantic:     'linear-gradient(180deg, #1c0c1e 0%, #07090f 35%, #07090f 65%, #120818 100%)',
+  Intense:      'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #10091a 100%)',
+  Confessions:  'linear-gradient(180deg, #11101e 0%, #07090f 35%, #07090f 65%, #0d0a1a 100%)',
+  'Dark Romance':'linear-gradient(180deg, #1a0c1c 0%, #07090f 35%, #07090f 65%, #130818 100%)',
+  BDSM:         'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #100918 100%)',
+  default:      'linear-gradient(180deg, #10101e 0%, #07090f 35%, #07090f 65%, #0d0b1c 100%)',
 }
 
 function getGradient(categoryName: string, moodTags: string[]): string {
@@ -36,15 +41,13 @@ interface Props {
   isActive: boolean
 }
 
-const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }: Props) {
-  const story    = _story as StoryWithTitle
+const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) {
   const [currentPage, setCurrentPage] = useState(0)
   const pages    = paginateText(story.rawBody ?? story.body)
   const gradient = getGradient(story.categoryName, story.moodTags)
 
-  // Double-tap to like
   const lastTapRef    = useRef<number>(0)
-  const touchFiredRef = useRef(false)           // ghost-click guard
+  const touchFiredRef = useRef(false)
   const [heartVisible, setHeartVisible] = useState(false)
   const [heartPos, setHeartPos]         = useState({ x: 0, y: 0 })
 
@@ -52,45 +55,37 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
   const likeMutation = useLikeMutation()
 
   function handleTap(e: React.TouchEvent | React.MouseEvent) {
-    // Ghost-click guard: a single physical tap fires onTouchEnd first, then a
-    // browser-synthesised onClick ~300ms later. Without this guard the synthesised
-    // click lands inside the 300ms window and mis-fires as a double-tap.
     if ('touches' in e) {
       touchFiredRef.current = true
     } else {
       if (touchFiredRef.current) {
         touchFiredRef.current = false
-        return // swallow ghost click
+        return
       }
     }
-
     const now   = Date.now()
     const delta = now - lastTapRef.current
     lastTapRef.current = now
 
     if (delta < 300 && delta > 0) {
-      // Always show heart overlay on double-tap (Instagram behaviour)
       const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
       const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX
       const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY
       setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
       setHeartVisible(true)
       setTimeout(() => setHeartVisible(false), 900)
-
-      // Only fire like when not already liked — no toggle-off
       if (!isLiked) {
         likeMutation.mutate({ storyId: story.id, currentlyLiked: false })
       }
     }
   }
 
-  // Reset page when card scrolls off-screen
   useEffect(() => {
     if (!isActive) setCurrentPage(0)
   }, [isActive])
 
-  const displayMoodTags = story.moodTags.slice(0, 2)
-  const hasHeader       = !!(story.title || story.categoryName || displayMoodTags.length > 0)
+  // Show up to 3 extra categories as secondary chips
+  const secondaryChips = story.moodTags.slice(0, 3)
 
   return (
     <div
@@ -104,100 +99,121 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
         background:    '#07090f',
       }}
     >
-      {/* ── Background layers (z-0 → z-[5], pointer-events-none) ─────────── */}
+      {/* Mood gradient — covers full card so colours flow top→body→footer */}
       <div className="absolute inset-0 z-0" style={{ background: gradient }} />
-
+      {/* Rose brand glow */}
       <div
-        className="fixed inset-0 pointer-events-none z-[5] opacity-40"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
-        }}
+        className="absolute inset-0 pointer-events-none z-[1]"
+        style={{ background: 'radial-gradient(ellipse 70% 35% at 50% 90%, rgba(232,96,122,0.10) 0%, transparent 70%)' }}
       />
 
+      {/* ── HEADER ───────────────────────────────────────────────────────── */}
+      {/* Solid #111620 card background — always readable regardless of body image */}
       <div
-        className="absolute inset-0 pointer-events-none z-[4]"
         style={{
-          background: 'radial-gradient(ellipse 60% 40% at 50% 80%, rgba(232,96,122,0.04) 0%, transparent 70%)',
+          flexShrink:    0,
+          zIndex:        20,
+          paddingTop:    'max(14px, env(safe-area-inset-top))',
+          paddingLeft:   16,
+          paddingRight:  16,
+          paddingBottom: 12,
+          background:    '#111620',
+          borderBottom:  '1px solid #1c2333',
         }}
-      />
-
-      {/* ── HEADER zone ──────────────────────────────────────────────────── */}
-      {hasHeader && (
+      >
+        {/* Rose top-accent line */}
         <div
           style={{
-            flexShrink:    0,
-            zIndex:        20,
-            paddingTop:    'max(12px, env(safe-area-inset-top))',
-            paddingLeft:   16,
-            paddingRight:  16,
-            paddingBottom: 10,
-            background:    'linear-gradient(to bottom, rgba(7,9,15,0.85) 0%, transparent 100%)',
+            position:   'absolute',
+            top:        0,
+            left:       0,
+            right:      0,
+            height:     2,
+            background: 'linear-gradient(90deg, transparent, #e8607a, transparent)',
           }}
-        >
-          {/* Title */}
-          {story.title && (
-            <p
-              style={{
-                fontFamily:   "'Playfair Display', serif",
-                fontSize:     20,
-                color:        '#eeeef0',
-                fontStyle:    'italic',
-                whiteSpace:   'nowrap',
-                overflow:     'hidden',
-                textOverflow: 'ellipsis',
-                margin:       0,
-                lineHeight:   1.3,
-              }}
-            >
-              {story.title}
-            </p>
-          )}
+        />
 
-          {/* Chips */}
-          {(story.categoryName || displayMoodTags.length > 0) && (
-            <div
-              style={{
-                display:    'flex',
-                flexWrap:   'wrap',
-                gap:        5,
-                marginTop:  story.title ? 6 : 0,
-              }}
-            >
-              {story.categoryName && (
-                <span
-                  style={{
-                    fontSize:     10,
-                    color:        '#e8607a',
-                    background:   'rgba(232,96,122,0.12)',
-                    border:       '1px solid rgba(232,96,122,0.3)',
-                    padding:      '3px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  {story.categoryName}
-                </span>
-              )}
-              {displayMoodTags.map(t => (
-                <span
-                  key={t}
-                  style={{
-                    fontSize:     10,
-                    color:        '#6b7280',
-                    background:   'rgba(255,255,255,0.04)',
-                    border:       '1px solid #1c2333',
-                    padding:      '3px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        {/* Title — Playfair italic, primary text */}
+        {story.title ? (
+          <p
+            style={{
+              fontFamily:   "'Playfair Display', serif",
+              fontSize:     18,
+              color:        '#eeeef0',
+              fontStyle:    'italic',
+              whiteSpace:   'nowrap',
+              overflow:     'hidden',
+              textOverflow: 'ellipsis',
+              margin:       0,
+              lineHeight:   1.35,
+            }}
+          >
+            {story.title}
+          </p>
+        ) : (
+          // Fallback when no title: show a soft placeholder so header is never blank
+          <p
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize:   16,
+              color:      '#6b7280',
+              fontStyle:  'italic',
+              margin:     0,
+              lineHeight: 1.35,
+            }}
+          >
+            anonymous confession
+          </p>
+        )}
 
-      {/* ── BODY zone (double-tap target) ────────────────────────────────── */}
+        {/* Category + mood chips */}
+        {(story.categoryName || secondaryChips.length > 0) && (
+          <div
+            style={{
+              display:   'flex',
+              flexWrap:  'wrap',
+              gap:       4,
+              marginTop: 6,
+            }}
+          >
+            {/* Primary category — rose chip */}
+            {story.categoryName && (
+              <span
+                style={{
+                  fontSize:     10,
+                  fontWeight:   500,
+                  color:        '#e8607a',
+                  background:   'rgba(232,96,122,0.12)',
+                  border:       '1px solid rgba(232,96,122,0.3)',
+                  padding:      '3px 9px',
+                  borderRadius: 999,
+                }}
+              >
+                {story.categoryName}
+              </span>
+            )}
+
+            {/* Extra categories — muted chips */}
+            {secondaryChips.map(t => (
+              <span
+                key={t}
+                style={{
+                  fontSize:     10,
+                  color:        '#6b7280',
+                  background:   'rgba(255,255,255,0.03)',
+                  border:       '1px solid #1c2333',
+                  padding:      '3px 9px',
+                  borderRadius: 999,
+                }}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── BODY — image fills this zone ──────────────────────────────────── */}
       <div
         style={{ flex: 1, position: 'relative', overflow: 'hidden', zIndex: 10 }}
         onTouchEnd={handleTap}
@@ -210,7 +226,6 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
           onPageChange={setCurrentPage}
         />
 
-        {/* Double-tap heart overlay */}
         <AnimatePresence>
           {heartVisible && (
             <motion.div
@@ -244,25 +259,26 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
         </AnimatePresence>
       </div>
 
-      {/* ── FOOTER zone ──────────────────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────────────────── */}
+      {/* Solid #111620 card background — mirrors the header */}
       <div
         style={{
-          flexShrink:     0,
-          zIndex:         20,
-          paddingBottom:  'max(12px, env(safe-area-inset-bottom))',
-          paddingLeft:    16,
-          paddingRight:   16,
-          paddingTop:     10,
-          background:     'linear-gradient(to top, rgba(7,9,15,0.85) 0%, transparent 100%)',
-          display:        'flex',
-          flexDirection:  'column',
-          alignItems:     'center',
-          gap:            10,
+          flexShrink:    0,
+          zIndex:        20,
+          paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+          paddingLeft:   16,
+          paddingRight:  16,
+          paddingTop:    10,
+          background:    '#111620',
+          borderTop:     '1px solid #1c2333',
+          display:       'flex',
+          flexDirection: 'column',
+          gap:           8,
         }}
       >
-        {/* Row 1 — Instagram-style pill dots (only when multi-page) */}
+        {/* Page progress dots — centered */}
         {pages.length > 1 && (
-          <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 5, alignItems: 'center' }}>
             {pages.map((_, i) => (
               <div
                 key={i}
@@ -270,7 +286,7 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
                   width:        i === currentPage ? 18 : 5,
                   height:       5,
                   borderRadius: 999,
-                  background:   i === currentPage ? '#e8607a' : 'rgba(255,255,255,0.2)',
+                  background:   i === currentPage ? '#e8607a' : '#1c2333',
                   transition:   'width 0.2s ease, background 0.2s ease',
                 }}
               />
@@ -278,7 +294,7 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
           </div>
         )}
 
-        {/* Row 2 — Horizontal action bar */}
+        {/* Like / comment / save / audio */}
         <ActionPill
           storyId={story.id}
           likeCount={story.likeCount}
@@ -289,8 +305,8 @@ const ConfessionCard = memo(function ConfessionCard({ story: _story, isActive }:
           layout="horizontal"
         />
 
-        {/* Row 3 — Author alias */}
-        <span style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>
+        {/* Author alias — left aligned, muted italic */}
+        <span style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>
           {story.isAnonymous || !story.authorAlias ? 'anonymous' : story.authorAlias}
         </span>
       </div>

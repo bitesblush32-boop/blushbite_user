@@ -104,6 +104,7 @@ export async function GET(req: NextRequest) {
     const rows = await db
       .select({
         id:             stories.id,
+        title:          stories.title,
         is_anonymous:   stories.is_anonymous,
         body:           stories.body,
         excerpt:        stories.excerpt,
@@ -152,12 +153,19 @@ export async function GET(req: NextRequest) {
       : null
 
     const mapped = items.map(r => {
-      // Parse body JSON — may be { raw, pages } or legacy plain text
+      // Parse body JSON — may be { raw, pages, categories } or legacy plain text
       const parsedBody = (() => {
-        try { return JSON.parse(r.body ?? '') } catch { return { raw: r.body ?? '', pages: [] } }
+        try { return JSON.parse(r.body ?? '') } catch { return { raw: r.body ?? '', pages: [], categories: [] } }
       })()
+      // Categories stored in body JSON take precedence over the storyCategories join
+      // (user-uploaded confessions store category_id=null but write categories into body)
+      const bodyCategories: string[] = Array.isArray(parsedBody.categories) ? parsedBody.categories : []
+      const primaryCategory = bodyCategories[0] ?? r.category_name ?? ''
+      const extraCategories = bodyCategories.slice(1)
+      const dbMoodTags = r.mood_tags ? r.mood_tags.split(',') : []
       return {
         id:             r.id,
+        title:          r.title ?? '',
         authorAlias:    r.is_anonymous ? null : (r.author_alias ?? null),
         isAnonymous:    r.is_anonymous,
         body:           r.body,
@@ -170,8 +178,9 @@ export async function GET(req: NextRequest) {
         commentCount:   r.comment_count,
         userHasLiked:   Boolean(r.user_has_liked),
         userHasSaved:   Boolean(r.user_has_saved),
-        moodTags:       r.mood_tags ? r.mood_tags.split(',') : [],
-        categoryName:   r.category_name ?? '',
+        // Show extra body categories as mood tags; fall back to DB mood tags
+        moodTags:       extraCategories.length > 0 ? extraCategories : dbMoodTags,
+        categoryName:   primaryCategory,
         publishedAt:    r.published_at,
         relevanceScore: Number(r.final_score),
       }

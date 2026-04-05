@@ -111,11 +111,10 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
               src={pageImageUrls![currentPage]}
               alt=""
               style={{
-                width:      '100%',
-                height:     '100%',
-                objectFit:  'contain',
-                borderRadius: 8,
-                display:    'block',
+                width:     '100%',
+                height:    '100%',
+                objectFit: 'contain',
+                display:   'block',
               }}
             />
           ) : (

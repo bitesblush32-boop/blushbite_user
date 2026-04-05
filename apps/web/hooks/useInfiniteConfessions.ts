@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 
 export interface Story {
   id:             string
+  title:          string
   authorAlias:    string | null
   isAnonymous:    boolean
   body:           string
