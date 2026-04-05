@@ -127,8 +127,9 @@ export function ConfessionsFeed() {
       {/* Scroll container */}
       <div
         ref={containerRef}
-        className="fixed inset-0 z-10"
+        className="fixed top-0 left-0 right-0 z-10"
         style={{
+          bottom:               64,
           overflowY:            'scroll',
           scrollSnapType:       'y mandatory',
           overscrollBehaviorY:  'contain',
@@ -140,7 +141,7 @@ export function ConfessionsFeed() {
             key={story.id}
             ref={(node) => setItemRef(index, story.id, node)}
             style={{
-              height:          '100dvh',
+              height:          'calc(100dvh - 64px)',
               scrollSnapAlign: 'start',
               scrollSnapStop:  'always',
               position:        'relative',

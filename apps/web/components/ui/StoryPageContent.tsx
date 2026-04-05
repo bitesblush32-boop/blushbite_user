@@ -111,19 +111,19 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
           minHeight={50}
           maxHeight={4000}
           drawShadow={true}
-          flippingTime={700}
+          flippingTime={350}
           usePortrait={true}
           startZIndex={0}
           autoSize={false}
           showCover={false}
-          mobileScrollSupport={false}
+          mobileScrollSupport={true}
           useMouseEvents={true}
           maxShadowOpacity={0.5}
           clickEventForward={true}
-          swipeDistance={30}
+          swipeDistance={12}
           showPageCorners={true}
           disableFlipByClick={false}
-          style={{ touchAction: 'none' }}
+          style={{ background: '#07090f', willChange: 'transform', touchAction: 'pan-y' }}
           className=""
           startPage={0}
           onFlip={(e: { data: number }) => {

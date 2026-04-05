@@ -265,7 +265,7 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         style={{
           flexShrink:    0,
           zIndex:        20,
-          paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
           paddingLeft:   16,
           paddingRight:  16,
           paddingTop:    10,
