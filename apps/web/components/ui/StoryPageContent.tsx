@@ -118,6 +118,11 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
           showCover={false}
           mobileScrollSupport={false}
           useMouseEvents={true}
+          maxShadowOpacity={0.5}
+          clickEventForward={true}
+          swipeDistance={30}
+          showPageCorners={true}
+          disableFlipByClick={false}
           style={{ touchAction: 'none' }}
           className=""
           startPage={0}
