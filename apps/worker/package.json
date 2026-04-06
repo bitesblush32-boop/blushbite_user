@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "classify": "tsx src/classify-stories.ts"
+    "classify": "tsx --env-file ../web/.env.local src/classify-stories.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

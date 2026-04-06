@@ -1,8 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, forwardRef } from 'react'
-// @ts-ignore — react-pageflip types are loose
-import HTMLFlipBook from 'react-pageflip'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {
@@ -12,170 +10,217 @@ interface Props {
   onPageChange:   (n: number) => void
 }
 
-// react-pageflip clones each child with a ref — forwardRef required
-const FlipPage = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
-  ({ children }, ref) => (
-    <div
-      ref={ref}
-      style={{
-        width:      '100%',
-        height:     '100%',
-        background: '#07090f',
-        overflow:   'hidden',
-      }}
-    >
-      {children}
-    </div>
-  )
-)
-FlipPage.displayName = 'FlipPage'
+// Adapt flip duration to device capability — GPU-only animation either way
+function getFlipMs(): number {
+  if (typeof navigator === 'undefined') return 340
+  const cores = navigator.hardwareConcurrency ?? 4
+  return cores < 4 ? 240 : 340
+}
 
 export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChange }: Props) {
-  const bookRef      = useRef<any>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [dims, setDims] = useState({ w: 0, h: 0 })
-  const prevPage     = useRef(currentPage)
-
   const useImages = Array.isArray(pageImageUrls) && pageImageUrls.length > 0
   const total     = useImages ? pageImageUrls!.length : pages.length
 
-  // Measure container once on mount
+  // Stably-displayed page index
+  const [displayPage, setDisplayPage]     = useState(currentPage)
+  // Page being flipped to (null = idle)
+  const [incomingPage, setIncomingPage]   = useState<number | null>(null)
+  // Active flip direction (null = idle)
+  const [flipDir, setFlipDir]             = useState<'forward' | 'backward' | null>(null)
+
+  const isFlipping   = useRef(false)
+  const prevPropPage = useRef(currentPage)
+  const FLIP_MS      = useRef(340)
+
   useEffect(() => {
-    if (!containerRef.current) return
-    const { width, height } = containerRef.current.getBoundingClientRect()
-    setDims({ w: Math.floor(width), h: Math.floor(height) })
+    FLIP_MS.current = getFlipMs()
   }, [])
 
-  // Sync when ConfessionCard resets currentPage to 0 (card becomes inactive)
+  // Sync when parent resets currentPage (card becomes inactive → reset to page 0)
   useEffect(() => {
-    if (currentPage !== prevPage.current && bookRef.current) {
-      bookRef.current.pageFlip().turnToPage(currentPage)
-      prevPage.current = currentPage
-    }
+    if (currentPage === prevPropPage.current) return
+    prevPropPage.current = currentPage
+    setDisplayPage(currentPage)
+    setIncomingPage(null)
+    setFlipDir(null)
+    isFlipping.current = false
   }, [currentPage])
 
-  function goTo(n: number) {
-    if (n < 0 || n >= total) return
-    const pf = bookRef.current?.pageFlip()
-    if (!pf) return
-    // flipNext/flipPrev both play the full animated curl in the correct direction
-    if (n > currentPage) {
-      pf.flipNext('bottom')
-    } else {
-      pf.flipPrev('bottom')
+  function goTo(target: number) {
+    if (target < 0 || target >= total || isFlipping.current || target === displayPage) return
+    const dir: 'forward' | 'backward' = target > displayPage ? 'forward' : 'backward'
+    isFlipping.current = true
+    setIncomingPage(target)
+    setFlipDir(dir)
+
+    setTimeout(() => {
+      setDisplayPage(target)
+      setIncomingPage(null)
+      setFlipDir(null)
+      isFlipping.current = false
+      onPageChange(target)
+      prevPropPage.current = target
+    }, FLIP_MS.current)
+  }
+
+  // ── Swipe detection (horizontal dominant swipes only) ──────────────────────
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+  const SWIPE_PX    = 40
+
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  function onTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || touchStartY.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    touchStartX.current = null
+    touchStartY.current = null
+    // Ignore vertical-dominant or sub-threshold gestures
+    if (Math.abs(dx) < SWIPE_PX || Math.abs(dy) > Math.abs(dx) * 0.8) return
+    // Stop propagation so parent's double-tap handler is not triggered
+    e.stopPropagation()
+    if (dx < 0) goTo(displayPage + 1)
+    else        goTo(displayPage - 1)
+  }
+
+  // ── Render page content ─────────────────────────────────────────────────────
+  function renderContent(idx: number) {
+    if (useImages) {
+      return (
+        <img
+          src={pageImageUrls![idx]}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+        />
+      )
     }
+    return (
+      <div
+        style={{
+          height:         '100%',
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'center',
+          padding:        '48px 32px',
+        }}
+      >
+        <p
+          style={{
+            fontFamily:    "'Playfair Display', serif",
+            fontSize:      20,
+            color:         '#eeeef0',
+            lineHeight:    2.0,
+            letterSpacing: '0.02em',
+            whiteSpace:    'pre-wrap',
+            width:         '100%',
+          }}
+        >
+          {pages[idx]}
+        </p>
+      </div>
+    )
+  }
+
+  // ── Animation inline styles for the outgoing page ──────────────────────────
+  // Uses only transform + opacity — both compositor-thread, zero layout cost.
+  const outgoingStyle: React.CSSProperties = {
+    position:                'absolute',
+    inset:                   0,
+    background:              '#07090f',
+    zIndex:                  2,
+    animationName:           flipDir === 'forward'
+                               ? 'bbFlipOutForward'
+                               : flipDir === 'backward'
+                               ? 'bbFlipOutBackward'
+                               : 'none',
+    animationDuration:       `${FLIP_MS.current}ms`,
+    animationFillMode:       'forwards',
+    animationTimingFunction: 'ease-in-out',
+    transformOrigin:         flipDir === 'forward'
+                               ? 'left center'
+                               : flipDir === 'backward'
+                               ? 'right center'
+                               : 'center',
   }
 
   return (
     <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}
+      style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: '#07090f' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
-      {/* Desktop prev arrow */}
-      {currentPage > 0 && (
+      {/* ── Incoming page — static behind, revealed as outgoing flips away ── */}
+      {incomingPage !== null && (
+        <div style={{ position: 'absolute', inset: 0, background: '#07090f', zIndex: 1 }}>
+          {renderContent(incomingPage)}
+        </div>
+      )}
+
+      {/* ── Outgoing (current) page — animates away on flip ──────────────── */}
+      <div style={outgoingStyle}>
+        {renderContent(displayPage)}
+      </div>
+
+      {/* ── Tap zones: 15 % left = prev, 15 % right = next ──────────────── */}
+      {displayPage > 0 && (
+        <div
+          onClick={e => { e.stopPropagation(); goTo(displayPage - 1) }}
+          style={{ position: 'absolute', left: 0, top: 0, width: '15%', height: '100%', zIndex: 10, cursor: 'pointer' }}
+        />
+      )}
+      {displayPage < total - 1 && (
+        <div
+          onClick={e => { e.stopPropagation(); goTo(displayPage + 1) }}
+          style={{ position: 'absolute', right: 0, top: 0, width: '15%', height: '100%', zIndex: 10, cursor: 'pointer' }}
+        />
+      )}
+
+      {/* ── Desktop arrow buttons — hidden on mobile ─────────────────────── */}
+      {displayPage > 0 && (
         <button
           type="button"
-          onClick={() => goTo(currentPage - 1)}
+          onClick={e => { e.stopPropagation(); goTo(displayPage - 1) }}
           className="absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center rounded-full transition-opacity duration-200"
-          style={{ left: 8, width: 36, height: 36, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', opacity: 0.15 }}
+          style={{
+            left:       8,
+            width:      36,
+            height:     36,
+            background: 'rgba(255,255,255,0.06)',
+            color:      'rgba(255,255,255,0.5)',
+            border:     'none',
+            cursor:     'pointer',
+            opacity:    0.15,
+          }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.5' }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.15' }}
         >
           <ChevronLeft size={20} />
         </button>
       )}
-
-      {/* Desktop next arrow */}
-      {currentPage < total - 1 && (
+      {displayPage < total - 1 && (
         <button
           type="button"
-          onClick={() => goTo(currentPage + 1)}
+          onClick={e => { e.stopPropagation(); goTo(displayPage + 1) }}
           className="absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center rounded-full transition-opacity duration-200"
-          style={{ right: 8, width: 36, height: 36, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', opacity: 0.15 }}
+          style={{
+            right:      8,
+            width:      36,
+            height:     36,
+            background: 'rgba(255,255,255,0.06)',
+            color:      'rgba(255,255,255,0.5)',
+            border:     'none',
+            cursor:     'pointer',
+            opacity:    0.15,
+          }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.5' }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.15' }}
         >
           <ChevronRight size={20} />
         </button>
-      )}
-
-      {/* Only render once we have real dimensions */}
-      {dims.w > 0 && dims.h > 0 && (
-        <HTMLFlipBook
-          ref={bookRef}
-          width={dims.w}
-          height={dims.h}
-          size="fixed"
-          minWidth={50}
-          maxWidth={4000}
-          minHeight={50}
-          maxHeight={4000}
-          drawShadow={true}
-          flippingTime={350}
-          usePortrait={true}
-          startZIndex={0}
-          autoSize={false}
-          showCover={false}
-          mobileScrollSupport={true}
-          useMouseEvents={true}
-          maxShadowOpacity={0.5}
-          clickEventForward={true}
-          swipeDistance={12}
-          showPageCorners={true}
-          disableFlipByClick={false}
-          style={{ background: '#07090f', willChange: 'transform', touchAction: 'pan-y' }}
-          className=""
-          startPage={0}
-          onFlip={(e: { data: number }) => {
-            onPageChange(e.data)
-            prevPage.current = e.data
-          }}
-        >
-          {useImages
-            ? pageImageUrls!.map((url, i) => (
-                <FlipPage key={i}>
-                  <img
-                    src={url}
-                    alt=""
-                    style={{
-                      width:     '100%',
-                      height:    '100%',
-                      objectFit: 'contain',
-                      display:   'block',
-                    }}
-                  />
-                </FlipPage>
-              ))
-            : pages.map((text, i) => (
-                <FlipPage key={i}>
-                  <div
-                    style={{
-                      height:         '100%',
-                      display:        'flex',
-                      alignItems:     'center',
-                      justifyContent: 'center',
-                      padding:        '48px 32px',
-                    }}
-                    className="md:px-[56px] md:py-[64px]"
-                  >
-                    <p
-                      style={{
-                        fontFamily:    "'Playfair Display', serif",
-                        fontSize:      20,
-                        color:         '#eeeef0',
-                        lineHeight:    2.0,
-                        letterSpacing: '0.02em',
-                        whiteSpace:    'pre-wrap',
-                        width:         '100%',
-                      }}
-                    >
-                      {text}
-                    </p>
-                  </div>
-                </FlipPage>
-              ))
-          }
-        </HTMLFlipBook>
       )}
     </div>
   )

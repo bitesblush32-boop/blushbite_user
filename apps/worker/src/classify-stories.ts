@@ -2,13 +2,6 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as readline from 'readline'
 
-// ── Startup guard ──────────────────────────────────────────────────────────────
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error(
-    'Missing ANTHROPIC_API_KEY — set it before running:\n  export ANTHROPIC_API_KEY=sk-ant-...'
-  )
-}
-const API_KEY   = process.env.ANTHROPIC_API_KEY
 const SCRIPT_DIR = path.dirname(path.resolve(process.argv[1]))
 
 // ── Load taxonomy.json ─────────────────────────────────────────────────────────
@@ -96,42 +89,33 @@ function slugsToIds(slugs: unknown, map: Map<string, number>): number[] {
 
 // ── Classify one story (with retry) ───────────────────────────────────────────
 async function classifyStory(story: Record<string, unknown>): Promise<Tags> {
-  const userMessage = `Title: ${story.title ?? ''}\nExcerpt: ${story.excerpt ?? ''}`
-  const requestBody = {
-    model:      'claude-haiku-4-5-20251001',
-    max_tokens: 256,
-    system:     SYSTEM_PROMPT,
-    messages:   [{ role: 'user', content: userMessage }],
-  }
-
   let lastError: unknown
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('http://localhost:11434/api/chat', {
         method:  'POST',
-        headers: {
-          'x-api-key':         API_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type':      'application/json',
-        },
-        body: JSON.stringify(requestBody),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model:    'llama3.1',
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user',   content: `Title: ${story.title ?? ''}\nExcerpt: ${story.excerpt ?? ''}` },
+          ],
+          stream: false,
+          format: 'json',
+        }),
       })
 
-      if (res.status === 429 || res.status === 529) {
-        lastError = new Error(`HTTP ${res.status}`)
-        if (attempt < 2) await sleep(8000)
-        continue
-      }
-
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
+        const errBody = await res.text().catch(() => '')
+        throw new Error(`HTTP ${res.status}: ${errBody}`)
       }
 
-      const data = await res.json() as { content?: { text: string }[] }
-      const text = data.content?.[0]?.text ?? ''
+      const data = await res.json() as { message?: { content: string } }
+      const raw  = data.message?.content ?? '{}'
 
       // Strip markdown code fences if model wraps JSON in them
-      const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/, '').trim()
+      const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/, '').trim()
       const parsed  = JSON.parse(cleaned)
 
       const story_category_ids  = slugsToIds(parsed.story_categories,  storyCategMap)

@@ -6,7 +6,8 @@ export function paginateText(body: string, maxChars = 700): string[] {
     let remaining = section.trim()
     while (remaining.length > maxChars) {
       let cut = remaining.lastIndexOf(' ', maxChars)
-      if (cut < maxChars * 0.6) cut = maxChars
+      // Only hard-cut mid-word if there is genuinely no space before the limit
+      if (cut <= 0) cut = maxChars
       pages.push(remaining.slice(0, cut).trim())
       remaining = remaining.slice(cut).trim()
     }
