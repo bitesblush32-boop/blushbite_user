@@ -12,7 +12,9 @@ import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
 import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollectionCard'
+import { LikedGrid } from '@/components/ui/LikedGrid'
 import { useSavedConfessions } from '@/hooks/useSavedConfessions'
+import { useLikedContent } from '@/hooks/useLikedContent'
 import { useUIStore } from '@/store/uiStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,6 +54,7 @@ interface UserPost {
 }
 
 type MainTab    = 'posts' | 'likes' | 'saved'
+type LikedSubTab = 'all' | 'confessions' | 'stories'
 type SavedSubTab = 'all' | 'collections' | 'companions'
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -226,6 +229,57 @@ function AudioCell({ title, voice, gradient }: { title: string; voice: string; g
   )
 }
 
+// ─── LikedTabContent ──────────────────────────────────────────────────────────
+
+const LIKED_SUB_TABS: { id: LikedSubTab; label: string }[] = [
+  { id: 'all',         label: 'All' },
+  { id: 'confessions', label: 'Confessions' },
+  { id: 'stories',     label: 'Stories' },
+]
+
+// Inner component so the hook is never called conditionally
+function LikedContentPane({ type }: { type: LikedSubTab }) {
+  const { items, isLoading } = useLikedContent(type)
+  return <LikedGrid items={items} isLoading={isLoading} />
+}
+
+function LikesTabContent({
+  likedSubTab,
+  setLikedSubTab,
+}: {
+  likedSubTab:    LikedSubTab
+  setLikedSubTab: (t: LikedSubTab) => void
+}) {
+  return (
+    <div>
+      {/* Sub-tab pills */}
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {LIKED_SUB_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setLikedSubTab(id)}
+            style={{
+              flexShrink:   0,
+              fontSize:     12,
+              padding:      '5px 14px',
+              borderRadius: 999,
+              border:       `1px solid ${likedSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color:        likedSubTab === id ? '#e8607a' : '#6b7280',
+              background:   likedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor:       'pointer',
+              transition:   'all 0.15s',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <LikedContentPane type={likedSubTab} />
+    </div>
+  )
+}
+
 // ─── SavedTabContent ──────────────────────────────────────────────────────────
 
 const SAVED_SUB_TABS: { id: SavedSubTab; label: string }[] = [
@@ -327,6 +381,7 @@ export default function ProfilePage() {
   const [editOpen, setEditOpen]             = useState(false)
   const [tasteOpen, setTasteOpen]           = useState(false)
   const [activeTab, setActiveTab]           = useState<MainTab>('posts')
+  const [likedSubTab, setLikedSubTab]       = useState<LikedSubTab>('all')
   const [savedSubTab, setSavedSubTab]       = useState<SavedSubTab>('all')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError]       = useState<string | null>(null)
@@ -646,12 +701,10 @@ export default function ProfilePage() {
             )}
 
             {activeTab === 'likes' && (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <Heart size={32} color="#1c2333" />
-                <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
-                  Confessions you've liked will appear here.
-                </p>
-              </div>
+              <LikesTabContent
+                likedSubTab={likedSubTab}
+                setLikedSubTab={setLikedSubTab}
+              />
             )}
 
             {activeTab === 'saved' && (
