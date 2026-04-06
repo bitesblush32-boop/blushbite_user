@@ -18,6 +18,9 @@ apps/web/.env.*.local
 # Drizzle migrations output
 apps/web/db/migrations/
 
+# TypeScript incremental cache
+*.tsbuildinfo
+
 # Build output
 dist/
 build/
@@ -40,3 +43,9 @@ reddit-scrape.ts
 scraped_stories.ndjson
 wattpad-scrape.ts
 wattpad-stories.ndjson
+compass_artifact_wf-028d3aed-3da4-46d1-9532-472f3f16950e_text_markdown.md
+screenshots/Screenshot 2026-04-06 081520.png
+screenshots/Screenshot 2026-04-06 080842.png
+apps/worker/src/classify-stories.ts
+apps/worker/src/classify_progress.txt
+apps/worker/scraped_stories_enriched.ndjson

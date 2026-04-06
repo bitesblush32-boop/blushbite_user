@@ -44,7 +44,7 @@ const COUNTRY_LIST = Object.keys(LOCATIONS)
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  displayName: z.string().max(100).optional(),
+  alias:       z.string().max(100).optional(),
   bio:         z.string().max(300).optional(),
   dateOfBirth: z.string().optional(),
   country:     z.string().max(100).optional(),
@@ -333,15 +333,15 @@ export default function EditProfileDrawer({
                 />
               </div>
 
-              {/* ── Display name ───────────────────────────────────── */}
+              {/* ── Alias ───────────────────────────────────── */}
               <div className="flex flex-col gap-[6px]">
-                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Display name</label>
+                <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Alias Name</label>
                 <input
-                  {...register('displayName')}
-                  placeholder="How you'd like to be called"
+                  {...register('alias')}
+                  placeholder="Your anonymous name (e.g., @midnight-wanderer)"
                   className={inputClass}
                 />
-                {errors.displayName && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.displayName.message}</span>}
+                {errors.alias && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.alias.message}</span>}
               </div>
 
               {/* ── Bio ────────────────────────────────────────────── */}

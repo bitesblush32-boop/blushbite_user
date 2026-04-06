@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "scrape:reddit": "tsx reddit-scrape.ts"
+    "scrape:reddit": "tsx reddit-scrape.ts",
+    "db:seed": "tsx --env-file .env.local db/seed.ts"
   },
   "dependencies": {
     "@auth/core": "^0.34.3",
@@ -24,6 +25,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.33.0",
     "framer-motion": "^11.3.24",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.446.0",
     "next": "14.2.35",
     "next-auth": "beta",
@@ -31,8 +33,10 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.53.0",
+    "react-pageflip": "^2.0.3",
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.5.2",
+    "vaul": "^1.1.2",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },

@@ -58,7 +58,7 @@ export async function GET() {
 // ─── PATCH /api/user/profile ──────────────────────────────────────────────────
 
 const patchSchema = z.object({
-  displayName:    z.string().max(100).optional(),
+  alias:          z.string().max(100).optional(),
   bio:            z.string().max(300).optional(),
   dateOfBirth:    z.string().optional(),
   country:        z.string().max(100).optional(),
@@ -91,15 +91,22 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: firstError }, { status: 400 })
     }
 
-    const { displayName, bio, dateOfBirth, country, city, vibes, gender, desiredGenders } = result.data
+    const { alias, bio, dateOfBirth, country, city, vibes, gender, desiredGenders } = result.data
     const now = new Date()
+
+    // Update users table if alias is provided
+    if (alias !== undefined) {
+      await db
+        .update(users)
+        .set({ alias, updated_at: now })
+        .where(eq(users.id, userId))
+    }
 
     // TODO DB: Phase 2 — trigger pgvector embedding recompute on vibe/tag change
     const updated = await db
       .insert(userProfiles)
       .values({
         user_id:         userId,
-        display_name:    displayName ?? null,
         bio:             bio ?? null,
         date_of_birth:   dateOfBirth ?? null,
         country:         country ?? null,
@@ -112,7 +119,6 @@ export async function PATCH(req: NextRequest) {
       .onConflictDoUpdate({
         target: userProfiles.user_id,
         set: {
-          ...(displayName    !== undefined && { display_name:    displayName }),
           ...(bio            !== undefined && { bio }),
           ...(dateOfBirth    !== undefined && { date_of_birth:   dateOfBirth }),
           ...(country        !== undefined && { country }),

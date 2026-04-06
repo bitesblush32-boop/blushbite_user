@@ -368,6 +368,13 @@ export const storyFantasyTags = pgTable('story_fantasy_tags', {
   pk: primaryKey({ columns: [table.story_id, table.fantasy_tag_id] }),
 }))
 
+export const storyStoryCategories = pgTable('story_story_categories', {
+  story_id:    uuid('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+  category_id: integer('category_id').notNull().references(() => storyCategories.id),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.story_id, table.category_id] }),
+}))
+
 export const audioRecordings = pgTable('audio_recordings', {
   id:                   uuid('id').primaryKey().defaultRandom(),
   author_type:          varchar('author_type', { length: 20 }).notNull(),
