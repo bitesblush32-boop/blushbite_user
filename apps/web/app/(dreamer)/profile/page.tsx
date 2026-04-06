@@ -297,10 +297,14 @@ function SavedTabContent({
 }) {
   const { items, total, isLoading } = useSavedConfessions()
 
-  const coverImages = items
-    .slice(0, 4)
-    .map(i => i.firstImage)
-    .filter((v): v is string => Boolean(v))
+  // Split saved items by content type for separate collection cards
+  const confessionItems = items.filter(i => i.authorType === 'user')
+  const storyItems      = items.filter(i => i.authorType !== 'user')
+
+  const confessionCovers = confessionItems
+    .slice(0, 4).map(i => i.firstImage).filter((v): v is string => Boolean(v))
+  const storyCovers = storyItems
+    .slice(0, 4).map(i => i.firstImage).filter((v): v is string => Boolean(v))
 
   const skeletonGrid = (
     <div className="grid grid-cols-3 gap-[2px]">
@@ -342,17 +346,36 @@ function SavedTabContent({
 
       {savedSubTab === 'collections' && (
         isLoading ? (
-          <div style={{ height: 140, borderRadius: 14, background: '#0d1117', border: '1px solid #1c2333' }}
-            className="animate-pulse" />
+          <div className="flex flex-col gap-3">
+            {[0, 1].map(i => (
+              <div key={i} style={{ height: 140, borderRadius: 14, background: '#0d1117', border: '1px solid #1c2333' }}
+                className="animate-pulse" />
+            ))}
+          </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <BookMarked size={32} color="#1c2333" />
             <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
-              No collections yet. Save confessions to create your first.
+              No collections yet. Save confessions or stories to create your first.
             </p>
           </div>
         ) : (
-          <ConfessionsCollectionCard count={total} coverImages={coverImages} />
+          <div className="flex flex-col gap-3">
+            {confessionItems.length > 0 && (
+              <ConfessionsCollectionCard
+                title="Confessions"
+                count={confessionItems.length}
+                coverImages={confessionCovers}
+              />
+            )}
+            {storyItems.length > 0 && (
+              <ConfessionsCollectionCard
+                title="Stories"
+                count={storyItems.length}
+                coverImages={storyCovers}
+              />
+            )}
+          </div>
         )
       )}
 

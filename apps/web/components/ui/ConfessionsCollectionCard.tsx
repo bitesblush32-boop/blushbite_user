@@ -6,9 +6,10 @@ import { BookMarked } from 'lucide-react'
 interface Props {
   count:       number
   coverImages: string[] // up to 4
+  title?:      string   // defaults to 'Confessions'
 }
 
-const ConfessionsCollectionCard = memo(function ConfessionsCollectionCard({ count, coverImages }: Props) {
+const ConfessionsCollectionCard = memo(function ConfessionsCollectionCard({ count, coverImages, title = 'Confessions' }: Props) {
   // Fill up to 4 quadrants — missing ones get a dark placeholder
   const quads = Array.from({ length: 4 }, (_, i) => coverImages[i] ?? null)
 
@@ -57,7 +58,7 @@ const ConfessionsCollectionCard = memo(function ConfessionsCollectionCard({ coun
           color:      '#eeeef0',
           lineHeight: 1.3,
         }}>
-          Confessions
+          {title}
         </div>
         <div style={{ fontSize: 12, color: '#6b7280' }}>
           {count} saved

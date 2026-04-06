@@ -18,6 +18,9 @@ apps/web/.env.*.local
 # Drizzle migrations output
 apps/web/db/migrations/
 
+# TypeScript incremental cache
+*.tsbuildinfo
+
 # Build output
 dist/
 build/

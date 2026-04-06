@@ -5,9 +5,10 @@ import {
   stories,
   storyCategories,
   users,
+  companions,
   userFantasyTags,
 } from '@/db/schema'
-import { eq, and, isNull, sql, or, desc } from 'drizzle-orm'
+import { eq, and, isNull, sql, or, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
 const querySchema = z.object({
@@ -76,10 +77,10 @@ export async function GET(req: NextRequest) {
     )`
 
     const baseWhere = and(
-      eq(stories.author_type, 'user'),
+      inArray(stories.author_type, ['companion', 'admin']),
       eq(stories.is_published, true),
       isNull(stories.deleted_at),
-      sql`${stories.moderation_status} IN ('approved', 'pending')`,
+      eq(stories.moderation_status, 'approved'),
     )
 
     const cursorWhere = cursor
@@ -104,19 +105,20 @@ export async function GET(req: NextRequest) {
 
     const rows = await db
       .select({
-        id:             stories.id,
-        title:          stories.title,
-        is_anonymous:   stories.is_anonymous,
-        body:           stories.body,
-        excerpt:        stories.excerpt,
-        like_count:     stories.like_count,
-        save_count:     stories.save_count,
-        view_count:     stories.view_count,
-        comment_count:  stories.comment_count,
-        published_at:   stories.published_at,
-        final_score:    finalScore,
-        author_alias:   users.alias,
-        category_name:  storyCategories.name,
+        id:               stories.id,
+        title:            stories.title,
+        is_anonymous:     stories.is_anonymous,
+        body:             stories.body,
+        excerpt:          stories.excerpt,
+        like_count:       stories.like_count,
+        save_count:       stories.save_count,
+        view_count:       stories.view_count,
+        comment_count:    stories.comment_count,
+        published_at:     stories.published_at,
+        final_score:      finalScore,
+        // Companion alias (for companion-authored stories)
+        companion_alias:  companions.alias,
+        category_name:    storyCategories.name,
         user_has_liked: sql<boolean>`EXISTS (
           SELECT 1 FROM likes lk
           WHERE lk.user_id = ${userId}::uuid
@@ -137,10 +139,9 @@ export async function GET(req: NextRequest) {
         )`,
       })
       .from(stories)
-      .leftJoin(
-        users,
-        and(eq(users.id, stories.author_user_id), eq(stories.is_anonymous, false))
-      )
+      // Companion alias: join on author_companion_id (null for admin-authored)
+      .leftJoin(companions, eq(companions.id, stories.author_companion_id))
+      // storyCategories join for fallback category name
       .leftJoin(storyCategories, eq(storyCategories.id, stories.category_id))
       .where(whereClause)
       .orderBy(desc(finalScore), desc(stories.id))
@@ -154,12 +155,9 @@ export async function GET(req: NextRequest) {
       : null
 
     const mapped = items.map(r => {
-      // Parse body JSON — may be { raw, pages, categories } or legacy plain text
       const parsedBody = (() => {
         try { return JSON.parse(r.body ?? '') } catch { return { raw: r.body ?? '', pages: [], categories: [] } }
       })()
-      // Categories stored in body JSON take precedence over the storyCategories join
-      // (user-uploaded confessions store category_id=null but write categories into body)
       const bodyCategories: string[] = Array.isArray(parsedBody.categories) ? parsedBody.categories : []
       const primaryCategory = bodyCategories[0] ?? r.category_name ?? ''
       const extraCategories = bodyCategories.slice(1)
@@ -167,7 +165,7 @@ export async function GET(req: NextRequest) {
       return {
         id:             r.id,
         title:          r.title ?? '',
-        authorAlias:    r.is_anonymous ? null : (r.author_alias ?? null),
+        authorAlias:    r.is_anonymous ? null : (r.companion_alias ?? null),
         isAnonymous:    r.is_anonymous,
         body:           r.body,
         rawBody:        (parsedBody.raw as string) ?? (r.body ?? ''),
@@ -179,7 +177,6 @@ export async function GET(req: NextRequest) {
         commentCount:   r.comment_count,
         userHasLiked:   Boolean(r.user_has_liked),
         userHasSaved:   Boolean(r.user_has_saved),
-        // Show extra body categories as mood tags; fall back to DB mood tags
         moodTags:       extraCategories.length > 0 ? extraCategories : dbMoodTags,
         categoryName:   primaryCategory,
         publishedAt:    r.published_at,
@@ -189,7 +186,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: mapped, nextCursor })
   } catch (err) {
-    console.error('[GET /api/confessions]', err)
+    console.error('[GET /api/platform-stories]', err)
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: `Server error: ${msg}` }, { status: 500 })
   }

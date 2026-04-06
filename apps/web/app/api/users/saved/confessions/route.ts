@@ -38,6 +38,7 @@ export async function GET(req: Request) {
         title:             stories.title,
         body:              stories.body,
         excerpt:           stories.excerpt,
+        author_type:       stories.author_type,
         like_count:        stories.like_count,
         save_count:        stories.save_count,
       })
@@ -60,6 +61,7 @@ export async function GET(req: Request) {
         excerpt:    r.excerpt ?? null,
         firstImage,
         categories,
+        authorType: r.author_type,
         likeCount:  r.like_count,
         saveCount:  r.save_count,
         savedAt:    (r.savedAt as Date).toISOString(),

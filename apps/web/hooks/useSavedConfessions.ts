@@ -6,6 +6,7 @@ export interface SavedPost {
   excerpt:    string | null
   firstImage: string | null
   categories: string[]
+  authorType: string   // 'user' | 'companion' | 'admin'
   likeCount:  number
   saveCount:  number
   savedAt:    string

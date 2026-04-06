@@ -15,6 +15,10 @@ interface Props {
   userHasLiked: boolean
   userHasSaved: boolean
   layout?:      'vertical' | 'horizontal'
+  // Optional overrides — pass these when the feed uses a different mutation cache
+  // (e.g. StoryFeedCard uses useStoryLikeMutation / useStorySaveMutation)
+  onLike?:      () => void
+  onSave?:      () => void
 }
 
 function fmt(n: number): string {
@@ -58,12 +62,13 @@ function ActionBtn({
 
 export function ActionPill({
   storyId, likeCount, saveCount, commentCount, userHasLiked, userHasSaved,
-  layout = 'vertical',
+  layout = 'vertical', onLike, onSave,
 }: Props) {
   const { openComments, toggleMute, isMuted } = useUIStore()
   const muted        = isMuted(storyId)
   const likeAnim     = useAnimation()
   const saveAnim     = useAnimation()
+  // Fallback mutations — used when no override is passed (confessions feed)
   const likeMutation = useLikeMutation()
   const saveMutation = useSaveMutation()
 
@@ -74,11 +79,19 @@ export function ActionPill({
 
   const handleLike = () => {
     likeAnim.start(springTap)
-    likeMutation.mutate({ storyId, currentlyLiked: userHasLiked })
+    if (onLike) {
+      onLike()
+    } else {
+      likeMutation.mutate({ storyId, currentlyLiked: userHasLiked })
+    }
   }
   const handleSave = () => {
     saveAnim.start(springTap)
-    saveMutation.mutate({ storyId, currentlySaved: userHasSaved })
+    if (onSave) {
+      onSave()
+    } else {
+      saveMutation.mutate({ storyId, currentlySaved: userHasSaved })
+    }
   }
 
   const iconSize  = layout === 'horizontal' ? 22 : 26
