@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Camera,
-  LayoutGrid, BookOpen, Headphones, Pencil,
+  LayoutGrid, Heart, Bookmark, BookMarked, Pencil,
 } from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
+import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
+import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollectionCard'
+import { useSavedConfessions } from '@/hooks/useSavedConfessions'
 import { useUIStore } from '@/store/uiStore'
-import { stories, audios } from '@/lib/data'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,7 +51,8 @@ interface UserPost {
   createdAt:        string
 }
 
-type SavedTab = 'posts' | 'stories' | 'audio'
+type MainTab    = 'posts' | 'likes' | 'saved'
+type SavedSubTab = 'all' | 'collections' | 'companions'
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -223,6 +226,94 @@ function AudioCell({ title, voice, gradient }: { title: string; voice: string; g
   )
 }
 
+// ─── SavedTabContent ──────────────────────────────────────────────────────────
+
+const SAVED_SUB_TABS: { id: SavedSubTab; label: string }[] = [
+  { id: 'all',         label: 'All' },
+  { id: 'collections', label: 'Collections' },
+  { id: 'companions',  label: 'Companions' },
+]
+
+function SavedTabContent({
+  savedSubTab,
+  setSavedSubTab,
+}: {
+  savedSubTab:    SavedSubTab
+  setSavedSubTab: (t: SavedSubTab) => void
+}) {
+  const { items, total, isLoading } = useSavedConfessions()
+
+  const coverImages = items
+    .slice(0, 4)
+    .map(i => i.firstImage)
+    .filter((v): v is string => Boolean(v))
+
+  const skeletonGrid = (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} style={{ aspectRatio: '3/4', background: '#111620' }} className="animate-pulse" />
+      ))}
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Sub-tab pills */}
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-4" style={{ scrollbarWidth: 'none' }}>
+        {SAVED_SUB_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setSavedSubTab(id)}
+            style={{
+              flexShrink:   0,
+              fontSize:     12,
+              padding:      '5px 14px',
+              borderRadius: 999,
+              border:       `1px solid ${savedSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color:        savedSubTab === id ? '#e8607a' : '#6b7280',
+              background:   savedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor:       'pointer',
+              transition:   'all 0.15s',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Sub-tab content */}
+      {savedSubTab === 'all' && (
+        isLoading ? skeletonGrid : <SavedConfessionsGrid items={items} />
+      )}
+
+      {savedSubTab === 'collections' && (
+        isLoading ? (
+          <div style={{ height: 140, borderRadius: 14, background: '#0d1117', border: '1px solid #1c2333' }}
+            className="animate-pulse" />
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <BookMarked size={32} color="#1c2333" />
+            <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+              No collections yet. Save confessions to create your first.
+            </p>
+          </div>
+        ) : (
+          <ConfessionsCollectionCard count={total} coverImages={coverImages} />
+        )
+      )}
+
+      {savedSubTab === 'companions' && (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <Bookmark size={32} color="#1c2333" />
+          <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+            Saved companions will appear here.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -235,7 +326,8 @@ export default function ProfilePage() {
   const [loading, setLoading]               = useState(true)
   const [editOpen, setEditOpen]             = useState(false)
   const [tasteOpen, setTasteOpen]           = useState(false)
-  const [activeTab, setActiveTab]           = useState<SavedTab>('posts')
+  const [activeTab, setActiveTab]           = useState<MainTab>('posts')
+  const [savedSubTab, setSavedSubTab]       = useState<SavedSubTab>('all')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError]       = useState<string | null>(null)
 
@@ -315,10 +407,10 @@ export default function ProfilePage() {
   const vibes    = profile?.vibes?.length           ? profile.vibes           : []
   const desires  = profile?.desired_genders?.length ? profile.desired_genders : []
 
-  const TABS: { id: SavedTab; icon: React.ReactNode }[] = [
-    { id: 'posts',   icon: <LayoutGrid size={20} /> },
-    { id: 'stories', icon: <BookOpen size={20} /> },
-    { id: 'audio',   icon: <Headphones size={20} /> },
+  const TABS: { id: MainTab; icon: React.ReactNode }[] = [
+    { id: 'posts', icon: <LayoutGrid size={20} /> },
+    { id: 'likes', icon: <Heart size={20} /> },
+    { id: 'saved', icon: <Bookmark size={20} /> },
   ]
 
   return (
@@ -521,12 +613,8 @@ export default function ProfilePage() {
               postsLoading ? (
                 <div className="grid grid-cols-3 gap-[2px]">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} style={{
-                      aspectRatio: '3/4',
-                      background: '#111620',
-                      borderRadius: 4,
-                      animation: 'pulse 1.5s ease-in-out infinite',
-                    }} />
+                    <div key={i} style={{ aspectRatio: '3/4', background: '#111620', borderRadius: 4 }}
+                      className="animate-pulse" />
                   ))}
                 </div>
               ) : posts.length === 0 ? (
@@ -556,19 +644,21 @@ export default function ProfilePage() {
                 </div>
               )
             )}
-            {activeTab === 'stories' && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {stories.map(s => (
-                  <StoryCell key={s.id} title={s.title} gradient={s.gradient} />
-                ))}
+
+            {activeTab === 'likes' && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Heart size={32} color="#1c2333" />
+                <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+                  Confessions you've liked will appear here.
+                </p>
               </div>
             )}
-            {activeTab === 'audio' && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {audios.map(a => (
-                  <AudioCell key={a.id} title={a.title} voice={a.voice} gradient={a.gradient} />
-                ))}
-              </div>
+
+            {activeTab === 'saved' && (
+              <SavedTabContent
+                savedSubTab={savedSubTab}
+                setSavedSubTab={setSavedSubTab}
+              />
             )}
           </div>
 
