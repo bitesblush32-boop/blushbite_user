@@ -454,7 +454,7 @@ export default function OnboardingPage() {
       await update()
       // Companions (dream) go to identity verification — Dreamers go to the feed
       if (result.platform_role === 'dream') {
-        router.push('/companion/onboarding/identity')
+        router.push('/companion/welcome')
       } else {
         router.push('/')
       }

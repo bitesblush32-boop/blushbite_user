@@ -52,6 +52,34 @@ export default auth((req) => {
     return Response.redirect(new URL('/auth/onboarding', nextUrl))
   }
 
+  // Gate 4 — Companion routing (platform_role === 'companion')
+  if (user?.platform_role === 'companion' && !path.startsWith('/api/')) {
+    const stage  = (user.companion_stage  as number)  ?? 1
+    const isLive = (user.companion_is_live as boolean) ?? false
+
+    const companionPublic = [
+      '/companion/welcome',
+      '/companion/onboarding/profile',
+      '/companion/onboarding/legal',
+      '/companion/onboarding/submitted',
+    ]
+    const isCompanionPublic = companionPublic.some(p => path.startsWith(p))
+
+    if (!isLive) {
+      if (stage === 1 && !isCompanionPublic) {
+        return Response.redirect(new URL('/companion/welcome', nextUrl))
+      }
+      if (stage === 2 && !path.startsWith('/companion/onboarding/legal')) {
+        return Response.redirect(new URL('/companion/onboarding/legal', nextUrl))
+      }
+      if (stage === 3 && !path.startsWith('/companion/onboarding/submitted')) {
+        return Response.redirect(new URL('/companion/onboarding/submitted', nextUrl))
+      }
+    }
+    // is_live = true → allow through to /companion/dashboard etc.
+    return
+  }
+
   // All gates passed — allow through
 })
 

@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs'
 
 import { authConfig } from './auth.config'
 import { db } from './db'
-import { users, userAccounts } from './db/schema'
+import { users, userAccounts, userProfiles, companions, companionProfiles } from './db/schema'
 import { generateAlias } from './lib/alias'
 
 const credentialsSchema = z.object({
@@ -109,6 +109,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .where(eq(users.id, token.id as string))
           .limit(1)
         if (!row.length) return null
+
+        // Refresh platform_role
+        const profileRow = await db
+          .select({ platform_role: userProfiles.platform_role })
+          .from(userProfiles)
+          .where(eq(userProfiles.user_id, token.id as string))
+          .limit(1)
+        token.platform_role = profileRow[0]?.platform_role ?? undefined
+
+        // If companion, refresh stage + is_live
+        if (token.platform_role === 'companion' && token.email) {
+          const companionRow = await db
+            .select({
+              companion_stage: companions.companion_stage,
+              is_live:         companionProfiles.is_live,
+            })
+            .from(companions)
+            .leftJoin(companionProfiles, eq(companionProfiles.companion_id, companions.id))
+            .where(eq(companions.email, token.email as string))
+            .limit(1)
+          token.companion_stage   = companionRow[0]?.companion_stage ?? 1
+          token.companion_is_live = companionRow[0]?.is_live ?? false
+        }
       }
 
       return token

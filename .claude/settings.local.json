@@ -61,7 +61,12 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add react-pageflip 2>&1)",
       "Bash(ls \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\worker\\\\\" 2>/dev/null || echo \"NOT FOUND\")",
       "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/worker\" && pnpm install 2>&1)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit --project tsconfig.json 2>&1 | head -60)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit --project tsconfig.json 2>&1 | head -60)",
+      "Bash(ls \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/auth/companion-verify/\" 2>/dev/null && echo \"exists\" || echo \"not found\"\nls \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(companion\\)/companion/onboarding/\" 2>/dev/null)",
+      "Bash(ls \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(companion\\)/companion/onboarding/identity/\" 2>/dev/null\nls \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(companion\\)/companion/onboarding/verify/\" 2>/dev/null)",
+      "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -40)",
+      "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -20)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -40)"
     ]
   }
 }
