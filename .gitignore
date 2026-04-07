@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+tsconfig.tsbuildinfo
 
 # Next.js
 apps/web/.next/

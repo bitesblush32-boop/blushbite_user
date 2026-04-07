@@ -1,20 +1,19 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { PlusCircle, Menu, X, PlusIcon, Plus, Bell } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Bell, ChevronRight, HelpCircle, LogOut, Menu, Plus, Shield } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
+import SlidePanel from '@/components/ui/SlidePanel'
 
 export default function Header() {
   const { data: session } = useSession()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
   const avatarUrl = useUIStore(s => s.avatarUrl)
   const router = useRouter()
   const pathname = usePathname()
@@ -24,21 +23,41 @@ export default function Header() {
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
 
   useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false)
+    setSettingsOpen(false)
+    setNotificationsOpen(false)
+  }, [pathname])
+
+  const menuItems = [
+    {
+      label: 'Privacy & safety',
+      href: '/privacy',
+      icon: Shield,
+      tone: 'default' as const,
+    },
+    {
+      label: 'Help & support',
+      href: '/help',
+      icon: HelpCircle,
+      tone: 'default' as const,
+    },
+    {
+      label: 'Sign out',
+      icon: LogOut,
+      tone: 'danger' as const,
+      onClick: () => signOut({ callbackUrl: '/auth/signin' }),
+    },
+  ]
+
+  const profileAccent = avatarUrl
+    ? {
+        backgroundImage: `url(${avatarUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
       }
-    }
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handlePointerDown)
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [])
+    : {
+        background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
+        color: '#fff',
+      }
 
   return (
     <header
@@ -50,7 +69,6 @@ export default function Header() {
         height: 75,
       }}
     >
-      {/* Three-zone grid: left | center | right */}
       <div
         className="px-5 md:px-8"
         style={{
@@ -61,7 +79,6 @@ export default function Header() {
           height: '100%',
         }}
       >
-        {/* LEFT — compose button */}
         <div style={{ justifySelf: 'start' }}>
           <button
             type="button"
@@ -91,7 +108,6 @@ export default function Header() {
           </button>
         </div>
 
-        {/* CENTER — logo */}
         <div style={{ justifySelf: 'center' }}>
           <Link href="/" className="flex-shrink-0 block">
             <Image
@@ -105,100 +121,151 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* RIGHT — hamburger on /profile, notification icon everywhere else */}
         <div style={{ justifySelf: 'end' }}>
           {isProfile ? (
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen(v => !v)}
-                className="flex items-center justify-center rounded-full transition-all duration-150"
-                style={{
-                  width: 40, height: 40, background: 'transparent', border: 'none',
-                  color: menuOpen ? '#e8607a' : '#6b7280', cursor: 'pointer',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-              >
-                {menuOpen
-                  ? <X size={22} strokeWidth={1.5} />
-                  : <Menu size={22} strokeWidth={1.5} />
-                }
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-[calc(100%+10px)] z-10 flex flex-col gap-[2px] rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-2"
-                  style={{ minWidth: 180, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
-                >
-                  <Link
-                    href="/privacy"
-                    role="menuitem"
-                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors hover:bg-white/[0.06] hover:text-[#eeeef0]"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Privacy &amp; safety
-                  </Link>
-                  <Link
-                    href="/help"
-                    role="menuitem"
-                    className="rounded-[8px] px-3 py-2 text-left text-[13px] text-[#6b7280] transition-colors hover:bg-white/[0.06] hover:text-[#eeeef0]"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Help &amp; support
-                  </Link>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="rounded-[8px] px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/[0.06]"
-                    style={{ color: '#e87070' }}
-                    onClick={() => {
-                      setMenuOpen(false)
-                      signOut({ callbackUrl: '/auth/signin' })
-                    }}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="flex items-center justify-center rounded-full transition-all duration-150"
+              style={{
+                width: 40,
+                height: 40,
+                background: 'transparent',
+                border: 'none',
+                color: settingsOpen ? '#e8607a' : '#6b7280',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+            >
+              <Menu size={22} strokeWidth={1.5} />
+            </button>
           ) : (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="flex items-center justify-center rounded-full transition-all duration-150"
-                style={{
-                  width: 40, height: 40, background: 'transparent', border: 'none',
-                  color: notificationsOpen ? '#e8607a' : '#6b7280', cursor: 'pointer',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-              >
-                <Bell size={22} strokeWidth={1.5} />
-              </button>
-
-              <AnimatePresence>
-                {notificationsOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="absolute right-0 top-[calc(100%+10px)] z-10 rounded-[14px] border border-[#1c2333] bg-[#161d2a] p-4"
-                    style={{ minWidth: 320, maxHeight: 400, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}
-                  >
-                    <div className="text-[13px] text-[#6b7280] text-center py-8">
-                      No notifications yet
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <button
+              type="button"
+              onClick={() => setNotificationsOpen(true)}
+              className="flex items-center justify-center rounded-full transition-all duration-150"
+              style={{
+                width: 40,
+                height: 40,
+                background: 'transparent',
+                border: 'none',
+                color: notificationsOpen ? '#e8607a' : '#6b7280',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+            >
+              <Bell size={22} strokeWidth={1.5} />
+            </button>
           )}
         </div>
       </div>
+
+      <SlidePanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        title="Profile settings"
+        headerSlot={(
+          <div className="mt-2 flex items-center gap-3">
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#1c2333] text-[11px] font-semibold"
+              style={profileAccent}
+            >
+              {!avatarUrl ? initials : null}
+            </span>
+            <div>
+              <p className="text-[13px] text-[#eeeef0]">{alias}</p>
+              <p className="text-[11px] text-[#4b5563]">Manage privacy, support, and account actions.</p>
+            </div>
+          </div>
+        )}
+      >
+        <div className="flex flex-col gap-2">
+          {menuItems.map(item => {
+            const Icon = item.icon
+            const isDanger = item.tone === 'danger'
+            const content = (
+              <>
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-[12px] border"
+                  style={{
+                    borderColor: isDanger ? 'rgba(232,112,112,0.18)' : '#1c2333',
+                    background: isDanger ? 'rgba(232,112,112,0.08)' : '#111620',
+                    color: isDanger ? '#e87070' : '#e8607a',
+                  }}
+                >
+                  <Icon size={18} strokeWidth={1.8} />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-[14px]" style={{ color: isDanger ? '#e87070' : '#eeeef0' }}>
+                    {item.label}
+                  </span>
+                  <span className="block pt-1 text-[12px] text-[#4b5563]">
+                    {isDanger ? 'End this session securely.' : 'Open this screen in a full-page view.'}
+                  </span>
+                </span>
+                {!isDanger && <ChevronRight size={18} color="#4b5563" />}
+              </>
+            )
+
+            if (item.href) {
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setSettingsOpen(false)}
+                  className="flex items-center gap-3 rounded-[16px] border border-[#1c2333] bg-[#111620] px-4 py-3 transition-colors duration-150 hover:border-white/10 hover:bg-white/[0.03]"
+                >
+                  {content}
+                </Link>
+              )
+            }
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  setSettingsOpen(false)
+                  item.onClick?.()
+                }}
+                className="flex items-center gap-3 rounded-[16px] border px-4 py-3 text-left transition-colors duration-150"
+                style={{
+                  borderColor: '#2a1f24',
+                  background: 'rgba(232,112,112,0.05)',
+                }}
+              >
+                {content}
+              </button>
+            )
+          })}
+        </div>
+      </SlidePanel>
+
+      <SlidePanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        title="Notifications"
+        headerSlot={(
+          <span className="mt-1 block text-[12px] text-[#4b5563]">
+            Updates about replies, saves, and anything that needs your attention.
+          </span>
+        )}
+      >
+        <div className="flex min-h-[280px] flex-col items-center justify-center rounded-[18px] border border-dashed border-[#1c2333] bg-[#111620] px-6 text-center">
+          <span
+            className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#1c2333]"
+            style={{ background: 'rgba(232,96,122,0.08)' }}
+          >
+            <Bell size={24} color="#e8607a" />
+          </span>
+          <p className="text-[15px] text-[#eeeef0]">No notifications yet</p>
+          <p className="mt-2 max-w-[260px] text-[12px] leading-6 text-[#4b5563]">
+            When someone reacts to your activity or there&apos;s something new to review, it will show up here.
+          </p>
+        </div>
+      </SlidePanel>
     </header>
   )
 }

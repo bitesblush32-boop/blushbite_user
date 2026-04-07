@@ -561,11 +561,11 @@ export default function ProfilePage() {
               {alias}
             </div>
 
-            {profile?.display_name && (
+            {/* {profile?.display_name && (
               <div style={{ fontSize: 13, color: '#6b7280', marginTop: -6 }}>
                 {profile.display_name}
               </div>
-            )}
+            )} */}
 
             {profile?.bio && (
               <p style={{
