@@ -253,7 +253,7 @@ function PermissionBanner() {
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        margin: '16px 20px',
+        margin: '0 20px 14px',
         padding: '14px 16px',
         borderRadius: 14,
         background: 'rgba(232,96,122,0.07)',
@@ -385,7 +385,7 @@ export default function NotificationsPage() {
       />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Sticky header */}
+        {/* Sticky header + permission banner together so they never overlap */}
         <div
           style={{
             position: 'sticky',
@@ -394,53 +394,58 @@ export default function NotificationsPage() {
             background: 'rgba(7,9,15,0.90)',
             backdropFilter: 'blur(16px)',
             borderBottom: '1px solid #1c2333',
-            padding: '14px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
           }}
         >
-          <div>
-            <h1
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 22,
-                color: '#eeeef0',
-                fontWeight: 400,
-              }}
-            >
-              Activity
-            </h1>
+          <div
+            style={{
+              padding: '14px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 22,
+                  color: '#eeeef0',
+                  fontWeight: 400,
+                }}
+              >
+                Activity
+              </h1>
+              {unreadCount > 0 && (
+                <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                  {unreadCount} unread
+                </p>
+              )}
+            </div>
             {unreadCount > 0 && (
-              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                {unreadCount} unread
-              </p>
+              <button
+                type="button"
+                onClick={() => markAllRead.mutate()}
+                disabled={markAllRead.isPending}
+                style={{
+                  fontSize: 12,
+                  color: markedLabel === 'Marked ✓' ? '#4ade80' : '#e8607a',
+                  background: markedLabel === 'Marked ✓' ? 'rgba(74,222,128,0.08)' : 'rgba(232,96,122,0.08)',
+                  border: `1px solid ${markedLabel === 'Marked ✓' ? 'rgba(74,222,128,0.2)' : 'rgba(232,96,122,0.2)'}`,
+                  borderRadius: 20,
+                  padding: '6px 14px',
+                  cursor: markAllRead.isPending ? 'default' : 'pointer',
+                  opacity: markAllRead.isPending ? 0.5 : 1,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {markedLabel}
+              </button>
             )}
           </div>
-          {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={() => markAllRead.mutate()}
-              disabled={markAllRead.isPending}
-              style={{
-                fontSize: 12,
-                color: markedLabel === 'Marked ✓' ? '#4ade80' : '#e8607a',
-                background: markedLabel === 'Marked ✓' ? 'rgba(74,222,128,0.08)' : 'rgba(232,96,122,0.08)',
-                border: `1px solid ${markedLabel === 'Marked ✓' ? 'rgba(74,222,128,0.2)' : 'rgba(232,96,122,0.2)'}`,
-                borderRadius: 20,
-                padding: '6px 14px',
-                cursor: markAllRead.isPending ? 'default' : 'pointer',
-                opacity: markAllRead.isPending ? 0.5 : 1,
-                transition: 'all 0.2s',
-              }}
-            >
-              {markedLabel}
-            </button>
-          )}
-        </div>
 
-        {/* Push permission banner */}
-        <PermissionBanner />
+          {/* Push permission banner — lives inside the sticky container so it never overlaps content */}
+          <PermissionBanner />
+        </div>
 
         {/* Loading */}
         {isLoading && (
