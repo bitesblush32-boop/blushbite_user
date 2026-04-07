@@ -88,6 +88,8 @@ export const users = pgTable('users', {
   image:               text('image'),
   alias:               varchar('alias', { length: 100 }).unique(),
   onboarding_complete: boolean('onboarding_complete').notNull().default(false),
+  is_flagged:          boolean('is_flagged').notNull().default(false),
+  deleted_at:          timestamp('deleted_at', { withTimezone: true }),
   created_at:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

@@ -66,7 +66,11 @@
       "Bash(ls \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(companion\\)/companion/onboarding/identity/\" 2>/dev/null\nls \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(companion\\)/companion/onboarding/verify/\" 2>/dev/null)",
       "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -40)",
       "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -20)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -40)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -40)",
+      "Bash(find \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(admin\\)/admin/_components\" -type f 2>/dev/null | head -10; echo \"---stats:\"; find \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/api/admin/stats\" -type f | sort)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -60)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -40)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1)"
     ]
   }
 }

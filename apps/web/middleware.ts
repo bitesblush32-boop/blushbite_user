@@ -10,8 +10,10 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/terms',
   '/admin-generate',
+  '/admin',
 ]
 const AUTH_API_PREFIX  = '/api/auth'
+const ADMIN_API_PREFIX = '/api/admin'
 const HEALTH_PATH      = '/api/health'
 const WEBHOOK_PREFIX   = '/api/webhooks'
 
@@ -19,8 +21,9 @@ export default auth((req) => {
   const { nextUrl } = req
   const path        = nextUrl.pathname
 
-  // Always allow NextAuth API routes and health check
+  // Always allow NextAuth API routes, admin API routes, and health check
   if (path.startsWith(AUTH_API_PREFIX)) return
+  if (path.startsWith(ADMIN_API_PREFIX)) return
   if (path === HEALTH_PATH) return
   if (path.startsWith(WEBHOOK_PREFIX)) return
 
@@ -51,6 +54,15 @@ export default auth((req) => {
   // Skip onboarding gate for API routes and the onboarding page itself
   if (!onboarded && path !== '/auth/onboarding' && !path.startsWith('/api/')) {
     return Response.redirect(new URL('/auth/onboarding', nextUrl))
+  }
+
+  // Gate: Admin users → /admin only, block access to dreamer routes
+  const token = req.auth?.user as any
+  if (token?.platform_role === 'admin') {
+    if (!path.startsWith('/admin') && !path.startsWith('/api/admin') && !path.startsWith('/api/auth')) {
+      return Response.redirect(new URL('/admin', nextUrl))
+    }
+    return // let admin through to /admin/* freely
   }
 
   // Gate 4 — Companion routing (platform_role === 'companion')

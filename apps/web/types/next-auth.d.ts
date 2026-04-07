@@ -6,7 +6,7 @@ declare module 'next-auth' {
       id: string
       alias: string
       onboarding_complete: boolean
-      platform_role?: string
+      platform_role?: 'dreamer' | 'companion' | 'admin'
       companion_stage?: number
       companion_is_live?: boolean
     } & DefaultSession['user']
@@ -16,7 +16,7 @@ declare module 'next-auth' {
   interface User {
     alias: string
     onboarding_complete: boolean
-    platform_role?: string
+    platform_role?: 'dreamer' | 'companion' | 'admin'
     companion_stage?: number
     companion_is_live?: boolean
   }
