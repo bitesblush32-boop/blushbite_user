@@ -487,6 +487,19 @@ export const bookingRequests = pgTable('booking_requests', {
   statusCheck: check('br_status_check', sql`${table.status} IN ('pending', 'accepted', 'declined', 'cancelled', 'completed')`),
 }))
 
+// ─── PUSH SUBSCRIPTIONS ───────────────────────────────────────────────────────
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id:         uuid('id').primaryKey().defaultRandom(),
+  user_id:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint:   text('endpoint').notNull(),
+  p256dh:     text('p256dh').notNull(),
+  auth:       text('auth').notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueEndpoint: unique('uq_push_endpoint').on(table.user_id, table.endpoint),
+}))
+
 export const fantasyTagOverlapScores = pgTable('fantasy_tag_overlap_scores', {
   id:                   uuid('id').primaryKey().defaultRandom(),
   user_id:              uuid('user_id').notNull().references(() => users.id),

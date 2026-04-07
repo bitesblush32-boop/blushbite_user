@@ -237,10 +237,8 @@ export default function AdminShellLayout({ children }: { children: React.ReactNo
       </AnimatePresence>
 
       {/* Main content */}
-      <main className="md:ml-[240px] ml-0 pt-0 md:pt-0 pt-[56px] min-h-screen" style={{ color: '#eeeef0' }}>
-        <div className="md:pt-0 pt-[56px]">
-          {children}
-        </div>
+      <main className="md:ml-[240px] pt-[56px] md:pt-0 min-h-screen" style={{ color: '#eeeef0' }}>
+        {children}
       </main>
     </div>
   )

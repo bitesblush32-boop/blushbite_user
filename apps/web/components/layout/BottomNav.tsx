@@ -2,21 +2,23 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Home, BookOpen, Users, BookHeart, User } from 'lucide-react'
+import { Home, BookOpen, Users, BookHeart, User, Bell } from 'lucide-react'
 import { usePlayerStore } from '@/store/playerStore'
+import { useNotifications } from '@/hooks/useNotifications'
 
 const NAV_ITEMS = [
-  { label: 'Home',        href: '/',            icon: Home },
-  { label: 'Stories',     href: '/stories',     icon: BookOpen },
-  { label: 'Companions',  href: '/companions',  icon: Users },
-  { label: 'Confessions', href: '/confessions', icon: BookHeart },
-  { label: 'Me',          href: '/profile',     icon: User },
+  { label: 'Home',        href: '/',               icon: Home },
+  { label: 'Stories',     href: '/stories',        icon: BookOpen },
+  { label: 'Companions',  href: '/companions',     icon: Users },
+  { label: 'Activity',    href: '/notifications',  icon: Bell },
+  { label: 'Me',          href: '/profile',        icon: User },
 ]
 
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const playerVisible = !!usePlayerStore((s) => s.audioId)
+  const { unreadCount } = useNotifications()
 
   return (
     <motion.div
@@ -73,7 +75,23 @@ export default function BottomNav() {
                 padding: 0,
               }}
             >
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
               <Icon size={22} strokeWidth={1.5} color={color} />
+              {href === '/notifications' && unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -2,
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: '#e8607a',
+                    border: '1.5px solid #07090f',
+                  }}
+                />
+              )}
+            </span>
               <span
                 style={{
                   fontSize: 10,

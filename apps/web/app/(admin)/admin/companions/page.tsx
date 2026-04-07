@@ -165,6 +165,9 @@ export default function AdminCompanionsPage() {
     onError: (_err, _vars, ctx: any) => {
       if (ctx?.prev) queryClient.setQueryData(queryKey, ctx.prev)
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'companions'] })
+    },
   })
 
   const rows = data?.data ?? []

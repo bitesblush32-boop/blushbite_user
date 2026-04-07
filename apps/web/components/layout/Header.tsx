@@ -9,13 +9,11 @@ import { Bell, ChevronRight, HelpCircle, LogOut, Menu, Plus, Shield } from 'luci
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 import SlidePanel from '@/components/ui/SlidePanel'
-import NotificationsPanel from '@/components/ui/NotificationsPanel'
 import { useNotifications } from '@/hooks/useNotifications'
 
 export default function Header() {
   const { data: session } = useSession()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
   const avatarUrl = useUIStore(s => s.avatarUrl)
   const router = useRouter()
@@ -29,7 +27,6 @@ export default function Header() {
 
   useEffect(() => {
     setSettingsOpen(false)
-    setNotificationsOpen(false)
   }, [pathname])
 
   const menuItems = [
@@ -146,23 +143,24 @@ export default function Header() {
               <Menu size={22} strokeWidth={1.5} />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => setNotificationsOpen(true)}
-              className="flex items-center justify-center rounded-full transition-all duration-150"
-              style={{
-                width: 40,
-                height: 40,
-                background: 'transparent',
-                border: 'none',
-                color: notificationsOpen ? '#e8607a' : '#6b7280',
-                cursor: 'pointer',
-                position: 'relative',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-            >
-              <Bell size={22} strokeWidth={1.5} />
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => router.push('/notifications')}
+                className="flex items-center justify-center rounded-full transition-all duration-150"
+                style={{
+                  width: 40,
+                  height: 40,
+                  background: pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent',
+                  border: 'none',
+                  color: pathname === '/notifications' ? '#e8607a' : '#6b7280',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent' }}
+              >
+                <Bell size={22} strokeWidth={1.5} />
+              </button>
               <AnimatePresence>
                 {unreadCount > 0 && (
                   <motion.span
@@ -170,11 +168,11 @@ export default function Header() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    transition={{ duration: 0.15 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                     style={{
                       position: 'absolute',
-                      top: 4,
-                      right: 4,
+                      top: -3,
+                      right: -3,
                       minWidth: 16,
                       height: 16,
                       borderRadius: 8,
@@ -188,13 +186,14 @@ export default function Header() {
                       color: '#fff',
                       lineHeight: 1,
                       padding: '0 3px',
+                      pointerEvents: 'none',
                     }}
                   >
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </motion.span>
                 )}
               </AnimatePresence>
-            </button>
+            </div>
           )}
         </div>
       </div>
@@ -280,21 +279,6 @@ export default function Header() {
         </div>
       </SlidePanel>
 
-      <SlidePanel
-        open={notificationsOpen}
-        onClose={() => setNotificationsOpen(false)}
-        title="Notifications"
-        headerSlot={(
-          <span className="mt-1 block text-[12px] text-[#4b5563]">
-            Updates about replies, saves, and anything that needs your attention.
-          </span>
-        )}
-      >
-        <NotificationsPanel
-          open={notificationsOpen}
-          onClose={() => setNotificationsOpen(false)}
-        />
-      </SlidePanel>
     </header>
   )
 }

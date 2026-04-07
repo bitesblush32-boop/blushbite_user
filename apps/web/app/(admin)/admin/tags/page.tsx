@@ -54,6 +54,15 @@ const SECTIONS: { key: SectionKey; table: TableKey; label: string; hasEmoji: boo
   { key: 'story_categories',   table: 'story_category',    label: 'Story Categories',    hasEmoji: false, hasDescription: true,  hasSortOrder: true,  hasCategory: false },
 ]
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function singularize(label: string): string {
+  if (label.endsWith('ies')) return label.slice(0, -3) + 'y'
+  if (label.endsWith('ses')) return label.slice(0, -2)
+  if (label.endsWith('s'))   return label.slice(0, -1)
+  return label
+}
+
 // ─── Inline edit row ──────────────────────────────────────────────────────────
 
 function EditRow({
@@ -289,7 +298,10 @@ function TagTable({
   const [creating,     setCreating]     = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
 
-  const usageKey = sectionKey === 'fantasy_categories' || sectionKey === 'story_categories' ? 'story_count' : 'usage_count'
+  const usageKey =
+    sectionKey === 'fantasy_categories' ? 'tag_count'   :
+    sectionKey === 'story_categories'   ? 'story_count' :
+    'usage_count'
 
   return (
     <>
@@ -454,7 +466,7 @@ function TagTable({
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(232,96,122,0.06)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
         >
-          <Plus size={13} /> Add {SECTIONS.find(s => s.key === sectionKey)?.label.replace('s', '')}
+          <Plus size={13} /> Add {singularize(SECTIONS.find(s => s.key === sectionKey)?.label ?? '')}
         </button>
       )}
     </>
