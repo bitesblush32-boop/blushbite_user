@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   '/auth/error',
   '/privacy',
   '/terms',
+  '/admin-generate',
 ]
 const AUTH_API_PREFIX  = '/api/auth'
 const HEALTH_PATH      = '/api/health'
