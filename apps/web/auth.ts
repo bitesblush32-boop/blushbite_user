@@ -36,6 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id                  = user.id as string
         token.alias               = (user as any).alias ?? ''
         token.onboarding_complete = (user as any).onboarding_complete ?? false
+        token.platform_role       = (user as any).platform_role ?? 'dreamer'
         return token
       }
 
@@ -98,6 +99,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id                  = dbUser.id
         token.alias               = dbUser.alias ?? ''
         token.onboarding_complete = dbUser.onboarding_complete
+
+        // Read platform_role from user_profiles
+        const oauthProfile = await db.query.userProfiles.findFirst({
+          where: eq(userProfiles.user_id, dbUser.id),
+        })
+        token.platform_role = oauthProfile?.platform_role ?? 'dreamer'
+
         return token
       }
 
@@ -168,12 +176,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const isValid = await bcrypt.compare(password, user.hashed_password)
         if (!isValid) return null
 
+        const userProfile = await db.query.userProfiles.findFirst({
+          where: eq(userProfiles.user_id, user.id),
+        })
+
         return {
           id:                  user.id,
           email:               user.email,
           name:                user.name,
           alias:               user.alias               ?? '',
           onboarding_complete: user.onboarding_complete,
+          platform_role:       (userProfile?.platform_role ?? 'dreamer') as 'dreamer' | 'companion' | 'admin',
         }
       },
     }),
