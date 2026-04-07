@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { likes, stories } from '@/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
+import { createNotification } from '@/db/helpers/createNotification'
 
 export async function POST(
   _req: NextRequest,
@@ -23,7 +24,19 @@ export async function POST(
       .update(stories)
       .set({ like_count: sql`${stories.like_count} + 1` })
       .where(eq(stories.id, storyId))
-      .returning({ likeCount: stories.like_count })
+      .returning({ likeCount: stories.like_count, authorId: stories.author_user_id })
+
+    try {
+      if (updated?.authorId) {
+        await createNotification({
+          recipientId: updated.authorId,
+          actorId:     userId,
+          type:        'story_like',
+          contentType: 'story',
+          contentId:   storyId,
+        })
+      }
+    } catch { /* notification failure must never break the like response */ }
 
     return NextResponse.json({ liked: true, likeCount: updated?.likeCount ?? 0 })
   } catch (err) {
