@@ -70,7 +70,11 @@
       "Bash(find \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(admin\\)/admin/_components\" -type f 2>/dev/null | head -10; echo \"---stats:\"; find \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/api/admin/stats\" -type f | sort)",
       "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -60)",
       "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1 | head -40)",
-      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1)"
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx tsc --noEmit 2>&1)",
+      "Bash(find \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(auth\\)\" -type f | sort)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && node -e \"\nconst { Client } = require\\('pg'\\);\nconst client = new Client\\({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway' }\\);\nclient.connect\\(\\).then\\(\\(\\) => {\n  return client.query\\(\\\\\"SELECT u.id, u.email, u.alias, up.platform_role FROM users u LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.email = 'admin@blushbite.co'\\\\\"\\);\n}\\).then\\(r => {\n  console.log\\(JSON.stringify\\(r.rows\\)\\);\n  return client.end\\(\\);\n}\\).catch\\(e => console.error\\(e.message\\)\\);\n\" 2>&1)",
+      "Bash(psql \"postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway\" -c \"\\\\d users\" 2>&1 | head -40)",
+      "Bash(psql \"postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway\" -c \"\nALTER TABLE users\n  ADD COLUMN IF NOT EXISTS is_flagged  BOOLEAN NOT NULL DEFAULT FALSE,\n  ADD COLUMN IF NOT EXISTS deleted_at  TIMESTAMPTZ;\n\nCREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users \\(deleted_at\\) WHERE deleted_at IS NOT NULL;\nCREATE INDEX IF NOT EXISTS idx_users_is_flagged  ON users \\(is_flagged\\)  WHERE is_flagged = TRUE;\n\" 2>&1)"
     ]
   }
 }
