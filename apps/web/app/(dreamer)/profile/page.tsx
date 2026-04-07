@@ -401,7 +401,6 @@ export default function ProfilePage() {
 
   const [profile, setProfile]               = useState<UserProfile | null>(null)
   const [loading, setLoading]               = useState(true)
-  const [editOpen, setEditOpen]             = useState(false)
   const [tasteOpen, setTasteOpen]           = useState(false)
   const [activeTab, setActiveTab]           = useState<MainTab>('posts')
   const [likedSubTab, setLikedSubTab]       = useState<LikedSubTab>('all')
@@ -581,13 +580,7 @@ export default function ProfilePage() {
               The Dreamer
             </span>
 
-            <button
-              onClick={() => setEditOpen(true)}
-              className="flex items-center gap-[6px] bg-transparent text-[#6b7280] border border-[#1c2333] px-[18px] py-[8px] rounded-[10px] text-[13px] cursor-pointer transition-all duration-200 hover:border-white/20 hover:text-[#eeeef0] mt-1"
-            >
-              <Pencil size={13} />
-              Edit profile
-            </button>
+
           </div>
 
           {/* ── Section 2: Stats ─────────────────────────────── */}
@@ -646,7 +639,7 @@ export default function ProfilePage() {
 
             <div>
               <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-                desires
+                Gender Preference
               </div>
               {desires.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -740,24 +733,6 @@ export default function ProfilePage() {
 
         </motion.main>
       )}
-
-      {/* ── Edit profile drawer ───────────────────────────────── */}
-      <EditProfileDrawer
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        currentAvatar={profile?.avatar_url ?? null}
-        onSaved={(d) => {
-          setProfile(p => p ? { ...p, ...d } : p)
-          if (d.avatar_url) setAvatarUrl(d.avatar_url)
-        }}
-        defaults={{
-          alias:       profile?.alias         ?? undefined,
-          bio:         profile?.bio          ?? undefined,
-          dateOfBirth: profile?.date_of_birth ?? undefined,
-          country:     profile?.country      ?? undefined,
-          city:        profile?.city         ?? undefined,
-        }}
-      />
 
       {/* ── Taste drawer ─────────────────────────────────────── */}
       <TasteDrawer

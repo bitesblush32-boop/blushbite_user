@@ -124,7 +124,7 @@ export default function TasteDrawer({
           {/* Panel */}
           <motion.div
             {...motionProps}
-            className="fixed z-[860] overflow-y-auto bottom-0 left-0 right-0 md:bottom-0 md:top-0 md:left-auto md:right-0 md:w-[480px]"
+            className="fixed z-[900] md:z-[2110] overflow-y-auto bottom-0 left-0 right-0 md:bottom-0 md:top-0 md:left-auto md:right-0 md:w-[480px]"
             style={{
               background:   '#0d1117',
               borderTop:    isMobile ? '1px solid #1c2333' : 'none',

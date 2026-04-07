@@ -5,22 +5,98 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { Bell, ChevronRight, HelpCircle, LogOut, Menu, Plus, Shield } from 'lucide-react'
+ import { Bell, ChevronRight, HelpCircle, LogOut, Menu, Pencil, Plus, Shield } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 import SlidePanel from '@/components/ui/SlidePanel'
 import { useNotifications } from '@/hooks/useNotifications'
 
+const LOCATIONS: Record<string, string[]> = {
+  'Netherlands': ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven'],
+  'France': ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Bordeaux'],
+  'Germany': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne'],
+  'United Kingdom': ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Bristol'],
+  'Spain': ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Bilbao'],
+  'Other': [],
+}
+const COUNTRY_LIST = Object.keys(LOCATIONS)
+
+const editProfileSchema = z.object({
+  alias:       z.string().max(100).optional(),
+  bio:         z.string().max(300).optional(),
+  dateOfBirth: z.string().optional(),
+  country:     z.string().max(100).optional(),
+  city:        z.string().max(100).optional(),
+})
+
+type EditProfileFormValues = z.infer<typeof editProfileSchema>
+
+interface UserProfile {
+  id:              string
+  email:           string
+  name:            string | null
+  image:           string | null
+  alias:           string | null
+  created_at:      string
+  display_name:    string | null
+  avatar_url:      string | null
+  bio:             string | null
+  date_of_birth:   string | null
+  country:         string | null
+  city:            string | null
+  gender:          string | null
+  desired_genders: string[] | null
+  vibes:           string[] | null
+  platform_role:   string | null
+}
+
 export default function Header() {
   const { data: session } = useSession()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const avatarUrl = useUIStore(s => s.avatarUrl)
+  const setAvatarUrl = useUIStore(s => s.setAvatarUrl)
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<EditProfileFormValues>({
+    resolver: zodResolver(editProfileSchema),
+    defaultValues: profile ? {
+      alias:       profile.alias ?? undefined,
+      bio:         profile.bio ?? undefined,
+      dateOfBirth: profile.date_of_birth ?? undefined,
+      country:     profile.country ?? undefined,
+      city:        profile.city ?? undefined,
+    } : {},
+  })
+
+  useEffect(() => {
+    if (editProfileOpen && profile) {
+      reset({
+        alias:       profile.alias ?? undefined,
+        bio:         profile.bio ?? undefined,
+        dateOfBirth: profile.date_of_birth ?? undefined,
+        country:     profile.country ?? undefined,
+        city:        profile.city ?? undefined,
+      })
+    }
+  }, [editProfileOpen, profile, reset])
   const router = useRouter()
   const pathname = usePathname()
   const isProfile = pathname === '/profile'
-
-  const { unreadCount } = useNotifications()
 
   const alias = session?.user?.alias ?? '??'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
@@ -30,6 +106,12 @@ export default function Header() {
   }, [pathname])
 
   const menuItems = [
+    {
+      label: 'Edit profile',
+      icon: Pencil,
+      tone: 'default' as const,
+      onClick: () => setEditProfileOpen(true),
+    },
     {
       label: 'Privacy & safety',
       href: '/privacy',
@@ -60,6 +142,35 @@ export default function Header() {
         background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
         color: '#fff',
       }
+
+  const selectedCountry = watch('country') ?? ''
+  const cityOptions    = LOCATIONS[selectedCountry] ?? []
+  const bioLength      = watch('bio')?.length ?? 0
+
+  async function onSubmitEditProfile(values: EditProfileFormValues) {
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const res = await fetch('/api/users/profile', {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(values),
+      })
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({}))
+        setSubmitError(error ?? 'Something went wrong. Try again.')
+        return
+      }
+      const { data } = await res.json()
+      setProfile(data ?? null)
+      if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+      setEditProfileOpen(false)
+    } catch {
+      setSubmitError('Something went wrong. Try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <header
@@ -113,10 +224,12 @@ export default function Header() {
         <div style={{ justifySelf: 'center' }}>
           <Link href="/" className="flex-shrink-0 block">
             <Image
-              src="/bb.png"
+              src="/bb_croped.png"
               alt="BlushBite"
               width={140}
               height={1150}
+              // width={90}
+              // height={1150}
               priority
               style={{ objectFit: 'contain', objectPosition: 'center', display: 'block' }}
             />
@@ -268,8 +381,8 @@ export default function Header() {
                 }}
                 className="flex items-center gap-3 rounded-[16px] border px-4 py-3 text-left transition-colors duration-150"
                 style={{
-                  borderColor: '#2a1f24',
-                  background: 'rgba(232,112,112,0.05)',
+                  borderColor: item.label === 'Edit profile' ? '#1c2333' : '#2a1f24',
+                  background: item.label === 'Edit profile' ? '#111620' : 'rgba(232,112,112,0.05)',
                 }}
               >
                 {content}
@@ -279,6 +392,140 @@ export default function Header() {
         </div>
       </SlidePanel>
 
+      <SlidePanel
+        open={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        title="Edit profile"
+        widthClassName="md:w-[480px]"
+      >
+        <form onSubmit={handleSubmit(onSubmitEditProfile)} className="flex flex-col gap-5">
+          {/* Alias */}
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Private alias</label>
+            <input
+              {...register('alias')}
+              placeholder="Your anonymous name (e.g., @midnight-wanderer)"
+              className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
+            />
+            {errors.alias && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.alias.message}</span>}
+          </div>
+
+          {/* Bio */}
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Bio</label>
+            <div className="relative">
+              <textarea
+                {...register('bio')}
+                rows={3}
+                placeholder="A little about your desires…"
+                className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full resize-none"
+              />
+              <span className="absolute bottom-2 right-3" style={{ fontSize: 10, color: '#4b5563', pointerEvents: 'none' }}>
+                {bioLength}/300
+              </span>
+            </div>
+            {errors.bio && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.bio.message}</span>}
+          </div>
+
+          {/* Date of birth */}
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Date of birth</label>
+            <input
+              {...register('dateOfBirth')}
+              type="date"
+              className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
+              style={{ colorScheme: 'dark' }}
+            />
+            {errors.dateOfBirth && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.dateOfBirth.message}</span>}
+          </div>
+
+          {/* Country */}
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">Country</label>
+            <div className="relative">
+              <select
+                {...register('country')}
+                className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
+                style={{ colorScheme: 'dark', appearance: 'none', paddingRight: 36 }}
+              >
+                <option value="">Select your country</option>
+                {COUNTRY_LIST.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">▾</div>
+            </div>
+            {errors.country && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.country.message}</span>}
+          </div>
+
+          {/* City */}
+          <div className="flex flex-col gap-[6px]">
+            <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">City</label>
+            {cityOptions.length > 0 ? (
+              <div className="relative">
+                <select
+                  {...register('city')}
+                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
+                  style={{ colorScheme: 'dark', appearance: 'none', paddingRight: 36 }}
+                  disabled={!selectedCountry}
+                >
+                  <option value="">Select your city</option>
+                  {cityOptions.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="Other">Other</option>
+                </select>
+                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">▾</div>
+              </div>
+            ) : (
+              <input
+                {...register('city')}
+                type="text"
+                placeholder={selectedCountry ? 'Enter your city' : 'Select a country first'}
+                disabled={!selectedCountry}
+                className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
+                style={{ opacity: selectedCountry ? 1 : 0.5 }}
+              />
+            )}
+            {errors.city && <span style={{ fontSize: 11, color: '#e87070' }}>{errors.city.message}</span>}
+          </div>
+
+          {submitError && (
+            <p style={{ fontSize: 12, color: '#e87070', textAlign: 'center' }}>{submitError}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 mt-2 rounded-[10px] py-[12px] text-[13.5px] font-medium text-white transition-all duration-200"
+            style={{
+              background:    submitting ? '#c4485e' : '#e8607a',
+              border:        'none',
+              opacity:       submitting ? 0.8 : 1,
+              pointerEvents: submitting ? 'none' : 'auto',
+              cursor:        submitting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {submitting ? '⏳ Saving…' : 'Save changes'}
+          </button>
+        </form>
+      </SlidePanel>
+
+      <SlidePanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        title="Notifications"
+        headerSlot={(
+          <span className="mt-1 block text-[12px] text-[#4b5563]">
+            Updates about replies, saves, and anything that needs your attention.
+          </span>
+        )}
+      >
+        <NotificationsPanel
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+        />
+      </SlidePanel>
     </header>
   )
 }
