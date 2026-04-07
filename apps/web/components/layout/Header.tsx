@@ -111,9 +111,11 @@ export default function Header() {
         <div style={{ justifySelf: 'center' }}>
           <Link href="/" className="flex-shrink-0 block">
             <Image
-              src="/bb.png"
+              src="/logo_light_croped.png"
               alt="BlushBite"
-              width={140}
+              // width={140}
+              // height={1150}
+              width={90}
               height={1150}
               priority
               style={{ objectFit: 'contain', objectPosition: 'center', display: 'block' }}
