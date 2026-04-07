@@ -9,8 +9,11 @@ import { useSession, signOut } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 import SlidePanel from '@/components/ui/SlidePanel'
+import NotificationsPanel from '@/components/ui/NotificationsPanel'
+import { useNotifications } from '@/hooks/useNotifications'
 
 const LOCATIONS: Record<string, string[]> = {
   'Netherlands': ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven'],
@@ -95,17 +98,6 @@ export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const isProfile = pathname === '/profile'
-
-  // Fetch profile for EditProfileDrawer
-  useEffect(() => {
-    fetch('/api/users/profile', { credentials: 'include' })
-      .then(r => r.json())
-      .then(({ data }) => {
-        setProfile(data ?? null)
-        setAvatarUrl(data?.avatar_url ?? null)
-      })
-      .catch(() => {})
-  }, [])
 
   const alias = session?.user?.alias ?? '??'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
@@ -277,11 +269,43 @@ export default function Header() {
                 border: 'none',
                 color: notificationsOpen ? '#e8607a' : '#6b7280',
                 cursor: 'pointer',
+                position: 'relative',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
             >
               <Bell size={22} strokeWidth={1.5} />
+              <AnimatePresence>
+                {unreadCount > 0 && (
+                  <motion.span
+                    key="badge"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      background: '#e8607a',
+                      border: '2px solid #07090f',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: '#fff',
+                      lineHeight: 1,
+                      padding: '0 3px',
+                    }}
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           )}
         </div>
@@ -497,18 +521,10 @@ export default function Header() {
           </span>
         )}
       >
-        <div className="flex min-h-[280px] flex-col items-center justify-center rounded-[18px] border border-dashed border-[#1c2333] bg-[#111620] px-6 text-center">
-          <span
-            className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#1c2333]"
-            style={{ background: 'rgba(232,96,122,0.08)' }}
-          >
-            <Bell size={24} color="#e8607a" />
-          </span>
-          <p className="text-[15px] text-[#eeeef0]">No notifications yet</p>
-          <p className="mt-2 max-w-[260px] text-[12px] leading-6 text-[#4b5563]">
-            When someone reacts to your activity or there&apos;s something new to review, it will show up here.
-          </p>
-        </div>
+        <NotificationsPanel
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+        />
       </SlidePanel>
     </header>
   )

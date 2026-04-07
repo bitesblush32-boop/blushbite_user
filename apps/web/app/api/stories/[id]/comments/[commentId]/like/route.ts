@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { likes, comments } from '@/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
+import { createNotification } from '@/db/helpers/createNotification'
 
 type Params = { params: Promise<{ id: string; commentId: string }> }
 
@@ -22,7 +23,19 @@ export async function POST(_req: NextRequest, { params }: Params) {
       .update(comments)
       .set({ like_count: sql`${comments.like_count} + 1` })
       .where(eq(comments.id, commentId))
-      .returning({ likeCount: comments.like_count })
+      .returning({ likeCount: comments.like_count, ownerId: comments.user_id })
+
+    try {
+      if (updated?.ownerId) {
+        await createNotification({
+          recipientId: updated.ownerId,
+          actorId:     userId,
+          type:        'comment_like',
+          contentType: 'comment',
+          contentId:   commentId,
+        })
+      }
+    } catch { /* notification failure must never break the like response */ }
 
     return NextResponse.json({ liked: true, likeCount: updated?.likeCount ?? 0 })
   } catch (err) {

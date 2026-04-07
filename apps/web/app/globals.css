@@ -103,6 +103,19 @@ h1, h2, h3, .font-display {
   100% { transform: translateX(200%); }
 }
 
+.shimmer {
+  background: #161d2a;
+  overflow: hidden;
+  position: relative;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
 @keyframes wave {
   0%, 100% { transform: scaleY(0.3); }
   50%       { transform: scaleY(1); }

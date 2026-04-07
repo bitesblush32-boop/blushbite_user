@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { comments, stories, users } from '@/db/schema'
 import { and, eq, isNull, sql, desc, asc } from 'drizzle-orm'
 import { z } from 'zod'
+import { createNotification } from '@/db/helpers/createNotification'
 
 // ─── GET /api/stories/[id]/comments ──────────────────────────────────────────
 
@@ -166,6 +167,45 @@ export async function POST(
       .from(users)
       .where(eq(users.id, userId))
       .limit(1)
+
+    // ── Notifications ────────────────────────────────────────────────────────
+    try {
+      const [story] = await db
+        .select({ authorId: stories.author_user_id })
+        .from(stories)
+        .where(eq(stories.id, storyId))
+        .limit(1)
+
+      if (parentId) {
+        // Reply: notify parent comment author
+        const [parentComment] = await db
+          .select({ ownerId: comments.user_id })
+          .from(comments)
+          .where(eq(comments.id, parentId))
+          .limit(1)
+
+        if (parentComment?.ownerId) {
+          await createNotification({
+            recipientId: parentComment.ownerId,
+            actorId:     userId,
+            type:        'comment_reply',
+            contentType: 'story',
+            contentId:   storyId,
+          })
+        }
+      }
+
+      // Always notify story author (de-duped by unique constraint)
+      if (story?.authorId) {
+        await createNotification({
+          recipientId: story.authorId,
+          actorId:     userId,
+          type:        'story_comment',
+          contentType: 'story',
+          contentId:   storyId,
+        })
+      }
+    } catch { /* notification failure must never break the comment response */ }
 
     return NextResponse.json({
       comment: {

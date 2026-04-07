@@ -15,6 +15,7 @@ import {
   primaryKey,
   unique,
   check,
+  index,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
@@ -427,6 +428,24 @@ export const saves = pgTable('saves', {
 }, (table) => ({
   uniqueSave:       unique('uq_save').on(table.user_id, table.content_type, table.content_id),
   contentTypeCheck: check('sv_content_type_check', sql`${table.content_type} IN ('story', 'audio_recording', 'companion_profile', 'session_card')`),
+}))
+
+export const notifications = pgTable('notifications', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  recipient_id: uuid('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  actor_id:     uuid('actor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type:         varchar('type', { length: 40 }).notNull(),
+  // type enum: 'story_like' | 'story_save' | 'story_comment' | 'comment_reply' | 'comment_like'
+  content_type: varchar('content_type', { length: 30 }),
+  content_id:   uuid('content_id'),
+  // content_id = the story or comment being acted on — used to deep-link from the notification
+  is_read:      boolean('is_read').notNull().default(false),
+  created_at:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  recipientIdx: index('notif_recipient_idx').on(table.recipient_id),
+  uniqueNotif:  unique('uq_notification').on(
+    table.recipient_id, table.actor_id, table.type, table.content_id
+  ),
 }))
 
 export const comments = pgTable('comments', {
