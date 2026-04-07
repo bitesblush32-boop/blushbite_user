@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 import SlidePanel from '@/components/ui/SlidePanel'
+import NotificationsPanel from '@/components/ui/NotificationsPanel'
 import { useNotifications } from '@/hooks/useNotifications'
 
 const LOCATIONS: Record<string, string[]> = {
@@ -64,6 +65,7 @@ export default function Header() {
   const [submitting, setSubmitting] = useState(false)
   const avatarUrl = useUIStore(s => s.avatarUrl)
   const setAvatarUrl = useUIStore(s => s.setAvatarUrl)
+  const { unreadCount } = useNotifications()
 
   const {
     register,
