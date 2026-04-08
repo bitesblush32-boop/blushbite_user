@@ -93,6 +93,14 @@ export function ActionPill({
       saveMutation.mutate({ storyId, currentlySaved: userHasSaved })
     }
   }
+  const handleOpenComments = () => {
+    // Prevent focused background control from remaining active while dialog applies aria-hidden.
+    if (typeof document !== 'undefined') {
+      const active = document.activeElement
+      if (active instanceof HTMLElement) active.blur()
+    }
+    openComments(storyId)
+  }
 
   const iconSize  = layout === 'horizontal' ? 22 : 26
   const countStyle: React.CSSProperties = layout === 'horizontal'
@@ -121,7 +129,7 @@ export function ActionPill({
       </ActionBtn>
 
       {/* Comment */}
-      <ActionBtn onTap={() => openComments(storyId)} label="Comments" horizontal={isHorizontal}>
+      <ActionBtn onTap={handleOpenComments} label="Comments" horizontal={isHorizontal}>
         <MessageCircle size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
         <span className="font-semibold drop-shadow-sm" style={countStyle}>
           {fmt(commentCount)}

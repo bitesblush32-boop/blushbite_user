@@ -374,6 +374,7 @@ function CommentItem({
 // ─── CommentsSheet ────────────────────────────────────────────────────────────
 
 export function CommentsSheet({ storyId, onClose }: Props) {
+  const BOTTOM_NAV_OFFSET = 52
   const [inputValue, setInputValue] = useState('')
   const [replyTo,    setReplyTo]    = useState<{ id: string; alias: string } | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -440,11 +441,12 @@ export function CommentsSheet({ storyId, onClose }: Props) {
       <Drawer.Portal>
         <Drawer.Overlay
           className="fixed inset-0 z-[80]"
-          style={{ background: 'rgba(0,0,0,0.65)' }}
+          style={{ background: 'rgba(0,0,0,0.65)', bottom: BOTTOM_NAV_OFFSET }}
         />
         <Drawer.Content
           className="flex flex-col fixed bottom-0 left-0 right-0 z-[90] outline-none"
           style={{
+            bottom:        BOTTOM_NAV_OFFSET,
             background:   '#0d1117',
             borderTop:    '1px solid #1c2333',
             borderRadius: '20px 20px 0 0',
@@ -452,6 +454,13 @@ export function CommentsSheet({ storyId, onClose }: Props) {
             paddingBottom:'max(12px, env(safe-area-inset-bottom))',
           }}
         >
+          <Drawer.Title className="sr-only">
+            Comments
+          </Drawer.Title>
+          <Drawer.Description className="sr-only">
+            Read comments and add your comment for this confession.
+          </Drawer.Description>
+
           {/* Handle bar */}
           <div
             className="mx-auto mt-3 rounded-full flex-shrink-0"
