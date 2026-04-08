@@ -2,6 +2,7 @@
 
 import { memo } from 'react'
 import { Heart } from 'lucide-react'
+import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 import type { LikedItem } from '@/hooks/useLikedContent'
 
 interface Props {
@@ -10,6 +11,48 @@ interface Props {
 }
 
 const LikedGrid = memo(function LikedGrid({ items, isLoading }: Props) {
+  const openProfileViewer = useUIStore(s => s.openProfileViewer)
+  const openModal         = useUIStore(s => s.openModal)
+
+  function handleItemTap(idx: number) {
+    const item = items[idx]
+    if (!item) return
+
+    // For companion-type items: open the ProfileDrawer instead
+    if (item.authorType === 'companion') {
+      openModal(item.id)
+      return
+    }
+
+    const storiesArray: ProfileViewerStory[] = items
+      .filter(i => i.authorType !== 'companion')
+      .map(i => ({
+        id:            i.id,
+        title:         i.title,
+        body:          '',
+        rawBody:       i.excerpt ?? '',
+        pageImageUrls: [],
+        categoryName:  i.categories[0] ?? '',
+        categories:    i.categories,
+        moodTags:      [],
+        likeCount:     i.likeCount,
+        saveCount:     i.saveCount,
+        commentCount:  0,
+        userHasLiked:  true,
+        userHasSaved:  false,
+        authorAlias:   null,
+        isAnonymous:   false,
+        createdAt:     i.likedAt,
+      }))
+
+    // Find the index within story-only items
+    const storyItems = items.filter(i => i.authorType !== 'companion')
+    const storyIdx   = storyItems.findIndex(i => i.id === item.id)
+    const openIdx    = storyIdx >= 0 ? storyIdx : 0
+
+    openProfileViewer(storiesArray, openIdx, 'liked')
+  }
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-3 gap-[2px]">
@@ -37,15 +80,16 @@ const LikedGrid = memo(function LikedGrid({ items, isLoading }: Props) {
 
   return (
     <div className="grid grid-cols-3 gap-[2px]">
-      {items.map(item => (
+      {items.map((item, idx) => (
         <div
           key={item.id}
+          onClick={() => handleItemTap(idx)}
           style={{
-            aspectRatio: '3/4',
-            position:    'relative',
-            overflow:    'hidden',
+            aspectRatio:  '3/4',
+            position:     'relative',
+            overflow:     'hidden',
             borderRadius: 4,
-            cursor:      'pointer',
+            cursor:       'pointer',
           }}
         >
           {item.firstImage ? (

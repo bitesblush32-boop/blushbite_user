@@ -15,7 +15,7 @@ import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollection
 import { LikedGrid } from '@/components/ui/LikedGrid'
 import { useSavedConfessions } from '@/hooks/useSavedConfessions'
 import { useLikedContent } from '@/hooks/useLikedContent'
-import { useUIStore } from '@/store/uiStore'
+import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,22 +71,12 @@ function Skeleton() {
 
 // ─── PostCell ─────────────────────────────────────────────────────────────────
 
-function PostCell({
-  post,
-  isDeleting,
-  onDelete,
-}: {
-  post: UserPost
-  isDeleting: boolean
-  onDelete: () => void
-}) {
-  const [menuOpen, setMenuOpen] = useState(false)
-
+function PostCell({ post, onTap }: { post: UserPost; onTap: () => void }) {
   return (
     <div
       style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden',
                background: '#111620', cursor: 'pointer' }}
-      onClick={() => !menuOpen && setMenuOpen(false)}
+      onClick={onTap}
     >
       {post.firstImage ? (
         <img
@@ -111,51 +101,6 @@ function PostCell({
             {post.excerpt ?? ''}
           </p>
         </div>
-      )}
-
-      <button
-        onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
-        style={{
-          position: 'absolute', top: 6, right: 6,
-          width: 28, height: 28, borderRadius: '50%',
-          background: 'rgba(7,9,15,0.72)', border: 'none',
-          color: '#eeeef0', fontSize: 16, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(4px)',
-        }}
-      >
-        ⋯
-      </button>
-
-      {menuOpen && (
-        <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-            onClick={e => { e.stopPropagation(); setMenuOpen(false) }}
-          />
-          <div style={{
-            position: 'absolute', top: 36, right: 6, zIndex: 50,
-            background: '#161d2a', border: '1px solid #1c2333',
-            borderRadius: 10, overflow: 'hidden', minWidth: 140,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-          }}>
-            <button
-              onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete() }}
-              disabled={isDeleting}
-              style={{
-                width: '100%', padding: '10px 14px', background: 'transparent',
-                border: 'none', textAlign: 'left', fontSize: 13,
-                color: isDeleting ? '#6b7280' : '#e87070',
-                cursor: isDeleting ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}
-              onMouseEnter={e => { if (!isDeleting) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.08)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-            >
-              {isDeleting ? '⏳ Deleting…' : '🗑 Delete'}
-            </button>
-          </div>
-        </>
       )}
 
       <div style={{
@@ -397,7 +342,8 @@ export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const setAvatarUrl = useUIStore(s => s.setAvatarUrl)
+  const setAvatarUrl       = useUIStore(s => s.setAvatarUrl)
+  const openProfileViewer  = useUIStore(s => s.openProfileViewer)
 
   const [profile, setProfile]               = useState<UserProfile | null>(null)
   const [loading, setLoading]               = useState(true)
@@ -410,7 +356,6 @@ export default function ProfilePage() {
 
   const [posts, setPosts]               = useState<UserPost[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
-  const [deletingId, setDeletingId]     = useState<string | null>(null)
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -460,22 +405,6 @@ export default function ProfilePage() {
     } finally {
       setAvatarUploading(false)
     }
-  }
-
-  // ── Delete post ────────────────────────────────────────────────────────────
-  async function handleDeletePost(postId: string) {
-    if (!confirm('Delete this confession? This cannot be undone.')) return
-    setDeletingId(postId)
-    try {
-      const res = await fetch(`/api/users/posts/${postId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      })
-      if (res.ok) {
-        setPosts(prev => prev.filter(p => p.id !== postId))
-      }
-    } catch {}
-    finally { setDeletingId(null) }
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
@@ -704,12 +633,31 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-[2px]">
-                  {posts.map(post => (
+                  {posts.map((post, idx) => (
                     <PostCell
                       key={post.id}
                       post={post}
-                      isDeleting={deletingId === post.id}
-                      onDelete={() => handleDeletePost(post.id)}
+                      onTap={() => {
+                        const storiesArray: ProfileViewerStory[] = posts.map(p => ({
+                          id:            p.id,
+                          title:         p.title,
+                          body:          '',
+                          rawBody:       p.excerpt ?? '',
+                          pageImageUrls: p.pageImageUrls,
+                          categoryName:  p.categories[0] ?? '',
+                          categories:    p.categories,
+                          moodTags:      [],
+                          likeCount:     p.likeCount,
+                          saveCount:     p.saveCount,
+                          commentCount:  p.commentCount,
+                          userHasLiked:  false,
+                          userHasSaved:  false,
+                          authorAlias:   session?.user?.alias ?? null,
+                          isAnonymous:   false,
+                          createdAt:     p.createdAt,
+                        }))
+                        openProfileViewer(storiesArray, idx, 'own')
+                      }}
                     />
                   ))}
                 </div>

@@ -124,17 +124,45 @@ function NotifRow({ n, onTap }: { n: Notification; onTap: (n: Notification) => v
 
 // ─── Permission Banner ────────────────────────────────────────────────────────
 
+async function registerPushSubscription() {
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js')
+    await navigator.serviceWorker.ready
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) as any,
+    })
+    const raw = sub.toJSON() as { endpoint: string; keys?: { p256dh: string; auth: string } }
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: raw.endpoint,
+        p256dh:   raw.keys?.p256dh ?? '',
+        auth:     raw.keys?.auth   ?? '',
+      }),
+    })
+  } catch {
+    // non-fatal — push is best-effort
+  }
+}
+
 function PermissionBanner({ onGranted }: { onGranted: () => void }) {
   const [show,    setShow]    = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      'Notification' in window &&
-      Notification.permission === 'default' &&
-      'serviceWorker' in navigator
-    ) {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return
+
+    if (Notification.permission === 'granted') {
+      // Already granted — silently re-register subscription in background
+      // (fixes the case where previous subscription was saved with bad keys)
+      registerPushSubscription()
+      return
+    }
+
+    if (Notification.permission === 'default') {
       setShow(true)
     }
   }, [])
@@ -144,24 +172,7 @@ function PermissionBanner({ onGranted }: { onGranted: () => void }) {
     try {
       const permission = await Notification.requestPermission()
       if (permission === 'granted') {
-        const reg = await navigator.serviceWorker.register('/sw.js')
-        await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) as any,
-        })
-        // sub.toJSON() nests keys under { keys: { p256dh, auth } } — extract them explicitly
-        const raw = sub.toJSON() as { endpoint: string; keys?: { p256dh: string; auth: string } }
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            endpoint: raw.endpoint,
-            p256dh:   raw.keys?.p256dh ?? '',
-            auth:     raw.keys?.auth   ?? '',
-          }),
-        })
+        await registerPushSubscription()
         onGranted()
       }
     } catch {
