@@ -7,8 +7,8 @@ import { stories } from '@/db/schema'
 // ─── Validation ───────────────────────────────────────────────────────────────
 
 const postSchema = z.object({
-  pages:         z.array(z.string().min(1)).min(1).max(8),
-  pageImageUrls: z.array(z.string()).max(8).optional().default([]),
+  pages:         z.array(z.string().min(1)).min(1).max(100),
+  pageImageUrls: z.array(z.string()).max(100).optional().default([]),
   title:         z.string().max(120).optional().default(''),
   categories:    z.array(z.string()).min(1).max(20),
   isAnonymous:   z.boolean().optional().default(false),
