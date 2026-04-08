@@ -27,7 +27,8 @@ export const authConfig = {
       session.user.onboarding_complete = token.onboarding_complete as boolean
       session.user.platform_role       = token.platform_role as 'dreamer' | 'companion' | 'admin' | undefined
       session.user.companion_stage     = token.companion_stage as number | undefined ?? 1
-      session.user.companion_is_live   = token.companion_is_live as boolean | undefined ?? false
+      session.user.companion_is_live    = token.companion_is_live    as boolean | undefined ?? false
+      session.user.companion_legal_signed = token.companion_legal_signed as boolean | undefined ?? false
       if (token.error) {
         (session as any).error = token.error
       }

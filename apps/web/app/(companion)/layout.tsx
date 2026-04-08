@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LayoutDashboard, CalendarDays, User, Film, Settings } from 'lucide-react'
+import { CompanionModeToggle } from '@/components/ui/CompanionModeToggle'
 
 const NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',  href: '/companion/dashboard'    },
@@ -14,7 +15,7 @@ const NAV = [
   { icon: Settings,        label: 'Settings',    href: '/companion/settings'     },
 ]
 
-const BARE_PREFIXES = ['/companion/onboarding', '/companion/welcome']
+const BARE_PREFIXES = ['/companion/legal']
 
 export default function CompanionLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -31,6 +32,7 @@ export default function CompanionLayout({ children }: { children: React.ReactNod
   }, [isBare])
 
   if (isBare) return <>{children}</>
+
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#07090f' }}>
@@ -105,6 +107,9 @@ export default function CompanionLayout({ children }: { children: React.ReactNod
           )
         })}
       </div>
+
+      {/* ── Mode toggle — floats above all content ── */}
+      <CompanionModeToggle />
 
       {/* ── Main content ── */}
       <main className="md:ml-[220px] mt-[56px] md:mt-0 flex-1"

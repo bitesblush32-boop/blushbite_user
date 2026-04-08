@@ -13,6 +13,7 @@ const ProfileDrawer     = dynamic(() => import('@/components/ui/ProfileDrawer'),
 const BookingModal      = dynamic(() => import('@/components/ui/BookingModal'),      { ssr: false })
 const BottomNav         = dynamic(() => import('@/components/layout/BottomNav'),     { ssr: false })
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
+const LocationBanner    = dynamic(() => import('@/components/ui/LocationBanner'),    { ssr: false })
 
 export default function DreamerLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -47,6 +48,7 @@ export default function DreamerLayout({ children }: { children: React.ReactNode 
       <BookingModal />
       <ProfilePostViewer />
       <BottomNav />
+      <LocationBanner />
     </div>
   )
 }

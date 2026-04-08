@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs'
 
 import { authConfig } from './auth.config'
 import { db } from './db'
-import { users, userAccounts, userProfiles, companions, companionProfiles } from './db/schema'
+import { users, userAccounts, userProfiles, companions, companionProfiles, companionLegalDocs } from './db/schema'
 import { generateAlias } from './lib/alias'
 
 const credentialsSchema = z.object({
@@ -126,10 +126,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1)
         token.platform_role = profileRow[0]?.platform_role ?? undefined
 
-        // If companion, refresh stage + is_live
-        if (token.platform_role === 'companion' && token.email) {
+        // If companion, refresh stage + is_live + legal_signed
+        if ((token.platform_role === 'companion' || token.platform_role === 'dream') && token.email) {
           const companionRow = await db
             .select({
+              id:              companions.id,
               companion_stage: companions.companion_stage,
               is_live:         companionProfiles.is_live,
             })
@@ -139,6 +140,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             .limit(1)
           token.companion_stage   = companionRow[0]?.companion_stage ?? 1
           token.companion_is_live = companionRow[0]?.is_live ?? false
+
+          const companionId = companionRow[0]?.id
+          if (companionId) {
+            const docs = await db
+              .select({ document_type: companionLegalDocs.document_type })
+              .from(companionLegalDocs)
+              .where(eq(companionLegalDocs.companion_id, companionId))
+            token.companion_legal_signed = docs.length >= 3
+          } else {
+            token.companion_legal_signed = false
+          }
         }
       }
 

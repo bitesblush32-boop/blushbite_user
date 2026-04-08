@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Home, BookOpen, Users, BookHeart, User } from 'lucide-react'
 import { usePlayerStore } from '@/store/playerStore'
+import { useNotificationCount } from '@/hooks/useNotifications'
 
 const NAV_ITEMS = [
   { label: 'Home',        href: '/',            icon: Home },
@@ -14,9 +15,10 @@ const NAV_ITEMS = [
 ]
 
 export default function BottomNav() {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname      = usePathname()
+  const router        = useRouter()
   const playerVisible = !!usePlayerStore((s) => s.audioId)
+  const unreadCount   = useNotificationCount()
 
   return (
     <motion.div
@@ -73,7 +75,31 @@ export default function BottomNav() {
                 padding: 0,
               }}
             >
-              <Icon size={22} strokeWidth={1.5} color={color} />
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <Icon size={22} strokeWidth={1.5} color={color} />
+                {href === '/profile' && unreadCount > 0 && (
+                  <span style={{
+                    position:       'absolute',
+                    top:            -4,
+                    right:          -4,
+                    background:     '#e8607a',
+                    color:          '#fff',
+                    fontSize:       9,
+                    fontWeight:     700,
+                    borderRadius:   9999,
+                    minWidth:       16,
+                    height:         16,
+                    display:        'flex',
+                    alignItems:     'center',
+                    justifyContent: 'center',
+                    padding:        '0 4px',
+                    lineHeight:     1,
+                    pointerEvents:  'none',
+                  }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </div>
               <span
                 style={{
                   fontSize: 10,

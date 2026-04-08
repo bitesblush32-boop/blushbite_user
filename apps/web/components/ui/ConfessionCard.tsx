@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { useLikeMutation } from '@/hooks/useLikeMutation'
+import { useUIStore } from '@/store/uiStore'
 import type { Story } from '@/hooks/useInfiniteConfessions'
 
 // ─── Design-system tokens ─────────────────────────────────────────────────────
@@ -34,6 +36,19 @@ function getGradient(categoryName: string, moodTags: string[]): string {
   )
 }
 
+// ─── Bridge companion type ─────────────────────────────────────────────────────
+
+interface BridgeCompanion {
+  id:                  string
+  companion_id:        string
+  alias:               string | null
+  name:                string | null
+  tagline:             string | null
+  city:                string | null
+  availability_status: string
+  photo_url:           string | null
+}
+
 // ─── ConfessionCard ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -53,6 +68,16 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
 
   const isLiked      = story.userHasLiked
   const likeMutation = useLikeMutation()
+  const openModal    = useUIStore((s) => s.openModal)
+
+  // Fetch bridge companions — only when this card is active (avoids mass requests)
+  const { data: bridgesData } = useQuery<{ data: BridgeCompanion[] }>({
+    queryKey: ['story-bridges', story.id],
+    queryFn:  () => fetch(`/api/stories/${story.id}/bridges`).then(r => r.json()),
+    enabled:  isActive,
+    staleTime: 60_000,
+  })
+  const bridges = bridgesData?.data ?? []
 
   function handleTap(e: React.TouchEvent | React.MouseEvent) {
     if ('touches' in e) {
@@ -304,6 +329,88 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           userHasSaved={story.userHasSaved}
           layout="horizontal"
         />
+
+        {/* Bridge companions — opacity-only fade, zero layout shift */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: bridges.length > 0 ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            display:     bridges.length > 0 ? 'block' : 'none',
+            borderTop:   '1px solid rgba(28,35,51,0.6)',
+            paddingTop:  12,
+            marginTop:   4,
+          }}
+        >
+          <p style={{
+            fontSize:      10,
+            color:         '#6b7280',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom:  8,
+          }}>
+            Companions who live this story
+          </p>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {bridges.map(b => (
+              <div
+                key={b.id}
+                style={{
+                  flexShrink:     0,
+                  display:        'flex',
+                  flexDirection:  'column',
+                  alignItems:     'center',
+                  gap:            4,
+                  cursor:         'pointer',
+                }}
+                onClick={() => openModal(b.id)}
+              >
+                {/* Avatar circle 36px */}
+                <div style={{
+                  width:          36,
+                  height:         36,
+                  borderRadius:   '50%',
+                  background:     'linear-gradient(135deg,#e8607a,#9b5fe0)',
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  fontSize:       13,
+                  color:          '#fff',
+                  fontWeight:     600,
+                  border:         '1px solid rgba(232,96,122,0.3)',
+                  flexShrink:     0,
+                }}>
+                  {(b.name ?? b.alias ?? '?')[0].toUpperCase()}
+                </div>
+                <span style={{
+                  fontSize:     9,
+                  color:        '#6b7280',
+                  maxWidth:     40,
+                  textAlign:    'center',
+                  overflow:     'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace:   'nowrap',
+                }}>
+                  @{b.alias}
+                </span>
+                {b.availability_status === 'available' && (
+                  <span style={{
+                    width:        6,
+                    height:       6,
+                    borderRadius: '50%',
+                    background:   '#4ade80',
+                    display:      'block',
+                  }} />
+                )}
+              </div>
+            ))}
+          </div>
+          {bridges.length > 0 && (
+            <p style={{ fontSize: 10, color: '#e8607a', marginTop: 8 }}>
+              Tap a companion to see their full profile →
+            </p>
+          )}
+        </motion.div>
 
         {/* Author alias — left aligned, muted italic */}
         <span style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>

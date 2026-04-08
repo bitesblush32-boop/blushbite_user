@@ -1,4 +1,81 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import useSWR from 'swr'
+
+// ── SWR fetcher ───────────────────────────────────────────────────────────────
+
+const swrFetcher = (url: string) =>
+  fetch(url, { credentials: 'include' }).then(r => r.json())
+
+// ── Badge count — SWR poll every 30s (battery-aware) ─────────────────────────
+
+export function useNotificationCount() {
+  const { data } = useSWR('/api/notifications/count', swrFetcher, {
+    refreshInterval:    30_000,
+    refreshWhenHidden:  false,
+    refreshWhenOffline: false,
+    revalidateOnFocus:  true,
+    dedupingInterval:   10_000,
+  })
+  return (data?.unread as number) ?? 0
+}
+
+// ── Full list with optimistic markRead (SWR) ──────────────────────────────────
+
+export function useNotificationsWithMarkRead() {
+  const { data, isLoading, mutate } = useSWR('/api/notifications', swrFetcher, {
+    refreshInterval:    60_000,
+    refreshWhenHidden:  false,
+    refreshWhenOffline: false,
+    dedupingInterval:   15_000,
+  })
+
+  const markRead = useCallback(async (ids: string[]) => {
+    if (!ids.length) return
+    mutate(
+      (prev: any) =>
+        prev
+          ? {
+              ...prev,
+              unread_count:  Math.max(0, (prev.unread_count ?? 0) - ids.length),
+              notifications: (prev.notifications ?? []).map((n: any) =>
+                ids.includes(n.id) ? { ...n, is_read: true } : n,
+              ),
+            }
+          : prev,
+      false,
+    )
+    await fetch('/api/notifications', {
+      method:      'PATCH',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ notification_ids: ids }),
+    })
+    mutate()
+  }, [mutate])
+
+  return {
+    notifications: (data?.notifications ?? []) as NotificationItem[],
+    unreadCount:   (data?.unread_count  ?? 0)  as number,
+    isLoading,
+    markRead,
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy TanStack Query exports (used by dreamer notifications page)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface NotificationItem {
+  id:                string
+  notification_type: string
+  title:             string
+  body:              string
+  action_url:        string | null
+  metadata:          Record<string, unknown> | null
+  is_read:           boolean
+  created_at:        string
+}
 
 export interface Notification {
   id:           string

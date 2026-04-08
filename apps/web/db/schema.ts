@@ -91,6 +91,11 @@ export const users = pgTable('users', {
   onboarding_complete: boolean('onboarding_complete').notNull().default(false),
   is_flagged:          boolean('is_flagged').notNull().default(false),
   deleted_at:          timestamp('deleted_at', { withTimezone: true }),
+  // Location (Haversine-compatible)
+  latitude:            numeric('latitude', { precision: 10, scale: 8 }),
+  longitude:           numeric('longitude', { precision: 11, scale: 8 }),
+  location_enabled:    boolean('location_enabled').notNull().default(false),
+  location_updated_at: timestamp('location_updated_at', { withTimezone: true }),
   created_at:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -155,6 +160,8 @@ export const companions = pgTable('companions', {
   date_of_birth:       date('date_of_birth'),
   country:             varchar('country', { length: 100 }),
   companion_stage:     integer('companion_stage').notNull().default(1),
+  tour_completed_at:   timestamp('tour_completed_at', { withTimezone: true }),
+  whatsapp_number:     varchar('whatsapp_number', { length: 20 }),
   created_at:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -177,22 +184,39 @@ export const companionAccounts = pgTable('companion_accounts', {
 }))
 
 export const companionProfiles = pgTable('companion_profiles', {
-  id:                  uuid('id').primaryKey().defaultRandom(),
-  companion_id:        uuid('companion_id').notNull().unique().references(() => companions.id, { onDelete: 'cascade' }),
-  bio:                 text('bio'),
-  tagline:             varchar('tagline', { length: 300 }),
-  city:                varchar('city', { length: 100 }),
-  hourly_rate:         numeric('hourly_rate', { precision: 10, scale: 2 }),
-  currency:            varchar('currency', { length: 3 }).notNull().default('EUR'),
-  availability_status: varchar('availability_status', { length: 20 }).notNull().default('offline'),
-  is_verified:         boolean('is_verified').notNull().default(false),
-  verified_at:         timestamp('verified_at', { withTimezone: true }),
-  is_live:             boolean('is_live').notNull().default(false),
-  approved_at:         timestamp('approved_at', { withTimezone: true }),
-  created_at:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updated_at:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  id:                   uuid('id').primaryKey().defaultRandom(),
+  companion_id:         uuid('companion_id').notNull().unique().references(() => companions.id, { onDelete: 'cascade' }),
+  bio:                  text('bio'),
+  tagline:              varchar('tagline', { length: 300 }),
+  city:                 varchar('city', { length: 100 }),
+  hourly_rate:          numeric('hourly_rate', { precision: 10, scale: 2 }),
+  currency:             varchar('currency', { length: 3 }).notNull().default('EUR'),
+  availability_status:  varchar('availability_status', { length: 20 }).notNull().default('offline'),
+  is_verified:          boolean('is_verified').notNull().default(false),
+  verified_at:          timestamp('verified_at', { withTimezone: true }),
+  is_live:              boolean('is_live').notNull().default(false),
+  approved_at:          timestamp('approved_at', { withTimezone: true }),
+  // Location (Haversine-compatible)
+  latitude:             numeric('latitude', { precision: 10, scale: 8 }),
+  longitude:            numeric('longitude', { precision: 11, scale: 8 }),
+  location_enabled:     boolean('location_enabled').notNull().default(false),
+  location_updated_at:  timestamp('location_updated_at', { withTimezone: true }),
+  // Physical attributes
+  height_cm:            integer('height_cm'),
+  body_type:            varchar('body_type', { length: 30 }),
+  ethnicity:            varchar('ethnicity', { length: 50 }),
+  eye_color:            varchar('eye_color', { length: 30 }),
+  hair_color:           varchar('hair_color', { length: 30 }),
+  // Profile completeness gate
+  profile_completeness: integer('profile_completeness').notNull().default(0),
+  is_visible_to_users:  boolean('is_visible_to_users').notNull().default(false),
+  // WhatsApp (E.164 format e.g. "+31612345678")
+  whatsapp_number:      varchar('whatsapp_number', { length: 20 }),
+  created_at:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at:           timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   availabilityCheck: check('cp_availability_check', sql`${table.availability_status} IN ('available', 'busy', 'offline')`),
+  bodyTypeCheck:     check('cp_body_type_check', sql`${table.body_type} IS NULL OR ${table.body_type} IN ('slim','athletic','average','curvy','plus_size','prefer_not_to_say')`),
 }))
 
 export const companionPhotos = pgTable('companion_photos', {
@@ -431,21 +455,23 @@ export const saves = pgTable('saves', {
 }))
 
 export const notifications = pgTable('notifications', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  recipient_id: uuid('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  actor_id:     uuid('actor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  type:         varchar('type', { length: 40 }).notNull(),
-  // type enum: 'story_like' | 'story_save' | 'story_comment' | 'comment_reply' | 'comment_like'
-  content_type: varchar('content_type', { length: 30 }),
-  content_id:   uuid('content_id'),
-  // content_id = the story or comment being acted on — used to deep-link from the notification
-  is_read:      boolean('is_read').notNull().default(false),
-  created_at:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  id:                uuid('id').primaryKey().defaultRandom(),
+  // For companions: recipient_type='companion', recipient_id = companion.id
+  // For dreamers:   recipient_type='user',      recipient_id = user.id
+  recipient_type:    varchar('recipient_type', { length: 20 }).notNull(),
+  recipient_id:      uuid('recipient_id').notNull(),
+  notification_type: varchar('notification_type', { length: 40 }).notNull(),
+  title:             varchar('title', { length: 200 }).notNull(),
+  body:              text('body').notNull(),
+  action_url:        varchar('action_url', { length: 500 }),
+  metadata:          jsonb('metadata'),
+  is_read:           boolean('is_read').notNull().default(false),
+  read_at:           timestamp('read_at', { withTimezone: true }),
+  created_at:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  recipientIdx: index('notif_recipient_idx').on(table.recipient_id),
-  uniqueNotif:  unique('uq_notification').on(
-    table.recipient_id, table.actor_id, table.type, table.content_id
-  ),
+  recipientTypeCheck: check('notif_recipient_check', sql`${table.recipient_type} IN ('user','companion')`),
+  notifTypeCheck:     check('notif_type_check', sql`${table.notification_type} IN ('profile_viewed','story_linked','booking_request','admin_approved','verification_complete','bridge_approved')`),
+  recipientIdx:       index('notif_recipient_idx').on(table.recipient_id),
 }))
 
 export const comments = pgTable('comments', {
@@ -512,3 +538,58 @@ export const fantasyTagOverlapScores = pgTable('fantasy_tag_overlap_scores', {
 }, (table) => ({
   uniqueScore: unique('uq_overlap_score').on(table.user_id, table.companion_profile_id),
 }))
+
+// ─── COMPANION STORY BRIDGES ──────────────────────────────────────────────────
+
+export const companionStoryBridges = pgTable('companion_story_bridges', {
+  id:                   uuid('id').primaryKey().defaultRandom(),
+  companion_profile_id: uuid('companion_profile_id').notNull()
+    .references(() => companionProfiles.id, { onDelete: 'cascade' }),
+  story_id:             uuid('story_id').notNull()
+    .references(() => stories.id, { onDelete: 'cascade' }),
+  status:               varchar('status', { length: 20 }).notNull().default('pending'),
+  admin_note:           text('admin_note'),
+  approved_at:          timestamp('approved_at', { withTimezone: true }),
+  created_at:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueBridge: unique('uq_companion_story_bridge').on(table.companion_profile_id, table.story_id),
+  statusCheck:  check('csb_status_check', sql`${table.status} IN ('pending','approved','rejected')`),
+}))
+
+// ─── ANALYTICS EVENTS ─────────────────────────────────────────────────────────
+
+export const analyticsEvents = pgTable('analytics_events', {
+  id:                   uuid('id').primaryKey().defaultRandom(),
+  event_type:           varchar('event_type', { length: 40 }).notNull(),
+  companion_profile_id: uuid('companion_profile_id').notNull()
+    .references(() => companionProfiles.id, { onDelete: 'cascade' }),
+  viewer_user_id:       uuid('viewer_user_id').references(() => users.id, { onDelete: 'set null' }),
+  story_id:             uuid('story_id').references(() => stories.id, { onDelete: 'set null' }),
+  // SHA256 of IP+SALT, first 32 chars only
+  viewer_ip_hash:       varchar('viewer_ip_hash', { length: 32 }),
+  metadata:             jsonb('metadata'),
+  created_at:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  eventTypeCheck: check('ae_event_type_check', sql`${table.event_type} IN ('profile_view','story_view','whatsapp_click','bridge_click','search_impression')`),
+}))
+
+// ─── DIDIT EXTRACTED DATA ─────────────────────────────────────────────────────
+
+export const diditExtractedData = pgTable('didit_extracted_data', {
+  id:                   uuid('id').primaryKey().defaultRandom(),
+  companion_id:         uuid('companion_id').notNull()
+    .references(() => companions.id, { onDelete: 'cascade' }),
+  session_id:           varchar('session_id', { length: 255 }).notNull().unique(),
+  // Extracted from ID document via OCR
+  extracted_first_name: varchar('extracted_first_name', { length: 100 }),
+  extracted_last_name:  varchar('extracted_last_name', { length: 100 }),
+  extracted_dob:        varchar('extracted_dob', { length: 10 }),  // YYYY-MM-DD
+  document_type:        varchar('document_type', { length: 50 }),
+  document_number:      varchar('document_number', { length: 100 }),
+  issuing_state:        varchar('issuing_state', { length: 10 }),  // ISO 3166-1 alpha-3
+  liveness_score:       numeric('liveness_score', { precision: 5, scale: 2 }),
+  face_match_score:     numeric('face_match_score', { precision: 5, scale: 2 }),
+  overall_status:       varchar('overall_status', { length: 30 }),
+  raw_payload:          jsonb('raw_payload').notNull(),
+  created_at:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
