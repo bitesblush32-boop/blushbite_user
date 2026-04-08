@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { saves, stories } from '@/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
+import { createNotification } from '@/db/helpers/createNotification'
 
 export async function POST(
   _req: NextRequest,
@@ -23,7 +24,19 @@ export async function POST(
       .update(stories)
       .set({ save_count: sql`${stories.save_count} + 1` })
       .where(eq(stories.id, storyId))
-      .returning({ saveCount: stories.save_count })
+      .returning({ saveCount: stories.save_count, authorId: stories.author_user_id })
+
+    try {
+      if (updated?.authorId) {
+        await createNotification({
+          recipientId: updated.authorId,
+          actorId:     userId,
+          type:        'story_save',
+          contentType: 'story',
+          contentId:   storyId,
+        })
+      }
+    } catch { /* notification failure must never break the save response */ }
 
     return NextResponse.json({ saved: true, saveCount: updated?.saveCount ?? 0 })
   } catch (err) {

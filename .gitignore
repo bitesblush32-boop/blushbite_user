@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+tsconfig.tsbuildinfo
 
 # Next.js
 apps/web/.next/
@@ -33,6 +34,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Claude Code — never commit local settings (may contain API keys)
+claude/settings.local.json
 
 # Logs
 *.log

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { moodTags, orientationTags, fantasyCategories, storyCategories } from '@/db/schema'
+import { moodTags, orientationTags, fantasyCategories, fantasyTags, storyCategories } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 
 export const revalidate = 3600
 
 export async function GET() {
   try {
-    const [moods, orientations, fantasyCats, storyCats] = await Promise.all([
+    const [moods, orientations, fantasyCats, fantTags, storyCats] = await Promise.all([
       db
         .select({ id: moodTags.id, name: moodTags.name, slug: moodTags.slug, emoji: moodTags.emoji })
         .from(moodTags)
@@ -25,6 +25,12 @@ export async function GET() {
         .orderBy(asc(fantasyCategories.sort_order)),
 
       db
+        .select({ id: fantasyTags.id, name: fantasyTags.name, slug: fantasyTags.slug, category_id: fantasyTags.category_id })
+        .from(fantasyTags)
+        .where(eq(fantasyTags.is_active, true))
+        .orderBy(asc(fantasyTags.id)),
+
+      db
         .select({ id: storyCategories.id, name: storyCategories.name, slug: storyCategories.slug, description: storyCategories.description })
         .from(storyCategories)
         .where(eq(storyCategories.is_active, true))
@@ -32,7 +38,7 @@ export async function GET() {
     ])
 
     return NextResponse.json(
-      { moodTags: moods, orientationTags: orientations, fantasyCategories: fantasyCats, storyCategories: storyCats },
+      { moodTags: moods, orientationTags: orientations, fantasyCategories: fantasyCats, fantasyTags: fantTags, storyCategories: storyCats },
       { headers: { 'Cache-Control': 'public, max-age=3600' } }
     )
   } catch (err) {

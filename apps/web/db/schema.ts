@@ -15,6 +15,7 @@ import {
   primaryKey,
   unique,
   check,
+  index,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
@@ -88,6 +89,8 @@ export const users = pgTable('users', {
   image:               text('image'),
   alias:               varchar('alias', { length: 100 }).unique(),
   onboarding_complete: boolean('onboarding_complete').notNull().default(false),
+  is_flagged:          boolean('is_flagged').notNull().default(false),
+  deleted_at:          timestamp('deleted_at', { withTimezone: true }),
   created_at:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -427,6 +430,24 @@ export const saves = pgTable('saves', {
   contentTypeCheck: check('sv_content_type_check', sql`${table.content_type} IN ('story', 'audio_recording', 'companion_profile', 'session_card')`),
 }))
 
+export const notifications = pgTable('notifications', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  recipient_id: uuid('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  actor_id:     uuid('actor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type:         varchar('type', { length: 40 }).notNull(),
+  // type enum: 'story_like' | 'story_save' | 'story_comment' | 'comment_reply' | 'comment_like'
+  content_type: varchar('content_type', { length: 30 }),
+  content_id:   uuid('content_id'),
+  // content_id = the story or comment being acted on — used to deep-link from the notification
+  is_read:      boolean('is_read').notNull().default(false),
+  created_at:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  recipientIdx: index('notif_recipient_idx').on(table.recipient_id),
+  uniqueNotif:  unique('uq_notification').on(
+    table.recipient_id, table.actor_id, table.type, table.content_id
+  ),
+}))
+
 export const comments = pgTable('comments', {
   id:                uuid('id').primaryKey().defaultRandom(),
   user_id:           uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -464,6 +485,19 @@ export const bookingRequests = pgTable('booking_requests', {
   updated_at:                 timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   statusCheck: check('br_status_check', sql`${table.status} IN ('pending', 'accepted', 'declined', 'cancelled', 'completed')`),
+}))
+
+// ─── PUSH SUBSCRIPTIONS ───────────────────────────────────────────────────────
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id:         uuid('id').primaryKey().defaultRandom(),
+  user_id:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint:   text('endpoint').notNull(),
+  p256dh:     text('p256dh').notNull(),
+  auth:       text('auth').notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueEndpoint: unique('uq_push_endpoint').on(table.user_id, table.endpoint),
 }))
 
 export const fantasyTagOverlapScores = pgTable('fantasy_tag_overlap_scores', {

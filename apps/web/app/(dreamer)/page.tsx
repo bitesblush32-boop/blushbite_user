@@ -54,7 +54,7 @@ export default function HomePage() {
     >
 
       {/* ── BLOCK 1: Mood Slider ─────────────────────────────────────────────── */}
-      <div
+      {/* <div
         className="flex items-center gap-[14px] mb-8"
         style={{
           background: '#111620',
@@ -87,7 +87,7 @@ export default function HomePage() {
         <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
           Spicier
         </span>
-      </div>
+      </div> */}
 
       {/* ── BLOCK 2: Hero ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 mb-14">

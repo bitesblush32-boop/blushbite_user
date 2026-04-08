@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
     const toInsert = records.filter(r => !existingTitles.has(r.title?.toLowerCase().trim()))
     const skipped = records.length - toInsert.length
 
+    const adminUserId = process.env.ADMIN_USER_ID ?? null
+
     const BATCH = 50
     let insertedCount = 0
 
@@ -45,14 +47,18 @@ export async function POST(req: NextRequest) {
       await db.transaction(async (tx) => {
         for (const record of batch) {
           const [row] = await tx.insert(stories).values({
-            author_type:         'admin',
-            author_user_id:      null,
+            author_type:         adminUserId ? 'user' : 'admin',
+            author_user_id:      adminUserId ?? null,
             author_companion_id: null,
             category_id:         record.primary_category_id ?? null,
             title:               record.title,
-            body:                record.body,
+            body:                JSON.stringify({
+              raw:        record.body,
+              pages:      [],
+              categories: record.story_category_ids?.map(String) ?? [],
+            }),
             excerpt:             record.excerpt ?? record.body?.slice(0, 280) ?? null,
-            is_anonymous:        false,
+            is_anonymous:        true,
             is_published:        true,
             is_featured:         false,
             moderation_status:   'approved',

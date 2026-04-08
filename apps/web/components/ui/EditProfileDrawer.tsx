@@ -208,7 +208,7 @@ export default function EditProfileDrawer({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-[850]"
+            className="fixed inset-0 z-[950]"
             style={{ background: 'rgba(0,0,0,0.60)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -221,7 +221,7 @@ export default function EditProfileDrawer({
           <motion.div
             {...motionProps}
             className={[
-              'fixed z-[860] overflow-y-auto',
+              'fixed z-[960] overflow-y-auto',
               // Mobile: bottom sheet
               'bottom-0 left-0 right-0',
               // Desktop: right-side panel, fixed width

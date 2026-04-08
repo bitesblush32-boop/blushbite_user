@@ -44,10 +44,29 @@ interface Props {
 const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) {
   const [currentPage, setCurrentPage] = useState(0)
   const pages    = paginateText(story.rawBody ?? story.body)
+  
+  // Debug: Check what data is actually available
+  const hasImages = Array.isArray(story.pageImageUrls) && story.pageImageUrls.length > 0
+  const totalPages = hasImages ? story.pageImageUrls.length : pages.length
+  
+  // useEffect(() => {
+  //   console.log('📖 ConfessionCard debug:', {
+  //     storyId: story.id,
+  //     hasImages,
+  //     imageCount: story.pageImageUrls?.length ?? 0,
+  //     imageUrls: story.pageImageUrls,
+  //     textPageCount: pages.length,
+  //     totalPages,
+  //     currentPage,
+  //     isActive,
+  //   })
+  // }, [story.id, hasImages, totalPages, currentPage, isActive, story.pageImageUrls, pages.length])
+  
   const gradient = getGradient(story.categoryName, story.moodTags)
 
   const lastTapRef    = useRef<number>(0)
   const touchFiredRef = useRef(false)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const [heartVisible, setHeartVisible] = useState(false)
   const [heartPos, setHeartPos]         = useState({ x: 0, y: 0 })
 
@@ -56,26 +75,51 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
 
   function handleTap(e: React.TouchEvent | React.MouseEvent) {
     if ('touches' in e) {
-      touchFiredRef.current = true
+      // This is a touch event — check if it was a swipe
+      if (!touchStartRef.current) return
+      const clientX = e.changedTouches[0]?.clientX
+      const clientY = e.changedTouches[0]?.clientY
+      if (!clientX || !clientY) return
+      
+      const dx = Math.abs(clientX - touchStartRef.current.x)
+      const dy = Math.abs(clientY - touchStartRef.current.y)
+      // If moved more than 30px, it's a swipe, not a tap
+      if (dx > 30 || dy > 30) return
+      
+      // It's a tap — trigger double-tap with same logic as mouse
+      const now   = Date.now()
+      const delta = now - lastTapRef.current
+      lastTapRef.current = now
+
+      if (delta < 300 && delta > 0) {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
+        setHeartVisible(true)
+        setTimeout(() => setHeartVisible(false), 900)
+        if (!isLiked) {
+          likeMutation.mutate({ storyId: story.id, currentlyLiked: false })
+        }
+      }
     } else {
+      // Mouse click
       if (touchFiredRef.current) {
         touchFiredRef.current = false
         return
       }
-    }
-    const now   = Date.now()
-    const delta = now - lastTapRef.current
-    lastTapRef.current = now
+      const now   = Date.now()
+      const delta = now - lastTapRef.current
+      lastTapRef.current = now
 
-    if (delta < 300 && delta > 0) {
-      const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
-      const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX
-      const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY
-      setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
-      setHeartVisible(true)
-      setTimeout(() => setHeartVisible(false), 900)
-      if (!isLiked) {
-        likeMutation.mutate({ storyId: story.id, currentlyLiked: false })
+      if (delta < 300 && delta > 0) {
+        const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        const clientX = (e as React.MouseEvent).clientX
+        const clientY = (e as React.MouseEvent).clientY
+        setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
+        setHeartVisible(true)
+        setTimeout(() => setHeartVisible(false), 900)
+        if (!isLiked) {
+          likeMutation.mutate({ storyId: story.id, currentlyLiked: false })
+        }
       }
     }
   }
@@ -135,21 +179,34 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
 
         {/* Title — Playfair italic, primary text */}
         {story.title ? (
-          <p
-            style={{
-              fontFamily:   "'Playfair Display', serif",
-              fontSize:     18,
-              color:        '#eeeef0',
-              fontStyle:    'italic',
-              whiteSpace:   'nowrap',
-              overflow:     'hidden',
-              textOverflow: 'ellipsis',
-              margin:       0,
-              lineHeight:   1.35,
-            }}
-          >
-            {story.title}
-          </p>
+          <>
+            <p
+              style={{
+                fontFamily:   "'Playfair Display', serif",
+                fontSize:     18,
+                color:        '#eeeef0',
+                fontStyle:    'italic',
+                margin:       0,
+                lineHeight:   1.35,
+                wordWrap:     'break-word',
+                overflowWrap: 'break-word',
+              }}
+            >
+              {story.title}
+            </p>
+            {/* Author name below title */}
+            <p
+              style={{
+                fontSize:   11,
+                color:      '#6b7280',
+                fontStyle:  'italic',
+                margin:     '4px 0 0 0',
+                lineHeight: 1.3,
+              }}
+            >
+              by {story.isAnonymous || !story.authorAlias ? 'anonymous' : story.authorAlias}
+            </p>
+          </>
         ) : (
           // Fallback when no title: show a soft placeholder so header is never blank
           <p
@@ -193,15 +250,16 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
               </span>
             )}
 
-            {/* Extra categories — muted chips */}
+            {/* Extra categories — rose chips */}
             {secondaryChips.map(t => (
               <span
                 key={t}
                 style={{
                   fontSize:     10,
-                  color:        '#6b7280',
-                  background:   'rgba(255,255,255,0.03)',
-                  border:       '1px solid #1c2333',
+                  fontWeight:   500,
+                  color:        '#e8607a',
+                  background:   'rgba(232,96,122,0.12)',
+                  border:       '1px solid rgba(232,96,122,0.3)',
                   padding:      '3px 9px',
                   borderRadius: 999,
                 }}
@@ -216,6 +274,12 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
       {/* ── BODY — image fills this zone ──────────────────────────────────── */}
       <div
         style={{ flex: 1, position: 'relative', overflow: 'hidden', zIndex: 10 }}
+        onTouchStart={(e) => {
+          touchStartRef.current = {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+          }
+        }}
         onTouchEnd={handleTap}
         onClick={handleTap}
       >
@@ -265,7 +329,7 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         style={{
           flexShrink:    0,
           zIndex:        20,
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          paddingBottom: 6,
           paddingLeft:   16,
           paddingRight:  16,
           paddingTop:    10,
@@ -277,9 +341,9 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         }}
       >
         {/* Page progress dots — centered */}
-        {pages.length > 1 && (
+        {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: 5, alignItems: 'center' }}>
-            {pages.map((_, i) => (
+            {Array.from({ length: totalPages }).map((_, i) => (
               <div
                 key={i}
                 style={{
@@ -305,10 +369,6 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           layout="horizontal"
         />
 
-        {/* Author alias — left aligned, muted italic */}
-        <span style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>
-          {story.isAnonymous || !story.authorAlias ? 'anonymous' : story.authorAlias}
-        </span>
       </div>
     </div>
   )

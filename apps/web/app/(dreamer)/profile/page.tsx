@@ -15,7 +15,7 @@ import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollection
 import { LikedGrid } from '@/components/ui/LikedGrid'
 import { useSavedConfessions } from '@/hooks/useSavedConfessions'
 import { useLikedContent } from '@/hooks/useLikedContent'
-import { useUIStore } from '@/store/uiStore'
+import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,22 +71,12 @@ function Skeleton() {
 
 // ─── PostCell ─────────────────────────────────────────────────────────────────
 
-function PostCell({
-  post,
-  isDeleting,
-  onDelete,
-}: {
-  post: UserPost
-  isDeleting: boolean
-  onDelete: () => void
-}) {
-  const [menuOpen, setMenuOpen] = useState(false)
-
+function PostCell({ post, onTap }: { post: UserPost; onTap: () => void }) {
   return (
     <div
       style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden',
                background: '#111620', cursor: 'pointer' }}
-      onClick={() => !menuOpen && setMenuOpen(false)}
+      onClick={onTap}
     >
       {post.firstImage ? (
         <img
@@ -111,51 +101,6 @@ function PostCell({
             {post.excerpt ?? ''}
           </p>
         </div>
-      )}
-
-      <button
-        onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
-        style={{
-          position: 'absolute', top: 6, right: 6,
-          width: 28, height: 28, borderRadius: '50%',
-          background: 'rgba(7,9,15,0.72)', border: 'none',
-          color: '#eeeef0', fontSize: 16, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(4px)',
-        }}
-      >
-        ⋯
-      </button>
-
-      {menuOpen && (
-        <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-            onClick={e => { e.stopPropagation(); setMenuOpen(false) }}
-          />
-          <div style={{
-            position: 'absolute', top: 36, right: 6, zIndex: 50,
-            background: '#161d2a', border: '1px solid #1c2333',
-            borderRadius: 10, overflow: 'hidden', minWidth: 140,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-          }}>
-            <button
-              onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete() }}
-              disabled={isDeleting}
-              style={{
-                width: '100%', padding: '10px 14px', background: 'transparent',
-                border: 'none', textAlign: 'left', fontSize: 13,
-                color: isDeleting ? '#6b7280' : '#e87070',
-                cursor: isDeleting ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}
-              onMouseEnter={e => { if (!isDeleting) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.08)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-            >
-              {isDeleting ? '⏳ Deleting…' : '🗑 Delete'}
-            </button>
-          </div>
-        </>
       )}
 
       <div style={{
@@ -397,11 +342,11 @@ export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const setAvatarUrl = useUIStore(s => s.setAvatarUrl)
+  const setAvatarUrl       = useUIStore(s => s.setAvatarUrl)
+  const openProfileViewer  = useUIStore(s => s.openProfileViewer)
 
   const [profile, setProfile]               = useState<UserProfile | null>(null)
   const [loading, setLoading]               = useState(true)
-  const [editOpen, setEditOpen]             = useState(false)
   const [tasteOpen, setTasteOpen]           = useState(false)
   const [activeTab, setActiveTab]           = useState<MainTab>('posts')
   const [likedSubTab, setLikedSubTab]       = useState<LikedSubTab>('all')
@@ -411,7 +356,6 @@ export default function ProfilePage() {
 
   const [posts, setPosts]               = useState<UserPost[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
-  const [deletingId, setDeletingId]     = useState<string | null>(null)
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -461,22 +405,6 @@ export default function ProfilePage() {
     } finally {
       setAvatarUploading(false)
     }
-  }
-
-  // ── Delete post ────────────────────────────────────────────────────────────
-  async function handleDeletePost(postId: string) {
-    if (!confirm('Delete this confession? This cannot be undone.')) return
-    setDeletingId(postId)
-    try {
-      const res = await fetch(`/api/users/posts/${postId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      })
-      if (res.ok) {
-        setPosts(prev => prev.filter(p => p.id !== postId))
-      }
-    } catch {}
-    finally { setDeletingId(null) }
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
@@ -561,11 +489,11 @@ export default function ProfilePage() {
               {alias}
             </div>
 
-            {profile?.display_name && (
+            {/* {profile?.display_name && (
               <div style={{ fontSize: 13, color: '#6b7280', marginTop: -6 }}>
                 {profile.display_name}
               </div>
-            )}
+            )} */}
 
             {profile?.bio && (
               <p style={{
@@ -581,13 +509,7 @@ export default function ProfilePage() {
               The Dreamer
             </span>
 
-            <button
-              onClick={() => setEditOpen(true)}
-              className="flex items-center gap-[6px] bg-transparent text-[#6b7280] border border-[#1c2333] px-[18px] py-[8px] rounded-[10px] text-[13px] cursor-pointer transition-all duration-200 hover:border-white/20 hover:text-[#eeeef0] mt-1"
-            >
-              <Pencil size={13} />
-              Edit profile
-            </button>
+
           </div>
 
           {/* ── Section 2: Stats ─────────────────────────────── */}
@@ -646,7 +568,7 @@ export default function ProfilePage() {
 
             <div>
               <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-                desires
+                Gender Preference
               </div>
               {desires.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -711,12 +633,31 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-[2px]">
-                  {posts.map(post => (
+                  {posts.map((post, idx) => (
                     <PostCell
                       key={post.id}
                       post={post}
-                      isDeleting={deletingId === post.id}
-                      onDelete={() => handleDeletePost(post.id)}
+                      onTap={() => {
+                        const storiesArray: ProfileViewerStory[] = posts.map(p => ({
+                          id:            p.id,
+                          title:         p.title,
+                          body:          '',
+                          rawBody:       p.excerpt ?? '',
+                          pageImageUrls: p.pageImageUrls,
+                          categoryName:  p.categories[0] ?? '',
+                          categories:    p.categories,
+                          moodTags:      [],
+                          likeCount:     p.likeCount,
+                          saveCount:     p.saveCount,
+                          commentCount:  p.commentCount,
+                          userHasLiked:  false,
+                          userHasSaved:  false,
+                          authorAlias:   session?.user?.alias ?? null,
+                          isAnonymous:   false,
+                          createdAt:     p.createdAt,
+                        }))
+                        openProfileViewer(storiesArray, idx, 'own')
+                      }}
                     />
                   ))}
                 </div>
@@ -740,24 +681,6 @@ export default function ProfilePage() {
 
         </motion.main>
       )}
-
-      {/* ── Edit profile drawer ───────────────────────────────── */}
-      <EditProfileDrawer
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        currentAvatar={profile?.avatar_url ?? null}
-        onSaved={(d) => {
-          setProfile(p => p ? { ...p, ...d } : p)
-          if (d.avatar_url) setAvatarUrl(d.avatar_url)
-        }}
-        defaults={{
-          alias:       profile?.alias         ?? undefined,
-          bio:         profile?.bio          ?? undefined,
-          dateOfBirth: profile?.date_of_birth ?? undefined,
-          country:     profile?.country      ?? undefined,
-          city:        profile?.city         ?? undefined,
-        }}
-      />
 
       {/* ── Taste drawer ─────────────────────────────────────── */}
       <TasteDrawer

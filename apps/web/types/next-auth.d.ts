@@ -6,6 +6,9 @@ declare module 'next-auth' {
       id: string
       alias: string
       onboarding_complete: boolean
+      platform_role?: 'dreamer' | 'companion' | 'admin'
+      companion_stage?: number
+      companion_is_live?: boolean
     } & DefaultSession['user']
     error?: string
   }
@@ -13,6 +16,9 @@ declare module 'next-auth' {
   interface User {
     alias: string
     onboarding_complete: boolean
+    platform_role?: 'dreamer' | 'companion' | 'admin'
+    companion_stage?: number
+    companion_is_live?: boolean
   }
 }
 
@@ -21,5 +27,8 @@ declare module 'next-auth/jwt' {
     id: string
     alias: string
     onboarding_complete: boolean
+    platform_role?: string
+    companion_stage?: number
+    companion_is_live?: boolean
   }
 }

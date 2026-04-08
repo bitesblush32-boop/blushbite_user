@@ -2,6 +2,7 @@
 
 import { memo } from 'react'
 import { Bookmark } from 'lucide-react'
+import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 import type { SavedPost } from '@/hooks/useSavedConfessions'
 
 interface Props {
@@ -9,6 +10,47 @@ interface Props {
 }
 
 const SavedConfessionsGrid = memo(function SavedConfessionsGrid({ items }: Props) {
+  const openProfileViewer = useUIStore(s => s.openProfileViewer)
+  const openModal         = useUIStore(s => s.openModal)
+
+  function handleItemTap(idx: number) {
+    const item = items[idx]
+    if (!item) return
+
+    // Companion saves: open ProfileDrawer
+    if (item.authorType === 'companion') {
+      openModal(item.id)
+      return
+    }
+
+    const storiesArray: ProfileViewerStory[] = items
+      .filter(i => i.authorType !== 'companion')
+      .map(i => ({
+        id:            i.id,
+        title:         i.title,
+        body:          '',
+        rawBody:       i.excerpt ?? '',
+        pageImageUrls: [],
+        categoryName:  i.categories[0] ?? '',
+        categories:    i.categories,
+        moodTags:      [],
+        likeCount:     i.likeCount,
+        saveCount:     i.saveCount,
+        commentCount:  0,
+        userHasLiked:  false,
+        userHasSaved:  true,
+        authorAlias:   null,
+        isAnonymous:   false,
+        createdAt:     i.savedAt,
+      }))
+
+    const storyItems = items.filter(i => i.authorType !== 'companion')
+    const storyIdx   = storyItems.findIndex(i => i.id === item.id)
+    const openIdx    = storyIdx >= 0 ? storyIdx : 0
+
+    openProfileViewer(storiesArray, openIdx, 'saved')
+  }
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -22,9 +64,10 @@ const SavedConfessionsGrid = memo(function SavedConfessionsGrid({ items }: Props
 
   return (
     <div className="grid grid-cols-3 gap-[2px]">
-      {items.map(item => (
+      {items.map((item, idx) => (
         <div
           key={item.id}
+          onClick={() => handleItemTap(idx)}
           style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
         >
           {item.firstImage ? (

@@ -21,6 +21,17 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
   const useImages = Array.isArray(pageImageUrls) && pageImageUrls.length > 0
   const total     = useImages ? pageImageUrls!.length : pages.length
 
+  // Debug log
+  // useEffect(() => {
+  //   console.log('🖼️ StoryPageContent debug:', {
+  //     useImages,
+  //     imageCount: pageImageUrls?.length ?? 0,
+  //     textPageCount: pages.length,
+  //     total,
+  //     currentPage,
+  //   })
+  // }, [useImages, total, currentPage, pageImageUrls?.length, pages.length])
+
   // Stably-displayed page index
   const [displayPage, setDisplayPage]     = useState(currentPage)
   // Page being flipped to (null = idle)

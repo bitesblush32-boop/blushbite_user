@@ -10,7 +10,7 @@ import { toJpeg } from 'html-to-image'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MAX_CHARS = 700
-const MAX_PAGES = 8
+const MAX_PAGES = 100
 
 const PLACEHOLDERS = [
   "There's something I've never told anyone...",
