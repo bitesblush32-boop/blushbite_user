@@ -1,5 +1,28 @@
 import { create } from 'zustand'
 
+// ── ProfileViewerStory ─────────────────────────────────────────────────────
+
+export interface ProfileViewerStory {
+  id:            string
+  title:         string | null
+  body:          string          // raw JSON body string — same format as Story.body
+  rawBody:       string | null   // plain text extracted for paginateText
+  pageImageUrls: string[]
+  categoryName:  string
+  categories:    string[]
+  moodTags:      string[]
+  likeCount:     number
+  saveCount:     number
+  commentCount:  number
+  userHasLiked:  boolean
+  userHasSaved:  boolean
+  authorAlias:   string | null
+  isAnonymous:   boolean
+  createdAt:     string
+}
+
+// ── UIStore ────────────────────────────────────────────────────────────────
+
 interface UIStore {
   drawerOpen: boolean
   modalOpen: boolean
@@ -23,6 +46,17 @@ interface UIStore {
   unmutedStoryIds: Set<string>
   toggleMute: (storyId: string) => void
   isMuted: (storyId: string) => boolean
+
+  // Profile viewer
+  profileViewerStories: ProfileViewerStory[]
+  profileViewerIndex:   number
+  profileViewerMode:    'own' | 'liked' | 'saved' | null
+  openProfileViewer: (
+    stories: ProfileViewerStory[],
+    index:   number,
+    mode:    'own' | 'liked' | 'saved'
+  ) => void
+  closeProfileViewer: () => void
 }
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -56,4 +90,13 @@ export const useUIStore = create<UIStore>((set, get) => ({
     return { unmutedStoryIds: next }
   }),
   isMuted: (storyId) => !get().unmutedStoryIds.has(storyId),
+
+  // Profile viewer
+  profileViewerStories: [],
+  profileViewerIndex:   0,
+  profileViewerMode:    null,
+  openProfileViewer: (stories, index, mode) =>
+    set({ profileViewerStories: stories, profileViewerIndex: index, profileViewerMode: mode }),
+  closeProfileViewer: () =>
+    set({ profileViewerStories: [], profileViewerIndex: 0, profileViewerMode: null }),
 }))

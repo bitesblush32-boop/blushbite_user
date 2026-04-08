@@ -9,9 +9,10 @@ import dynamic from 'next/dynamic'
 import Header from '@/components/layout/Header'
 import MiniPlayer from '@/components/layout/MiniPlayer'
 
-const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { ssr: false })
-const BookingModal  = dynamic(() => import('@/components/ui/BookingModal'),  { ssr: false })
-const BottomNav     = dynamic(() => import('@/components/layout/BottomNav'), { ssr: false })
+const ProfileDrawer     = dynamic(() => import('@/components/ui/ProfileDrawer'),     { ssr: false })
+const BookingModal      = dynamic(() => import('@/components/ui/BookingModal'),      { ssr: false })
+const BottomNav         = dynamic(() => import('@/components/layout/BottomNav'),     { ssr: false })
+const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
 
 export default function DreamerLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -44,6 +45,7 @@ export default function DreamerLayout({ children }: { children: React.ReactNode 
       {/* ── Global modals/drawers (lazy, ssr:false — not in initial bundle) ── */}
       <ProfileDrawer />
       <BookingModal />
+      <ProfilePostViewer />
       <BottomNav />
     </div>
   )
