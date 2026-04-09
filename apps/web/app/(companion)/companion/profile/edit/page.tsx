@@ -226,6 +226,7 @@ export default function EditProfilePage() {
   // ── Saving / saved per section ──
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [saved,  setSaved]  = useState<Record<string, boolean>>({})
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
 
@@ -296,6 +297,7 @@ export default function EditProfilePage() {
   async function saveSection(section: string, payload: object) {
     setSaving(p => ({ ...p, [section]: true }))
     setSaved(p => ({ ...p, [section]: false }))
+    setSaveError(null)
     try {
       const res = await fetch('/api/companions/profile', {
         method:      'PATCH',
@@ -303,9 +305,15 @@ export default function EditProfilePage() {
         credentials: 'include',
         body:        JSON.stringify({ section, ...payload }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setSaveError(data?.error ?? `Save failed (${res.status}). Please try again.`)
+        return
+      }
       setSaved(p => ({ ...p, [section]: true }))
       setTimeout(() => setSaved(p => ({ ...p, [section]: false })), 2500)
+    } catch {
+      setSaveError('Network error. Please check your connection and try again.')
     } finally {
       setSaving(p => ({ ...p, [section]: false }))
     }
@@ -387,6 +395,19 @@ export default function EditProfilePage() {
         </h1>
         <p style={{ fontSize: 12, color: '#c9a96e' }}>Changes save instantly per section.</p>
       </div>
+
+      {/* Save error banner */}
+      {saveError && (
+        <div style={{
+          background: 'rgba(232,96,122,0.1)', border: '1px solid rgba(232,96,122,0.3)',
+          borderRadius: 10, padding: '10px 16px', marginBottom: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <span style={{ fontSize: 13, color: '#e8607a' }}>{saveError}</span>
+          <button type="button" onClick={() => setSaveError(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e8607a', fontSize: 16, lineHeight: 1 }}>✕</button>
+        </div>
+      )}
 
       {/* ── SECTION A ─────────────────────────────────────────────────────── */}
       <motion.div
