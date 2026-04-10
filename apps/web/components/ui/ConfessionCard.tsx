@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart } from 'lucide-react'
+import { Heart, Link2, Loader2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { useLikeMutation } from '@/hooks/useLikeMutation'
+import { useBridgeMutation } from '@/hooks/useBridgeMutation'
 import { useUIStore } from '@/store/uiStore'
 import type { Story } from '@/hooks/useInfiniteConfessions'
 
@@ -61,8 +62,8 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
   const pages    = paginateText(story.rawBody ?? story.body)
   
   // Debug: Check what data is actually available
-  const hasImages = Array.isArray(story.pageImageUrls) && story.pageImageUrls.length > 0
-  const totalPages = hasImages ? story.pageImageUrls.length : pages.length
+  const hasImages  = Array.isArray(story.pageImageUrls) && story.pageImageUrls.length > 0
+  const totalPages = (hasImages ? story.pageImageUrls.length : pages.length) + 1
   
   // useEffect(() => {
   //   console.log('📖 ConfessionCard debug:', {
@@ -85,9 +86,10 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
   const [heartVisible, setHeartVisible] = useState(false)
   const [heartPos, setHeartPos]         = useState({ x: 0, y: 0 })
 
-  const isLiked      = story.userHasLiked
-  const likeMutation = useLikeMutation()
-  const openModal    = useUIStore((s) => s.openModal)
+  const isLiked                                    = story.userHasLiked
+  const likeMutation                               = useLikeMutation()
+  const openModal                                  = useUIStore((s) => s.openModal)
+  const { isCompanion, bridgeStatus, loading: bridgeLoading, bridge } = useBridgeMutation(story.id)
 
   // Fetch bridge companions — only when this card is active (avoids mass requests)
   const { data: bridgesData } = useQuery<{ data: BridgeCompanion[] }>({
@@ -313,6 +315,8 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           pageImageUrls={story.pageImageUrls}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          storyId={story.id}
+          gradient={gradient}
         />
 
         <AnimatePresence>
@@ -384,15 +388,68 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         )}
 
         {/* Like / comment / save / audio */}
-        <ActionPill
-          storyId={story.id}
-          likeCount={story.likeCount}
-          saveCount={story.saveCount}
-          commentCount={story.commentCount}
-          userHasLiked={story.userHasLiked}
-          userHasSaved={story.userHasSaved}
-          layout="horizontal"
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ActionPill
+            storyId={story.id}
+            likeCount={story.likeCount}
+            saveCount={story.saveCount}
+            commentCount={story.commentCount}
+            userHasLiked={story.userHasLiked}
+            userHasSaved={story.userHasSaved}
+            layout="horizontal"
+          />
+
+          {isCompanion && (
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={bridge}
+              disabled={bridgeLoading || bridgeStatus !== 'idle'}
+              style={{
+                display:       'flex',
+                flexDirection: 'column',
+                alignItems:    'center',
+                gap:           3,
+                background:    'none',
+                border:        'none',
+                cursor:        bridgeStatus === 'idle' ? 'pointer' : 'default',
+                padding:       0,
+                flexShrink:    0,
+              }}
+            >
+              <div style={{
+                width:          40,
+                height:         40,
+                borderRadius:   '50%',
+                background:     bridgeStatus === 'approved' ? 'rgba(74,222,128,0.15)'
+                              : bridgeStatus === 'pending'  ? 'rgba(201,169,110,0.15)'
+                              : 'rgba(28,35,51,0.8)',
+                border:         `1px solid ${
+                                  bridgeStatus === 'approved' ? 'rgba(74,222,128,0.4)'
+                                : bridgeStatus === 'pending'  ? 'rgba(201,169,110,0.4)'
+                                : '#1c2333'}`,
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                transition:     'background 0.2s, border-color 0.2s',
+              }}>
+                {bridgeLoading
+                  ? <Loader2 size={16} style={{ color: '#6b7280', animation: 'spin 1s linear infinite' }} />
+                  : <Link2 size={16} style={{
+                      color: bridgeStatus === 'approved' ? '#4ade80'
+                           : bridgeStatus === 'pending'  ? '#c9a96e'
+                           : '#6b7280',
+                    }} />
+                }
+              </div>
+              <span style={{ fontSize: 10, color: '#6b7280', lineHeight: 1 }}>
+                {bridgeStatus === 'approved' ? 'Bridged'
+                 : bridgeStatus === 'pending'  ? 'Pending'
+                 : bridgeStatus === 'rejected' ? 'Declined'
+                 : 'Bridge'}
+              </span>
+            </motion.button>
+          )}
+        </div>
 
       </div>
     </div>

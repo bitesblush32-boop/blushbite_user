@@ -219,6 +219,8 @@ const ViewerCard = memo(function ViewerCard({ story, onOpenMenu, onClose }: View
           pageImageUrls={story.pageImageUrls}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          storyId={story.id}
+          gradient={gradient}
         />
 
         <AnimatePresence>

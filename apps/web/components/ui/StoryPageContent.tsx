@@ -2,42 +2,286 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
+import { useBridgeMutation } from '@/hooks/useBridgeMutation'
+import { useUIStore } from '@/store/uiStore'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface BridgeCompanion {
+  id:                  string
+  companion_id:        string
+  alias:               string | null
+  name:                string | null
+  tagline:             string | null
+  city:                string | null
+  availability_status: string
+  photo_url:           string | null
+}
 
 interface Props {
   pages:          string[]
   pageImageUrls?: string[]
   currentPage:    number
   onPageChange:   (n: number) => void
+  storyId:        string
+  gradient:       string
 }
 
-// Adapt flip duration to device capability — GPU-only animation either way
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function getFlipMs(): number {
   if (typeof navigator === 'undefined') return 340
   const cores = navigator.hardwareConcurrency ?? 4
   return cores < 4 ? 240 : 340
 }
 
-export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChange }: Props) {
-  const useImages = Array.isArray(pageImageUrls) && pageImageUrls.length > 0
-  const total     = useImages ? pageImageUrls!.length : pages.length
+// ─── BridgePage ───────────────────────────────────────────────────────────────
 
-  // Debug log
-  // useEffect(() => {
-  //   console.log('🖼️ StoryPageContent debug:', {
-  //     useImages,
-  //     imageCount: pageImageUrls?.length ?? 0,
-  //     textPageCount: pages.length,
-  //     total,
-  //     currentPage,
-  //   })
-  // }, [useImages, total, currentPage, pageImageUrls?.length, pages.length])
+function BridgePage({ storyId, gradient }: { storyId: string; gradient: string }) {
+  const { data: session }  = useSession()
+  const openModal          = useUIStore((s) => s.openModal)
+  const { isCompanion, bridgeStatus, loading, bridge } = useBridgeMutation(storyId)
+
+  const { data, isLoading } = useQuery<{ data: BridgeCompanion[] }>({
+    queryKey:  ['story-bridges', storyId],
+    queryFn:   () => fetch(`/api/stories/${storyId}/bridges`).then(r => r.json()),
+    staleTime: 60_000,
+  })
+  const companions = data?.data ?? []
+  const shown      = companions.slice(0, 12)
+  const extra      = companions.length - 12
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        width:          '100%',
+        height:         '100%',
+        position:       'relative',
+        overflow:       'hidden',
+        background:     gradient,
+        display:        'flex',
+        flexDirection:  'column',
+        alignItems:     'center',
+        justifyContent: 'center',
+      }}
+    >
+      {/* Noise texture */}
+      <div
+        style={{
+          position:        'absolute',
+          inset:           0,
+          pointerEvents:   'none',
+          zIndex:          10,
+          opacity:         0.6,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
+        }}
+      />
+      {/* Ambient rose glow */}
+      <div
+        style={{
+          position:      'absolute',
+          inset:         0,
+          pointerEvents: 'none',
+          background:    'radial-gradient(ellipse 70% 55% at 50% 30%, rgba(232,96,122,0.06) 0%, transparent 70%)',
+        }}
+      />
+
+      {/* Content */}
+      <div
+        style={{
+          position:       'relative',
+          zIndex:         20,
+          display:        'flex',
+          flexDirection:  'column',
+          alignItems:     'center',
+          gap:            20,
+          padding:        '64px 32px 32px',
+          width:          '100%',
+          maxWidth:       360,
+        }}
+      >
+        {/* Rose chip */}
+        <span style={{
+          fontSize:     10,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color:         '#e8607a',
+          background:    'rgba(232,96,122,0.1)',
+          border:        '1px solid rgba(232,96,122,0.2)',
+          borderRadius:  999,
+          padding:       '4px 16px',
+        }}>
+          Companions who live this story
+        </span>
+
+        {/* Avatars */}
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                style={{
+                  width:        36,
+                  height:       36,
+                  borderRadius: '50%',
+                  background:   '#1c2333',
+                  animation:    'bb-shimmer 1.4s ease-in-out infinite',
+                  opacity:      0.6 - i * 0.15,
+                }}
+              />
+            ))}
+          </div>
+        ) : companions.length === 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
+              No companions linked yet.
+            </p>
+            {isCompanion && bridgeStatus === 'idle' && (
+              <button
+                onClick={bridge}
+                disabled={loading}
+                style={{
+                  fontSize:    12,
+                  color:       '#e8607a',
+                  background:  'none',
+                  border:      'none',
+                  cursor:      loading ? 'not-allowed' : 'pointer',
+                  opacity:     loading ? 0.6 : 1,
+                  marginTop:   4,
+                  padding:     0,
+                }}
+              >
+                Be the first to bridge yourself with this story →
+              </button>
+            )}
+            {isCompanion && bridgeStatus === 'pending' && (
+              <p style={{ fontSize: 12, color: '#c9a96e', margin: 0 }}>Your request is pending review.</p>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+              {shown.map(c => (
+                <div
+                  key={c.id}
+                  onClick={() => openModal(c.id)}
+                  style={{
+                    display:       'flex',
+                    flexDirection: 'column',
+                    alignItems:    'center',
+                    gap:           4,
+                    cursor:        'pointer',
+                  }}
+                >
+                  {/* Avatar circle */}
+                  <div style={{
+                    width:        36,
+                    height:       36,
+                    borderRadius: '50%',
+                    overflow:     'hidden',
+                    flexShrink:   0,
+                    background:   'linear-gradient(135deg,#e8607a,#9b5fe0)',
+                    display:      'flex',
+                    alignItems:   'center',
+                    justifyContent: 'center',
+                    fontSize:     13,
+                    fontWeight:   600,
+                    color:        '#fff',
+                  }}>
+                    {c.photo_url ? (
+                      <img
+                        src={c.photo_url}
+                        alt={c.alias ?? ''}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      (c.alias ?? c.name ?? '?').replace('@', '').charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  {/* Alias */}
+                  <span style={{
+                    fontSize:    9,
+                    color:       '#6b7280',
+                    maxWidth:    40,
+                    overflow:    'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace:  'nowrap',
+                    textAlign:   'center',
+                    lineHeight:  1.2,
+                  }}>
+                    {c.alias ?? c.name ?? '?'}
+                  </span>
+                  {/* Availability dot */}
+                  {c.availability_status === 'available' && (
+                    <div style={{
+                      width:        6,
+                      height:       6,
+                      borderRadius: '50%',
+                      background:   '#4ade80',
+                      marginTop:    -2,
+                    }} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {extra > 0 && (
+              <p style={{ fontSize: 11, color: '#6b7280', textAlign: 'center', marginTop: 8 }}>
+                +{extra} more
+              </p>
+            )}
+
+            {isCompanion && bridgeStatus === 'idle' && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                <button
+                  onClick={bridge}
+                  disabled={loading}
+                  style={{
+                    fontSize:   12,
+                    color:      '#e8607a',
+                    background: 'none',
+                    border:     'none',
+                    cursor:     loading ? 'not-allowed' : 'pointer',
+                    opacity:    loading ? 0.6 : 1,
+                    padding:    0,
+                  }}
+                >
+                  Bridge yourself with this story →
+                </button>
+              </div>
+            )}
+            {isCompanion && bridgeStatus === 'pending' && (
+              <p style={{ fontSize: 12, color: '#c9a96e', textAlign: 'center', marginTop: 8 }}>
+                Your request is pending review.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── StoryPageContent ─────────────────────────────────────────────────────────
+
+export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChange, storyId, gradient }: Props) {
+  const useImages    = Array.isArray(pageImageUrls) && pageImageUrls.length > 0
+  const contentTotal = useImages ? pageImageUrls!.length : pages.length
+  // Bridge page is always the last page (+1)
+  const total        = contentTotal + 1
 
   // Stably-displayed page index
-  const [displayPage, setDisplayPage]     = useState(currentPage)
+  const [displayPage, setDisplayPage]   = useState(currentPage)
   // Page being flipped to (null = idle)
-  const [incomingPage, setIncomingPage]   = useState<number | null>(null)
+  const [incomingPage, setIncomingPage] = useState<number | null>(null)
   // Active flip direction (null = idle)
-  const [flipDir, setFlipDir]             = useState<'forward' | 'backward' | null>(null)
+  const [flipDir, setFlipDir]           = useState<'forward' | 'backward' | null>(null)
 
   const isFlipping   = useRef(false)
   const prevPropPage = useRef(currentPage)
@@ -47,7 +291,7 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
     FLIP_MS.current = getFlipMs()
   }, [])
 
-  // Sync when parent resets currentPage (card becomes inactive → reset to page 0)
+  // Sync when parent resets currentPage
   useEffect(() => {
     if (currentPage === prevPropPage.current) return
     prevPropPage.current = currentPage
@@ -74,7 +318,7 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
     }, FLIP_MS.current)
   }
 
-  // ── Swipe detection (horizontal dominant swipes only) ──────────────────────
+  // ── Swipe detection ────────────────────────────────────────────────────────
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const SWIPE_PX    = 40
@@ -90,16 +334,18 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
     const dy = e.changedTouches[0].clientY - touchStartY.current
     touchStartX.current = null
     touchStartY.current = null
-    // Ignore vertical-dominant or sub-threshold gestures
     if (Math.abs(dx) < SWIPE_PX || Math.abs(dy) > Math.abs(dx) * 0.8) return
-    // Stop propagation so parent's double-tap handler is not triggered
     e.stopPropagation()
     if (dx < 0) goTo(displayPage + 1)
     else        goTo(displayPage - 1)
   }
 
-  // ── Render page content ─────────────────────────────────────────────────────
+  // ── Render page content ────────────────────────────────────────────────────
   function renderContent(idx: number) {
+    // Bridge page — always the last page
+    if (idx === contentTotal) {
+      return <BridgePage storyId={storyId} gradient={gradient} />
+    }
     if (useImages) {
       return (
         <img
@@ -136,8 +382,7 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
     )
   }
 
-  // ── Animation inline styles for the outgoing page ──────────────────────────
-  // Uses only transform + opacity — both compositor-thread, zero layout cost.
+  // ── Animation inline styles for the outgoing page ─────────────────────────
   const outgoingStyle: React.CSSProperties = {
     position:                'absolute',
     inset:                   0,
@@ -176,7 +421,7 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
         {renderContent(displayPage)}
       </div>
 
-      {/* ── Tap zones: 15 % left = prev, 15 % right = next ──────────────── */}
+      {/* ── Tap zones: 15% left = prev, 15% right = next ─────────────────── */}
       {displayPage > 0 && (
         <div
           onClick={e => { e.stopPropagation(); goTo(displayPage - 1) }}
@@ -190,7 +435,7 @@ export function StoryPageContent({ pages, pageImageUrls, currentPage, onPageChan
         />
       )}
 
-      {/* ── Desktop arrow buttons — hidden on mobile ─────────────────────── */}
+      {/* ── Desktop arrow buttons ──────────────────────────────────────────── */}
       {displayPage > 0 && (
         <button
           type="button"

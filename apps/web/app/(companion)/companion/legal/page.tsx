@@ -48,7 +48,7 @@ export default function CompanionLegalPage() {
         throw new Error(j.error ?? 'Something went wrong.')
       }
       await update()
-      router.push('/companion/dashboard')
+      router.push('/')
     } catch (err) {
       setSaving(false)
       setError(err instanceof Error ? err.message : 'Something went wrong. Try again in a moment.')

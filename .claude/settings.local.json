@@ -92,7 +92,15 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -50)",
       "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\node_modules\\\\@didit-protocol\" -name \"*.d.ts\" 2>/dev/null | head -5)",
       "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\" -path \"*/didit-protocol*\" -name \"*.d.ts\" 2>/dev/null | head -5; find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\" -path \"*didit*\" -type f 2>/dev/null | head -10)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add swr 2>&1 | tail -5)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add swr 2>&1 | tail -5)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx drizzle-kit generate 2>&1)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && npx drizzle-kit migrate 2>&1)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite\" && rm -f \"apps/web/app/\\(companion\\)/companion/dashboard/page.tsx\" \"apps/web/app/\\(companion\\)/companion/content/page.tsx\" \"apps/web/app/\\(companion\\)/companion/bookings/page.tsx\" \"apps/web/app/\\(companion\\)/companion/settings/page.tsx\" && rmdir \"apps/web/app/\\(companion\\)/companion/dashboard\" \"apps/web/app/\\(companion\\)/companion/content\" \"apps/web/app/\\(companion\\)/companion/bookings\" \"apps/web/app/\\(companion\\)/companion/settings\" 2>/dev/null; echo \"done\")",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite\" && rm -f \"apps/web/app/api/companions/content/route.ts\" && rmdir \"apps/web/app/api/companions/content\" 2>/dev/null; rm -f \"apps/web/app/api/companions/bookings/route.ts\" && rmdir \"apps/web/app/api/companions/bookings\" 2>/dev/null; echo \"done\")",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite\" && find \"apps/web/app/\\(companion\\)\" -name \"page.tsx\" | sort && echo \"---\" && find \"apps/web/app/api/companions\" -name \"route.ts\" | sort)",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite\" && rm -rf \"apps/web/app/api/companions/dashboard\" \"apps/web/app/api/companions/content\" && echo \"done\")",
+      "Bash(cd \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && rm -rf \".next/types/app/\\(companion\\)/companion/dashboard\" \".next/types/app/\\(companion\\)/companion/content\" \".next/types/app/\\(companion\\)/companion/bookings\" \".next/types/app/\\(companion\\)/companion/settings\" \".next/types/app/api/companions/dashboard\" \".next/types/app/api/companions/content\" && npx tsc --noEmit 2>&1 | head -40)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsc --noEmit 2>&1 | head -50)"
     ]
   }
 }

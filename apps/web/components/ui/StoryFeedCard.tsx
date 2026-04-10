@@ -204,6 +204,8 @@ const StoryFeedCard = memo(function StoryFeedCard({ story, isActive }: Props) {
           pageImageUrls={story.pageImageUrls}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          storyId={story.id}
+          gradient={gradient}
         />
 
         <AnimatePresence>

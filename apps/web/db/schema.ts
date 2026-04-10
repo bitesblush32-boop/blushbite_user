@@ -207,6 +207,8 @@ export const companionProfiles = pgTable('companion_profiles', {
   ethnicity:            varchar('ethnicity', { length: 50 }),
   eye_color:            varchar('eye_color', { length: 30 }),
   hair_color:           varchar('hair_color', { length: 30 }),
+  gender:               varchar('gender', { length: 30 }),
+  skin_color:           varchar('skin_color', { length: 30 }),
   // Profile completeness gate
   profile_completeness: integer('profile_completeness').notNull().default(0),
   is_visible_to_users:  boolean('is_visible_to_users').notNull().default(false),
@@ -217,6 +219,8 @@ export const companionProfiles = pgTable('companion_profiles', {
 }, (table) => ({
   availabilityCheck: check('cp_availability_check', sql`${table.availability_status} IN ('available', 'busy', 'offline')`),
   bodyTypeCheck:     check('cp_body_type_check', sql`${table.body_type} IS NULL OR ${table.body_type} IN ('slim','athletic','average','curvy','plus_size','prefer_not_to_say')`),
+  genderCheck:       check('cp_gender_check', sql`${table.gender} IN ('woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say') OR ${table.gender} IS NULL`),
+  skinColorCheck:    check('cp_skin_color_check', sql`${table.skin_color} IN ('fair','light','medium','olive','brown','dark','ebony','prefer_not_to_say') OR ${table.skin_color} IS NULL`),
 }))
 
 export const companionPhotos = pgTable('companion_photos', {

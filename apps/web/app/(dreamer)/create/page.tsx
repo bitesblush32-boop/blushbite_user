@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
@@ -221,6 +221,7 @@ function StepCanvas({
   setPageIndex,
   onClose,
   onNext,
+  maxChars,
 }: {
   pages:        string[]
   setPages:     (p: string[]) => void
@@ -228,11 +229,13 @@ function StepCanvas({
   setPageIndex: (i: number) => void
   onClose:      () => void
   onNext:       () => void
+  maxChars?:    number
 }) {
   const textareaRef                       = useRef<HTMLTextAreaElement>(null)
   const [dragStart, setDragStart]         = useState<number | null>(null)
   const [placeholder]                     = useState(() => PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)])
   const [direction, setDirection]         = useState(0)
+  const CHAR_LIMIT                        = maxChars ?? MAX_CHARS
 
   // Lock page scroll while composing
   useEffect(() => {
@@ -254,13 +257,13 @@ function StepCanvas({
 
   const handleTextChange = (val: string) => {
     const newPages = [...pages]
-    if (val.length <= MAX_CHARS) {
+    if (val.length <= CHAR_LIMIT) {
       newPages[pageIndex] = val
       setPages(newPages)
     } else {
       if (pages.length < MAX_PAGES) {
-        newPages[pageIndex] = val.slice(0, MAX_CHARS)
-        const overflow = val.slice(MAX_CHARS)
+        newPages[pageIndex] = val.slice(0, CHAR_LIMIT)
+        const overflow = val.slice(CHAR_LIMIT)
         if (pageIndex === pages.length - 1) {
           newPages.push(overflow)
         } else {
@@ -363,7 +366,7 @@ function StepCanvas({
         </div>
 
         <div className="w-full max-w-[580px] mt-2 flex flex-col items-end gap-[2px]">
-          <span style={{ fontSize: 11, color: '#2a3040' }}>{charCount} / {MAX_CHARS}</span>
+          <span style={{ fontSize: 11, color: '#2a3040' }}>{charCount} / {CHAR_LIMIT}</span>
           {pages.length > 1 && (
             <span style={{ fontSize: 11, color: '#2a3040' }}>Page {pageIndex + 1} of {pages.length}</span>
           )}
@@ -405,6 +408,7 @@ function StepMeta({
   setSelectedCategories,
   onBack,
   onNext,
+  isStoryMode,
 }: {
   title:                  string
   setTitle:               (v: string) => void
@@ -412,6 +416,7 @@ function StepMeta({
   setSelectedCategories:  (v: string[]) => void
   onBack:                 () => void
   onNext:                 () => void
+  isStoryMode?:           boolean
 }) {
   const [titleFocused, setTitleFocused]   = useState(false)
   const [query, setQuery]                 = useState('')
@@ -517,7 +522,7 @@ function StepMeta({
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value.slice(0, 120))}
-              placeholder="e.g. The night I said nothing..."
+              placeholder={isStoryMode ? 'Give your story a title...' : 'e.g. The night I said nothing...'}
               onFocus={() => setTitleFocused(true)}
               onBlur={() => setTitleFocused(false)}
               className="w-full bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 text-[14px] text-[#eeeef0] outline-none"
@@ -543,7 +548,7 @@ function StepMeta({
           {/* Label row */}
           <div className="flex items-center justify-between mb-1">
             <p style={{ fontSize: 10, color: '#e8607a', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>
-              What is this about? *
+              {isStoryMode ? 'Story themes *' : 'What is this about? *'}
             </p>
             <span style={{ fontSize: 10, color: '#4b5563' }}>
               {selectedCategories.length} selected
@@ -992,10 +997,13 @@ type ComposerStep = 'canvas' | 'meta' | 'generating' | 'preview'
 
 export default function CreatePage() {
   const router            = useRouter()
+  const searchParams      = useSearchParams()
   const { data: session } = useSession()
+  const isStoryMode       = searchParams.get('type') === 'story'
+  const MAX_CHARS_CURRENT = isStoryMode ? 1500 : MAX_CHARS
 
   // Replace the current history entry so back-nav from / never returns here
-  useEffect(() => { router.replace('/create') }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { router.replace(isStoryMode ? '/create?type=story' : '/create') }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [step, setStep]                           = useState<ComposerStep>('canvas')
   const [pages, setPages]                         = useState<string[]>([''])
@@ -1081,6 +1089,7 @@ export default function CreatePage() {
             setPageIndex={setPageIndex}
             onClose={() => router.push('/')}
             onNext={() => setStep('meta')}
+            maxChars={MAX_CHARS_CURRENT}
           />
         )}
 
@@ -1093,6 +1102,7 @@ export default function CreatePage() {
             setSelectedCategories={setSelectedCategories}
             onBack={() => setStep('canvas')}
             onNext={runGeneration}
+            isStoryMode={isStoryMode}
           />
         )}
 

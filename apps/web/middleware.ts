@@ -61,21 +61,24 @@ export default auth((req) => {
     return
   }
 
-  // Gate 4 — Companion routing
+  // Gate 4 — Companion routing (platform_role === 'companion' or 'dream')
   if (token?.platform_role === 'companion' || token?.platform_role === 'dream') {
     const legalSigned = (token.companion_legal_signed as boolean) ?? false
 
-    // Always allow API routes and auth routes
+    // Always pass API routes through
     if (path.startsWith('/api/') || path.startsWith('/auth/')) return
 
-    // Legal not signed → force to /companion/legal
-    if (!legalSigned && !path.startsWith('/companion/legal')) {
+    // Companion-specific bare routes (no nav chrome)
+    const bareRoutes = ['/companion/legal', '/companion/onboarding/legal']
+    const isBare = bareRoutes.some(r => path.startsWith(r))
+
+    // If legal not signed → force to /companion/legal
+    if (!legalSigned && !isBare) {
       return Response.redirect(new URL('/companion/legal', nextUrl))
     }
 
-    // Legal signed → allow through to ALL /companion/* routes freely
-    // Profile completeness is enforced at the data level (is_visible_to_users)
-    // NOT at the routing level — companion can always access their dashboard
+    // Legal signed → companions access ALL routes freely
+    // They use the dreamer layout for / /confessions /stories /profile etc.
     return
   }
 

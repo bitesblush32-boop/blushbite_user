@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { stories } from '@/db/schema'
+import { stories, companions } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -45,6 +46,26 @@ export async function POST(req: NextRequest) {
 
     const { pages, pageImageUrls, title, categories } = result.data
 
+    // Determine author type — companion or user
+    const platformRole = (session.user as any)?.platform_role as string | undefined
+    const isCompanion  = platformRole === 'companion' || platformRole === 'dream'
+
+    let authorType: 'user' | 'companion' = 'user'
+    let authorUserId: string | null      = userId
+    let authorCompanionId: string | null = null
+
+    if (isCompanion && session.user.email) {
+      const companion = await db.query.companions.findFirst({
+        where: eq(companions.email, session.user.email),
+        columns: { id: true },
+      })
+      if (companion) {
+        authorType        = 'companion'
+        authorUserId      = null
+        authorCompanionId = companion.id
+      }
+    }
+
     const bodyToStore = JSON.stringify({
       raw:        pages.join('\n\n---\n\n'),
       pages:      pageImageUrls,
@@ -56,9 +77,9 @@ export async function POST(req: NextRequest) {
     const [story] = await db
       .insert(stories)
       .values({
-        author_type:         'user',
-        author_user_id:      userId,
-        author_companion_id: null,
+        author_type:         authorType,
+        author_user_id:      authorUserId,
+        author_companion_id: authorCompanionId,
         category_id:         null,
         title:               title || '',
         body:                bodyToStore,
