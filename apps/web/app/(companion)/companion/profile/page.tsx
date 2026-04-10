@@ -240,11 +240,11 @@ export default function CompanionProfilePage() {
   const availLabel = AVAILABILITY.find(a => a.value === data.profile.availability_status)?.label ?? 'Offline'
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', paddingBottom: 80 }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', paddingTop: 95, paddingBottom: 80 }}>
 
       {/* ── Sticky top bar ───────────────────────────────────────────────────── */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 50, background: 'rgba(10,12,20,0.95)',
+        position: 'sticky', top: 75, zIndex: 50, background: 'rgba(10,12,20,0.95)',
         backdropFilter: 'blur(20px)', borderBottom: '1px solid #1c2333',
         padding: '12px 0', marginBottom: 24,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -400,7 +400,7 @@ export default function CompanionProfilePage() {
         <PostsSection
           title="Confessions"
           stories={data.stories}
-          onWrite={() => router.push('/companion/content?tab=confessions')}
+          onWrite={() => router.push('/create')}
           icon={PenLine}
         />
       </motion.div>
@@ -410,7 +410,7 @@ export default function CompanionProfilePage() {
         <PostsSection
           title="Stories"
           stories={data.stories}
-          onWrite={() => router.push('/companion/content?tab=stories')}
+          onWrite={() => router.push('/create?type=story')}
           icon={BookOpen}
         />
       </motion.div>

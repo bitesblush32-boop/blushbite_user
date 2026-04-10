@@ -345,6 +345,13 @@ export default function ProfilePage() {
   const setAvatarUrl       = useUIStore(s => s.setAvatarUrl)
   const openProfileViewer  = useUIStore(s => s.openProfileViewer)
 
+  // Companions have their own full-featured profile page
+  const platformRole = (session?.user as any)?.platform_role
+  const isCompanion  = platformRole === 'companion' || platformRole === 'dream'
+  useEffect(() => {
+    if (isCompanion) router.replace('/companion/profile')
+  }, [isCompanion, router])
+
   const [profile, setProfile]               = useState<UserProfile | null>(null)
   const [loading, setLoading]               = useState(true)
   const [tasteOpen, setTasteOpen]           = useState(false)
