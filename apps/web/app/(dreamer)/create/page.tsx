@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -995,7 +995,7 @@ function StepPreview({
 
 type ComposerStep = 'canvas' | 'meta' | 'generating' | 'preview'
 
-export default function CreatePage() {
+function CreatePageInner() {
   const router            = useRouter()
   const searchParams      = useSearchParams()
   const { data: session } = useSession()
@@ -1125,5 +1125,13 @@ export default function CreatePage() {
         )}
       </AnimatePresence>
     </motion.div>
+  )
+}
+
+export default function CreatePage() {
+  return (
+    <Suspense>
+      <CreatePageInner />
+    </Suspense>
   )
 }
