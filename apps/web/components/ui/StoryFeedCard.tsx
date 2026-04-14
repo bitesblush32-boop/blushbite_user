@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart } from 'lucide-react'
+import { Heart, Link2, Loader2 } from 'lucide-react'
 import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { useStoryLikeMutation } from '@/hooks/useStoryLikeMutation'
 import { useStorySaveMutation } from '@/hooks/useStorySaveMutation'
+import { useBridgeMutation } from '@/hooks/useBridgeMutation'
 import type { Story } from '@/hooks/useInfiniteConfessions'
 
 // ─── Platform-story gradient palette ──────────────────────────────────────────
@@ -48,6 +49,7 @@ const StoryFeedCard = memo(function StoryFeedCard({ story, isActive }: Props) {
   const isLiked      = story.userHasLiked
   const likeMutation = useStoryLikeMutation()
   const saveMutation = useStorySaveMutation()
+  const { isCompanion, bridgeStatus, loading: bridgeLoading, bridge } = useBridgeMutation(story.id)
 
   function handleTap(e: React.TouchEvent | React.MouseEvent) {
     if ('touches' in e) {
@@ -275,17 +277,70 @@ const StoryFeedCard = memo(function StoryFeedCard({ story, isActive }: Props) {
           </div>
         )}
 
-        <ActionPill
-          storyId={story.id}
-          likeCount={story.likeCount}
-          saveCount={story.saveCount}
-          commentCount={story.commentCount}
-          userHasLiked={story.userHasLiked}
-          userHasSaved={story.userHasSaved}
-          layout="horizontal"
-          onLike={() => likeMutation.mutate({ storyId: story.id, currentlyLiked: story.userHasLiked })}
-          onSave={() => saveMutation.mutate({ storyId: story.id, currentlySaved: story.userHasSaved })}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ActionPill
+            storyId={story.id}
+            likeCount={story.likeCount}
+            saveCount={story.saveCount}
+            commentCount={story.commentCount}
+            userHasLiked={story.userHasLiked}
+            userHasSaved={story.userHasSaved}
+            layout="horizontal"
+            onLike={() => likeMutation.mutate({ storyId: story.id, currentlyLiked: story.userHasLiked })}
+            onSave={() => saveMutation.mutate({ storyId: story.id, currentlySaved: story.userHasSaved })}
+          />
+
+          {isCompanion && (
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={bridge}
+              disabled={bridgeLoading || bridgeStatus !== 'idle'}
+              style={{
+                display:       'flex',
+                flexDirection: 'column',
+                alignItems:    'center',
+                gap:           3,
+                background:    'none',
+                border:        'none',
+                cursor:        bridgeStatus === 'idle' ? 'pointer' : 'default',
+                padding:       0,
+                flexShrink:    0,
+              }}
+            >
+              <div style={{
+                width:          40,
+                height:         40,
+                borderRadius:   '50%',
+                background:     bridgeStatus === 'approved' ? 'rgba(74,222,128,0.15)'
+                              : bridgeStatus === 'pending'  ? 'rgba(201,169,110,0.15)'
+                              : 'rgba(28,35,51,0.8)',
+                border:         `1px solid ${
+                                  bridgeStatus === 'approved' ? 'rgba(74,222,128,0.4)'
+                                : bridgeStatus === 'pending'  ? 'rgba(201,169,110,0.4)'
+                                : '#1c2333'}`,
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                transition:     'background 0.2s, border-color 0.2s',
+              }}>
+                {bridgeLoading
+                  ? <Loader2 size={16} style={{ color: '#6b7280', animation: 'spin 1s linear infinite' }} />
+                  : <Link2 size={16} style={{
+                      color: bridgeStatus === 'approved' ? '#4ade80'
+                           : bridgeStatus === 'pending'  ? '#c9a96e'
+                           : '#6b7280',
+                    }} />
+                }
+              </div>
+              <span style={{ fontSize: 10, color: '#6b7280', lineHeight: 1 }}>
+                {bridgeStatus === 'approved' ? 'Bridged'
+                 : bridgeStatus === 'pending'  ? 'Pending'
+                 : bridgeStatus === 'rejected' ? 'Declined'
+                 : 'Bridge'}
+              </span>
+            </motion.button>
+          )}
+        </div>
 
         {/* Author label — companion alias or platform fallback */}
         <span style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>

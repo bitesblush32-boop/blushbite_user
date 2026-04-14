@@ -81,10 +81,11 @@ export async function POST(req: NextRequest) {
     await db.insert(companionStoryBridges).values({
       companion_profile_id: profile.id,
       story_id,
-      status: 'pending',
+      status: 'approved',
+      approved_at: new Date(),
     })
 
-    return NextResponse.json({ success: true, status: 'pending' })
+    return NextResponse.json({ success: true, status: 'approved' })
   } catch (err) {
     console.error('[POST /api/companion/bridge]', err)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })

@@ -419,7 +419,7 @@ export default function Header() {
   }, [editProfileOpen, profile, reset])
   const router = useRouter()
   const pathname = usePathname()
-  const isProfile = pathname === '/profile'
+  const isProfile = pathname === '/profile' || (isCompanion && pathname === '/companion/profile')
 
   const alias = session?.user?.alias ?? '??'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
@@ -428,32 +428,59 @@ export default function Header() {
     setSettingsOpen(false)
   }, [pathname])
 
-  const menuItems = [
-    {
-      label: 'Edit profile',
-      icon: Pencil,
-      tone: 'default' as const,
-      onClick: () => setEditProfileOpen(true),
-    },
-    {
-      label: 'Privacy & safety',
-      href: '/privacy',
-      icon: Shield,
-      tone: 'default' as const,
-    },
-    {
-      label: 'Help & support',
-      href: '/help',
-      icon: HelpCircle,
-      tone: 'default' as const,
-    },
-    {
-      label: 'Sign out',
-      icon: LogOut,
-      tone: 'danger' as const,
-      onClick: () => signOut({ callbackUrl: '/auth/signin' }),
-    },
-  ]
+  const menuItems = isCompanion
+    ? [
+        {
+          label: 'Complete my profile',
+          href: '/companion/profile/settings',
+          icon: Pencil,
+          tone: 'default' as const,
+        },
+        {
+          label: 'Privacy & safety',
+          href: '/privacy',
+          icon: Shield,
+          tone: 'default' as const,
+        },
+        {
+          label: 'Help & support',
+          href: '/help',
+          icon: HelpCircle,
+          tone: 'default' as const,
+        },
+        {
+          label: 'Sign out',
+          icon: LogOut,
+          tone: 'danger' as const,
+          onClick: () => signOut({ callbackUrl: '/auth/signin' }),
+        },
+      ]
+    : [
+        {
+          label: 'Edit profile',
+          icon: Pencil,
+          tone: 'default' as const,
+          onClick: () => setEditProfileOpen(true),
+        },
+        {
+          label: 'Privacy & safety',
+          href: '/privacy',
+          icon: Shield,
+          tone: 'default' as const,
+        },
+        {
+          label: 'Help & support',
+          href: '/help',
+          icon: HelpCircle,
+          tone: 'default' as const,
+        },
+        {
+          label: 'Sign out',
+          icon: LogOut,
+          tone: 'danger' as const,
+          onClick: () => signOut({ callbackUrl: '/auth/signin' }),
+        },
+      ]
 
   const profileAccent = avatarUrl
     ? {

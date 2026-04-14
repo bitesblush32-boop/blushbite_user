@@ -75,17 +75,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Maximum 20 bridge links allowed' }, { status: 422 })
   }
 
-  // Insert bridge
+  // Insert bridge — auto-approved, no admin review required
   await db.insert(companionStoryBridges).values({
     companion_profile_id: profileId,
     story_id,
-    status: 'pending',
+    status: 'approved',
+    approved_at: new Date(),
   })
-
-  // TODO: Create admin notification once admin notification system is built
 
   return NextResponse.json({
     success: true,
-    message: 'Your link is pending admin approval',
+    message: 'Your profile is now linked to this story',
   })
 }

@@ -1,1195 +1,656 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useUploadToR2 } from '@/hooks/useUploadToR2'
-import Image from 'next/image'
 import {
-  Camera, Edit2, CheckCircle2, X, Plus, Loader2, Star,
-  Phone, BookOpen, Film, PenLine, Image as ImageIcon,
+  Camera,
+  LayoutGrid, Heart, Bookmark, BookMarked, Settings2,
 } from 'lucide-react'
-
-const DiditVerify = dynamic(() => import('@/components/ui/DiditVerify'), { ssr: false })
+import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
+import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollectionCard'
+import { LikedGrid } from '@/components/ui/LikedGrid'
+import { useSavedConfessions } from '@/hooks/useSavedConfessions'
+import { useLikedContent } from '@/hooks/useLikedContent'
+import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface PhotoRow  { id: string; url: string; storage_key: string; is_primary: boolean; is_approved: boolean; sort_order: number }
-interface VideoRow  { id: string; url: string; storage_key: string; duration_seconds: number | null; thumbnail_url: string | null; is_approved: boolean }
-interface StoryRow  { id: string; title: string | null; moderation_status: string; like_count: number; created_at: string }
-interface CardRow   { id: string; title: string; description: string | null; duration_minutes: number | null; price: string | null; currency: string; session_type: string | null }
-interface TagItem   { id: number; name: string; category_id?: number }
-
-interface ProfileData {
+interface CompanionProfileData {
   companion: {
-    id: string; name: string | null; email: string; alias: string | null
-    full_name: string | null; date_of_birth: string | null; country: string | null
-    whatsapp_number: string | null; companion_stage: number
+    id:             string
+    name:           string | null
+    email:          string
+    alias:          string | null
   }
   profile: {
-    id: string; bio: string | null; tagline: string | null; city: string | null
-    availability_status: string; is_live: boolean; is_verified: boolean
-    height_cm: number | null; body_type: string | null; ethnicity: string | null
-    eye_color: string | null; hair_color: string | null
-    whatsapp_number: string | null
-    profile_completeness: number; is_visible_to_users: boolean
+    id:                  string
+    bio:                 string | null
+    tagline:             string | null
+    city:                string | null
+    availability_status: string
+    is_verified:         boolean
+    is_live:             boolean
+    profile_completeness: number
   }
-  photos: PhotoRow[]
-  videos: VideoRow[]
-  stories: StoryRow[]
-  verification: { provider_status: string | null; verified_at: string | null } | null
-  selected_fantasy_tag_ids: number[]
+  photos:       { id: string; url: string; is_primary: boolean }[]
+  stories:      { id: string; title: string | null; moderation_status: string; like_count: number; created_at: string }[]
+  session_cards: { id: string; title: string; price: string | null; currency: string; duration_minutes: number | null }[]
   selected_vibe_tag_ids: number[]
-  available_fantasy_tags: TagItem[]
-  available_vibe_tags: TagItem[]
-  session_cards: CardRow[]
+  available_vibe_tags:   { id: number; name: string }[]
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const BODY_TYPES = [
-  { value: 'slim',              label: 'Slim' },
-  { value: 'athletic',          label: 'Athletic' },
-  { value: 'average',           label: 'Average' },
-  { value: 'curvy',             label: 'Curvy' },
-  { value: 'plus_size',         label: 'Plus Size' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
-]
-const ETHNICITIES   = ['Asian','Black','Hispanic/Latino','Middle Eastern','South Asian','White/Caucasian','Mixed','Other']
-const EYE_COLORS    = ['Brown','Blue','Green','Hazel','Gray','Amber']
-const HAIR_COLORS   = ['Black','Brown','Blonde','Red','Auburn','Other']
-const AVAILABILITY  = [
-  { value: 'available', label: 'Available',       dot: '#34d399' },
-  { value: 'busy',      label: 'By Appointment',  dot: '#c9a96e' },
-  { value: 'offline',   label: 'Offline',         dot: '#6b7280' },
-]
-
-function cmToFeet(cm: number) {
-  const totalInches = cm / 2.54
-  const feet = Math.floor(totalInches / 12)
-  const inches = Math.round(totalInches % 12)
-  return `${feet}'${inches}"`
+interface UserPost {
+  id:               string
+  title:            string | null
+  excerpt:          string | null
+  firstImage:       string | null
+  pageImageUrls:    string[]
+  categories:       string[]
+  likeCount:        number
+  saveCount:        number
+  viewCount:        number
+  commentCount:     number
+  moderationStatus: string
+  createdAt:        string
 }
 
-// ─── Zod schemas ──────────────────────────────────────────────────────────────
+type MainTab     = 'posts' | 'likes' | 'saved'
+type LikedSubTab = 'all' | 'confessions' | 'stories'
+type SavedSubTab = 'all' | 'collections' | 'companions'
 
-const basicsSchema = z.object({
-  name:    z.string().min(1, 'Required').max(255),
-  bio:     z.string().max(500, 'Max 500 characters').optional(),
-  tagline: z.string().max(80,  'Max 80 characters').optional(),
-  city:    z.string().max(100).optional(),
-})
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-const whatsappSchema = z.object({
-  whatsapp_number: z.string().regex(/^\+[1-9]\d{6,14}$/, 'Include country code e.g. +31612345678'),
-})
-
-const legalSchema = z.object({
-  full_name:     z.string().min(2, 'Required').max(255),
-  date_of_birth: z.string().min(1, 'Required'),
-  country:       z.string().min(1, 'Required').max(100),
-})
-
-const serviceCardSchema = z.object({
-  title:            z.string().min(1, 'Required').max(200),
-  description:      z.string().optional(),
-  duration_minutes: z.coerce.number().int().positive().optional(),
-  price:            z.string().optional(),
-  session_type:     z.enum(['in_person','audio_call','video_call','chat','custom']).optional(),
-})
-
-// ─── Section entrance animation ───────────────────────────────────────────────
-
-const sectionVariants = {
-  hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
-}
-
-// ─── Chip component ───────────────────────────────────────────────────────────
-
-function Chip({ label, active, onClick, gold }: { label: string; active: boolean; onClick: () => void; gold?: boolean }) {
-  const color  = gold ? '#c9a96e' : '#e8607a'
-  const border = active
-    ? (gold ? 'rgba(201,169,110,0.4)' : 'rgba(232,96,122,0.4)')
-    : '#1c2333'
-  const bg     = active
-    ? (gold ? 'rgba(201,169,110,0.08)' : 'rgba(232,96,122,0.08)')
-    : 'transparent'
+function Skeleton() {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        fontSize: 12, padding: '10px 14px', borderRadius: 999,
-        border: `1px solid ${border}`, color: active ? color : '#6b7280',
-        background: bg, cursor: 'pointer', minHeight: 44, lineHeight: 1,
-        transition: 'border-color 0.15s, color 0.15s, background 0.15s, transform 0.15s',
-        transform: active ? 'scale(1)' : 'scale(0.97)',
-      }}
-      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = border === '#1c2333' ? 'rgba(232,96,122,0.2)' : border }}
-      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = border }}
+    <div className="flex flex-col items-center gap-4 pt-[95px] pb-[120px] px-5 max-w-[640px] mx-auto">
+      <div className="w-[96px] h-[96px] rounded-full bg-[#111620] animate-pulse" />
+      <div className="h-[22px] w-[140px] bg-[#111620] animate-pulse rounded-[8px]" />
+      <div className="h-[14px] w-[100px] bg-[#111620] animate-pulse rounded-[8px]" />
+    </div>
+  )
+}
+
+// ─── PostCell ─────────────────────────────────────────────────────────────────
+
+function PostCell({ post, onTap }: { post: UserPost; onTap: () => void }) {
+  return (
+    <div
+      style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden',
+               background: '#111620', cursor: 'pointer' }}
+      onClick={onTap}
     >
-      {label}
-    </button>
+      {post.firstImage ? (
+        <img
+          src={post.firstImage}
+          alt={post.title ?? 'Confession'}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <div style={{
+          width: '100%', height: '100%',
+          background: 'linear-gradient(160deg, #0d1117 0%, #07090f 60%, #0d0a12 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '12px',
+        }}>
+          <p style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 11, color: '#6b7280', lineHeight: 1.6,
+            textAlign: 'center', overflow: 'hidden',
+            display: '-webkit-box', WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
+          }}>
+            {post.excerpt ?? ''}
+          </p>
+        </div>
+      )}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        background: 'linear-gradient(transparent, rgba(7,9,15,0.85))',
+        padding: '16px 8px 8px',
+        display: 'flex', gap: 10, alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}>
+          ♥ {post.likeCount}
+        </span>
+        <span style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}>
+          💬 {post.commentCount}
+        </span>
+        {post.moderationStatus === 'pending' && (
+          <span style={{
+            fontSize: 9, color: '#c9a96e', marginLeft: 'auto',
+            background: 'rgba(201,169,110,0.12)',
+            border: '1px solid rgba(201,169,110,0.25)',
+            borderRadius: 20, padding: '1px 6px',
+          }}>
+            pending
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// ─── LikedTabContent ──────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { color: string; bg: string; border: string; label: string }> = {
-    approved: { color: '#34d399', bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.25)',  label: 'Approved' },
-    pending:  { color: '#c9a96e', bg: 'rgba(201,169,110,0.08)', border: 'rgba(201,169,110,0.25)', label: 'Pending'  },
-    rejected: { color: '#e8607a', bg: 'rgba(232,96,122,0.08)',  border: 'rgba(232,96,122,0.25)',  label: 'Rejected' },
-  }
-  const s = map[status] ?? map.pending
+const LIKED_SUB_TABS: { id: LikedSubTab; label: string }[] = [
+  { id: 'all',         label: 'All' },
+  { id: 'confessions', label: 'Confessions' },
+  { id: 'stories',     label: 'Stories' },
+]
+
+function LikedContentPane({ type }: { type: LikedSubTab }) {
+  const { items, isLoading } = useLikedContent(type)
+  return <LikedGrid items={items} isLoading={isLoading} />
+}
+
+function LikesTabContent({
+  likedSubTab,
+  setLikedSubTab,
+}: {
+  likedSubTab:    LikedSubTab
+  setLikedSubTab: (t: LikedSubTab) => void
+}) {
   return (
-    <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, color: s.color, background: s.bg, border: `1px solid ${s.border}`, whiteSpace: 'nowrap' }}>
-      {s.label}
-    </span>
+    <div>
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {LIKED_SUB_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setLikedSubTab(id)}
+            style={{
+              flexShrink:   0,
+              fontSize:     12,
+              padding:      '5px 14px',
+              borderRadius: 999,
+              border:       `1px solid ${likedSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color:        likedSubTab === id ? '#e8607a' : '#6b7280',
+              background:   likedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor:       'pointer',
+              transition:   'all 0.15s',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <LikedContentPane type={likedSubTab} />
+    </div>
   )
 }
 
-// ─── Input style ──────────────────────────────────────────────────────────────
+// ─── SavedTabContent ──────────────────────────────────────────────────────────
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: '#161d2a', border: '1px solid #1c2333',
-  borderRadius: 10, padding: '12px 14px', color: '#eeeef0',
-  fontSize: 16, outline: 'none', boxSizing: 'border-box',
-}
+const SAVED_SUB_TABS: { id: SavedSubTab; label: string }[] = [
+  { id: 'all',         label: 'All' },
+  { id: 'collections', label: 'Collections' },
+  { id: 'companions',  label: 'Companions' },
+]
 
-const labelStyle: React.CSSProperties = {
-  fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6, display: 'block',
-}
+function SavedTabContent({
+  savedSubTab,
+  setSavedSubTab,
+}: {
+  savedSubTab:    SavedSubTab
+  setSavedSubTab: (t: SavedSubTab) => void
+}) {
+  const { items, isLoading } = useSavedConfessions()
 
-// ─── PATCH helper ─────────────────────────────────────────────────────────────
+  const confessionItems = items.filter(i => i.authorType === 'user')
+  const storyItems      = items.filter(i => i.authorType !== 'user')
 
-async function patchSection(section: string, body: Record<string, unknown>) {
-  const res = await fetch('/api/companions/profile/full', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ section, ...body }),
-    credentials: 'include',
-  })
-  if (!res.ok) {
-    const j = await res.json().catch(() => ({}))
-    throw new Error(j.error ?? 'Save failed')
-  }
-  return res.json()
+  const confessionCovers = confessionItems
+    .slice(0, 4).map(i => i.firstImage).filter((v): v is string => Boolean(v))
+  const storyCovers = storyItems
+    .slice(0, 4).map(i => i.firstImage).filter((v): v is string => Boolean(v))
+
+  const skeletonGrid = (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} style={{ aspectRatio: '3/4', background: '#111620' }} className="animate-pulse" />
+      ))}
+    </div>
+  )
+
+  return (
+    <div>
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-4" style={{ scrollbarWidth: 'none' }}>
+        {SAVED_SUB_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setSavedSubTab(id)}
+            style={{
+              flexShrink:   0,
+              fontSize:     12,
+              padding:      '5px 14px',
+              borderRadius: 999,
+              border:       `1px solid ${savedSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color:        savedSubTab === id ? '#e8607a' : '#6b7280',
+              background:   savedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor:       'pointer',
+              transition:   'all 0.15s',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {savedSubTab === 'all' && (
+        isLoading ? skeletonGrid : <SavedConfessionsGrid items={items} />
+      )}
+
+      {savedSubTab === 'collections' && (
+        isLoading ? (
+          <div className="flex flex-col gap-3">
+            {[0, 1].map(i => (
+              <div key={i} style={{ height: 140, borderRadius: 14, background: '#0d1117', border: '1px solid #1c2333' }}
+                className="animate-pulse" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <BookMarked size={32} color="#1c2333" />
+            <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+              No collections yet. Save confessions or stories to create your first.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {confessionItems.length > 0 && (
+              <ConfessionsCollectionCard
+                title="Confessions"
+                count={confessionItems.length}
+                coverImages={confessionCovers}
+              />
+            )}
+            {storyItems.length > 0 && (
+              <ConfessionsCollectionCard
+                title="Stories"
+                count={storyItems.length}
+                coverImages={storyCovers}
+              />
+            )}
+          </div>
+        )
+      )}
+
+      {savedSubTab === 'companions' && (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <Bookmark size={32} color="#1c2333" />
+          <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+            Saved companions will appear here.
+          </p>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CompanionProfilePage() {
-  const router  = useRouter()
-  const [data,    setData]    = useState<ProfileData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState(false)
-  const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null)
+  const { data: session } = useSession()
+  const router = useRouter()
+  const photoInputRef      = useRef<HTMLInputElement>(null)
+  const setAvatarUrl       = useUIStore(s => s.setAvatarUrl)
+  const openProfileViewer  = useUIStore(s => s.openProfileViewer)
 
-  // Section refs for scroll-to
-  const photosRef       = useRef<HTMLDivElement>(null)
-  const videosRef       = useRef<HTMLDivElement>(null)
-  const confessionsRef  = useRef<HTMLDivElement>(null)
-  const storiesRef      = useRef<HTMLDivElement>(null)
+  const [profileData, setProfileData]         = useState<CompanionProfileData | null>(null)
+  const [loading, setLoading]                 = useState(true)
+  const [activeTab, setActiveTab]             = useState<MainTab>('posts')
+  const [likedSubTab, setLikedSubTab]         = useState<LikedSubTab>('all')
+  const [savedSubTab, setSavedSubTab]         = useState<SavedSubTab>('all')
+  const [photoUploading, setPhotoUploading]   = useState(false)
+  const [photoError, setPhotoError]           = useState<string | null>(null)
 
+  const [posts, setPosts]               = useState<UserPost[]>([])
+  const [postsLoading, setPostsLoading] = useState(true)
+
+  // ── Fetch companion profile ────────────────────────────────────────────────
   useEffect(() => {
     fetch('/api/companions/profile/full', { credentials: 'include' })
       .then(r => r.json())
-      .then(d => { if (!d.error) setData(d) })
+      .then(d => {
+        if (!d.error) {
+          setProfileData(d)
+          const primary = d.photos?.find((p: { is_primary: boolean }) => p.is_primary) ?? d.photos?.[0]
+          if (primary?.url) setAvatarUrl(primary.url)
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
+  }, [setAvatarUrl])
+
+  // ── Fetch posts (companion's own confessions/stories) ─────────────────────
+  useEffect(() => {
+    fetch('/api/users/posts', { credentials: 'include' })
+      .then(r => r.json())
+      .then(({ data }) => setPosts(data ?? []))
+      .catch(() => {})
+      .finally(() => setPostsLoading(false))
   }, [])
 
-  const handleSave = async () => {
-    if (!pendingSave || saving) return
-    setSaving(true)
+  // ── Primary photo upload ───────────────────────────────────────────────────
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setPhotoError('JPG, PNG or WebP only.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('Image must be under 5 MB.')
+      return
+    }
+    setPhotoUploading(true)
+    setPhotoError(null)
+    const formData = new FormData()
+    formData.append('file', file)
     try {
-      await pendingSave()
-      setPendingSave(null)
+      const res  = await fetch('/api/users/avatar', { method: 'POST', body: formData })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+      const newUrl = json.data?.avatarUrl ?? json.avatarUrl
+      if (newUrl) {
+        setProfileData(p => p ? { ...p, photos: [{ id: 'temp', url: newUrl, is_primary: true }, ...p.photos.filter(ph => !ph.is_primary)] } : p)
+        setAvatarUrl(newUrl)
+      }
+    } catch (err: unknown) {
+      setPhotoError(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
-      setSaving(false)
+      setPhotoUploading(false)
     }
   }
 
-  const updateData = useCallback((patch: Partial<ProfileData>) => {
-    setData(prev => prev ? { ...prev, ...patch } : prev)
-  }, [])
+  // ── Derived values ─────────────────────────────────────────────────────────
+  const alias    = profileData?.companion?.alias ?? session?.user?.alias ?? '@you'
+  const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
+  const vibes    = profileData?.available_vibe_tags
+    .filter(t => profileData.selected_vibe_tag_ids.includes(t.id))
+    .map(t => t.name) ?? []
+  const primaryPhoto = profileData?.photos?.find(p => p.is_primary) ?? profileData?.photos?.[0]
+  const completeness = profileData?.profile?.profile_completeness ?? 0
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <Loader2 size={24} color="#e8607a" className="animate-spin" />
-      </div>
-    )
-  }
-
-  if (!data) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280', fontSize: 14 }}>
-        Could not load your profile. Refresh to try again.
-      </div>
-    )
-  }
-
-  const availDot = AVAILABILITY.find(a => a.value === data.profile.availability_status)?.dot ?? '#6b7280'
-  const availLabel = AVAILABILITY.find(a => a.value === data.profile.availability_status)?.label ?? 'Offline'
+  const TABS: { id: MainTab; icon: React.ReactNode }[] = [
+    { id: 'posts', icon: <LayoutGrid size={20} /> },
+    { id: 'likes', icon: <Heart size={20} /> },
+    { id: 'saved', icon: <Bookmark size={20} /> },
+  ]
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', paddingTop: 95, paddingBottom: 80 }}>
-
-      {/* ── Sticky top bar ───────────────────────────────────────────────────── */}
-      <div style={{
-        position: 'sticky', top: 75, zIndex: 50, background: 'rgba(10,12,20,0.95)',
-        backdropFilter: 'blur(20px)', borderBottom: '1px solid #1c2333',
-        padding: '12px 0', marginBottom: 24,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: '#eeeef0' }}>My Profile</span>
-        <button
-          onClick={handleSave}
-          disabled={!pendingSave || saving}
-          style={{
-            fontSize: 13, fontWeight: 500, padding: '8px 20px', borderRadius: 20,
-            background: pendingSave && !saving ? '#e8607a' : '#161d2a',
-            color:      pendingSave && !saving ? '#fff' : '#6b7280',
-            border:     pendingSave && !saving ? 'none' : '1px solid #1c2333',
-            cursor:     pendingSave && !saving ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', gap: 6,
-            transition: 'all 0.2s',
-          }}
+    <>
+      {loading ? <Skeleton /> : (
+        <motion.main
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 mx-auto px-5 pt-[95px] pb-[120px]"
+          style={{ maxWidth: 640 }}
         >
-          {saving && <Loader2 size={14} className="animate-spin" />}
-          Save
-        </button>
-      </div>
 
-      {/* ── Album tabs ───────────────────────────────────────────────────────── */}
-      <div style={{
-        position: 'sticky', top: 56, zIndex: 40, background: 'rgba(10,12,20,0.95)',
-        backdropFilter: 'blur(20px)', borderBottom: '1px solid #1c2333',
-        marginBottom: 24, marginLeft: -32, marginRight: -32, paddingLeft: 32, paddingRight: 32,
-      }}>
-        <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[
-            { label: 'Photos',      icon: ImageIcon,  ref: photosRef       },
-            { label: 'Videos',      icon: Film,       ref: videosRef       },
-            { label: 'Confessions', icon: PenLine,    ref: confessionsRef  },
-            { label: 'Stories',     icon: BookOpen,   ref: storiesRef      },
-          ].map(({ label, icon: Icon, ref: sRef }) => (
-            <button
-              key={label}
-              onClick={() => sRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              style={{
-                flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
-                padding: '12px 16px', fontSize: 12, fontWeight: 500,
-                color: '#6b7280', background: 'transparent', border: 'none',
-                borderBottom: '2px solid transparent', cursor: 'pointer',
-                transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#eeeef0' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
+          {/* ── Section 1: Hero identity ─────────────────────── */}
+          <div className="flex flex-col items-center gap-3 mb-6">
+
+            {/* Avatar / primary photo */}
+            <div
+              className="relative group cursor-pointer"
+              style={{ width: 96, height: 96 }}
+              onClick={() => !photoUploading && photoInputRef.current?.click()}
             >
-              <Icon size={13} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+              {primaryPhoto?.url ? (
+                <div style={{
+                  width: 96, height: 96, borderRadius: '50%',
+                  backgroundImage: `url(${primaryPhoto.url})`,
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                  border: '2px solid #1c2333',
+                }} />
+              ) : (
+                <div style={{
+                  width: 96, height: 96, borderRadius: '50%',
+                  background: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '2px solid #1c2333',
+                }}>
+                  <svg width="40" height="80" viewBox="0 0 70 140" fill="rgba(255,255,255,0.15)">
+                    <ellipse cx="35" cy="22" rx="16" ry="18"/>
+                    <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
+                  </svg>
+                </div>
+              )}
+              {photoUploading ? (
+                <div className="absolute inset-0 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.55)' }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: '50%',
+                    border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff',
+                    animation: 'spin 0.7s linear infinite',
+                  }} />
+                </div>
+              ) : (
+                <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  style={{ background: 'rgba(7,9,15,0.65)' }}>
+                  <Camera size={20} color="#eeeef0" />
+                </div>
+              )}
+            </div>
 
-      {/* ── Section A: Profile Header ─────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 20 }}>
-        <ProfileHeaderSection
-          data={data}
-          onAvatarUpload={url => updateData({ photos: [{ id: 'temp', url, storage_key: '', is_primary: true, is_approved: false, sort_order: 0 }, ...data.photos] })}
-          onAvailabilityChange={async status => {
-            updateData({ profile: { ...data.profile, availability_status: status } })
-            await patchSection('availability', { availability_status: status })
-          }}
-        />
-      </motion.div>
+            {photoError && (
+              <p style={{ fontSize: 11, color: '#e87070', textAlign: 'center' }}>{photoError}</p>
+            )}
 
-      {/* ── Section B: Basic Info ─────────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <BasicInfoSection
-          data={data}
-          onRegisterSave={fn => setPendingSave(() => fn)}
-          onSaved={updates => {
-            updateData({
-              companion: { ...data.companion, name: updates.name ?? data.companion.name },
-              profile:   { ...data.profile,   bio: updates.bio ?? data.profile.bio, tagline: updates.tagline ?? data.profile.tagline, city: updates.city ?? data.profile.city },
-            })
-            setPendingSave(null)
-          }}
-        />
-      </motion.div>
+            <input ref={photoInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }} onChange={handlePhotoChange} />
 
-      {/* ── Section C: WhatsApp ───────────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <WhatsAppSection
-          data={data}
-          onRegisterSave={fn => setPendingSave(() => fn)}
-          onSaved={num => {
-            updateData({
-              companion: { ...data.companion, whatsapp_number: num },
-              profile:   { ...data.profile,   whatsapp_number: num },
-            })
-            setPendingSave(null)
-          }}
-        />
-      </motion.div>
+            {/* Alias */}
+            <div style={{
+              fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#e8607a',
+              letterSpacing: '-0.01em',
+            }}>
+              {alias}
+            </div>
 
-      {/* ── Section D: Physical Profile ───────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <PhysicalSection
-          data={data}
-          onChange={patch => updateData({ profile: { ...data.profile, ...patch } })}
-        />
-      </motion.div>
+            {profileData?.companion?.name && (
+              <div style={{ fontSize: 13, color: '#9ca3af', marginTop: -6 }}>
+                {profileData.companion.name}
+              </div>
+            )}
 
-      {/* ── Section E: Tags ───────────────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <TagsSection
-          data={data}
-          onChange={patch => updateData(patch)}
-        />
-      </motion.div>
+            {profileData?.profile?.bio && (
+              <p style={{
+                fontSize: 13, color: '#9ca3af', textAlign: 'center', lineHeight: 1.6,
+                maxWidth: 320, fontStyle: 'italic',
+              }}>
+                {profileData.profile.bio}
+              </p>
+            )}
 
-      {/* ── Section F: Services & Rates ───────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <ServicesSection
-          data={data}
-          onRegisterSave={fn => setPendingSave(() => fn)}
-          onSaved={cards => { updateData({ session_cards: cards }); setPendingSave(null) }}
-        />
-      </motion.div>
+            {/* Role badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                style={{ border: '1px solid rgba(201,169,110,0.35)', background: 'rgba(201,169,110,0.08)' }}>
+                ✦ Companion
+              </span>
+              {profileData?.profile?.is_verified && (
+                <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                  style={{ border: '1px solid rgba(201,169,110,0.35)', background: 'rgba(201,169,110,0.08)' }}>
+                  Verified
+                </span>
+              )}
+            </div>
 
-      {/* ── Section G: Identity Verification ─────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <VerificationSection
-          verification={data.verification}
-          onVerified={() => updateData({ verification: { ...data.verification, provider_status: 'approved', verified_at: new Date().toISOString() } })}
-        />
-      </motion.div>
+            {/* Profile completeness prompt */}
+            {completeness < 100 && (
+              <button
+                onClick={() => router.push('/companion/profile/settings')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  fontSize: 12, color: '#e8607a', background: 'rgba(232,96,122,0.08)',
+                  border: '1px solid rgba(232,96,122,0.3)', borderRadius: 999,
+                  padding: '6px 14px', cursor: 'pointer',
+                }}
+              >
+                <Settings2 size={12} />
+                Complete your profile — {completeness}%
+              </button>
+            )}
+          </div>
 
-      {/* ── Section H: Photos ─────────────────────────────────────────────────── */}
-      <motion.div ref={photosRef} id="photos" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16, scrollMarginTop: 120 }}>
-        <PhotosSection
-          photos={data.photos}
-          onAdd={photo => updateData({ photos: [...data.photos, photo] })}
-          onDelete={id => updateData({ photos: data.photos.filter(p => p.id !== id) })}
-          onSetPrimary={id => updateData({ photos: data.photos.map(p => ({ ...p, is_primary: p.id === id })) })}
-        />
-      </motion.div>
+          {/* ── Section 2: Stats ─────────────────────────────── */}
+          <div className="flex items-center justify-center gap-0 mb-7">
+            {[
+              { n: posts.length.toString(),                                label: 'confessions' },
+              { n: posts.reduce((a, p) => a + p.likeCount, 0).toString(), label: 'likes' },
+              { n: posts.reduce((a, p) => a + p.saveCount, 0).toString(), label: 'saved' },
+            ].map(({ n, label }, i) => (
+              <div key={label} className="flex items-center">
+                <div className="flex flex-col items-center px-6 py-2">
+                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#eeeef0' }}>{n}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{label}</span>
+                </div>
+                {i < 2 && <div style={{ width: 1, height: 32, background: '#1c2333' }} />}
+              </div>
+            ))}
+          </div>
 
-      {/* ── Section I: Videos ─────────────────────────────────────────────────── */}
-      <motion.div ref={videosRef} id="videos" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16, scrollMarginTop: 120 }}>
-        <VideosSection
-          videos={data.videos}
-          onAdd={video => updateData({ videos: [...data.videos, video] })}
-          onDelete={id => updateData({ videos: data.videos.filter(v => v.id !== id) })}
-        />
-      </motion.div>
+          <div style={{ height: 1, background: '#1c2333', marginBottom: 28 }} />
 
-      {/* ── Section J: Confessions ────────────────────────────────────────────── */}
-      <motion.div ref={confessionsRef} id="confessions" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16, scrollMarginTop: 120 }}>
-        <PostsSection
-          title="Confessions"
-          stories={data.stories}
-          onWrite={() => router.push('/create')}
-          icon={PenLine}
-        />
-      </motion.div>
+          {/* ── Section 3: Vibe tags ──────────────────────────── */}
+          <div className="mb-7">
+            <div className="flex items-center justify-between mb-4">
+              <span style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                my vibe
+              </span>
+              <button
+                onClick={() => router.push('/companion/profile/settings')}
+                className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
+                style={{ fontSize: 12, color: '#e8607a', padding: 0 }}
+              >
+                <Settings2 size={11} />
+                Edit
+              </button>
+            </div>
 
-      {/* ── Section K: Stories ────────────────────────────────────────────────── */}
-      <motion.div ref={storiesRef} id="stories" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ scrollMarginTop: 120 }}>
-        <PostsSection
-          title="Stories"
-          stories={data.stories}
-          onWrite={() => router.push('/create?type=story')}
-          icon={BookOpen}
-        />
-      </motion.div>
-    </div>
-  )
-}
-
-// ─── Profile Header Section ───────────────────────────────────────────────────
-
-function ProfileHeaderSection({
-  data,
-  onAvatarUpload,
-  onAvailabilityChange,
-}: {
-  data: ProfileData
-  onAvatarUpload: (url: string) => void
-  onAvailabilityChange: (status: string) => void
-}) {
-  const { uploadFile, uploading } = useUploadToR2({
-    contentFor: 'companion_photo',
-    onSuccess: async ({ cdnUrl, s3Key }) => {
-      await patchSection('add_photo', { url: cdnUrl, storage_key: s3Key, is_primary: true })
-      onAvatarUpload(cdnUrl)
-    },
-  })
-
-  const primaryPhoto = data.photos.find(p => p.is_primary) ?? data.photos[0]
-  const gradient = 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)'
-  const availDot = AVAILABILITY.find(a => a.value === data.profile.availability_status)?.dot ?? '#6b7280'
-
-  return (
-    <div style={{ background: '#111620', border: '1px solid #1c2333', borderRadius: 16, padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
-        {/* Avatar */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', background: gradient, position: 'relative', border: '2px solid #1c2333' }}>
-            {primaryPhoto ? (
-              <img src={primaryPhoto.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {vibes.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {vibes.map(t => (
+                  <span key={t} className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">{t}</span>
+                ))}
+              </div>
             ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="40" height="80" viewBox="0 0 70 140" fill="rgba(255,255,255,0.15)">
-                  <ellipse cx="35" cy="22" rx="16" ry="18"/>
-                  <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z"/>
-                </svg>
+              <button onClick={() => router.push('/companion/profile/settings')}
+                className="text-[12px] bg-transparent border-none cursor-pointer p-0 transition-colors hover:text-[#eeeef0]"
+                style={{ color: '#4b5563', fontStyle: 'italic' }}>
+                Nothing yet — tap Edit to add your vibe tags.
+              </button>
+            )}
+
+            {profileData?.profile?.city && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                  Location
+                </div>
+                <span className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                  style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>
+                  {profileData.profile.city}
+                </span>
               </div>
             )}
           </div>
-          <label style={{ position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: '50%', background: '#e8607a', border: '2px solid #0a0c14', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            {uploading ? <Loader2 size={12} color="white" className="animate-spin" /> : <Camera size={12} color="white" />}
-            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f) }} />
-          </label>
-        </div>
 
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#eeeef0', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {data.companion.name || 'Your name'}
-          </div>
-          {data.companion.alias && (
-            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>@{data.companion.alias}</div>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: availDot, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#6b7280' }}>
-              {data.profile.city ? `${data.profile.city} · ` : ''}{AVAILABILITY.find(a => a.value === data.profile.availability_status)?.label ?? 'Offline'}
-            </span>
-          </div>
-          {/* Availability pills */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {AVAILABILITY.map(opt => (
+          <div style={{ height: 1, background: '#1c2333', marginBottom: 0 }} />
+
+          {/* ── Section 4: Tabs ──────────────────────────────── */}
+          <div className="flex border-b border-[#1c2333]">
+            {TABS.map(({ id, icon }) => (
               <button
-                key={opt.value}
-                onClick={() => onAvailabilityChange(opt.value)}
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className="flex-1 flex items-center justify-center py-3 transition-all duration-150 border-b-[2px] bg-transparent cursor-pointer"
                 style={{
-                  fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', minHeight: 32,
-                  border: `1px solid ${data.profile.availability_status === opt.value ? opt.dot : '#1c2333'}`,
-                  color: data.profile.availability_status === opt.value ? opt.dot : '#6b7280',
-                  background: data.profile.availability_status === opt.value ? `${opt.dot}15` : 'transparent',
-                  transition: 'all 0.15s',
+                  borderColor: activeTab === id ? '#e8607a' : 'transparent',
+                  color:       activeTab === id ? '#e8607a' : '#4b5563',
                 }}
               >
-                {opt.label}
+                {icon}
               </button>
             ))}
           </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
-// ─── Basic Info Section ───────────────────────────────────────────────────────
-
-function BasicInfoSection({
-  data, onRegisterSave, onSaved,
-}: {
-  data: ProfileData
-  onRegisterSave: (fn: () => Promise<void>) => void
-  onSaved: (updates: { name?: string; bio?: string; tagline?: string; city?: string }) => void
-}) {
-  const [editing, setEditing] = useState(false)
-
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm({
-    resolver: zodResolver(basicsSchema),
-    defaultValues: {
-      name:    data.companion.name    ?? '',
-      bio:     data.profile.bio       ?? '',
-      tagline: data.profile.tagline   ?? '',
-      city:    data.profile.city      ?? '',
-    },
-  })
-
-  useEffect(() => {
-    if (editing && isDirty) {
-      onRegisterSave(handleSubmit(async (values) => {
-        await patchSection('basics', values)
-        onSaved(values)
-        setEditing(false)
-      }))
-    }
-  }, [editing, isDirty]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const enterEdit = () => { reset({ name: data.companion.name ?? '', bio: data.profile.bio ?? '', tagline: data.profile.tagline ?? '', city: data.profile.city ?? '' }); setEditing(true) }
-
-  return (
-    <SectionCard
-      title="Basic Information"
-      action={!editing ? <button onClick={enterEdit} style={{ fontSize: 11, color: '#e8607a', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Edit2 size={11} /> Edit</button> : null}
-    >
-      {editing ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={labelStyle}>Display Name</label>
-            <input {...register('name')} style={inputStyle} placeholder="Your name" />
-            {errors.name && <p style={{ fontSize: 11, color: '#e8607a', marginTop: 4 }}>{errors.name.message}</p>}
-          </div>
-          <div>
-            <label style={labelStyle}>Tagline <span style={{ color: '#6b7280' }}>(max 80 chars)</span></label>
-            <input {...register('tagline')} style={inputStyle} placeholder="A short phrase that captures your vibe" />
-            {errors.tagline && <p style={{ fontSize: 11, color: '#e8607a', marginTop: 4 }}>{errors.tagline.message}</p>}
-          </div>
-          <div>
-            <label style={labelStyle}>Bio <span style={{ color: '#6b7280' }}>(max 500 chars)</span></label>
-            <textarea
-              {...register('bio')}
-              rows={5}
-              style={{ ...inputStyle, resize: 'vertical', fontFamily: "'Playfair Display', serif", lineHeight: 1.8 }}
-              placeholder="Tell dreamers who you are…"
-            />
-            {errors.bio && <p style={{ fontSize: 11, color: '#e8607a', marginTop: 4 }}>{errors.bio.message}</p>}
-          </div>
-          <div>
-            <label style={labelStyle}>City</label>
-            <input {...register('city')} style={inputStyle} placeholder="Amsterdam" />
-          </div>
-          <button onClick={() => setEditing(false)} style={{ fontSize: 12, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', alignSelf: 'flex-start', padding: 0 }}>Cancel</button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Row label="Name"    value={data.companion.name    || '—'} />
-          <Row label="Tagline" value={data.profile.tagline   || '—'} />
-          <Row label="City"    value={data.profile.city      || '—'} />
-          {data.profile.bio && <p style={{ fontSize: 14, color: '#c4c8d0', lineHeight: 1.9, fontFamily: "'Playfair Display', serif", marginTop: 4 }}>{data.profile.bio}</p>}
-        </div>
-      )}
-    </SectionCard>
-  )
-}
-
-// ─── WhatsApp Section ─────────────────────────────────────────────────────────
-
-function WhatsAppSection({
-  data, onRegisterSave, onSaved,
-}: {
-  data: ProfileData
-  onRegisterSave: (fn: () => Promise<void>) => void
-  onSaved: (num: string | null) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const existing = data.companion.whatsapp_number ?? data.profile.whatsapp_number
-
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm({
-    resolver: zodResolver(whatsappSchema),
-    defaultValues: { whatsapp_number: existing ?? '' },
-  })
-
-  useEffect(() => {
-    if (editing && isDirty) {
-      onRegisterSave(handleSubmit(async values => {
-        await patchSection('whatsapp', { whatsapp_number: values.whatsapp_number })
-        onSaved(values.whatsapp_number)
-        setEditing(false)
-      }))
-    }
-  }, [editing, isDirty]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const masked = existing ? `+${'•'.repeat(existing.length - 3)}${existing.slice(-2)}` : null
-
-  return (
-    <SectionCard
-      title={<span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>WhatsApp Contact {existing && <CheckCircle2 size={13} color="#34d399" />}</span>}
-      action={!editing ? <button onClick={() => { reset({ whatsapp_number: existing ?? '' }); setEditing(true) }} style={{ fontSize: 11, color: '#e8607a', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Edit2 size={11} /> {existing ? 'Edit' : 'Add'}</button> : null}
-    >
-      {editing ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Phone Number</label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 18 }}>🌐</span>
-              <input
-                {...register('whatsapp_number')}
-                style={{ ...inputStyle, paddingLeft: 40 }}
-                placeholder="+31612345678"
-                type="tel"
-              />
-            </div>
-            {errors.whatsapp_number && <p style={{ fontSize: 11, color: '#e8607a', marginTop: 4 }}>{errors.whatsapp_number.message}</p>}
-          </div>
-          <button onClick={() => setEditing(false)} style={{ fontSize: 12, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', alignSelf: 'flex-start', padding: 0 }}>Cancel</button>
-        </div>
-      ) : existing ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Phone size={14} color="#6b7280" />
-            <span style={{ fontSize: 14, color: '#eeeef0', fontFamily: 'monospace' }}>{masked}</span>
-          </div>
-          <div style={{ padding: '10px 16px', background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.25)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 16 }}>💬</span>
-            <span style={{ fontSize: 12.5, color: '#25d366', fontWeight: 500 }}>Message on WhatsApp</span>
-            <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 4 }}>— preview of what dreamers see</span>
-          </div>
-        </div>
-      ) : (
-        <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>Add your WhatsApp number so dreamers can reach you directly. Shown only after booking confirmation.</p>
-      )}
-    </SectionCard>
-  )
-}
-
-// ─── Physical Section ─────────────────────────────────────────────────────────
-
-function PhysicalSection({
-  data, onChange,
-}: {
-  data: ProfileData
-  onChange: (patch: Partial<ProfileData['profile']>) => void
-}) {
-  const [height, setHeight] = useState(data.profile.height_cm ?? 170)
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const debounce = (field: string, value: unknown) => {
-    if (debRef.current) clearTimeout(debRef.current)
-    debRef.current = setTimeout(() => {
-      patchSection('physical', { [field]: value }).catch(() => {})
-    }, 800)
-  }
-
-  const handleHeight = (cm: number) => {
-    setHeight(cm)
-    onChange({ height_cm: cm })
-    debounce('height_cm', cm)
-  }
-
-  const handleChip = (field: string, value: string) => {
-    const current = (data.profile as Record<string, unknown>)[field]
-    const next = current === value ? null : value
-    onChange({ [field]: next } as Partial<ProfileData['profile']>)
-    debounce(field, next)
-  }
-
-  return (
-    <SectionCard title="About Your Body" subtitle="Shown on your profile">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-        {/* Height slider */}
-        <div>
-          <label style={labelStyle}>Height</label>
-          <div style={{ textAlign: 'center', marginBottom: 12 }}>
-            <span style={{ fontSize: 28, fontWeight: 600, color: '#e8607a', transition: 'color 0.15s' }}>{height}</span>
-            <span style={{ fontSize: 14, color: '#6b7280', marginLeft: 4 }}>cm</span>
-            <span style={{ fontSize: 12, color: '#6b7280', display: 'block', marginTop: 2 }}>{cmToFeet(height)}</span>
-          </div>
-          <input
-            type="range" min={140} max={220} step={1} value={height}
-            onChange={e => handleHeight(Number(e.target.value))}
-            style={{ width: '100%', accentColor: '#e8607a', cursor: 'pointer' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-            <span style={{ fontSize: 10, color: '#6b7280' }}>140 cm</span>
-            <span style={{ fontSize: 10, color: '#6b7280' }}>220 cm</span>
-          </div>
-        </div>
-
-        {/* Body type */}
-        <ChipGroup
-          label="Body Type"
-          options={BODY_TYPES.map(b => b.label)}
-          active={BODY_TYPES.find(b => b.value === data.profile.body_type)?.label ?? null}
-          onSelect={label => {
-            const found = BODY_TYPES.find(b => b.label === label)
-            if (found) handleChip('body_type', found.value)
-          }}
-        />
-
-        {/* Ethnicity */}
-        <ChipGroup
-          label="Ethnicity"
-          options={ETHNICITIES}
-          active={data.profile.ethnicity}
-          onSelect={label => handleChip('ethnicity', label)}
-        />
-
-        {/* Eye color */}
-        <ChipGroup
-          label="Eye Color"
-          options={EYE_COLORS}
-          active={data.profile.eye_color}
-          onSelect={label => handleChip('eye_color', label)}
-        />
-
-        {/* Hair color */}
-        <ChipGroup
-          label="Hair Color"
-          options={HAIR_COLORS}
-          active={data.profile.hair_color}
-          onSelect={label => handleChip('hair_color', label)}
-        />
-      </div>
-    </SectionCard>
-  )
-}
-
-function ChipGroup({ label, options, active, onSelect }: { label: string; options: string[]; active: string | null; onSelect: (v: string) => void }) {
-  return (
-    <div>
-      <label style={labelStyle}>{label}</label>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {options.map(opt => <Chip key={opt} label={opt} active={active === opt} onClick={() => onSelect(opt)} />)}
-      </div>
-    </div>
-  )
-}
-
-// ─── Tags Section ─────────────────────────────────────────────────────────────
-
-function TagsSection({
-  data, onChange,
-}: {
-  data: ProfileData
-  onChange: (patch: Partial<ProfileData>) => void
-}) {
-  const [selectedFantasy, setSelectedFantasy] = useState<number[]>(data.selected_fantasy_tag_ids)
-  const [selectedVibe,    setSelectedVibe]    = useState<number[]>(data.selected_vibe_tag_ids)
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const debounce = (fantasyIds: number[], vibeIds: number[]) => {
-    if (debRef.current) clearTimeout(debRef.current)
-    debRef.current = setTimeout(() => {
-      patchSection('tags', { fantasy_tag_ids: fantasyIds, vibe_tag_ids: vibeIds }).catch(() => {})
-    }, 800)
-  }
-
-  const toggleFantasy = (id: number) => {
-    const next = selectedFantasy.includes(id)
-      ? selectedFantasy.filter(x => x !== id)
-      : [...selectedFantasy, id]
-    setSelectedFantasy(next)
-    onChange({ selected_fantasy_tag_ids: next })
-    debounce(next, selectedVibe)
-  }
-
-  const toggleVibe = (id: number) => {
-    const next = selectedVibe.includes(id)
-      ? selectedVibe.filter(x => x !== id)
-      : [...selectedVibe, id]
-    setSelectedVibe(next)
-    onChange({ selected_vibe_tag_ids: next })
-    debounce(selectedFantasy, next)
-  }
-
-  return (
-    <SectionCard title="Fantasy & Vibe Tags">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div>
-          <label style={labelStyle}>Fantasy Tags <span style={{ color: '#6b7280' }}>(select at least 3)</span></label>
-          {selectedFantasy.length > 0 && selectedFantasy.length < 3 && (
-            <p style={{ fontSize: 11, color: '#e8607a', marginBottom: 8 }}>Select {3 - selectedFantasy.length} more to meet the minimum</p>
-          )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {data.available_fantasy_tags.map(tag => (
-              <Chip key={tag.id} label={tag.name} active={selectedFantasy.includes(tag.id)} onClick={() => toggleFantasy(tag.id)} />
-            ))}
-          </div>
-        </div>
-        <div>
-          <label style={labelStyle}>Vibe Tags <span style={{ color: '#6b7280' }}>(select at least 3)</span></label>
-          {selectedVibe.length > 0 && selectedVibe.length < 3 && (
-            <p style={{ fontSize: 11, color: '#e8607a', marginBottom: 8 }}>Select {3 - selectedVibe.length} more to meet the minimum</p>
-          )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {data.available_vibe_tags.map(tag => (
-              <Chip key={tag.id} label={tag.name} active={selectedVibe.includes(tag.id)} onClick={() => toggleVibe(tag.id)} gold />
-            ))}
-          </div>
-        </div>
-      </div>
-    </SectionCard>
-  )
-}
-
-// ─── Services & Rates Section ─────────────────────────────────────────────────
-
-function ServicesSection({
-  data, onRegisterSave, onSaved,
-}: {
-  data: ProfileData
-  onRegisterSave: (fn: () => Promise<void>) => void
-  onSaved: (cards: CardRow[]) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [cards,   setCards]   = useState<Partial<CardRow>[]>(data.session_cards)
-
-  const enterEdit = () => { setCards(data.session_cards); setEditing(true) }
-
-  useEffect(() => {
-    if (editing) {
-      onRegisterSave(async () => {
-        const validCards = cards.filter(c => c.title?.trim())
-        await patchSection('services', { session_cards: validCards.map(c => ({ title: c.title!, description: c.description, duration_minutes: c.duration_minutes, price: c.price, currency: c.currency ?? 'EUR', session_type: c.session_type })) })
-        onSaved(validCards as CardRow[])
-        setEditing(false)
-      })
-    }
-  }, [editing, cards]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <SectionCard
-      title="Services & Rates"
-      action={!editing ? <button onClick={enterEdit} style={{ fontSize: 11, color: '#e8607a', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Edit2 size={11} /> Edit</button> : null}
-    >
-      {editing ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {cards.map((card, i) => (
-            <div key={i} style={{ background: '#0d1117', border: '1px solid #1c2333', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: '#e8607a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Service {i + 1}</span>
-                <button onClick={() => setCards(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', padding: 0 }}><X size={14} /></button>
-              </div>
-              <input
-                value={card.title ?? ''} placeholder="Session name"
-                onChange={e => setCards(prev => prev.map((c, idx) => idx === i ? { ...c, title: e.target.value } : c))}
-                style={{ ...inputStyle, fontSize: 14 }}
-              />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  value={card.price ?? ''} placeholder="€ Price"
-                  onChange={e => setCards(prev => prev.map((c, idx) => idx === i ? { ...c, price: e.target.value } : c))}
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <input
-                  type="number" value={card.duration_minutes ?? ''} placeholder="Min"
-                  onChange={e => setCards(prev => prev.map((c, idx) => idx === i ? { ...c, duration_minutes: Number(e.target.value) || undefined } : c))}
-                  style={{ ...inputStyle, width: 80, flex: 'none' }}
-                />
-              </div>
-              <textarea
-                value={card.description ?? ''} placeholder="Short description"
-                rows={2}
-                onChange={e => setCards(prev => prev.map((c, idx) => idx === i ? { ...c, description: e.target.value } : c))}
-                style={{ ...inputStyle, resize: 'vertical' }}
-              />
-            </div>
-          ))}
-          <button
-            onClick={() => setCards(prev => [...prev, { title: '', currency: 'EUR' }])}
-            style={{ fontSize: 12.5, color: '#e8607a', background: 'rgba(232,96,122,0.08)', border: '1px solid rgba(232,96,122,0.25)', borderRadius: 10, padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-          >
-            <Plus size={13} /> Add service
-          </button>
-          <button onClick={() => setEditing(false)} style={{ fontSize: 12, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', alignSelf: 'flex-start', padding: 0 }}>Cancel</button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {data.session_cards.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#6b7280' }}>No services added yet. Add what dreamers can book with you.</p>
-          ) : data.session_cards.map(card => (
-            <div key={card.id} style={{ background: '#0d1117', border: '1px solid #1c2333', borderRadius: 12, padding: '14px 16px' }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: '#eeeef0', marginBottom: 4 }}>{card.title}</div>
-              {card.description && <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, marginBottom: 8 }}>{card.description}</div>}
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                {card.price && <span style={{ fontSize: 17, color: '#e8607a', fontWeight: 500 }}>{card.currency} {card.price}</span>}
-                {card.duration_minutes && <span style={{ fontSize: 11, color: '#6b7280' }}>{card.duration_minutes} min</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </SectionCard>
-  )
-}
-
-// ─── Identity Verification Section ───────────────────────────────────────────
-
-function VerificationSection({
-  verification, onVerified,
-}: {
-  verification: ProfileData['verification']
-  onVerified: () => void
-}) {
-  const [verificationUrl, setVerificationUrl] = useState<string | null>(null)
-  const [starting, setStarting] = useState(false)
-  const [error, setError] = useState('')
-
-  const startVerification = async () => {
-    setStarting(true)
-    setError('')
-    try {
-      const res = await fetch('/api/companions/onboarding/verify/start', { method: 'POST', credentials: 'include' })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Failed')
-      setVerificationUrl(json.verification_url)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start verification')
-    } finally {
-      setStarting(false)
-    }
-  }
-
-  const status = verification?.provider_status
-
-  const badge = status === 'approved'
-    ? { label: 'Verified ✓', color: '#34d399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.25)' }
-    : status === 'created' || status === 'pending'
-    ? { label: 'In Progress', color: '#c9a96e', bg: 'rgba(201,169,110,0.1)', border: 'rgba(201,169,110,0.25)' }
-    : status === 'declined' || status === 'requires_action'
-    ? { label: 'Declined', color: '#e8607a', bg: 'rgba(232,96,122,0.1)', border: 'rgba(232,96,122,0.25)' }
-    : null
-
-  return (
-    <SectionCard
-      title="Identity Verification"
-      action={badge ? <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 999, color: badge.color, background: badge.bg, border: `1px solid ${badge.border}` }}>{badge.label}</span> : null}
-    >
-      {status === 'approved' ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CheckCircle2 size={16} color="#34d399" />
-          <span style={{ fontSize: 13, color: '#34d399' }}>
-            Verified{verification?.verified_at ? ` on ${new Date(verification.verified_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}
-          </span>
-        </div>
-      ) : verificationUrl ? (
-        <DiditVerify
-          verificationUrl={verificationUrl}
-          onComplete={result => {
-            setVerificationUrl(null)
-            if (result.type === 'completed') onVerified()
-          }}
-        />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-            {status === 'declined' || status === 'requires_action'
-              ? 'Your previous verification was declined. You can try again below.'
-              : 'Verify your identity to unlock your profile for dreamers. Uses Didit — takes 2 minutes.'}
-          </p>
-          {error && <p style={{ fontSize: 12, color: '#e8607a' }}>{error}</p>}
-          <button
-            onClick={startVerification}
-            disabled={starting}
-            style={{ fontSize: 13.5, color: '#fff', background: '#e8607a', border: 'none', borderRadius: 10, padding: '12px 20px', cursor: starting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', opacity: starting ? 0.7 : 1 }}
-          >
-            {starting && <Loader2 size={14} className="animate-spin" />}
-            {status === 'declined' || status === 'requires_action' ? 'Retry verification' : 'Start verification →'}
-          </button>
-        </div>
-      )}
-    </SectionCard>
-  )
-}
-
-// ─── Photos Section ───────────────────────────────────────────────────────────
-
-function PhotosSection({
-  photos, onAdd, onDelete, onSetPrimary,
-}: {
-  photos: PhotoRow[]
-  onAdd: (p: PhotoRow) => void
-  onDelete: (id: string) => void
-  onSetPrimary: (id: string) => void
-}) {
-  const { uploadFile, uploading } = useUploadToR2({
-    contentFor: 'companion_photo',
-    onSuccess: async ({ cdnUrl, s3Key }) => {
-      await patchSection('add_photo', { url: cdnUrl, storage_key: s3Key })
-      onAdd({ id: crypto.randomUUID(), url: cdnUrl, storage_key: s3Key, is_primary: false, is_approved: false, sort_order: photos.length })
-    },
-  })
-
-  return (
-    <SectionCard title="Photos">
-      {/* Upload zone */}
-      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, padding: '20px 16px', border: '1px dashed #1c2333', borderRadius: 12, cursor: 'pointer', marginBottom: 16, minHeight: 80, transition: 'border-color 0.15s' }}
-        onMouseEnter={e => { (e.currentTarget as HTMLLabelElement).style.borderColor = 'rgba(232,96,122,0.4)' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLLabelElement).style.borderColor = '#1c2333' }}>
-        {uploading ? <Loader2 size={20} color="#e8607a" className="animate-spin" /> : <Camera size={20} color="#6b7280" />}
-        <span style={{ fontSize: 12, color: '#6b7280' }}>{uploading ? 'Uploading…' : 'Tap to add photo'}</span>
-        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f) }} />
-      </label>
-
-      {photos.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-          {photos.map(photo => (
-            <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 12, overflow: 'hidden', background: '#161d2a' }} className="group">
-              <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              {/* Primary star */}
-              <button
-                onClick={() => { patchSection('set_primary_photo', { photo_id: photo.id }); onSetPrimary(photo.id) }}
-                style={{ position: 'absolute', top: 6, left: 6, background: photo.is_primary ? '#c9a96e' : 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.15s' }}
-              >
-                <Star size={12} color="white" fill={photo.is_primary ? 'white' : 'none'} />
-              </button>
-              {/* Approval overlay */}
-              <div style={{ position: 'absolute', bottom: 6, right: 6 }}>
-                {photo.is_approved
-                  ? <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CheckCircle2 size={10} color="white" /></span>
-                  : <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(0,0,0,0.7)', color: '#c9a96e', borderRadius: 4 }}>Pending</span>
-                }
-              </div>
-              {/* Remove */}
-              <button
-                onClick={() => { patchSection('delete_photo', { photo_id: photo.id }); onDelete(photo.id) }}
-                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <X size={11} color="white" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </SectionCard>
-  )
-}
-
-// ─── Videos Section ───────────────────────────────────────────────────────────
-
-function VideosSection({
-  videos, onAdd, onDelete,
-}: {
-  videos: VideoRow[]
-  onAdd: (v: VideoRow) => void
-  onDelete: (id: string) => void
-}) {
-  const [durationError, setDurationError] = useState('')
-  const { uploadFile, uploading } = useUploadToR2({
-    contentFor: 'companion_video',
-    onSuccess: async ({ cdnUrl, s3Key }) => {
-      await patchSection('add_video', { url: cdnUrl, storage_key: s3Key })
-      onAdd({ id: crypto.randomUUID(), url: cdnUrl, storage_key: s3Key, duration_seconds: null, thumbnail_url: null, is_approved: false })
-    },
-  })
-
-  const handleVideoFile = (file: File) => {
-    setDurationError('')
-    const video = document.createElement('video')
-    video.preload = 'metadata'
-    video.onloadedmetadata = () => {
-      URL.revokeObjectURL(video.src)
-      if (video.duration > 10) {
-        setDurationError('Videos must be 10 seconds or less.')
-        return
-      }
-      uploadFile(file)
-    }
-    video.src = URL.createObjectURL(file)
-  }
-
-  return (
-    <SectionCard title="Videos" subtitle="Up to 3 short clips (max 10 seconds)">
-      {durationError && <p style={{ fontSize: 12, color: '#e8607a', marginBottom: 12 }}>{durationError}</p>}
-      {videos.length < 3 && (
-        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, padding: '20px 16px', border: '1px dashed #1c2333', borderRadius: 12, cursor: 'pointer', marginBottom: 16, minHeight: 80 }}
-          onMouseEnter={e => { (e.currentTarget as HTMLLabelElement).style.borderColor = 'rgba(232,96,122,0.4)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLLabelElement).style.borderColor = '#1c2333' }}>
-          {uploading ? <Loader2 size={20} color="#e8607a" className="animate-spin" /> : <Film size={20} color="#6b7280" />}
-          <span style={{ fontSize: 12, color: '#6b7280' }}>{uploading ? 'Uploading…' : 'Tap to add video'}</span>
-          <input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleVideoFile(f) }} />
-        </label>
-      )}
-      {videos.length > 0 && (
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {videos.map(v => (
-            <div key={v.id} style={{ position: 'relative', width: 120, borderRadius: 12, overflow: 'hidden', background: '#161d2a', flexShrink: 0 }}>
-              <video src={v.url} style={{ width: '100%', aspectRatio: '9/16', objectFit: 'cover' }} muted playsInline />
-              {v.duration_seconds && <span style={{ position: 'absolute', bottom: 6, left: 6, fontSize: 10, background: 'rgba(0,0,0,0.7)', color: '#eeeef0', padding: '2px 6px', borderRadius: 4 }}>{v.duration_seconds}s</span>}
-              <div style={{ position: 'absolute', bottom: 6, right: 6 }}>
-                {v.is_approved
-                  ? <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CheckCircle2 size={10} color="white" /></span>
-                  : <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(0,0,0,0.7)', color: '#c9a96e', borderRadius: 4 }}>Pending</span>
-                }
-              </div>
-              <button onClick={() => { patchSection('delete_video', { video_id: v.id }); onDelete(v.id) }} style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <X size={11} color="white" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </SectionCard>
-  )
-}
-
-// ─── Posts Section (Confessions & Stories) ────────────────────────────────────
-
-function PostsSection({
-  title, stories, onWrite, icon: Icon,
-}: {
-  title: string
-  stories: StoryRow[]
-  onWrite: () => void
-  icon: React.ElementType
-}) {
-  return (
-    <SectionCard title={title}>
-      <button
-        onClick={onWrite}
-        style={{ fontSize: 12.5, color: '#e8607a', background: 'rgba(232,96,122,0.08)', border: '1px solid rgba(232,96,122,0.25)', borderRadius: 10, padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}
-      >
-        <Icon size={13} /> Write {title.toLowerCase().slice(0, -1)}
-      </button>
-      {stories.length === 0 ? (
-        <p style={{ fontSize: 13, color: '#6b7280' }}>Nothing here yet. Share your first {title === 'Confessions' ? 'confession' : 'story'}.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {stories.map(s => (
-            <div key={s.id} style={{ background: '#0d1117', border: '1px solid #1c2333', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, color: '#eeeef0', fontFamily: "'Playfair Display', serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {s.title ?? 'Untitled'}
+          <div className="pt-4 mb-8">
+            {activeTab === 'posts' && (
+              postsLoading ? (
+                <div className="grid grid-cols-3 gap-[2px]">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} style={{ aspectRatio: '3/4', background: '#111620', borderRadius: 4 }}
+                      className="animate-pulse" />
+                  ))}
                 </div>
-                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
-                  {s.like_count} likes · {new Date(s.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              ) : posts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <LayoutGrid size={32} color="#1c2333" />
+                  <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+                    Your confessions will appear here.
+                  </p>
+                  <button
+                    onClick={() => router.push('/create')}
+                    className="text-[12px] text-[#e8607a] px-4 py-2 rounded-full mt-1 cursor-pointer"
+                    style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+                  >
+                    Write your first confession →
+                  </button>
                 </div>
-              </div>
-              <StatusBadge status={s.moderation_status ?? 'pending'} />
-            </div>
-          ))}
-        </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-[2px]">
+                  {posts.map((post, idx) => (
+                    <PostCell
+                      key={post.id}
+                      post={post}
+                      onTap={() => {
+                        const storiesArray: ProfileViewerStory[] = posts.map(p => ({
+                          id:            p.id,
+                          title:         p.title,
+                          body:          '',
+                          rawBody:       p.excerpt ?? '',
+                          pageImageUrls: p.pageImageUrls,
+                          categoryName:  p.categories[0] ?? '',
+                          categories:    p.categories,
+                          moodTags:      [],
+                          likeCount:     p.likeCount,
+                          saveCount:     p.saveCount,
+                          commentCount:  p.commentCount,
+                          userHasLiked:  false,
+                          userHasSaved:  false,
+                          authorAlias:   session?.user?.alias ?? null,
+                          isAnonymous:   false,
+                          createdAt:     p.createdAt,
+                        }))
+                        openProfileViewer(storiesArray, idx, 'own')
+                      }}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+
+            {activeTab === 'likes' && (
+              <LikesTabContent
+                likedSubTab={likedSubTab}
+                setLikedSubTab={setLikedSubTab}
+              />
+            )}
+
+            {activeTab === 'saved' && (
+              <SavedTabContent
+                savedSubTab={savedSubTab}
+                setSavedSubTab={setSavedSubTab}
+              />
+            )}
+          </div>
+
+        </motion.main>
       )}
-    </SectionCard>
-  )
-}
-
-// ─── Utility sub-components ───────────────────────────────────────────────────
-
-function SectionCard({
-  title, subtitle, action, children,
-}: {
-  title: React.ReactNode
-  subtitle?: string
-  action?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div style={{ background: '#111620', border: '1px solid #1c2333', borderRadius: 16, padding: '20px 20px 24px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: subtitle ? 2 : 16, gap: 8 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0' }}>{title}</span>
-        {action}
-      </div>
-      {subtitle && <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 16 }}>{subtitle}</p>}
-      {children}
-    </div>
-  )
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-      <span style={{ fontSize: 12, color: '#6b7280', flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 13, color: '#eeeef0', textAlign: 'right' }}>{value}</span>
-    </div>
+    </>
   )
 }

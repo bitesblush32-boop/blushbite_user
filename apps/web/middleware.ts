@@ -77,8 +77,12 @@ export default auth((req) => {
       return Response.redirect(new URL('/companion/legal', nextUrl))
     }
 
+    // Redirect /profile → /companion/profile so companions never see the dreamer profile page
+    if (path === '/profile') {
+      return Response.redirect(new URL('/companion/profile', nextUrl))
+    }
+
     // Legal signed → companions access ALL routes freely
-    // They use the dreamer layout for / /confessions /stories /profile etc.
     return
   }
 

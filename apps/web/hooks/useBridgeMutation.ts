@@ -30,7 +30,7 @@ export function useBridgeMutation(storyId: string) {
   const bridge = async () => {
     if (!isCompanion || loading || bridgeStatus !== 'idle') return
     setLoading(true)
-    setBridgeStatus('pending') // optimistic
+    setBridgeStatus('approved') // optimistic — auto-approved
     try {
       const res = await fetch('/api/companion/bridge', {
         method:  'POST',
@@ -42,7 +42,7 @@ export function useBridgeMutation(storyId: string) {
       if (data.already_linked) {
         setBridgeStatus((data.status as BridgeStatus) ?? 'idle')
       } else if (data.success) {
-        setBridgeStatus('pending')
+        setBridgeStatus('approved')
       } else {
         setBridgeStatus('idle')
       }
