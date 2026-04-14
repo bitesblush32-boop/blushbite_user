@@ -126,7 +126,9 @@
       "Bash(/mnt/c/Users/judob/AppData/Roaming/nvm/versions/node/v22.15.0/bin/node /mnt/c/Users/judob/AppData/Roaming/nvm/versions/node/v22.15.0/bin/tsc --noEmit)",
       "Bash(node node_modules/.bin/tsc --noEmit)",
       "Bash(wait)",
-      "Bash(echo \"EXIT_CODE:$?\")"
+      "Bash(echo \"EXIT_CODE:$?\")",
+      "Bash(xargs grep:*)",
+      "Bash(grep -n \"staleTime\\\\|gcTime\\\\|cacheTime\" /c/Users/judob/dev/dev26/blushbite_user/apps/web/hooks/*.ts)"
     ]
   }
 }

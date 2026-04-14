@@ -55,3 +55,4 @@ apps/worker/src/classify_progress.txt
 apps/worker/scraped_stories_enriched.ndjson
 .claude/settings.local.json
 apps/web/tsconfig.tsbuildinfo
+.claude/settings.local.json

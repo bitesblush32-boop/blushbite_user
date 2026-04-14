@@ -95,6 +95,17 @@ interface NotificationsResponse {
   unread_count:  number
 }
 
+export function useNotificationCountQ() {
+  const { data } = useQuery<{ unread: number }>({
+    queryKey:             ['notifications', 'count'],
+    queryFn:              () => fetch('/api/notifications/count', { credentials: 'include' }).then(r => r.json()),
+    staleTime:            30_000,
+    refetchInterval:      60_000,
+    refetchOnWindowFocus: false,
+  })
+  return (data?.unread ?? 0) as number
+}
+
 export function useNotifications() {
   const { data, isLoading } = useQuery<NotificationsResponse>({
     queryKey: ['notifications'],

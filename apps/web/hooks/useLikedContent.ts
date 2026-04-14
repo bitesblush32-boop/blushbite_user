@@ -33,6 +33,8 @@ export function useLikedContent(type: ContentType) {
     queryFn:          ({ pageParam }) => fetchLiked(type, pageParam as string | undefined),
     initialPageParam: undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime:        5 * 60 * 1000,
+    gcTime:           10 * 60 * 1000,
   })
 
   const items = query.data?.pages.flatMap(p => p.data) ?? []
