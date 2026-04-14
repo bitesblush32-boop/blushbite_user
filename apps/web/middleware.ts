@@ -11,6 +11,8 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/admin-generate',
   '/admin',
+  '/sitemap.xml',
+  '/robots.txt',
 ]
 const AUTH_API_PREFIX  = '/api/auth'
 const ADMIN_API_PREFIX = '/api/admin'

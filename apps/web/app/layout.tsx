@@ -13,7 +13,26 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'BlushBite · Private Fantasy & Companions',
   description: 'Verified companions, literary confessions, and intimate audio — curated for you alone.',
-  robots: 'noindex, nofollow', // keep off search engines; 18+ platform
+  metadataBase: new URL('https://blushbite.co'),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://blushbite.co',
+    siteName: 'BlushBite',
+    title: 'BlushBite · Private Fantasy & Companions',
+    description: 'Verified companions, literary confessions, and intimate audio — curated for you alone.',
+    images: [{ url: '/bb.png', width: 1200, height: 630, alt: 'BlushBite' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BlushBite · Private Fantasy & Companions',
+    description: 'Verified companions, literary confessions, and intimate audio — curated for you alone.',
+    images: ['/bb.png'],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
