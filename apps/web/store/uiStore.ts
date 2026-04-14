@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { FontSize } from '@/lib/paginateText'
 
 // ── ProfileViewerStory ─────────────────────────────────────────────────────
 
@@ -57,6 +58,10 @@ interface UIStore {
     mode:    'own' | 'liked' | 'saved'
   ) => void
   closeProfileViewer: () => void
+
+  // Confession reading preferences
+  confessionFontSize: FontSize
+  setConfessionFontSize: (s: FontSize) => void
 }
 
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -99,4 +104,8 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set({ profileViewerStories: stories, profileViewerIndex: index, profileViewerMode: mode }),
   closeProfileViewer: () =>
     set({ profileViewerStories: [], profileViewerIndex: 0, profileViewerMode: null }),
+
+  // Confession reading preferences
+  confessionFontSize: 'md',
+  setConfessionFontSize: (s) => set({ confessionFontSize: s }),
 }))
