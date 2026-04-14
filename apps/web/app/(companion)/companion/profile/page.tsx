@@ -35,6 +35,7 @@ interface CompanionProfileData {
     profile_completeness: number
   }
   photos:       { id: string; url: string; is_primary: boolean }[]
+  videos:       { id: string; url: string; thumbnail_url: string | null; duration_seconds: number | null; is_approved: boolean }[]
   stories:      { id: string; title: string | null; moderation_status: string; like_count: number; created_at: string }[]
   session_cards: { id: string; title: string; price: string | null; currency: string; duration_minutes: number | null }[]
   selected_vibe_tag_ids: number[]
@@ -57,6 +58,7 @@ interface UserPost {
 }
 
 type MainTab     = 'posts' | 'likes' | 'saved'
+type PostsSubTab = 'all' | 'photos' | 'videos' | 'confessions' | 'stories'
 type LikedSubTab = 'all' | 'confessions' | 'stories'
 type SavedSubTab = 'all' | 'collections' | 'companions'
 
@@ -128,6 +130,285 @@ function PostCell({ post, onTap }: { post: UserPost; onTap: () => void }) {
           </span>
         )}
       </div>
+    </div>
+  )
+}
+
+// ─── PostsTabContent ──────────────────────────────────────────────────────────
+
+const POSTS_SUB_TABS: { id: PostsSubTab; label: string }[] = [
+  { id: 'all',         label: 'All' },
+  { id: 'photos',      label: 'Photos' },
+  { id: 'videos',      label: 'Videos' },
+  { id: 'confessions', label: 'Confessions' },
+  { id: 'stories',     label: 'Stories' },
+]
+
+function PhotoGrid({ photos }: { photos: CompanionProfileData['photos'] }) {
+  if (photos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <LayoutGrid size={32} color="#1c2333" />
+        <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+          No photos yet. Add photos from your profile settings.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {photos.map(photo => (
+        <div key={photo.id} style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden', background: '#111620' }}>
+          <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          {photo.is_primary && (
+            <div style={{
+              position: 'absolute', top: 6, right: 6,
+              fontSize: 9, color: '#c9a96e',
+              background: 'rgba(201,169,110,0.15)', border: '1px solid rgba(201,169,110,0.3)',
+              borderRadius: 999, padding: '2px 6px',
+            }}>
+              primary
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function VideoGrid({ videos }: { videos: CompanionProfileData['videos'] }) {
+  if (videos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <LayoutGrid size={32} color="#1c2333" />
+        <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+          No videos yet. Add short videos from your profile settings.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {videos.map(video => (
+        <div key={video.id} style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden', background: '#111620' }}>
+          {video.thumbnail_url ? (
+            <img src={video.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)' }} />
+          )}
+          {/* play overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.25)',
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'rgba(232,96,122,0.85)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="12" height="14" viewBox="0 0 12 14" fill="white">
+                <path d="M1 1l10 6-10 6V1z"/>
+              </svg>
+            </div>
+          </div>
+          {video.duration_seconds && (
+            <div style={{
+              position: 'absolute', bottom: 6, right: 6,
+              fontSize: 9, color: '#eeeef0',
+              background: 'rgba(7,9,15,0.75)', borderRadius: 4, padding: '2px 5px',
+            }}>
+              {video.duration_seconds}s
+            </div>
+          )}
+          {!video.is_approved && (
+            <div style={{
+              position: 'absolute', top: 6, left: 6,
+              fontSize: 9, color: '#c9a96e',
+              background: 'rgba(201,169,110,0.15)', border: '1px solid rgba(201,169,110,0.3)',
+              borderRadius: 999, padding: '2px 6px',
+            }}>
+              pending
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function StoriesGrid({ stories }: { stories: CompanionProfileData['stories'] }) {
+  if (stories.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <LayoutGrid size={32} color="#1c2333" />
+        <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+          No stories yet.
+        </p>
+      </div>
+    )
+  }
+  const gradients = [
+    'linear-gradient(135deg,#1a0e20,#2a1540)',
+    'linear-gradient(135deg,#0e1a18,#101f30)',
+    'linear-gradient(135deg,#1a1010,#2a1520)',
+    'linear-gradient(135deg,#0f1428,#1a1040)',
+  ]
+  return (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {stories.map((story, i) => (
+        <div key={story.id} style={{
+          aspectRatio: '3/4', position: 'relative', overflow: 'hidden',
+          background: gradients[i % gradients.length],
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(transparent 40%, rgba(7,9,15,0.9) 100%)',
+            display: 'flex', alignItems: 'flex-end', padding: 8,
+          }}>
+            <p style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 11, color: '#eeeef0', lineHeight: 1.4,
+              overflow: 'hidden', display: '-webkit-box',
+              WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+              margin: 0,
+            }}>
+              {story.title ?? 'Untitled'}
+            </p>
+          </div>
+          {story.moderation_status === 'pending' && (
+            <div style={{
+              position: 'absolute', top: 6, right: 6,
+              fontSize: 9, color: '#c9a96e',
+              background: 'rgba(201,169,110,0.15)', border: '1px solid rgba(201,169,110,0.3)',
+              borderRadius: 999, padding: '2px 6px',
+            }}>
+              pending
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PostsTabContent({
+  postsSubTab,
+  setPostsSubTab,
+  posts,
+  postsLoading,
+  photos,
+  videos,
+  stories,
+  onPostTap,
+  onWriteConfession,
+  authorAlias,
+}: {
+  postsSubTab:       PostsSubTab
+  setPostsSubTab:    (t: PostsSubTab) => void
+  posts:             UserPost[]
+  postsLoading:      boolean
+  photos:            CompanionProfileData['photos']
+  videos:            CompanionProfileData['videos']
+  stories:           CompanionProfileData['stories']
+  onPostTap:         (idx: number) => void
+  onWriteConfession: () => void
+  authorAlias:       string | null
+}) {
+  const skeletonGrid = (
+    <div className="grid grid-cols-3 gap-[2px]">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} style={{ aspectRatio: '3/4', background: '#111620', borderRadius: 4 }} className="animate-pulse" />
+      ))}
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Sub-tab pills */}
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {POSTS_SUB_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setPostsSubTab(id)}
+            style={{
+              flexShrink:   0,
+              fontSize:     12,
+              padding:      '5px 14px',
+              borderRadius: 999,
+              border:       `1px solid ${postsSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color:        postsSubTab === id ? '#e8607a' : '#6b7280',
+              background:   postsSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor:       'pointer',
+              transition:   'all 0.15s',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {postsLoading ? skeletonGrid : (
+        <>
+          {postsSubTab === 'all' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {photos.length > 0 && <PhotoGrid photos={photos} />}
+              {videos.length > 0 && <VideoGrid videos={videos} />}
+              {posts.length > 0 ? (
+                <div className="grid grid-cols-3 gap-[2px]">
+                  {posts.map((post, idx) => (
+                    <PostCell key={post.id} post={post} onTap={() => onPostTap(idx)} />
+                  ))}
+                </div>
+              ) : photos.length === 0 && videos.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <LayoutGrid size={32} color="#1c2333" />
+                  <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+                    Nothing posted yet.
+                  </p>
+                  <button
+                    onClick={onWriteConfession}
+                    className="text-[12px] text-[#e8607a] px-4 py-2 rounded-full mt-1 cursor-pointer"
+                    style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+                  >
+                    Write your first confession →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {postsSubTab === 'photos' && <PhotoGrid photos={photos} />}
+
+          {postsSubTab === 'videos' && <VideoGrid videos={videos} />}
+
+          {postsSubTab === 'confessions' && (
+            posts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <LayoutGrid size={32} color="#1c2333" />
+                <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+                  Your confessions will appear here.
+                </p>
+                <button
+                  onClick={onWriteConfession}
+                  className="text-[12px] text-[#e8607a] px-4 py-2 rounded-full mt-1 cursor-pointer"
+                  style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+                >
+                  Write your first confession →
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-[2px]">
+                {posts.map((post, idx) => (
+                  <PostCell key={post.id} post={post} onTap={() => onPostTap(idx)} />
+                ))}
+              </div>
+            )
+          )}
+
+          {postsSubTab === 'stories' && <StoriesGrid stories={stories} />}
+        </>
+      )}
     </div>
   )
 }
@@ -300,6 +581,7 @@ export default function CompanionProfilePage() {
   const [profileData, setProfileData]         = useState<CompanionProfileData | null>(null)
   const [loading, setLoading]                 = useState(true)
   const [activeTab, setActiveTab]             = useState<MainTab>('posts')
+  const [postsSubTab, setPostsSubTab]         = useState<PostsSubTab>('all')
   const [likedSubTab, setLikedSubTab]         = useState<LikedSubTab>('all')
   const [savedSubTab, setSavedSubTab]         = useState<SavedSubTab>('all')
   const [photoUploading, setPhotoUploading]   = useState(false)
@@ -580,58 +862,38 @@ export default function CompanionProfilePage() {
 
           <div className="pt-4 mb-8">
             {activeTab === 'posts' && (
-              postsLoading ? (
-                <div className="grid grid-cols-3 gap-[2px]">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} style={{ aspectRatio: '3/4', background: '#111620', borderRadius: 4 }}
-                      className="animate-pulse" />
-                  ))}
-                </div>
-              ) : posts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <LayoutGrid size={32} color="#1c2333" />
-                  <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
-                    Your confessions will appear here.
-                  </p>
-                  <button
-                    onClick={() => router.push('/create')}
-                    className="text-[12px] text-[#e8607a] px-4 py-2 rounded-full mt-1 cursor-pointer"
-                    style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
-                  >
-                    Write your first confession →
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-[2px]">
-                  {posts.map((post, idx) => (
-                    <PostCell
-                      key={post.id}
-                      post={post}
-                      onTap={() => {
-                        const storiesArray: ProfileViewerStory[] = posts.map(p => ({
-                          id:            p.id,
-                          title:         p.title,
-                          body:          '',
-                          rawBody:       p.excerpt ?? '',
-                          pageImageUrls: p.pageImageUrls,
-                          categoryName:  p.categories[0] ?? '',
-                          categories:    p.categories,
-                          moodTags:      [],
-                          likeCount:     p.likeCount,
-                          saveCount:     p.saveCount,
-                          commentCount:  p.commentCount,
-                          userHasLiked:  false,
-                          userHasSaved:  false,
-                          authorAlias:   session?.user?.alias ?? null,
-                          isAnonymous:   false,
-                          createdAt:     p.createdAt,
-                        }))
-                        openProfileViewer(storiesArray, idx, 'own')
-                      }}
-                    />
-                  ))}
-                </div>
-              )
+              <PostsTabContent
+                postsSubTab={postsSubTab}
+                setPostsSubTab={setPostsSubTab}
+                posts={posts}
+                postsLoading={postsLoading}
+                photos={profileData?.photos ?? []}
+                videos={profileData?.videos ?? []}
+                stories={profileData?.stories ?? []}
+                onPostTap={idx => {
+                  const storiesArray: ProfileViewerStory[] = posts.map(p => ({
+                    id:            p.id,
+                    title:         p.title,
+                    body:          '',
+                    rawBody:       p.excerpt ?? '',
+                    pageImageUrls: p.pageImageUrls,
+                    categoryName:  p.categories[0] ?? '',
+                    categories:    p.categories,
+                    moodTags:      [],
+                    likeCount:     p.likeCount,
+                    saveCount:     p.saveCount,
+                    commentCount:  p.commentCount,
+                    userHasLiked:  false,
+                    userHasSaved:  false,
+                    authorAlias:   session?.user?.alias ?? null,
+                    isAnonymous:   false,
+                    createdAt:     p.createdAt,
+                  }))
+                  openProfileViewer(storiesArray, idx, 'own')
+                }}
+                onWriteConfession={() => router.push('/create')}
+                authorAlias={session?.user?.alias ?? null}
+              />
             )}
 
             {activeTab === 'likes' && (
