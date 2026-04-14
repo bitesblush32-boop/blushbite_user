@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Link2, Loader2 } from 'lucide-react'
-import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { useStoryLikeMutation } from '@/hooks/useStoryLikeMutation'
@@ -38,7 +37,7 @@ interface Props {
 
 const StoryFeedCard = memo(function StoryFeedCard({ story, isActive }: Props) {
   const [currentPage, setCurrentPage] = useState(0)
-  const pages    = paginateText(story.rawBody ?? story.body)
+  const [totalPages, setTotalPages]   = useState(2)
   const gradient = getGradient(story.categoryName, story.moodTags)
 
   const lastTapRef    = useRef<number>(0)
@@ -202,10 +201,11 @@ const StoryFeedCard = memo(function StoryFeedCard({ story, isActive }: Props) {
         onClick={handleTap}
       >
         <StoryPageContent
-          pages={pages}
+          rawText={story.rawBody ?? story.body}
           pageImageUrls={story.pageImageUrls}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          onTotalPages={setTotalPages}
           storyId={story.id}
           gradient={gradient}
         />
@@ -260,9 +260,9 @@ const StoryFeedCard = memo(function StoryFeedCard({ story, isActive }: Props) {
         }}
       >
         {/* Page progress dots */}
-        {pages.length > 1 && (
+        {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: 5, alignItems: 'center' }}>
-            {pages.map((_, i) => (
+            {Array.from({ length: totalPages }).map((_, i) => (
               <div
                 key={i}
                 style={{

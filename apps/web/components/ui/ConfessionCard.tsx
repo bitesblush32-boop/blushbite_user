@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Link2, Loader2 } from 'lucide-react'
+import { Heart, Link2, Loader2, MoreVertical } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { paginateText } from '@/lib/paginateText'
+import { FONT_SIZE_LABELS, FONT_SIZE_PX } from '@/lib/paginateText'
+import type { FontSize } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { useLikeMutation } from '@/hooks/useLikeMutation'
@@ -58,27 +59,29 @@ interface Props {
 }
 
 const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) {
-  const [currentPage, setCurrentPage] = useState(0)
-  const pages    = paginateText(story.rawBody ?? story.body)
-  
-  // Debug: Check what data is actually available
-  const hasImages  = Array.isArray(story.pageImageUrls) && story.pageImageUrls.length > 0
-  const totalPages = (hasImages ? story.pageImageUrls.length : pages.length) + 1
-  
-  // useEffect(() => {
-  //   console.log('📖 ConfessionCard debug:', {
-  //     storyId: story.id,
-  //     hasImages,
-  //     imageCount: story.pageImageUrls?.length ?? 0,
-  //     imageUrls: story.pageImageUrls,
-  //     textPageCount: pages.length,
-  //     totalPages,
-  //     currentPage,
-  //     isActive,
-  //   })
-  // }, [story.id, hasImages, totalPages, currentPage, isActive, story.pageImageUrls, pages.length])
-  
+  const [currentPage, setCurrentPage]   = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsRef                     = useRef<HTMLDivElement>(null)
+
+  const confessionFontSize    = useUIStore(s => s.confessionFontSize)
+  const setConfessionFontSize = useUIStore(s => s.setConfessionFontSize)
+
+  // totalPages is reported back by StoryPageContent via onTotalPages callback
+  const [totalPages, setTotalPages] = useState(2)
+
   const gradient = getGradient(story.categoryName, story.moodTags)
+
+  // Close settings popover on outside click
+  useEffect(() => {
+    if (!settingsOpen) return
+    function onPointerDown(e: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [settingsOpen])
 
   const lastTapRef    = useRef<number>(0)
   const touchFiredRef = useRef(false)
@@ -311,12 +314,14 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         onClick={handleTap}
       >
         <StoryPageContent
-          pages={pages}
+          rawText={story.rawBody ?? story.body}
           pageImageUrls={story.pageImageUrls}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          onTotalPages={setTotalPages}
           storyId={story.id}
           gradient={gradient}
+          fontSize={confessionFontSize}
         />
 
         <AnimatePresence>
@@ -387,7 +392,7 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           </div>
         )}
 
-        {/* Like / comment / save / audio */}
+        {/* Like / comment / save / settings */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ActionPill
             storyId={story.id}
@@ -398,6 +403,91 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
             userHasSaved={story.userHasSaved}
             layout="horizontal"
           />
+
+          {/* 3-dot settings — font size */}
+          <div ref={settingsRef} style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={() => setSettingsOpen(o => !o)}
+              style={{
+                display:        'flex',
+                flexDirection:  'column',
+                alignItems:     'center',
+                gap:            3,
+                background:     'none',
+                border:         'none',
+                cursor:         'pointer',
+                padding:        0,
+              }}
+            >
+              <div style={{
+                width:          40,
+                height:         40,
+                borderRadius:   '50%',
+                background:     settingsOpen ? 'rgba(232,96,122,0.12)' : 'rgba(28,35,51,0.8)',
+                border:         `1px solid ${settingsOpen ? 'rgba(232,96,122,0.35)' : '#1c2333'}`,
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                transition:     'background 0.2s, border-color 0.2s',
+              }}>
+                <MoreVertical size={16} style={{ color: settingsOpen ? '#e8607a' : '#6b7280' }} />
+              </div>
+              <span style={{ fontSize: 10, color: '#6b7280', lineHeight: 1 }}>Size</span>
+            </motion.button>
+
+            {/* Font size popover */}
+            <AnimatePresence>
+              {settingsOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  style={{
+                    position:     'absolute',
+                    bottom:       'calc(100% + 8px)',
+                    right:        0,
+                    background:   '#161d2a',
+                    border:       '1px solid #1c2333',
+                    borderRadius: 12,
+                    padding:      '8px 4px',
+                    zIndex:       50,
+                    minWidth:     148,
+                    boxShadow:    '0 8px 24px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <p style={{ fontSize: 10, color: '#6b7280', padding: '2px 12px 8px', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                    Text size
+                  </p>
+                  {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => { setConfessionFontSize(s); setSettingsOpen(false) }}
+                      style={{
+                        display:    'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width:      '100%',
+                        padding:    '8px 12px',
+                        fontSize:   13,
+                        textAlign:  'left',
+                        color:      confessionFontSize === s ? '#e8607a' : '#eeeef0',
+                        background: confessionFontSize === s ? 'rgba(232,96,122,0.08)' : 'none',
+                        border:     'none',
+                        cursor:     'pointer',
+                        borderRadius: 8,
+                      }}
+                    >
+                      <span>{FONT_SIZE_LABELS[s]}</span>
+                      <span style={{ fontSize: FONT_SIZE_PX[s], color: confessionFontSize === s ? '#e8607a' : '#6b7280', lineHeight: 1 }}>Aa</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {isCompanion && (
             <motion.button
