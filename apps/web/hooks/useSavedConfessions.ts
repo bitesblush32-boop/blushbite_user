@@ -32,6 +32,8 @@ export function useSavedConfessions() {
     queryFn:          ({ pageParam }) => fetchSaved(pageParam as string | undefined),
     initialPageParam: undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime:        5 * 60 * 1000,
+    gcTime:           10 * 60 * 1000,
   })
 
   const items = query.data?.pages.flatMap(p => p.data) ?? []

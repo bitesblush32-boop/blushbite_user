@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Home, BookOpen, Users, BookHeart, User } from 'lucide-react'
 import { usePlayerStore } from '@/store/playerStore'
-import { useNotificationCount } from '@/hooks/useNotifications'
+import { useNotificationCountQ } from '@/hooks/useNotifications'
 
 const NAV_ITEMS = [
   { label: 'Home',        href: '/',            icon: Home },
@@ -18,7 +18,7 @@ export default function BottomNav() {
   const pathname      = usePathname()
   const router        = useRouter()
   const playerVisible = !!usePlayerStore((s) => s.audioId)
-  const unreadCount   = useNotificationCount()
+  const unreadCount   = useNotificationCountQ()
 
   return (
     <motion.div

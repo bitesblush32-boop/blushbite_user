@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -352,38 +353,35 @@ export default function ProfilePage() {
     if (isCompanion) router.replace('/companion/profile')
   }, [isCompanion, router])
 
-  const [profile, setProfile]               = useState<UserProfile | null>(null)
-  const [loading, setLoading]               = useState(true)
   const [tasteOpen, setTasteOpen]           = useState(false)
   const [activeTab, setActiveTab]           = useState<MainTab>('posts')
   const [likedSubTab, setLikedSubTab]       = useState<LikedSubTab>('all')
   const [savedSubTab, setSavedSubTab]       = useState<SavedSubTab>('all')
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError]       = useState<string | null>(null)
-
-  const [posts, setPosts]               = useState<UserPost[]>([])
-  const [postsLoading, setPostsLoading] = useState(true)
+  const [profileOverride, setProfileOverride] = useState<Partial<UserProfile> | null>(null)
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
+  const { data: profileData, isLoading: loading } = useQuery<{ data: UserProfile | null }>({
+    queryKey:  ['user', 'profile'],
+    queryFn:   () => fetch('/api/users/profile', { credentials: 'include' }).then(r => r.json()),
+    staleTime: 60_000,
+  })
+  const profile: UserProfile | null = profileOverride
+    ? { ...(profileData?.data ?? null as any), ...profileOverride } as UserProfile
+    : profileData?.data ?? null
+
   useEffect(() => {
-    fetch('/api/users/profile', { credentials: 'include' })
-      .then(r => r.json())
-      .then(({ data }) => {
-        setProfile(data ?? null)
-        setAvatarUrl(data?.avatar_url ?? null)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [setAvatarUrl])
+    if (profileData?.data?.avatar_url) setAvatarUrl(profileData.data.avatar_url)
+  }, [profileData?.data?.avatar_url, setAvatarUrl])
 
   // ── Fetch posts ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    fetch('/api/users/posts', { credentials: 'include' })
-      .then(r => r.json())
-      .then(({ data }) => setPosts(data ?? []))
-      .catch(() => {})
-      .finally(() => setPostsLoading(false))
-  }, [])
+  const { data: postsData, isLoading: postsLoading } = useQuery<{ data: UserPost[] }>({
+    queryKey:  ['user', 'posts'],
+    queryFn:   () => fetch('/api/users/posts', { credentials: 'include' }).then(r => r.json()),
+    staleTime: 60_000,
+  })
+  const posts = postsData?.data ?? []
 
   // ── Avatar upload ──────────────────────────────────────────────────────────
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -405,7 +403,7 @@ export default function ProfilePage() {
       const res  = await fetch('/api/users/avatar', { method: 'POST', body: formData })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
-      setProfile(p => p ? { ...p, avatar_url: json.data.avatarUrl } : p)
+      setProfileOverride(o => ({ ...(o ?? {}), avatar_url: json.data.avatarUrl }))
       setAvatarUrl(json.data.avatarUrl)
     } catch (err: unknown) {
       setAvatarError(err instanceof Error ? err.message : 'Upload failed.')
@@ -693,12 +691,12 @@ export default function ProfilePage() {
       <TasteDrawer
         open={tasteOpen}
         onClose={() => setTasteOpen(false)}
-        onSaved={(d: TasteData) => setProfile(p => p ? {
-          ...p,
+        onSaved={(d: TasteData) => setProfileOverride(o => ({
+          ...(o ?? {}),
           vibes:           d.vibes,
           gender:          d.gender,
           desired_genders: d.desiredGenders,
-        } : p)}
+        }))}
         defaults={{
           vibes:          profile?.vibes          ?? [],
           gender:         profile?.gender         ?? '',
