@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft, Check, X, Star, Video, Image as ImageIcon,
-  ShieldCheck, FileText, Globe, Clock, User
+  ShieldCheck, FileText, Globe, Clock, User, AlertTriangle,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -91,6 +91,62 @@ interface CompanionDossier {
     is_active: boolean | null
     sort_order: number | null
   }>
+}
+
+// ── Verification cross-check types ────────────────────────────────────────
+
+interface VerificationCrossCheck {
+  manually_entered: {
+    full_name:       string | null
+    date_of_birth:   string | null
+    country:         string | null
+    whatsapp_number: string | null
+  }
+  didit_extracted: {
+    id:                   string
+    extracted_first_name: string | null
+    extracted_last_name:  string | null
+    extracted_dob:        string | null
+    document_type:        string | null
+    document_number:      string | null
+    issuing_state:        string | null
+    liveness_score:       string | null
+    face_match_score:     string | null
+    overall_status:       string | null
+  } | null
+  verification_status: {
+    provider:              string | null
+    liveness_check_passed: boolean | null
+    verified_at:           string | null
+  } | null
+  is_verified: boolean
+}
+
+function matchStatus(a: string | null, b: string | null): 'match' | 'mismatch' | 'missing' {
+  if (!a || !b) return 'missing'
+  return a.toLowerCase().trim() === b.toLowerCase().trim() ? 'match' : 'mismatch'
+}
+
+function maskDocNumber(n: string | null): string {
+  if (!n) return '—'
+  if (n.length <= 5) return n
+  return n.slice(0, 3) + '•'.repeat(n.length - 5) + n.slice(-2)
+}
+
+function ScoreBar({ score, label }: { score: string | null; label: string }) {
+  const pct = score ? Math.min(100, Math.max(0, parseFloat(score))) : 0
+  const color = pct >= 80 ? '#34d399' : pct >= 50 ? '#c9a96e' : '#e8607a'
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 11, color: '#6b7280' }}>{label}</span>
+        <span style={{ fontSize: 11, color, fontWeight: 600 }}>{score ? `${parseFloat(score).toFixed(0)}%` : '—'}</span>
+      </div>
+      <div style={{ height: 4, borderRadius: 2, background: '#1c2333', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2, transition: 'width 0.6s ease' }} />
+      </div>
+    </div>
+  )
 }
 
 // ── Onboarding stages ──────────────────────────────────────────────────────
@@ -216,7 +272,7 @@ export default function AdminCompanionDetailPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  const [modal, setModal] = useState<'approve' | 'reject' | 'changes' | null>(null)
+  const [modal, setModal] = useState<'approve' | 'reject' | 'changes' | 'force_verify' | null>(null)
 
   const { data, isLoading, error } = useQuery<CompanionDossier>({
     queryKey: ['admin', 'companion', id],
@@ -226,6 +282,25 @@ export default function AdminCompanionDetailPage() {
       return res.json()
     },
     staleTime: 60_000,
+  })
+
+  const { data: verificationData } = useQuery<VerificationCrossCheck>({
+    queryKey: ['admin', 'companion', id, 'verification'],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/companions/${id}/verification`)
+      if (!res.ok) throw new Error('Failed')
+      return res.json()
+    },
+    staleTime: 60_000,
+    enabled: !!id,
+  })
+
+  const forceVerifyMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/companions/${id}/approve`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed')
+    },
+    onSuccess: () => { invalidate(); setModal(null) },
   })
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'companion', id] })
@@ -459,6 +534,137 @@ export default function AdminCompanionDetailPage() {
                   </dl>
                 )
               }
+            </div>
+
+            {/* ── Didit Cross-Verification ──────────────────────────── */}
+            <div className="bg-[#0d1117] border border-[#1c2333] rounded-[16px] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={14} color="#e8607a" />
+                  <span className="text-[13px] font-medium text-[#eeeef0]">ID Document Cross-Check</span>
+                </div>
+                {verificationData && (
+                  <span
+                    className="text-[11px] px-[10px] py-1 rounded-full"
+                    style={
+                      verificationData.is_verified
+                        ? { background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }
+                        : verificationData.didit_extracted
+                        ? { background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)', color: '#c9a96e' }
+                        : { background: 'rgba(107,114,128,0.1)', border: '1px solid #1c2333', color: '#6b7280' }
+                    }
+                  >
+                    {verificationData.is_verified ? 'Verified' : verificationData.didit_extracted ? 'Pending' : 'Not Verified'}
+                  </span>
+                )}
+              </div>
+
+              {!verificationData ? (
+                <div className="text-[12px] text-[#6b7280]">Loading…</div>
+              ) : !verificationData.didit_extracted ? (
+                <div
+                  className="flex items-center gap-3 rounded-[10px] p-4"
+                  style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.2)' }}
+                >
+                  <AlertTriangle size={14} color="#c9a96e" />
+                  <span className="text-[12px] text-[#c9a96e]">Companion has not completed Didit verification yet.</span>
+                </div>
+              ) : (() => {
+                const ext  = verificationData.didit_extracted
+                const ent  = verificationData.manually_entered
+                const enteredFullName = [ent.full_name].filter(Boolean).join(' ')
+                const extractedFullName = [ext.extracted_first_name, ext.extracted_last_name].filter(Boolean).join(' ')
+                const rows: Array<{ label: string; entered: string | null; extracted: string | null }> = [
+                  { label: 'First Name', entered: ent.full_name?.split(' ')[0] ?? null, extracted: ext.extracted_first_name },
+                  { label: 'Last Name',  entered: ent.full_name?.split(' ').slice(1).join(' ') || null, extracted: ext.extracted_last_name },
+                  { label: 'Date of Birth', entered: ent.date_of_birth, extracted: ext.extracted_dob },
+                  { label: 'Country / Issuing State', entered: ent.country, extracted: ext.issuing_state },
+                ]
+                return (
+                  <div className="flex flex-col gap-4">
+                    {/* Comparison table */}
+                    <div>
+                      {/* Header */}
+                      <div className="grid grid-cols-3 gap-2 mb-2 px-1">
+                        <span className="text-[10px] uppercase tracking-[0.06em] text-[#6b7280]">Field</span>
+                        <span className="text-[10px] uppercase tracking-[0.06em] text-[#6b7280]">Entered by companion</span>
+                        <span className="text-[10px] uppercase tracking-[0.06em] text-[#6b7280]">Extracted from ID</span>
+                      </div>
+                      <div className="flex flex-col gap-[6px]">
+                        {rows.map(row => {
+                          const status = matchStatus(row.entered, row.extracted)
+                          return (
+                            <div
+                              key={row.label}
+                              className="grid grid-cols-3 gap-2 items-center px-3 py-[10px] rounded-[10px]"
+                              style={{
+                                background: status === 'mismatch' ? 'rgba(232,96,122,0.05)' : '#111620',
+                                border: `1px solid ${status === 'mismatch' ? 'rgba(232,96,122,0.25)' : '#1c2333'}`,
+                              }}
+                            >
+                              <span className="text-[11px] text-[#6b7280]">{row.label}</span>
+                              <span
+                                className="text-[12px]"
+                                style={{ color: status === 'mismatch' ? '#e8607a' : '#eeeef0' }}
+                              >
+                                {row.entered ?? '—'}
+                              </span>
+                              <span className="flex items-center gap-[6px] text-[12px]"
+                                style={{ color: status === 'mismatch' ? '#e8607a' : status === 'match' ? '#34d399' : '#eeeef0' }}>
+                                {row.extracted ?? '—'}
+                                {status === 'match' && <Check size={11} color="#34d399" />}
+                                {status === 'mismatch' && <AlertTriangle size={11} color="#e8607a" />}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Scores */}
+                    <div className="flex flex-col gap-3">
+                      <ScoreBar score={ext.liveness_score}   label="Liveness score" />
+                      <ScoreBar score={ext.face_match_score} label="Face match score" />
+                    </div>
+
+                    {/* Extra chips */}
+                    <div className="flex flex-wrap gap-2">
+                      {ext.document_type && (
+                        <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                          {ext.document_type}
+                        </span>
+                      )}
+                      {ext.document_number && (
+                        <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03] font-mono">
+                          {maskDocNumber(ext.document_number)}
+                        </span>
+                      )}
+                      {ext.issuing_state && (
+                        <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                          {ext.issuing_state}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Force verify */}
+                    {!verificationData.is_verified && (
+                      <button
+                        onClick={() => setModal('force_verify')}
+                        className="text-[12px] self-start px-4 py-[8px] rounded-[10px] cursor-pointer transition-all"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(232,96,122,0.35)',
+                          color: '#e8607a',
+                        }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(232,96,122,0.08)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                      >
+                        Force Verify
+                      </button>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           </div>
 
@@ -737,6 +943,17 @@ export default function AdminCompanionDetailPage() {
             confirmColor="#ef4444"
             showReason
             onConfirm={reason => rejectMutation.mutate(reason)}
+            onCancel={() => setModal(null)}
+          />
+        )}
+        {modal === 'force_verify' && (
+          <ConfirmModal
+            key="force_verify"
+            title="Force verify companion"
+            body="This will manually mark the companion as verified regardless of Didit status. Only do this if you have independently confirmed their identity."
+            confirmLabel="Force Verify"
+            confirmColor="#e8607a"
+            onConfirm={() => forceVerifyMutation.mutate()}
             onCancel={() => setModal(null)}
           />
         )}

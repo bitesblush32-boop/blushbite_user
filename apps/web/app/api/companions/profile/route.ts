@@ -10,6 +10,24 @@ import {
 } from '@/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 
+/** Upsert a bare companion_profiles row if one doesn't exist yet. */
+async function getOrCreateProfile(companionId: string) {
+  let profile = await db.query.companionProfiles.findFirst({
+    where: eq(companionProfiles.companion_id, companionId),
+  })
+  if (!profile) {
+    const [created] = await db
+      .insert(companionProfiles)
+      .values({ companion_id: companionId })
+      .onConflictDoNothing()
+      .returning()
+    profile = created ?? await db.query.companionProfiles.findFirst({
+      where: eq(companionProfiles.companion_id, companionId),
+    })
+  }
+  return profile!
+}
+
 export async function GET() {
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -148,10 +166,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true })
   }
 
-  const profile = await db.query.companionProfiles.findFirst({
-    where: eq(companionProfiles.companion_id, companion.id),
-  })
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  const profile = await getOrCreateProfile(companion.id)
+  if (!profile) return NextResponse.json({ error: 'Profile not found — please complete onboarding first.' }, { status: 404 })
 
   // ── Section B: public profile ─────────────────────────────────────────────
   if (section === 'B') {

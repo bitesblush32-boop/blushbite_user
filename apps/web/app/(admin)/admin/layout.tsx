@@ -16,6 +16,7 @@ import {
   PenLine,
   CalendarDays,
   Tags,
+  Link2,
   ExternalLink,
   Menu,
   X,
@@ -26,6 +27,7 @@ interface BadgeCounts {
   pending_stories:    number
   pending_audio:      number
   open_bookings:      number
+  pending_bridges:    number
 }
 
 function NavGroup({ label }: { label: string }) {
@@ -103,7 +105,7 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
     queryKey: ['admin', 'counts'],
     queryFn:  () => fetch('/api/admin/stats/counts').then(r => r.json()),
     refetchInterval: 30_000,
-    initialData: { pending_companions: 0, pending_stories: 0, pending_audio: 0, open_bookings: 0 },
+    initialData: { pending_companions: 0, pending_stories: 0, pending_audio: 0, open_bookings: 0, pending_bridges: 0 },
   })
 
   return (
@@ -140,8 +142,9 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
 
         {/* Operations */}
         <NavGroup label="Operations" />
-        <NavItem href="/admin/bookings" icon={CalendarDays} label="Bookings"    badge={counts?.open_bookings} onClick={onNav} />
-        <NavItem href="/admin/tags"     icon={Tags}         label="Tag Library"                               onClick={onNav} />
+        <NavItem href="/admin/bookings" icon={CalendarDays} label="Bookings"       badge={counts?.open_bookings}   onClick={onNav} />
+        <NavItem href="/admin/bridges"  icon={Link2}        label="Story Bridges"  badge={counts?.pending_bridges} onClick={onNav} />
+        <NavItem href="/admin/tags"     icon={Tags}         label="Tag Library"                                    onClick={onNav} />
       </nav>
 
       {/* Separator */}

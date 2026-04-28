@@ -9,6 +9,7 @@ declare module 'next-auth' {
       platform_role?: 'dreamer' | 'companion' | 'admin'
       companion_stage?: number
       companion_is_live?: boolean
+      companion_legal_signed?: boolean
     } & DefaultSession['user']
     error?: string
   }
@@ -19,6 +20,7 @@ declare module 'next-auth' {
     platform_role?: 'dreamer' | 'companion' | 'admin'
     companion_stage?: number
     companion_is_live?: boolean
+    companion_legal_signed?: boolean
   }
 }
 
@@ -30,5 +32,6 @@ declare module 'next-auth/jwt' {
     platform_role?: string
     companion_stage?: number
     companion_is_live?: boolean
+    companion_legal_signed?: boolean
   }
 }

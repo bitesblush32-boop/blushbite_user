@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, MoreHorizontal, Heart } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
-import { paginateText } from '@/lib/paginateText'
 import { StoryPageContent } from './StoryPageContent'
 import { ActionPill } from './ActionPill'
 import { useLikeMutation } from '@/hooks/useLikeMutation'
@@ -31,7 +30,7 @@ interface ViewerCardProps {
 
 const ViewerCard = memo(function ViewerCard({ story, onOpenMenu, onClose }: ViewerCardProps) {
   const [currentPage, setCurrentPage] = useState(0)
-  const pages    = paginateText(story.rawBody ?? '')
+  const [totalPages, setTotalPages]   = useState(2)
   const gradient = GRADIENT_MAP[story.categoryName] ?? GRADIENT_MAP['default']
 
   const lastTapRef    = useRef<number>(0)
@@ -215,10 +214,13 @@ const ViewerCard = memo(function ViewerCard({ story, onOpenMenu, onClose }: View
         onClick={handleTap}
       >
         <StoryPageContent
-          pages={pages}
+          rawText={story.rawBody ?? ''}
           pageImageUrls={story.pageImageUrls}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          onTotalPages={setTotalPages}
+          storyId={story.id}
+          gradient={gradient}
         />
 
         <AnimatePresence>
@@ -269,9 +271,9 @@ const ViewerCard = memo(function ViewerCard({ story, onOpenMenu, onClose }: View
         gap:           8,
       }}>
         {/* Page progress dots */}
-        {pages.length > 1 && (
+        {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: 5, alignItems: 'center' }}>
-            {pages.map((_, i) => (
+            {Array.from({ length: totalPages }).map((_, i) => (
               <div key={i} style={{
                 width:        i === currentPage ? 18 : 5,
                 height:       5,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { companions, companionProfiles, stories, audioRecordings, bookingRequests } from '@/db/schema'
+import { companions, companionProfiles, stories, audioRecordings, bookingRequests, companionStoryBridges } from '@/db/schema'
 import { eq, and, isNull, sql } from 'drizzle-orm'
 
 export async function GET() {
@@ -16,6 +16,7 @@ export async function GET() {
     [pendingStoriesRow],
     [pendingAudioRow],
     [openBookingsRow],
+    [pendingBridgesRow],
   ] = await Promise.all([
 
     db.select({ n: sql<number>`COUNT(*)::int` })
@@ -50,6 +51,10 @@ export async function GET() {
     db.select({ n: sql<number>`COUNT(*)::int` })
       .from(bookingRequests)
       .where(eq(bookingRequests.status, 'pending')),
+
+    db.select({ n: sql<number>`COUNT(*)::int` })
+      .from(companionStoryBridges)
+      .where(eq(companionStoryBridges.status, 'pending')),
   ])
 
   return NextResponse.json({
@@ -57,5 +62,6 @@ export async function GET() {
     pending_stories:    pendingStoriesRow?.n    ?? 0,
     pending_audio:      pendingAudioRow?.n      ?? 0,
     open_bookings:      openBookingsRow?.n      ?? 0,
+    pending_bridges:    pendingBridgesRow?.n    ?? 0,
   })
 }

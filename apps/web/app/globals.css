@@ -335,3 +335,11 @@ body.canvas-mode {
     color: #eeeef0;
   }
 }
+
+/* ── DRIVER.JS DARK THEME FOR BLUSHBITE ─────────────────── */
+.driver-popover { background: #111620 !important; border: 1px solid #e8607a !important; border-radius: 16px !important; color: #eeeef0 !important; }
+.driver-popover-title { color: #eeeef0 !important; font-family: 'Playfair Display', serif !important; font-size: 18px !important; }
+.driver-popover-description { color: #6b7280 !important; font-size: 13px !important; line-height: 1.6 !important; }
+.driver-popover-next-btn { background: #e8607a !important; color: white !important; border: none !important; border-radius: 20px !important; }
+.driver-popover-prev-btn { color: #e8607a !important; border: 1px solid rgba(232,96,122,0.3) !important; border-radius: 20px !important; }
+.driver-popover-progress-text { color: #6b7280 !important; font-size: 11px !important; }

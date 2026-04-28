@@ -46,52 +46,45 @@ export default auth((req) => {
   }
 
   // Gate 2 — session but onboarding not complete → onboarding
-  // Check JWT flag OR bb_onboarded cookie (set by complete-onboarding after DB write)
   const user       = req.auth.user as any
-  // Cookie stores the user's ID — must match current session so a deleted+recreated
-  // account (new ID) doesn't inherit the previous user's onboarded state.
   const cookieDone = req.cookies.get('bb_onboarded')?.value === user?.id
   const onboarded  = user?.onboarding_complete || cookieDone
 
-  // Skip onboarding gate for API routes and the onboarding page itself
   if (!onboarded && path !== '/auth/onboarding' && !path.startsWith('/api/')) {
     return Response.redirect(new URL('/auth/onboarding', nextUrl))
   }
 
-  // Gate: Admin users → /admin only, block access to dreamer routes
+  // Gate: Admin users → /admin only
   const token = req.auth?.user as any
   if (token?.platform_role === 'admin') {
     if (!path.startsWith('/admin') && !path.startsWith('/api/admin') && !path.startsWith('/api/auth')) {
       return Response.redirect(new URL('/admin', nextUrl))
     }
-    return // let admin through to /admin/* freely
+    return
   }
 
-  // Gate 4 — Companion routing (platform_role === 'companion')
-  if (user?.platform_role === 'companion' && !path.startsWith('/api/')) {
-    const stage  = (user.companion_stage  as number)  ?? 1
-    const isLive = (user.companion_is_live as boolean) ?? false
+  // Gate 4 — Companion routing (platform_role === 'companion' or 'dream')
+  if (token?.platform_role === 'companion' || token?.platform_role === 'dream') {
+    const legalSigned = (token.companion_legal_signed as boolean) ?? false
 
-    const companionPublic = [
-      '/companion/welcome',
-      '/companion/onboarding/profile',
-      '/companion/onboarding/legal',
-      '/companion/onboarding/submitted',
-    ]
-    const isCompanionPublic = companionPublic.some(p => path.startsWith(p))
+    // Always pass API routes through
+    if (path.startsWith('/api/') || path.startsWith('/auth/')) return
 
-    if (!isLive) {
-      if (stage === 1 && !isCompanionPublic) {
-        return Response.redirect(new URL('/companion/welcome', nextUrl))
-      }
-      if (stage === 2 && !path.startsWith('/companion/onboarding/legal')) {
-        return Response.redirect(new URL('/companion/onboarding/legal', nextUrl))
-      }
-      if (stage === 3 && !path.startsWith('/companion/onboarding/submitted')) {
-        return Response.redirect(new URL('/companion/onboarding/submitted', nextUrl))
-      }
+    // Companion-specific bare routes (no nav chrome)
+    const bareRoutes = ['/companion/legal', '/companion/onboarding/legal']
+    const isBare = bareRoutes.some(r => path.startsWith(r))
+
+    // If legal not signed → force to /companion/legal
+    if (!legalSigned && !isBare) {
+      return Response.redirect(new URL('/companion/legal', nextUrl))
     }
-    // is_live = true → allow through to /companion/dashboard etc.
+
+    // Redirect /profile → /companion/profile so companions never see the dreamer profile page
+    if (path === '/profile') {
+      return Response.redirect(new URL('/companion/profile', nextUrl))
+    }
+
+    // Legal signed → companions access ALL routes freely
     return
   }
 

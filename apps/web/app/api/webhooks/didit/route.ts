@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { db } from '@/db'
-import { companions, companionVerifications, companionOnboardingProgress } from '@/db/schema'
+import { companions, companionVerifications, companionOnboardingProgress, diditExtractedData } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 // ─── POST /api/webhooks/didit ──────────────────────────────────────────────────
@@ -122,6 +122,32 @@ export async function POST(req: NextRequest) {
           ],
           set: { status: 'completed', completed_at: now },
         })
+
+      // Store Didit extracted ID data for admin cross-verification
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const idData         = (payload?.decision as any)?.id_verification
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const livenessData   = (payload?.decision as any)?.liveness
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const faceMatchData  = (payload?.decision as any)?.face_match
+
+      await db.insert(diditExtractedData).values({
+        companion_id:         verification.companion_id,
+        session_id:           session_id,
+        extracted_first_name: idData?.first_name    ?? null,
+        extracted_last_name:  idData?.last_name     ?? null,
+        extracted_dob:        idData?.date_of_birth ?? null,
+        document_type:        idData?.document_type ?? null,
+        document_number:      idData?.document_number ?? null,
+        issuing_state:        idData?.issuing_state ?? null,
+        liveness_score:       livenessData?.score?.toString()  ?? null,
+        face_match_score:     faceMatchData?.score?.toString() ?? null,
+        overall_status:       payload?.status ?? null,
+        raw_payload:          payload,
+      }).onConflictDoUpdate({
+        target: diditExtractedData.session_id,
+        set: { overall_status: payload?.status, raw_payload: payload },
+      })
     }
   }
 
