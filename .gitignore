@@ -15,7 +15,7 @@ documentation/*
 apps/web/.env
 apps/web/.env.local
 apps/web/.env.*.local
-
+graphify-out/
 # Drizzle migrations output
 apps/web/db/migrations/
 
