@@ -2,7 +2,7 @@
 node_modules/
 .pnpm-store/
 tsconfig.tsbuildinfo
-
+graphify-out/
 # Next.js
 apps/web/.next/
 apps/web/out/
@@ -55,3 +55,4 @@ apps/worker/src/classify_progress.txt
 apps/worker/scraped_stories_enriched.ndjson
 .claude/settings.local.json
 apps/web/tsconfig.tsbuildinfo
+.graphify_uncached.txt
