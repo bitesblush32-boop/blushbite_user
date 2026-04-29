@@ -14,6 +14,7 @@ const BookingModal      = dynamic(() => import('@/components/ui/BookingModal'), 
 const BottomNav         = dynamic(() => import('@/components/layout/BottomNav'),     { ssr: false })
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
 const LocationBanner    = dynamic(() => import('@/components/ui/LocationBanner'),    { ssr: false })
+const TourOverlay       = dynamic(() => import('@/components/ui/TourOverlay').then(m => ({ default: m.TourOverlay })), { ssr: false })
 
 export default function DreamerLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,6 +50,7 @@ export default function DreamerLayout({ children }: { children: React.ReactNode 
       <ProfilePostViewer />
       <BottomNav />
       <LocationBanner />
+      <TourOverlay />
     </div>
   )
 }

@@ -38,8 +38,10 @@ interface CompanionProfileData {
   videos:       { id: string; url: string; thumbnail_url: string | null; duration_seconds: number | null; is_approved: boolean }[]
   stories:      { id: string; title: string | null; moderation_status: string; like_count: number; created_at: string }[]
   session_cards: { id: string; title: string; price: string | null; currency: string; duration_minutes: number | null }[]
-  selected_vibe_tag_ids: number[]
-  available_vibe_tags:   { id: number; name: string }[]
+  selected_vibe_tag_ids:    number[]
+  available_vibe_tags:      { id: number; name: string }[]
+  selected_fantasy_tag_ids: number[]
+  available_fantasy_tags:   { id: number; name: string; category_id?: number }[]
 }
 
 interface UserPost {
@@ -652,6 +654,9 @@ export default function CompanionProfilePage() {
   const vibes    = profileData?.available_vibe_tags
     .filter(t => profileData.selected_vibe_tag_ids.includes(t.id))
     .map(t => t.name) ?? []
+  const desires  = profileData?.available_fantasy_tags
+    .filter(t => profileData.selected_fantasy_tag_ids.includes(t.id))
+    .map(t => t.name) ?? []
   const primaryPhoto = profileData?.photos?.find(p => p.is_primary) ?? profileData?.photos?.[0]
   const completeness = profileData?.profile?.profile_completeness ?? 0
 
@@ -840,6 +845,36 @@ export default function CompanionProfilePage() {
               </div>
             )}
           </div>
+
+          {/* ── Section 3b: Desires (fantasy tags) ──────────── */}
+          {desires.length > 0 && (
+            <div className="mb-7">
+              <div className="flex items-center justify-between mb-4">
+                <span style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  my desires
+                </span>
+                <button
+                  onClick={() => router.push('/companion/profile/settings')}
+                  className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
+                  style={{ fontSize: 12, color: '#e8607a', padding: 0 }}
+                >
+                  <Settings2 size={11} />
+                  Edit
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {desires.map(t => (
+                  <span
+                    key={t}
+                    className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                    style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ height: 1, background: '#1c2333', marginBottom: 0 }} />
 

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,6 +12,7 @@ import Image from 'next/image'
 import {
   Camera, Edit2, CheckCircle2, X, Plus, Loader2, Star,
   Phone, BookOpen, Film, PenLine, Image as ImageIcon,
+  ChevronLeft, ChevronRight, User, Sparkles, LayoutGrid, ShieldCheck, Palette,
 } from 'lucide-react'
 
 const DiditVerify = dynamic(() => import('@/components/ui/DiditVerify'), { ssr: false })
@@ -182,6 +183,16 @@ async function patchSection(section: string, body: Record<string, unknown>) {
   return res.json()
 }
 
+// ─── Wizard steps definition ──────────────────────────────────────────────────
+
+const WIZARD_STEPS = [
+  { label: 'Profile',     icon: User,        desc: 'Name, bio, city'         },
+  { label: 'Appearance',  icon: Palette,      desc: 'Photos, looks, videos'   },
+  { label: 'Services',    icon: LayoutGrid,   desc: 'Session cards & contact' },
+  { label: 'Vibe',        icon: Sparkles,     desc: 'Tags & fantasy style'    },
+  { label: 'Verify',      icon: ShieldCheck,  desc: 'Identity & content'      },
+]
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CompanionProfilePage() {
@@ -189,13 +200,8 @@ export default function CompanionProfilePage() {
   const [data,    setData]    = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving,  setSaving]  = useState(false)
+  const [step,    setStep]    = useState(0)
   const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null)
-
-  // Section refs for scroll-to
-  const photosRef       = useRef<HTMLDivElement>(null)
-  const videosRef       = useRef<HTMLDivElement>(null)
-  const confessionsRef  = useRef<HTMLDivElement>(null)
-  const storiesRef      = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetch('/api/companions/profile/full', { credentials: 'include' })
@@ -205,20 +211,33 @@ export default function CompanionProfilePage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleSave = async () => {
-    if (!pendingSave || saving) return
-    setSaving(true)
-    try {
-      await pendingSave()
-      setPendingSave(null)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const updateData = useCallback((patch: Partial<ProfileData>) => {
     setData(prev => prev ? { ...prev, ...patch } : prev)
   }, [])
+
+  const flushSave = async () => {
+    if (!pendingSave || saving) return
+    setSaving(true)
+    try { await pendingSave(); setPendingSave(null) } finally { setSaving(false) }
+  }
+
+  const goNext = async () => {
+    await flushSave()
+    setStep(s => Math.min(s + 1, WIZARD_STEPS.length - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const goBack = async () => {
+    await flushSave()
+    setStep(s => Math.max(s - 1, 0))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const goToStep = async (idx: number) => {
+    await flushSave()
+    setStep(idx)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   if (loading) {
     return (
@@ -236,184 +255,275 @@ export default function CompanionProfilePage() {
     )
   }
 
-  const availDot = AVAILABILITY.find(a => a.value === data.profile.availability_status)?.dot ?? '#6b7280'
-  const availLabel = AVAILABILITY.find(a => a.value === data.profile.availability_status)?.label ?? 'Offline'
+  const isLast = step === WIZARD_STEPS.length - 1
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', paddingTop: 95, paddingBottom: 80 }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', paddingTop: 95, paddingBottom: 120 }}>
 
-      {/* ── Sticky top bar ───────────────────────────────────────────────────── */}
+      {/* ── Sticky wizard header ─────────────────────────────────────────────── */}
       <div style={{
-        position: 'sticky', top: 75, zIndex: 50, background: 'rgba(10,12,20,0.95)',
-        backdropFilter: 'blur(20px)', borderBottom: '1px solid #1c2333',
-        padding: '12px 0', marginBottom: 24,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'sticky', top: 75, zIndex: 50,
+        background: 'rgba(10,12,20,0.97)', backdropFilter: 'blur(24px)',
+        borderBottom: '1px solid #1c2333', paddingBottom: 0,
       }}>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: '#eeeef0' }}>My Profile</span>
-        <button
-          onClick={handleSave}
-          disabled={!pendingSave || saving}
-          style={{
-            fontSize: 13, fontWeight: 500, padding: '8px 20px', borderRadius: 20,
-            background: pendingSave && !saving ? '#e8607a' : '#161d2a',
-            color:      pendingSave && !saving ? '#fff' : '#6b7280',
-            border:     pendingSave && !saving ? 'none' : '1px solid #1c2333',
-            cursor:     pendingSave && !saving ? 'pointer' : 'not-allowed',
-            display: 'flex', alignItems: 'center', gap: 6,
-            transition: 'all 0.2s',
-          }}
-        >
-          {saving && <Loader2 size={14} className="animate-spin" />}
-          Save
-        </button>
-      </div>
-
-      {/* ── Album tabs ───────────────────────────────────────────────────────── */}
-      <div style={{
-        position: 'sticky', top: 56, zIndex: 40, background: 'rgba(10,12,20,0.95)',
-        backdropFilter: 'blur(20px)', borderBottom: '1px solid #1c2333',
-        marginBottom: 24, marginLeft: -32, marginRight: -32, paddingLeft: 32, paddingRight: 32,
-      }}>
-        <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[
-            { label: 'Photos',      icon: ImageIcon,  ref: photosRef       },
-            { label: 'Videos',      icon: Film,       ref: videosRef       },
-            { label: 'Confessions', icon: PenLine,    ref: confessionsRef  },
-            { label: 'Stories',     icon: BookOpen,   ref: storiesRef      },
-          ].map(({ label, icon: Icon, ref: sRef }) => (
+        {/* Title row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0 10px' }}>
+          <div>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: '#eeeef0' }}>
+              {WIZARD_STEPS[step].label}
+            </span>
+            <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 10 }}>
+              {WIZARD_STEPS[step].desc}
+            </span>
+          </div>
+          {pendingSave && (
             <button
-              key={label}
-              onClick={() => sRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              onClick={flushSave}
+              disabled={saving}
               style={{
-                flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
-                padding: '12px 16px', fontSize: 12, fontWeight: 500,
-                color: '#6b7280', background: 'transparent', border: 'none',
-                borderBottom: '2px solid transparent', cursor: 'pointer',
-                transition: 'color 0.15s',
+                fontSize: 12, fontWeight: 500, padding: '6px 16px', borderRadius: 20,
+                background: '#e8607a', color: '#fff', border: 'none',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 5, opacity: saving ? 0.6 : 1,
+                transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#eeeef0' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#6b7280' }}
             >
-              <Icon size={13} />
-              {label}
+              {saving && <Loader2 size={12} className="animate-spin" />}
+              Save
             </button>
-          ))}
+          )}
+        </div>
+
+        {/* Step progress bar */}
+        <div style={{ display: 'flex', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {WIZARD_STEPS.map((s, i) => {
+            const Icon = s.icon
+            const isActive    = i === step
+            const isCompleted = i < step
+            return (
+              <button
+                key={i}
+                onClick={() => goToStep(i)}
+                style={{
+                  flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '10px 14px', fontSize: 12, fontWeight: isActive ? 500 : 400,
+                  color: isActive ? '#e8607a' : isCompleted ? '#eeeef0' : '#6b7280',
+                  background: 'transparent', border: 'none',
+                  borderBottom: isActive ? '2px solid #e8607a' : '2px solid transparent',
+                  cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isCompleted
+                  ? <CheckCircle2 size={12} style={{ color: '#34d399', flexShrink: 0 }} />
+                  : <Icon size={12} style={{ flexShrink: 0 }} />
+                }
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Thin progress fill bar */}
+        <div style={{ height: 2, background: '#1c2333' }}>
+          <div style={{
+            height: '100%',
+            width: `${((step + 1) / WIZARD_STEPS.length) * 100}%`,
+            background: 'linear-gradient(90deg, #e8607a, rgba(232,96,122,0.4))',
+            transition: 'width 0.35s ease',
+          }} />
         </div>
       </div>
 
-      {/* ── Section A: Profile Header ─────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 20 }}>
-        <ProfileHeaderSection
-          data={data}
-          onAvatarUpload={url => updateData({ photos: [{ id: 'temp', url, storage_key: '', is_primary: true, is_approved: false, sort_order: 0 }, ...data.photos] })}
-          onAvailabilityChange={async status => {
-            updateData({ profile: { ...data.profile, availability_status: status } })
-            await patchSection('availability', { availability_status: status })
+
+      {/* ── Step content ─────────────────────────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          style={{ paddingTop: 24 }}
+        >
+          {/* Step 0 — Profile */}
+          {step === 0 && (
+            <>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 20 }}>
+                <ProfileHeaderSection
+                  data={data}
+                  onAvatarUpload={url => updateData({ photos: [{ id: 'temp', url, storage_key: '', is_primary: true, is_approved: false, sort_order: 0 }, ...data.photos] })}
+                  onAvailabilityChange={async status => {
+                    updateData({ profile: { ...data.profile, availability_status: status } })
+                    await patchSection('availability', { availability_status: status })
+                  }}
+                />
+              </motion.div>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <BasicInfoSection
+                  data={data}
+                  onRegisterSave={fn => setPendingSave(() => fn)}
+                  onSaved={updates => {
+                    updateData({
+                      companion: { ...data.companion, name: updates.name ?? data.companion.name },
+                      profile:   { ...data.profile, bio: updates.bio ?? data.profile.bio, tagline: updates.tagline ?? data.profile.tagline, city: updates.city ?? data.profile.city },
+                    })
+                    setPendingSave(null)
+                  }}
+                />
+              </motion.div>
+            </>
+          )}
+
+          {/* Step 1 — Appearance */}
+          {step === 1 && (
+            <>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <PhysicalSection
+                  data={data}
+                  onChange={patch => updateData({ profile: { ...data.profile, ...patch } })}
+                />
+              </motion.div>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <PhotosSection
+                  photos={data.photos}
+                  onAdd={photo => updateData({ photos: [...data.photos, photo] })}
+                  onDelete={id => updateData({ photos: data.photos.filter(p => p.id !== id) })}
+                  onSetPrimary={id => updateData({ photos: data.photos.map(p => ({ ...p, is_primary: p.id === id })) })}
+                />
+              </motion.div>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <VideosSection
+                  videos={data.videos}
+                  onAdd={video => updateData({ videos: [...data.videos, video] })}
+                  onDelete={id => updateData({ videos: data.videos.filter(v => v.id !== id) })}
+                />
+              </motion.div>
+            </>
+          )}
+
+          {/* Step 2 — Services */}
+          {step === 2 && (
+            <>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <ServicesSection
+                  data={data}
+                  onRegisterSave={fn => setPendingSave(() => fn)}
+                  onSaved={cards => { updateData({ session_cards: cards }); setPendingSave(null) }}
+                />
+              </motion.div>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <WhatsAppSection
+                  data={data}
+                  onRegisterSave={fn => setPendingSave(() => fn)}
+                  onSaved={num => {
+                    updateData({
+                      companion: { ...data.companion, whatsapp_number: num },
+                      profile:   { ...data.profile, whatsapp_number: num },
+                    })
+                    setPendingSave(null)
+                  }}
+                />
+              </motion.div>
+            </>
+          )}
+
+          {/* Step 3 — Vibe */}
+          {step === 3 && (
+            <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+              <TagsSection
+                data={data}
+                onChange={patch => updateData(patch)}
+              />
+            </motion.div>
+          )}
+
+          {/* Step 4 — Verify */}
+          {step === 4 && (
+            <>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <VerificationSection
+                  verification={data.verification}
+                  onVerified={() => updateData({ verification: { ...data.verification, provider_status: 'approved', verified_at: new Date().toISOString() } })}
+                />
+              </motion.div>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <PostsSection
+                  title="Confessions"
+                  stories={data.stories}
+                  onWrite={() => router.push('/create')}
+                  icon={PenLine}
+                />
+              </motion.div>
+              <motion.div variants={sectionVariants} initial="hidden" animate="show" style={{ marginBottom: 16 }}>
+                <PostsSection
+                  title="Stories"
+                  stories={data.stories}
+                  onWrite={() => router.push('/create?type=story')}
+                  icon={BookOpen}
+                />
+              </motion.div>
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* ── Wizard navigation ────────────────────────────────────────────────── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 60,
+        background: 'rgba(10,12,20,0.97)', backdropFilter: 'blur(20px)',
+        borderTop: '1px solid #1c2333',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 24px', paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+      }}>
+        {/* Back */}
+        <button
+          onClick={goBack}
+          disabled={step === 0 || saving}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 13, color: step === 0 ? '#2a3040' : '#6b7280',
+            background: 'none', border: 'none', cursor: step === 0 ? 'default' : 'pointer',
+            transition: 'color 0.15s',
           }}
-        />
-      </motion.div>
+        >
+          <ChevronLeft size={16} />
+          Back
+        </button>
 
-      {/* ── Section B: Basic Info ─────────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <BasicInfoSection
-          data={data}
-          onRegisterSave={fn => setPendingSave(() => fn)}
-          onSaved={updates => {
-            updateData({
-              companion: { ...data.companion, name: updates.name ?? data.companion.name },
-              profile:   { ...data.profile,   bio: updates.bio ?? data.profile.bio, tagline: updates.tagline ?? data.profile.tagline, city: updates.city ?? data.profile.city },
-            })
-            setPendingSave(null)
+        {/* Step counter */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {WIZARD_STEPS.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i === step ? 20 : 6, height: 6, borderRadius: 999,
+                background: i === step ? '#e8607a' : i < step ? '#34d399' : '#1c2333',
+                transition: 'width 0.2s ease, background 0.2s ease',
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Next / Finish */}
+        <button
+          onClick={isLast ? flushSave : goNext}
+          disabled={saving}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 13, fontWeight: 500,
+            padding: '10px 22px', borderRadius: 24,
+            background: '#e8607a', color: '#fff', border: 'none',
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.7 : 1,
+            transition: 'opacity 0.15s',
           }}
-        />
-      </motion.div>
-
-      {/* ── Section C: WhatsApp ───────────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <WhatsAppSection
-          data={data}
-          onRegisterSave={fn => setPendingSave(() => fn)}
-          onSaved={num => {
-            updateData({
-              companion: { ...data.companion, whatsapp_number: num },
-              profile:   { ...data.profile,   whatsapp_number: num },
-            })
-            setPendingSave(null)
-          }}
-        />
-      </motion.div>
-
-      {/* ── Section D: Physical Profile ───────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <PhysicalSection
-          data={data}
-          onChange={patch => updateData({ profile: { ...data.profile, ...patch } })}
-        />
-      </motion.div>
-
-      {/* ── Section E: Tags ───────────────────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <TagsSection
-          data={data}
-          onChange={patch => updateData(patch)}
-        />
-      </motion.div>
-
-      {/* ── Section F: Services & Rates ───────────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <ServicesSection
-          data={data}
-          onRegisterSave={fn => setPendingSave(() => fn)}
-          onSaved={cards => { updateData({ session_cards: cards }); setPendingSave(null) }}
-        />
-      </motion.div>
-
-      {/* ── Section G: Identity Verification ─────────────────────────────────── */}
-      <motion.div variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16 }}>
-        <VerificationSection
-          verification={data.verification}
-          onVerified={() => updateData({ verification: { ...data.verification, provider_status: 'approved', verified_at: new Date().toISOString() } })}
-        />
-      </motion.div>
-
-      {/* ── Section H: Photos ─────────────────────────────────────────────────── */}
-      <motion.div ref={photosRef} id="photos" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16, scrollMarginTop: 120 }}>
-        <PhotosSection
-          photos={data.photos}
-          onAdd={photo => updateData({ photos: [...data.photos, photo] })}
-          onDelete={id => updateData({ photos: data.photos.filter(p => p.id !== id) })}
-          onSetPrimary={id => updateData({ photos: data.photos.map(p => ({ ...p, is_primary: p.id === id })) })}
-        />
-      </motion.div>
-
-      {/* ── Section I: Videos ─────────────────────────────────────────────────── */}
-      <motion.div ref={videosRef} id="videos" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16, scrollMarginTop: 120 }}>
-        <VideosSection
-          videos={data.videos}
-          onAdd={video => updateData({ videos: [...data.videos, video] })}
-          onDelete={id => updateData({ videos: data.videos.filter(v => v.id !== id) })}
-        />
-      </motion.div>
-
-      {/* ── Section J: Confessions ────────────────────────────────────────────── */}
-      <motion.div ref={confessionsRef} id="confessions" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: 16, scrollMarginTop: 120 }}>
-        <PostsSection
-          title="Confessions"
-          stories={data.stories}
-          onWrite={() => router.push('/create')}
-          icon={PenLine}
-        />
-      </motion.div>
-
-      {/* ── Section K: Stories ────────────────────────────────────────────────── */}
-      <motion.div ref={storiesRef} id="stories" variants={sectionVariants} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ scrollMarginTop: 120 }}>
-        <PostsSection
-          title="Stories"
-          stories={data.stories}
-          onWrite={() => router.push('/create?type=story')}
-          icon={BookOpen}
-        />
-      </motion.div>
+        >
+          {saving && <Loader2 size={13} className="animate-spin" />}
+          {isLast ? (saving ? 'Saving…' : 'Done') : 'Continue'}
+          {!isLast && <ChevronRight size={15} />}
+        </button>
+      </div>
     </div>
   )
 }
