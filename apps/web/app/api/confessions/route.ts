@@ -6,8 +6,13 @@ import {
   storyCategories,
   users,
   userFantasyTags,
+  storyFantasyTags,
+  storyMoodTags,
+  moodTags,
+  likes,
+  saves,
 } from '@/db/schema'
-import { eq, and, isNull, sql, or, desc } from 'drizzle-orm'
+import { eq, and, isNull, sql, or, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
 const querySchema = z.object({
@@ -39,23 +44,22 @@ export async function GET(req: NextRequest) {
       try { cursor = JSON.parse(parsed.data.cursor) } catch { /* ignore */ }
     }
 
-    // Count user's fantasy tags for normalization
-    const userTagCountRows = await db
-      .select({ cnt: sql<number>`COUNT(*)::int` })
+    // ── Pre-fetch user's fantasy tag IDs (single query, avoids nested subselect) ──
+    const userTagRows = await db
+      .select({ fantasy_tag_id: userFantasyTags.fantasy_tag_id })
       .from(userFantasyTags)
       .where(eq(userFantasyTags.user_id, userId))
-    const userTagCount = userTagCountRows[0]?.cnt ?? 0
+    const userTagIds  = userTagRows.map(r => r.fantasy_tag_id)
+    const userTagCount = userTagIds.length
 
-    // Ranking score expressions
+    // ── Ranking score expressions ──────────────────────────────────────────────
     const tagMatchScore = userTagCount > 0
       ? sql<number>`(
           SELECT COUNT(*)::float
           FROM story_fantasy_tags sft2
           WHERE sft2.story_id = ${stories.id}
-            AND sft2.fantasy_tag_id IN (
-              SELECT fantasy_tag_id FROM user_fantasy_tags WHERE user_id = ${userId}::uuid
-            )
-        ) / GREATEST(${userTagCount}::float, 1.0)`
+            AND sft2.fantasy_tag_id IN ${sql.raw(`(${userTagIds.join(',')})`)}
+        ) / ${userTagCount}::float`
       : sql<number>`0.0`
 
     const engagementScore = sql<number>`LEAST(
@@ -102,6 +106,29 @@ export async function GET(req: NextRequest) {
 
     const whereClause = cursorWhere ? and(baseWhere, cursorWhere) : baseWhere
 
+    // ── Subqueries for LEFT JOIN (replaces per-row correlated subqueries) ──────
+    const userLikesSq = db
+      .select({ content_id: likes.content_id })
+      .from(likes)
+      .where(and(eq(likes.user_id, userId), eq(likes.content_type, 'story')))
+      .as('ul')
+
+    const userSavesSq = db
+      .select({ content_id: saves.content_id })
+      .from(saves)
+      .where(and(eq(saves.user_id, userId), eq(saves.content_type, 'story')))
+      .as('us')
+
+    const moodTagAggSq = db
+      .select({
+        story_id: storyMoodTags.story_id,
+        tags:     sql<string>`STRING_AGG(${moodTags.name}, ',' ORDER BY ${moodTags.name})`.as('tags'),
+      })
+      .from(storyMoodTags)
+      .leftJoin(moodTags, eq(moodTags.id, storyMoodTags.mood_tag_id))
+      .groupBy(storyMoodTags.story_id)
+      .as('mt_agg')
+
     const rows = await db
       .select({
         id:             stories.id,
@@ -117,24 +144,9 @@ export async function GET(req: NextRequest) {
         final_score:    finalScore,
         author_alias:   users.alias,
         category_name:  storyCategories.name,
-        user_has_liked: sql<boolean>`EXISTS (
-          SELECT 1 FROM likes lk
-          WHERE lk.user_id = ${userId}::uuid
-            AND lk.content_type = 'story'
-            AND lk.content_id = ${stories.id}
-        )`,
-        user_has_saved: sql<boolean>`EXISTS (
-          SELECT 1 FROM saves sv
-          WHERE sv.user_id = ${userId}::uuid
-            AND sv.content_type = 'story'
-            AND sv.content_id = ${stories.id}
-        )`,
-        mood_tags: sql<string | null>`(
-          SELECT STRING_AGG(mt.name, ',' ORDER BY mt.name)
-          FROM story_mood_tags smt2
-          JOIN mood_tags mt ON mt.id = smt2.mood_tag_id
-          WHERE smt2.story_id = ${stories.id}
-        )`,
+        user_has_liked: sql<boolean>`(ul.content_id IS NOT NULL)`,
+        user_has_saved: sql<boolean>`(us.content_id IS NOT NULL)`,
+        mood_tags:      sql<string | null>`mt_agg.tags`,
       })
       .from(stories)
       .leftJoin(
@@ -142,6 +154,9 @@ export async function GET(req: NextRequest) {
         and(eq(users.id, stories.author_user_id), eq(stories.is_anonymous, false))
       )
       .leftJoin(storyCategories, eq(storyCategories.id, stories.category_id))
+      .leftJoin(userLikesSq,   eq(userLikesSq.content_id,   stories.id))
+      .leftJoin(userSavesSq,   eq(userSavesSq.content_id,   stories.id))
+      .leftJoin(moodTagAggSq,  eq(moodTagAggSq.story_id,    stories.id))
       .where(whereClause)
       .orderBy(desc(finalScore), desc(stories.id))
       .limit(limit + 1)
@@ -154,12 +169,9 @@ export async function GET(req: NextRequest) {
       : null
 
     const mapped = items.map(r => {
-      // Parse body JSON — may be { raw, pages, categories } or legacy plain text
       const parsedBody = (() => {
         try { return JSON.parse(r.body ?? '') } catch { return { raw: r.body ?? '', pages: [], categories: [] } }
       })()
-      // Categories stored in body JSON take precedence over the storyCategories join
-      // (user-uploaded confessions store category_id=null but write categories into body)
       const bodyCategories: string[] = Array.isArray(parsedBody.categories) ? parsedBody.categories : []
       const primaryCategory = bodyCategories[0] ?? r.category_name ?? ''
       const extraCategories = bodyCategories.slice(1)
@@ -179,7 +191,6 @@ export async function GET(req: NextRequest) {
         commentCount:   r.comment_count,
         userHasLiked:   Boolean(r.user_has_liked),
         userHasSaved:   Boolean(r.user_has_saved),
-        // Show extra body categories as mood tags; fall back to DB mood tags
         moodTags:       extraCategories.length > 0 ? extraCategories : dbMoodTags,
         categoryName:   primaryCategory,
         publishedAt:    r.published_at,

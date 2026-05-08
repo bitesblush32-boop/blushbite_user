@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -198,18 +199,23 @@ const WIZARD_STEPS = [
 export default function CompanionProfilePage() {
   const router  = useRouter()
   const [data,    setData]    = useState<ProfileData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [saving,  setSaving]  = useState(false)
   const [step,    setStep]    = useState(0)
   const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null)
 
-  useEffect(() => {
-    fetch('/api/companions/profile/full', { credentials: 'include' })
+  // Shared query key with companion/profile/page.tsx — cache hit on second visit
+  const { data: queryData, isLoading: loading } = useQuery<ProfileData | null>({
+    queryKey: ['companion', 'profile', 'full'],
+    queryFn:  () => fetch('/api/companions/profile/full', { credentials: 'include' })
       .then(r => r.json())
-      .then(d => { if (!d.error) setData(d) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+      .then(d => d.error ? null : d),
+    staleTime: 2 * 60 * 1000,
+  })
+
+  // Sync fetched data into local mutable state (wizard edits live in local state)
+  useEffect(() => {
+    if (queryData) setData(queryData)
+  }, [queryData])
 
   const updateData = useCallback((patch: Partial<ProfileData>) => {
     setData(prev => prev ? { ...prev, ...patch } : prev)

@@ -3,11 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, MessageCircle, Link2, BarChart2, TrendingUp, Wifi, WifiOff } from 'lucide-react'
-import useSWR from 'swr'
-
-// ── Fetcher ────────────────────────────────────────────────────────────────────
-
-const fetcher = (url: string) => fetch(url, { credentials: 'include' }).then(r => r.json())
+import { useQuery } from '@tanstack/react-query'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -178,11 +174,12 @@ function BarChart({ data }: { data: { date: string; count: number }[] }) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function CompanionAnalyticsPage() {
-  const { data, isLoading } = useSWR<AnalyticsSummary>(
-    '/api/companions/analytics/summary',
-    fetcher,
-    { refreshInterval: 60_000, refreshWhenHidden: false, refreshWhenOffline: false },
-  )
+  const { data, isLoading } = useQuery<AnalyticsSummary>({
+    queryKey:  ['companion', 'analytics', 'summary'],
+    queryFn:   () => fetch('/api/companions/analytics/summary', { credentials: 'include' }).then(r => r.json()),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  })
 
   const visible = data?.is_visible_to_users ?? true
 

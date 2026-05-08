@@ -8,10 +8,10 @@
 import dynamic from 'next/dynamic'
 import Header from '@/components/layout/Header'
 import MiniPlayer from '@/components/layout/MiniPlayer'
+import BottomNav from '@/components/layout/BottomNav'
 
 const ProfileDrawer     = dynamic(() => import('@/components/ui/ProfileDrawer'),     { ssr: false })
 const BookingModal      = dynamic(() => import('@/components/ui/BookingModal'),      { ssr: false })
-const BottomNav         = dynamic(() => import('@/components/layout/BottomNav'),     { ssr: false })
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
 const LocationBanner    = dynamic(() => import('@/components/ui/LocationBanner'),    { ssr: false })
 const TourOverlay       = dynamic(() => import('@/components/ui/TourOverlay').then(m => ({ default: m.TourOverlay })), { ssr: false })

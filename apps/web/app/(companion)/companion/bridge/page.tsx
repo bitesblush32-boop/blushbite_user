@@ -1,7 +1,8 @@
 'use client'
 
-import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useState, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Search, Heart, Eye, Loader2, CheckCircle2 } from 'lucide-react'
 
@@ -36,66 +37,53 @@ function BridgePageInner() {
   const tab          = (searchParams.get('tab') ?? 'find') as 'find' | 'mine'
 
   // ── Find tab state ──
-  const [search,     setSearch]     = useState('')
-  const [category,   setCategory]   = useState('')
-  const [categories, setCategories] = useState<string[]>([])
-  const [stories,    setStories]    = useState<BridgeStory[]>([])
-  const [fetching,   setFetching]   = useState(false)
-  const [linking,    setLinking]    = useState<Record<string, boolean>>({})
-  const [linked,     setLinked]     = useState<Record<string, boolean>>({})
-  const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [search,   setSearch]   = useState('')
+  const [category, setCategory] = useState('')
+  const [linking,  setLinking]  = useState<Record<string, boolean>>({})
+  const [linked,   setLinked]   = useState<Record<string, boolean>>({})
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── My links tab state ──
-  const [myLinks,     setMyLinks]     = useState<MyLink[]>([])
-  const [myFetching,  setMyFetching]  = useState(false)
-  const [removing,    setRemoving]    = useState<Record<string, boolean>>({})
+  const [removing, setRemoving] = useState<Record<string, boolean>>({})
 
-  // ── Fetch categories on mount ──
-  useEffect(() => {
-    fetch('/api/tags')
-      .then(r => r.json())
-      .then(d => {
-        if (d.storyCategories) setCategories(d.storyCategories.map((c: { name: string }) => c.name))
-      })
-      .catch(() => {})
-  }, [])
-
-  // ── Fetch stories ──
-  const fetchStories = useCallback((q: string, cat: string) => {
-    setFetching(true)
-    const params = new URLSearchParams()
-    if (q)   params.set('search',   q)
-    if (cat) params.set('category', cat)
-    fetch(`/api/companion/bridge/stories?${params}`)
-      .then(r => r.json())
-      .then(d => { if (d.data) setStories(d.data) })
-      .catch(() => {})
-      .finally(() => setFetching(false))
-  }, [])
-
-  useEffect(() => {
-    if (tab === 'find') fetchStories(search, category)
-  }, [tab, category, fetchStories]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearchChange = (val: string) => {
+  // Debounced search term fed into query key
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const handleSearchChange = useCallback((val: string) => {
     setSearch(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => fetchStories(val, category), 400)
-  }
-
-  // ── Fetch my links ──
-  const fetchMyLinks = useCallback(() => {
-    setMyFetching(true)
-    fetch('/api/companion/bridge/my-links')
-      .then(r => r.json())
-      .then(d => { if (d.data) setMyLinks(d.data) })
-      .catch(() => {})
-      .finally(() => setMyFetching(false))
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400)
   }, [])
 
-  useEffect(() => {
-    if (tab === 'mine') fetchMyLinks()
-  }, [tab, fetchMyLinks])
+  // ── Fetch categories (cached, rarely changes) ──────────────────────────────
+  const { data: tagsData } = useQuery({
+    queryKey: ['tags'],
+    queryFn:  () => fetch('/api/tags').then(r => r.json()),
+    staleTime: 60 * 60 * 1000, // tags change very rarely
+  })
+  const categories: string[] = tagsData?.storyCategories?.map((c: { name: string }) => c.name) ?? []
+
+  // ── Fetch bridge stories (find tab) ───────────────────────────────────────
+  const { data: bridgeStoriesData, isFetching: fetching } = useQuery({
+    queryKey: ['companion', 'bridge', 'stories', debouncedSearch, category],
+    queryFn:  () => {
+      const params = new URLSearchParams()
+      if (debouncedSearch) params.set('search',   debouncedSearch)
+      if (category)        params.set('category', category)
+      return fetch(`/api/companion/bridge/stories?${params}`).then(r => r.json()).then(d => d.data ?? [])
+    },
+    enabled:   tab === 'find',
+    staleTime: 30 * 1000,
+  })
+  const stories: BridgeStory[] = bridgeStoriesData ?? []
+
+  // ── Fetch my links (mine tab) ──────────────────────────────────────────────
+  const { data: myLinksData, isFetching: myFetching, refetch: refetchMyLinks } = useQuery({
+    queryKey: ['companion', 'bridge', 'my-links'],
+    queryFn:  () => fetch('/api/companion/bridge/my-links').then(r => r.json()).then(d => d.data ?? []),
+    enabled:   tab === 'mine',
+    staleTime: 30 * 1000,
+  })
+  const myLinks: MyLink[] = myLinksData ?? []
 
   // ── Link to story ──
   async function handleLink(storyId: string) {
@@ -117,7 +105,7 @@ function BridgePageInner() {
     setRemoving(p => ({ ...p, [storyId]: true }))
     try {
       const res = await fetch(`/api/companion/bridge/${storyId}`, { method: 'DELETE' })
-      if (res.ok) setMyLinks(prev => prev.filter(l => l.story_id !== storyId))
+      if (res.ok) refetchMyLinks()
     } finally {
       setRemoving(p => ({ ...p, [storyId]: false }))
     }

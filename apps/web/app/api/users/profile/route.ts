@@ -47,7 +47,9 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ data: rows[0] })
+    return NextResponse.json({ data: rows[0] }, {
+      headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' },
+    })
   } catch (err) {
     console.error('[GET /api/user/profile]', err)
     const msg = err instanceof Error ? err.message : 'Unknown error'

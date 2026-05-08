@@ -1,69 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import useSWR from 'swr'
-
-// ── SWR fetcher ───────────────────────────────────────────────────────────────
-
-const swrFetcher = (url: string) =>
-  fetch(url, { credentials: 'include' }).then(r => r.json())
-
-// ── Badge count — SWR poll every 30s (battery-aware) ─────────────────────────
-
-export function useNotificationCount() {
-  const { data } = useSWR('/api/notifications/count', swrFetcher, {
-    refreshInterval:    30_000,
-    refreshWhenHidden:  false,
-    refreshWhenOffline: false,
-    revalidateOnFocus:  true,
-    dedupingInterval:   10_000,
-  })
-  return (data?.unread as number) ?? 0
-}
-
-// ── Full list with optimistic markRead (SWR) ──────────────────────────────────
-
-export function useNotificationsWithMarkRead() {
-  const { data, isLoading, mutate } = useSWR('/api/notifications', swrFetcher, {
-    refreshInterval:    60_000,
-    refreshWhenHidden:  false,
-    refreshWhenOffline: false,
-    dedupingInterval:   15_000,
-  })
-
-  const markRead = useCallback(async (ids: string[]) => {
-    if (!ids.length) return
-    mutate(
-      (prev: any) =>
-        prev
-          ? {
-              ...prev,
-              unread_count:  Math.max(0, (prev.unread_count ?? 0) - ids.length),
-              notifications: (prev.notifications ?? []).map((n: any) =>
-                ids.includes(n.id) ? { ...n, is_read: true } : n,
-              ),
-            }
-          : prev,
-      false,
-    )
-    await fetch('/api/notifications', {
-      method:      'PATCH',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/json' },
-      body:        JSON.stringify({ notification_ids: ids }),
-    })
-    mutate()
-  }, [mutate])
-
-  return {
-    notifications: (data?.notifications ?? []) as NotificationItem[],
-    unreadCount:   (data?.unread_count  ?? 0)  as number,
-    isLoading,
-    markRead,
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Legacy TanStack Query exports (used by dreamer notifications page)
+// Types
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface NotificationItem {
@@ -95,24 +34,77 @@ interface NotificationsResponse {
   unread_count:  number
 }
 
-export function useNotificationCountQ() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Badge count (poll every 30s)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useNotificationCount() {
   const { data } = useQuery<{ unread: number }>({
-    queryKey:             ['notifications', 'count'],
-    queryFn:              () => fetch('/api/notifications/count', { credentials: 'include' }).then(r => r.json()),
-    staleTime:            30_000,
-    refetchInterval:      60_000,
-    refetchOnWindowFocus: false,
+    queryKey:        ['notifications', 'count'],
+    queryFn:         () => fetch('/api/notifications/count', { credentials: 'include' }).then(r => r.json()),
+    staleTime:       30_000,
+    refetchInterval: 30_000,
   })
   return (data?.unread ?? 0) as number
 }
 
+// alias kept for callers that imported the old name
+export { useNotificationCount as useNotificationCountQ }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Full list with optimistic markRead
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useNotificationsWithMarkRead() {
+  const queryClient = useQueryClient()
+
+  const { data, isLoading } = useQuery<NotificationsResponse>({
+    queryKey:        ['notifications'],
+    queryFn:         () => fetch('/api/notifications', { credentials: 'include' }).then(r => r.json()),
+    staleTime:       60_000,
+    refetchInterval: 60_000,
+  })
+
+  const markRead = useCallback(async (ids: string[]) => {
+    if (!ids.length) return
+    // Optimistic update
+    queryClient.setQueryData<NotificationsResponse>(['notifications'], prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        unread_count:  Math.max(0, (prev.unread_count ?? 0) - ids.length),
+        notifications: (prev.notifications ?? []).map((n: any) =>
+          ids.includes(n.id) ? { ...n, is_read: true } : n,
+        ),
+      }
+    })
+    await fetch('/api/notifications', {
+      method:      'PATCH',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ notification_ids: ids }),
+    })
+    queryClient.invalidateQueries({ queryKey: ['notifications'] })
+  }, [queryClient])
+
+  return {
+    notifications: (data?.notifications ?? []) as unknown as NotificationItem[],
+    unreadCount:   (data?.unread_count  ?? 0)  as number,
+    isLoading,
+    markRead,
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared read-only hook (used by dreamer notifications page)
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function useNotifications() {
   const { data, isLoading } = useQuery<NotificationsResponse>({
-    queryKey: ['notifications'],
-    queryFn:  () => fetch('/api/notifications').then(r => r.json()),
-    staleTime: 30_000,
+    queryKey:        ['notifications'],
+    queryFn:         () => fetch('/api/notifications', { credentials: 'include' }).then(r => r.json()),
+    staleTime:       30_000,
     refetchInterval: 60_000,
-    refetchOnWindowFocus: false,
   })
 
   return {
@@ -121,6 +113,10 @@ export function useNotifications() {
     isLoading,
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mutations
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function useMarkAllRead() {
   const queryClient = useQueryClient()

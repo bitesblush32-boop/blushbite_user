@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   Camera,
@@ -576,45 +577,43 @@ function SavedTabContent({
 export default function CompanionProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const queryClient        = useQueryClient()
   const photoInputRef      = useRef<HTMLInputElement>(null)
   const setAvatarUrl       = useUIStore(s => s.setAvatarUrl)
   const openProfileViewer  = useUIStore(s => s.openProfileViewer)
 
-  const [profileData, setProfileData]         = useState<CompanionProfileData | null>(null)
-  const [loading, setLoading]                 = useState(true)
-  const [activeTab, setActiveTab]             = useState<MainTab>('posts')
-  const [postsSubTab, setPostsSubTab]         = useState<PostsSubTab>('all')
-  const [likedSubTab, setLikedSubTab]         = useState<LikedSubTab>('all')
-  const [savedSubTab, setSavedSubTab]         = useState<SavedSubTab>('all')
-  const [photoUploading, setPhotoUploading]   = useState(false)
-  const [photoError, setPhotoError]           = useState<string | null>(null)
-
-  const [posts, setPosts]               = useState<UserPost[]>([])
-  const [postsLoading, setPostsLoading] = useState(true)
+  const [activeTab, setActiveTab]           = useState<MainTab>('posts')
+  const [postsSubTab, setPostsSubTab]       = useState<PostsSubTab>('all')
+  const [likedSubTab, setLikedSubTab]       = useState<LikedSubTab>('all')
+  const [savedSubTab, setSavedSubTab]       = useState<SavedSubTab>('all')
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoError, setPhotoError]         = useState<string | null>(null)
 
   // ── Fetch companion profile ────────────────────────────────────────────────
-  useEffect(() => {
-    fetch('/api/companions/profile/full', { credentials: 'include' })
+  const { data: profileData, isLoading: loading } = useQuery<CompanionProfileData | null>({
+    queryKey: ['companion', 'profile', 'full'],
+    queryFn:  () => fetch('/api/companions/profile/full', { credentials: 'include' })
       .then(r => r.json())
-      .then(d => {
-        if (!d.error) {
-          setProfileData(d)
-          const primary = d.photos?.find((p: { is_primary: boolean }) => p.is_primary) ?? d.photos?.[0]
-          if (primary?.url) setAvatarUrl(primary.url)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [setAvatarUrl])
+      .then(d => d.error ? null : d),
+    staleTime: 2 * 60 * 1000,
+  })
 
   // ── Fetch posts (companion's own confessions/stories) ─────────────────────
-  useEffect(() => {
-    fetch('/api/users/posts', { credentials: 'include' })
+  const { data: postsData, isLoading: postsLoading } = useQuery<UserPost[]>({
+    queryKey: ['user', 'posts'],
+    queryFn:  () => fetch('/api/users/posts', { credentials: 'include' })
       .then(r => r.json())
-      .then(({ data }) => setPosts(data ?? []))
-      .catch(() => {})
-      .finally(() => setPostsLoading(false))
-  }, [])
+      .then(({ data }) => data ?? []),
+    staleTime: 2 * 60 * 1000,
+  })
+  const posts = postsData ?? []
+
+  // ── Sync avatar from profile data ─────────────────────────────────────────
+  useEffect(() => {
+    if (!profileData) return
+    const primary = profileData.photos?.find((p: { is_primary: boolean }) => p.is_primary) ?? profileData.photos?.[0]
+    if (primary?.url) setAvatarUrl(primary.url)
+  }, [profileData, setAvatarUrl])
 
   // ── Primary photo upload ───────────────────────────────────────────────────
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -638,7 +637,10 @@ export default function CompanionProfilePage() {
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
       const newUrl = json.data?.avatarUrl ?? json.avatarUrl
       if (newUrl) {
-        setProfileData(p => p ? { ...p, photos: [{ id: 'temp', url: newUrl, is_primary: true }, ...p.photos.filter(ph => !ph.is_primary)] } : p)
+        queryClient.setQueryData<CompanionProfileData | null>(
+          ['companion', 'profile', 'full'],
+          old => old ? { ...old, photos: [{ id: 'temp', url: newUrl, is_primary: true }, ...old.photos.filter(ph => !ph.is_primary)] } : old
+        )
         setAvatarUrl(newUrl)
       }
     } catch (err: unknown) {

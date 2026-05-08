@@ -152,7 +152,11 @@
       "Bash(cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\stories\\\\page.tsx\")",
       "Bash(cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\page.tsx\")",
       "Bash(cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\settings\\\\page.tsx\")",
-      "Bash(cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\profile\\\\page.tsx\")"
+      "Bash(cat \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\profile\\\\page.tsx\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && curl -s -o /dev/null -w \"Status: %{http_code} | Total: %{time_total}s | TTFB: %{time_starttransfer}s | DNS: %{time_namelookup}s | Connect: %{time_connect}s\\\\n\" http://localhost:3000/api/confessions?limit=5 2>&1 || echo \"Server not reachable \\(not running or wrong port\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && curl -s -o /dev/null -w \"Status: %{http_code} | Total: %{time_total}s | TTFB: %{time_starttransfer}s\\\\n\" http://localhost:3000/ 2>&1; curl -s -o /dev/null -w \"Status: %{http_code} | Total: %{time_total}s | TTFB: %{time_starttransfer}s\\\\n\" http://localhost:3000/api/auth/session 2>&1; curl -s -o /dev/null -w \"Status: %{http_code} | Total: %{time_total}s | TTFB: %{time_starttransfer}s\\\\n\" http://localhost:3000/api/tags 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm remove swr 2>&1 | tail -5)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm install 2>&1 | tail -5)"
     ]
   }
 }

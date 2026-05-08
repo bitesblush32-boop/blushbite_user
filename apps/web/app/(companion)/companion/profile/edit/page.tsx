@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { Loader2, Lock, X, Star, CheckCircle2, Phone, Video, MessageCircle, Users2, Sparkles } from 'lucide-react'
@@ -228,70 +229,80 @@ export default function EditProfilePage() {
   const [saved,  setSaved]  = useState<Record<string, boolean>>({})
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const [loading, setLoading] = useState(true)
+  // ── Load profile + tags (shared cache with settings/profile pages) ──────────
+  const { data: profileQueryData, isLoading: profileLoading } = useQuery({
+    queryKey: ['companion', 'profile'],
+    queryFn:  () => fetch('/api/companions/profile', { credentials: 'include' }).then(r => r.json()),
+    staleTime: 2 * 60 * 1000,
+  })
+  const { data: tagsQueryData, isLoading: tagsLoading } = useQuery({
+    queryKey: ['tags'],
+    queryFn:  () => fetch('/api/tags').then(r => r.json()),
+    staleTime: 60 * 60 * 1000,
+  })
+  const loading = profileLoading || tagsLoading
 
-  // ── Load profile data ──
+  // ── Hydrate local form state from query data ───────────────────────────────
   useEffect(() => {
-    Promise.all([
-      fetch('/api/companions/profile', { credentials: 'include' }).then(r => r.json()),
-      fetch('/api/tags').then(r => r.json()),
-    ]).then(([data, tags]) => {
-      if (tags.fantasyTags) setFantasyTags(tags.fantasyTags)
-      if (!data.companion) return
+    if (tagsQueryData?.fantasyTags) setFantasyTags(tagsQueryData.fantasyTags)
+  }, [tagsQueryData])
 
-      const c = data.companion
-      setLegalName(c.full_name ?? '')
-      setDateOfBirth(c.date_of_birth ?? '')
-      setCountry(c.country ?? '')
-      setDisplayName(c.name ?? '')
+  useEffect(() => {
+    const data = profileQueryData
+    if (!data?.companion) return
 
-      if (data.profile) {
-        const p = data.profile
-        setTagline(p.tagline ?? '')
-        setBio(p.bio ?? '')
-        setCity(p.city ?? '')
-        setAvailability(p.availability_status ?? 'available')
-      }
+    const c = data.companion
+    setLegalName(c.full_name ?? '')
+    setDateOfBirth(c.date_of_birth ?? '')
+    setCountry(c.country ?? '')
+    setDisplayName(c.name ?? '')
 
-      if (data.fantasy_tag_ids?.length)  setSelectedFantasy(data.fantasy_tag_ids)
-      if (data.vibe_tag_names?.length)   setSelectedVibes(data.vibe_tag_names)
-      if (data.language_codes?.length)   setSelectedLangs(data.language_codes)
+    if (data.profile) {
+      const p = data.profile
+      setTagline(p.tagline ?? '')
+      setBio(p.bio ?? '')
+      setCity(p.city ?? '')
+      setAvailability(p.availability_status ?? 'available')
+    }
 
-      if (data.session_cards?.length) {
-        setCards(data.session_cards.map((c: any) => ({
-          id:          c.id,
-          title:       c.title,
-          sessionType: c.session_type ?? 'in_person',
-          durationKey: durKeyFromMinutes(c.duration_minutes),
-          price:       c.price?.toString() ?? '',
-          currency:    c.currency ?? 'EUR',
-          description: c.description ?? '',
-        })))
-      }
+    if (data.fantasy_tag_ids?.length)  setSelectedFantasy(data.fantasy_tag_ids)
+    if (data.vibe_tag_names?.length)   setSelectedVibes(data.vibe_tag_names)
+    if (data.language_codes?.length)   setSelectedLangs(data.language_codes)
 
-      if (data.photos?.length) {
-        setPhotos(data.photos.map((p: any) => ({
-          id:          p.id,
-          url:         p.url,
-          storage_key: p.storage_key,
-          previewUrl:  p.url,
-          uploading:   false,
-          error:       null,
-        })))
-      }
+    if (data.session_cards?.length) {
+      setCards(data.session_cards.map((c: any) => ({
+        id:          c.id,
+        title:       c.title,
+        sessionType: c.session_type ?? 'in_person',
+        durationKey: durKeyFromMinutes(c.duration_minutes),
+        price:       c.price?.toString() ?? '',
+        currency:    c.currency ?? 'EUR',
+        description: c.description ?? '',
+      })))
+    }
 
-      if (data.videos?.length) {
-        const v = data.videos[0]
-        setVideo({ url: v.url, storage_key: v.storage_key, durationSeconds: v.duration_seconds ?? 0, previewUrl: v.url })
-      }
+    if (data.photos?.length) {
+      setPhotos(data.photos.map((p: any) => ({
+        id:          p.id,
+        url:         p.url,
+        storage_key: p.storage_key,
+        previewUrl:  p.url,
+        uploading:   false,
+        error:       null,
+      })))
+    }
 
-      if (data.verification) {
-        const st = data.verification.status
-        setVerifyStatus(st === 'approved' ? 'approved' : st === 'pending' ? 'pending' : st === 'declined' ? 'declined' : 'idle')
-        setVerifiedAt(data.verification.verified_at ?? null)
-      }
-    }).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+    if (data.videos?.length) {
+      const v = data.videos[0]
+      setVideo({ url: v.url, storage_key: v.storage_key, durationSeconds: v.duration_seconds ?? 0, previewUrl: v.url })
+    }
+
+    if (data.verification) {
+      const st = data.verification.status
+      setVerifyStatus(st === 'approved' ? 'approved' : st === 'pending' ? 'pending' : st === 'declined' ? 'declined' : 'idle')
+      setVerifiedAt(data.verification.verified_at ?? null)
+    }
+  }, [profileQueryData])
 
   // ── Save helpers ──
   async function saveSection(section: string, payload: object) {
