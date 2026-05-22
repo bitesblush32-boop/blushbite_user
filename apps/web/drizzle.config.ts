@@ -5,6 +5,6 @@ export default {
   out: './db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: 'postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway',
+    url: process.env.DATABASE_URL!,
   },
 } satisfies Config

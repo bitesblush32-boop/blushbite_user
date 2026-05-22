@@ -56,3 +56,7 @@ apps/worker/scraped_stories_enriched.ndjson
 .claude/settings.local.json
 apps/web/tsconfig.tsbuildinfo
 .graphify_uncached.txt
+apps/web/db/complete-schema.sql
+.graphify_python
+.graphifyignore
+.claude/settings.local.json
