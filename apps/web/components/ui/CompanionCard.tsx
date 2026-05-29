@@ -31,18 +31,27 @@ function CompanionCard({ companion, style }: Props) {
     >
       {/* Media */}
       <div className="h-[200px] relative overflow-hidden" style={{ background: companion.gradient }}>
-        {/* Silhouette */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <svg width="70" height="140" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
-            <ellipse cx="35" cy="22" rx="16" ry="18" />
-            <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z" />
-          </svg>
-        </div>
+        {/* Real photo — shown when available; silhouette shown as fallback */}
+        {companion.photoUrl ? (
+          <img
+            src={companion.photoUrl}
+            alt={companion.name}
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <svg width="70" height="140" viewBox="0 0 70 140" fill="rgba(255,255,255,0.12)">
+              <ellipse cx="35" cy="22" rx="16" ry="18" />
+              <path d="M12 68 Q18 45 35 43 Q52 45 58 68 L60 130 Q50 138 35 140 Q20 138 10 130Z" />
+            </svg>
+          </div>
+        )}
 
-        {/* Bottom gradient overlay */}
+        {/* Bottom gradient overlay — always shown so text is readable over photo */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(transparent 50%, rgba(17,22,32,0.95) 100%)' }}
+          style={{ background: 'linear-gradient(transparent 40%, rgba(7,9,15,0.85) 100%)' }}
         />
 
         {/* Location tag */}

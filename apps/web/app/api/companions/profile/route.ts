@@ -122,6 +122,21 @@ export async function GET() {
       availability_status: profile.availability_status,
       is_live:             profile.is_live,
       is_verified:         profile.is_verified,
+      profile_completeness: profile.profile_completeness ?? 0,
+      // Section G — appearance
+      gender:              profile.gender ?? '',
+      height_cm:           profile.height_cm ?? null,
+      body_type:           profile.body_type ?? '',
+      ethnicity:           profile.ethnicity ?? '',
+      eye_color:           profile.eye_color ?? '',
+      hair_color:          profile.hair_color ?? '',
+      skin_color:          profile.skin_color ?? '',
+      // Section H — connect
+      whatsapp_number:     profile.whatsapp_number ?? '',
+      instagram_handle:    profile.instagram_handle ?? '',
+      website_url:         profile.website_url ?? '',
+      // Section I — go live
+      session_modality:    profile.session_modality ?? 'in_person',
     },
     fantasy_tag_ids: fantasyRows.map(r => r.id),
     vibe_tag_names:  vibeRows.map(r => r.name),
@@ -279,6 +294,71 @@ export async function PATCH(req: Request) {
         duration_seconds: videoData.durationSeconds ?? null,
         is_approved:      false,
       })
+    }
+    return NextResponse.json({ success: true })
+  }
+
+  // ── Section G: physical appearance ───────────────────────────────────────
+  if (section === 'G') {
+    const { gender, height_cm, body_type, ethnicity, eye_color, hair_color, skin_color } = body
+    const VALID_GENDERS   = ['woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say']
+    const VALID_BODY      = ['slim','athletic','average','curvy','plus_size','prefer_not_to_say']
+    const VALID_SKIN      = ['fair','light','medium','olive','brown','dark']
+
+    await db.update(companionProfiles)
+      .set({
+        gender:    gender && VALID_GENDERS.includes(gender) ? gender : undefined,
+        height_cm: height_cm ? Math.min(Math.max(Number(height_cm), 140), 220) : undefined,
+        body_type: body_type && VALID_BODY.includes(body_type) ? body_type : undefined,
+        ethnicity: ethnicity?.trim() || undefined,
+        eye_color: eye_color?.trim() || undefined,
+        hair_color: hair_color?.trim() || undefined,
+        skin_color: skin_color && VALID_SKIN.includes(skin_color) ? skin_color : undefined,
+      })
+      .where(eq(companionProfiles.id, profile.id))
+    return NextResponse.json({ success: true })
+  }
+
+  // ── Section H: connect (WhatsApp + social) ────────────────────────────────
+  if (section === 'H') {
+    const { whatsapp_number, instagram_handle, website_url } = body
+    await db.update(companionProfiles)
+      .set({
+        whatsapp_number:  whatsapp_number?.trim() || null,
+        instagram_handle: instagram_handle?.replace(/^@/, '').trim() || null,
+        website_url:      website_url?.trim() || null,
+      })
+      .where(eq(companionProfiles.id, profile.id))
+    return NextResponse.json({ success: true })
+  }
+
+  // ── Section I: go live (modality + is_live) ───────────────────────────────
+  if (section === 'I') {
+    const { session_modality, is_live } = body
+    const VALID_MODALITY = ['in_person', 'online', 'both']
+
+    const updates: Record<string, unknown> = {}
+    if (session_modality && VALID_MODALITY.includes(session_modality)) {
+      updates.session_modality = session_modality
+    }
+    if (typeof is_live === 'boolean') {
+      if (is_live) {
+        // Gate: require ≥ 70% completeness to go live
+        const currentProfile = await db.query.companionProfiles.findFirst({
+          where: eq(companionProfiles.id, profile.id),
+          columns: { profile_completeness: true },
+        })
+        if ((currentProfile?.profile_completeness ?? 0) < 70) {
+          return NextResponse.json({ error: 'Complete at least 70% of your profile first.' }, { status: 400 })
+        }
+      }
+      updates.is_live = is_live
+    }
+
+    if (Object.keys(updates).length) {
+      await db.update(companionProfiles)
+        .set(updates as any)
+        .where(eq(companionProfiles.id, profile.id))
     }
     return NextResponse.json({ success: true })
   }

@@ -224,6 +224,25 @@ export default function EditProfilePage() {
   const [verifyUrl, setVerifyUrl]       = useState<string | null>(null)
   const [verifiedAt, setVerifiedAt]     = useState<string | null>(null)
 
+  // ── Section G state (appearance) ──
+  const [gender,     setGender]     = useState('')
+  const [heightCm,   setHeightCm]   = useState('')
+  const [bodyType,   setBodyType]   = useState('')
+  const [ethnicity,  setEthnicity]  = useState('')
+  const [eyeColor,   setEyeColor]   = useState('')
+  const [hairColor,  setHairColor]  = useState('')
+  const [skinColor,  setSkinColor]  = useState('')
+
+  // ── Section H state (connect) ──
+  const [whatsappNumber,   setWhatsappNumber]   = useState('')
+  const [instagramHandle,  setInstagramHandle]  = useState('')
+  const [websiteUrl,       setWebsiteUrl]       = useState('')
+
+  // ── Section I state (go live) ──
+  const [sessionModality, setSessionModality] = useState<'in_person' | 'online' | 'both'>('in_person')
+  const [isLive,          setIsLive]          = useState(false)
+  const [profileCompleteness, setProfileCompleteness] = useState(0)
+
   // ── Saving / saved per section ──
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [saved,  setSaved]  = useState<Record<string, boolean>>({})
@@ -263,6 +282,22 @@ export default function EditProfilePage() {
       setBio(p.bio ?? '')
       setCity(p.city ?? '')
       setAvailability(p.availability_status ?? 'available')
+      setProfileCompleteness(p.profile_completeness ?? 0)
+      // Section G
+      setGender(p.gender ?? '')
+      setHeightCm(p.height_cm ? String(p.height_cm) : '')
+      setBodyType(p.body_type ?? '')
+      setEthnicity(p.ethnicity ?? '')
+      setEyeColor(p.eye_color ?? '')
+      setHairColor(p.hair_color ?? '')
+      setSkinColor(p.skin_color ?? '')
+      // Section H
+      setWhatsappNumber(p.whatsapp_number ?? '')
+      setInstagramHandle(p.instagram_handle ?? '')
+      setWebsiteUrl(p.website_url ?? '')
+      // Section I
+      setSessionModality(p.session_modality ?? 'in_person')
+      setIsLive(p.is_live ?? false)
     }
 
     if (data.fantasy_tag_ids?.length)  setSelectedFantasy(data.fantasy_tag_ids)
@@ -893,6 +928,179 @@ export default function EditProfilePage() {
             <span style={{ fontSize: 13, color: '#6b7280' }}>Starting verification session…</span>
           </div>
         )}
+      </motion.div>
+
+      {/* ── SECTION G ─────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.35 }}
+        style={{ background: '#111620', border: '1px solid #1c2333', borderRadius: 16, padding: '28px 32px', marginBottom: 20 }}
+      >
+        <SectionHeader letter="G" title="Your Appearance" subtitle="Helps dreamers discover you. Everything here is optional but increases visibility." />
+
+        <FieldWrap label="Gender identity">
+          <div className="flex flex-wrap gap-2">
+            {(['woman','man','non_binary','trans_woman','trans_man','other'] as const).map(g => {
+              const label: Record<string, string> = { woman: 'Woman', man: 'Man', non_binary: 'Non-binary', trans_woman: 'Trans woman', trans_man: 'Trans man', other: 'Other' }
+              return (
+                <button key={g} type="button" onClick={() => setGender(g)}
+                  className="text-[12px] px-[14px] py-[7px] rounded-full border cursor-pointer transition-all duration-150"
+                  style={{ borderColor: gender === g ? '#e8607a' : '#1c2333', color: gender === g ? '#e8607a' : '#6b7280', background: gender === g ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
+                  {label[g]}
+                </button>
+              )
+            })}
+          </div>
+        </FieldWrap>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FieldWrap label="Height (cm)" helper="Between 140 and 220">
+            <input type="number" min={140} max={220} value={heightCm}
+              onChange={e => setHeightCm(e.target.value)}
+              style={{ ...inputBase }} placeholder="e.g. 168" />
+          </FieldWrap>
+          <FieldWrap label="Body type">
+            <div className="flex flex-wrap gap-2">
+              {['slim','athletic','average','curvy','plus_size','prefer_not_to_say'].map(b => (
+                <button key={b} type="button" onClick={() => setBodyType(b)}
+                  className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
+                  style={{ borderColor: bodyType === b ? '#e8607a' : '#1c2333', color: bodyType === b ? '#e8607a' : '#6b7280', background: bodyType === b ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
+                  {b.replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+          </FieldWrap>
+        </div>
+
+        <FieldWrap label="Ethnicity" helper="Free text — describe however feels right to you">
+          <input type="text" value={ethnicity} onChange={e => setEthnicity(e.target.value)}
+            style={{ ...inputBase }} placeholder="e.g. Mixed, Mediterranean, Nordic…" />
+        </FieldWrap>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FieldWrap label="Eye color">
+            <div className="flex flex-wrap gap-2">
+              {['brown','blue','green','hazel','grey'].map(c => (
+                <button key={c} type="button" onClick={() => setEyeColor(c)}
+                  className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
+                  style={{ borderColor: eyeColor === c ? '#e8607a' : '#1c2333', color: eyeColor === c ? '#e8607a' : '#6b7280', background: eyeColor === c ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </FieldWrap>
+          <FieldWrap label="Hair color">
+            <div className="flex flex-wrap gap-2">
+              {['blonde','brown','black','auburn','grey','red','dark'].map(c => (
+                <button key={c} type="button" onClick={() => setHairColor(c)}
+                  className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
+                  style={{ borderColor: hairColor === c ? '#e8607a' : '#1c2333', color: hairColor === c ? '#e8607a' : '#6b7280', background: hairColor === c ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </FieldWrap>
+        </div>
+
+        <FieldWrap label="Skin tone">
+          <div className="flex flex-wrap gap-2">
+            {['fair','light','medium','olive','brown','dark'].map(c => (
+              <button key={c} type="button" onClick={() => setSkinColor(c)}
+                className="text-[12px] px-[14px] py-[7px] rounded-full border cursor-pointer transition-all duration-150"
+                style={{ borderColor: skinColor === c ? '#e8607a' : '#1c2333', color: skinColor === c ? '#e8607a' : '#6b7280', background: skinColor === c ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </FieldWrap>
+
+        <SaveButton section="G" saving={!!saving.G} saved={!!saved.G}
+          onSave={() => saveSection('G', { gender, height_cm: heightCm ? Number(heightCm) : null, body_type: bodyType, ethnicity, eye_color: eyeColor, hair_color: hairColor, skin_color: skinColor })} />
+      </motion.div>
+
+      {/* ── SECTION H ─────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.4 }}
+        style={{ background: '#111620', border: '1px solid #1c2333', borderRadius: 16, padding: '28px 32px', marginBottom: 20 }}
+      >
+        <SectionHeader letter="H" title="Connect" subtitle="Private contact details used only for confirmed bookings." />
+
+        <FieldWrap label="WhatsApp number" helper="International format, e.g. +31612345678">
+          <input type="tel" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)}
+            style={{ ...inputBase }} placeholder="+31612345678" />
+        </FieldWrap>
+
+        <FieldWrap label="Instagram handle" helper="Without the @ symbol">
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: 14 }}>@</span>
+            <input type="text" value={instagramHandle} onChange={e => setInstagramHandle(e.target.value.replace(/^@/, ''))}
+              style={{ ...inputBase, paddingLeft: 28 }} placeholder="yourhandle" />
+          </div>
+        </FieldWrap>
+
+        <FieldWrap label="Personal website" helper="Optional">
+          <input type="url" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)}
+            style={{ ...inputBase }} placeholder="https://yoursite.com" />
+        </FieldWrap>
+
+        <SaveButton section="H" saving={!!saving.H} saved={!!saved.H}
+          onSave={() => saveSection('H', { whatsapp_number: whatsappNumber, instagram_handle: instagramHandle, website_url: websiteUrl })} />
+      </motion.div>
+
+      {/* ── SECTION I ─────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.45 }}
+        style={{ background: '#111620', border: '1px solid #1c2333', borderRadius: 16, padding: '28px 32px', marginBottom: 40 }}
+      >
+        <SectionHeader letter="I" title="Availability & Go Live" subtitle="Control how dreamers can connect with you, and when you appear in the feed." />
+
+        <FieldWrap label="Session type">
+          <div className="flex gap-2">
+            {(['in_person', 'online', 'both'] as const).map(m => {
+              const labels = { in_person: 'In person', online: 'Online', both: 'Both' }
+              return (
+                <button key={m} type="button" onClick={() => setSessionModality(m)}
+                  className="flex-1 text-[12px] py-[10px] rounded-[10px] border cursor-pointer transition-all duration-150 font-medium"
+                  style={{ borderColor: sessionModality === m ? '#e8607a' : '#1c2333', color: sessionModality === m ? '#e8607a' : '#6b7280', background: sessionModality === m ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
+                  {labels[m]}
+                </button>
+              )
+            })}
+          </div>
+        </FieldWrap>
+
+        <div className="flex items-center justify-between p-4 rounded-[12px] mt-2" style={{ background: '#161d2a', border: '1px solid #1c2333' }}>
+          <div>
+            <p style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500, marginBottom: 3 }}>Appear in the dreamer feed</p>
+            <p style={{ fontSize: 11, color: '#6b7280' }}>
+              {profileCompleteness < 70
+                ? `Complete ${70 - profileCompleteness}% more of your profile to go live`
+                : 'Your profile is visible to dreamers when active'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => profileCompleteness >= 70 && setIsLive(v => !v)}
+            style={{
+              width: 44, height: 24, borderRadius: 12, border: 'none', cursor: profileCompleteness < 70 ? 'not-allowed' : 'pointer',
+              background: isLive && profileCompleteness >= 70 ? '#e8607a' : '#1c2333',
+              position: 'relative', transition: 'background 0.2s', opacity: profileCompleteness < 70 ? 0.5 : 1, flexShrink: 0,
+            }}
+          >
+            <span style={{
+              position: 'absolute', top: 2, left: isLive && profileCompleteness >= 70 ? 22 : 2,
+              width: 20, height: 20, borderRadius: '50%', background: '#eeeef0', transition: 'left 0.2s',
+            }} />
+          </button>
+        </div>
+
+        <SaveButton section="I" saving={!!saving.I} saved={!!saved.I}
+          onSave={() => saveSection('I', { session_modality: sessionModality, is_live: profileCompleteness >= 70 ? isLive : undefined })} />
       </motion.div>
     </motion.div>
   )

@@ -12,6 +12,7 @@ import { usePlayerStore } from '@/store/playerStore'
 import CompanionCard from '@/components/ui/CompanionCard'
 import StoryCard from '@/components/ui/StoryCard'
 import AudioCard from '@/components/ui/AudioCard'
+import DesiresDrawer from '@/components/ui/DesiresDrawer'
 
 // ─── Framer Motion stagger variants ───────────────────────────────────────────
 
@@ -35,6 +36,7 @@ export default function HomePage() {
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
   const [heroShadow, setHeroShadow] = useState(false)
+  const [desiresOpen, setDesiresOpen] = useState(false)
 
   const filteredStories =
     activeFilter === 'All' ? stories : stories.filter((s) => s.type === activeFilter)
@@ -55,41 +57,56 @@ export default function HomePage() {
       className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-10 pt-[95px] pb-20"
     >
 
-      {/* ── BLOCK 1: Mood Slider ─────────────────────────────────────────────── */}
-      {/* <div
-        className="flex items-center gap-[14px] mb-8"
-        style={{
-          background: '#111620',
-          border: '1px solid #1c2333',
-          borderRadius: 40,
-          padding: '10px 20px',
-        }}
-      >
-        <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
-          Tonight I want:
-        </span>
-        <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
-          Softer
-        </span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={intensity}
-          onChange={(e) => setIntensity(Number(e.target.value))}
+      {/* ── BLOCK 1: Mood Slider + Desires button ─────────────────────────────── */}
+      <div className="flex items-center gap-3 mb-8 flex-wrap">
+        <div
+          className="flex items-center gap-[14px] flex-1 min-w-[260px]"
           style={{
-            flex: 1,
-            accentColor: '#e8607a',
-            cursor: 'pointer',
-            margin: 0,
-            padding: 0,
-            height: 4,
+            background: '#111620',
+            border: '1px solid #1c2333',
+            borderRadius: 40,
+            padding: '10px 20px',
           }}
-        />
-        <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
-          Spicier
-        </span>
-      </div> */}
+        >
+          <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Tonight I want:
+          </span>
+          <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Softer
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={intensity}
+            onChange={(e) => setIntensity(Number(e.target.value))}
+            style={{
+              flex: 1,
+              accentColor: '#e8607a',
+              cursor: 'pointer',
+              margin: 0,
+              padding: 0,
+              height: 4,
+            }}
+          />
+          <span style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Spicier
+          </span>
+        </div>
+        <button
+          onClick={() => setDesiresOpen(true)}
+          className="text-[12.5px] font-medium px-[16px] py-[10px] rounded-full border cursor-pointer transition-all duration-200 whitespace-nowrap flex-shrink-0"
+          style={{
+            borderColor: 'rgba(232,96,122,0.35)',
+            background:  'rgba(232,96,122,0.06)',
+            color:        '#e8607a',
+          }}
+        >
+          ✦ Tune your desires
+        </button>
+      </div>
+
+      <DesiresDrawer open={desiresOpen} onClose={() => setDesiresOpen(false)} />
 
       {/* ── BLOCK 2: Hero ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 mb-14">

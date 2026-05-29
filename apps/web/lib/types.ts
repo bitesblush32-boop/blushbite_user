@@ -7,6 +7,7 @@ export interface Companion {
   vibe: string
   tags: string[]
   gradient: string
+  photoUrl?: string | null
 }
 
 export interface Story {
@@ -45,4 +46,8 @@ export interface CompanionFeedItem {
   isVerified:      boolean
   sessionModality: string
   overlapScore:    number
+  distance_km?:    number | null
+  gender?:         string | null
+  height_cm?:      number | null
+  body_type?:      string | null
 }

@@ -140,9 +140,11 @@ export const userFantasyTags = pgTable('user_fantasy_tags', {
   user_id:        uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   fantasy_tag_id: integer('fantasy_tag_id').notNull().references(() => fantasyTags.id),
   intensity:      varchar('intensity', { length: 20 }).notNull().default('curious'),
+  source:         varchar('source', { length: 30 }).notNull().default('explicit'),
 }, (table) => ({
   pk:             primaryKey({ columns: [table.user_id, table.fantasy_tag_id] }),
   intensityCheck: check('uft_intensity_check', sql`${table.intensity} IN ('curious', 'into_it', 'love_it')`),
+  sourceCheck:    check('uft_source_check', sql`${table.source} IN ('explicit', 'story_like', 'story_save', 'companion_save', 'vibe_map')`),
 }))
 
 // ─── COMPANION SIDE ───────────────────────────────────────────────────────────

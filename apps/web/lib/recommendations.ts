@@ -4,9 +4,16 @@ import {
 } from '@/db/schema'
 import { eq, inArray, sql } from 'drizzle-orm'
 
-// ─── Jaccard overlap score computation ────────────────────────────────────────
-// Computes Jaccard similarity between user fantasy tags and each companion's
-// fantasy tags. Inserts/upserts into fantasy_tag_overlap_scores.
+// Intensity → weight mapping for weighted Jaccard
+const INTENSITY_WEIGHT: Record<string, number> = {
+  curious:  1,
+  into_it:  2,
+  love_it:  3,
+}
+
+// ─── Weighted Jaccard overlap score computation ────────────────────────────────
+// Score = sum(user_weight for matching tags) / (totalUserWeight + |compTags| - |intersection|)
+// Inserts/upserts into fantasy_tag_overlap_scores.
 // Called lazily from the feed route when scores are missing.
 
 export async function computeOverlapScores(
@@ -15,14 +22,25 @@ export async function computeOverlapScores(
 ): Promise<void> {
   if (companionProfileIds.length === 0) return
 
-  // Fetch user's fantasy tag set
+  // Fetch user's fantasy tags with intensities
   const userTagRows = await db
-    .select({ fantasy_tag_id: userFantasyTags.fantasy_tag_id })
+    .select({
+      fantasy_tag_id: userFantasyTags.fantasy_tag_id,
+      intensity:      userFantasyTags.intensity,
+    })
     .from(userFantasyTags)
     .where(eq(userFantasyTags.user_id, userId))
 
-  const userTagSet = new Set(userTagRows.map(r => r.fantasy_tag_id))
-  if (userTagSet.size === 0) return
+  if (userTagRows.length === 0) return
+
+  // Build weight map and total
+  const userWeightMap = new Map<number, number>()
+  let totalUserWeight = 0
+  for (const r of userTagRows) {
+    const w = INTENSITY_WEIGHT[r.intensity] ?? 1
+    userWeightMap.set(r.fantasy_tag_id, w)
+    totalUserWeight += w
+  }
 
   // Fetch companion fantasy tags for all requested profiles
   const companionTagRows = await db
@@ -43,16 +61,28 @@ export async function computeOverlapScores(
   const values = []
   for (const profileId of companionProfileIds) {
     const compSet = byProfile.get(profileId) ?? new Set<number>()
-    const intersection = [...userTagSet].filter(t => compSet.has(t)).length
-    const union = new Set([...userTagSet, ...compSet]).size
-    const overlap = union === 0 ? 0 : intersection / union
+
+    // Weighted intersection: sum of user weight for tags present in companion set
+    let intersectionWeight = 0
+    let intersectionCount = 0
+    for (const [tagId, weight] of Array.from(userWeightMap)) {
+      if (compSet.has(tagId)) {
+        intersectionWeight += weight
+        intersectionCount++
+      }
+    }
+
+    // Denominator: totalUserWeight + companion-only tags
+    const companionOnlyCount = compSet.size - intersectionCount
+    const denominator = totalUserWeight + companionOnlyCount
+    const overlap = denominator === 0 ? 0 : intersectionWeight / denominator
 
     values.push({
       user_id:                userId,
       companion_profile_id:   profileId,
       overlap_score:          overlap.toFixed(4),
-      matching_tag_count:     intersection,
-      total_user_tags:        userTagSet.size,
+      matching_tag_count:     intersectionCount,
+      total_user_tags:        userTagRows.length,
       total_companion_tags:   compSet.size,
       computed_at:            new Date(),
     })
@@ -60,7 +90,6 @@ export async function computeOverlapScores(
 
   if (values.length === 0) return
 
-  // Upsert — safe to re-run
   await db
     .insert(fantasyTagOverlapScores)
     .values(values)

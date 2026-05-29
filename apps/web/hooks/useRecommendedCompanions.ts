@@ -1,6 +1,7 @@
 'use client'
 
 import { useInfiniteQuery } from '@tanstack/react-query'
+import type { InfiniteData } from '@tanstack/react-query'
 import type { CompanionFeedItem } from '@/app/api/companions/feed/route'
 import type { Companion } from '@/lib/types'
 
@@ -9,9 +10,10 @@ interface FeedPage {
   nextCursor: string | null
 }
 
-async function fetchFeedPage({ pageParam }: { pageParam: string | null }): Promise<FeedPage> {
-  const url = pageParam
-    ? `/api/companions/feed?cursor=${encodeURIComponent(pageParam)}`
+async function fetchFeedPage({ pageParam }: { pageParam: unknown }): Promise<FeedPage> {
+  const cursor = pageParam as string | null
+  const url = cursor
+    ? `/api/companions/feed?cursor=${encodeURIComponent(cursor)}`
     : '/api/companions/feed'
   const res = await fetch(url)
   if (!res.ok) throw new Error('Feed fetch failed')
@@ -29,29 +31,36 @@ export function toCompanionCard(item: CompanionFeedItem): Companion {
     vibe:     item.vibe ?? '',
     tags:     item.tags,
     gradient: item.gradient,
+    photoUrl: item.primaryPhotoUrl,
   }
 }
 
 export function useRecommendedCompanions() {
-  const query = useInfiniteQuery<FeedPage, Error>({
-    queryKey:        ['companions', 'feed'],
-    queryFn:         fetchFeedPage,
+  const query = useInfiniteQuery<
+    FeedPage,
+    Error,
+    InfiniteData<FeedPage>,
+    readonly unknown[],
+    string | null
+  >({
+    queryKey:         ['companions', 'feed'] as const,
+    queryFn:          fetchFeedPage,
     initialPageParam: null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    staleTime:       5 * 60 * 1000,   // 5 min
-    gcTime:          10 * 60 * 1000,  // 10 min
-    maxPages:        5,
+    getNextPageParam: (lastPage: FeedPage) => lastPage.nextCursor ?? null,
+    staleTime:        5 * 60 * 1000,
+    gcTime:           10 * 60 * 1000,
+    maxPages:         5,
   })
 
-  const companions = query.data?.pages.flatMap(p => p.items) ?? []
+  const companions: CompanionFeedItem[] = query.data?.pages.flatMap((p: FeedPage) => p.items) ?? []
 
   return {
     companions,
-    companionCards: companions.map(toCompanionCard),
-    isLoading:     query.isLoading,
-    isFetchingMore: query.isFetchingNextPage,
-    hasNextPage:   query.hasNextPage,
-    fetchNextPage: query.fetchNextPage,
-    error:         query.error,
+    companionCards:  companions.map(toCompanionCard),
+    isLoading:       query.isLoading,
+    isFetchingMore:  query.isFetchingNextPage,
+    hasNextPage:     query.hasNextPage,
+    fetchNextPage:   query.fetchNextPage,
+    error:           query.error,
   }
 }

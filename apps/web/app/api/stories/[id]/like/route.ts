@@ -1,9 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { likes, stories } from '@/db/schema'
-import { and, eq, sql } from 'drizzle-orm'
+import { likes, stories, storyFantasyTags, userFantasyTags } from '@/db/schema'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { createNotification } from '@/db/helpers/createNotification'
+
+// ─── Behavioral inference helper ──────────────────────────────────────────────
+// After a like, seed user_fantasy_tags from the story's fantasy tags (curious intensity)
+
+async function inferTagsFromStory(userId: string, storyId: string): Promise<void> {
+  try {
+    const storyTags = await db
+      .select({ fantasy_tag_id: storyFantasyTags.fantasy_tag_id })
+      .from(storyFantasyTags)
+      .where(eq(storyFantasyTags.story_id, storyId))
+
+    if (storyTags.length === 0) return
+
+    // Get already-explicit tags so we don't downgrade them
+    const existingExplicit = await db
+      .select({ fantasy_tag_id: userFantasyTags.fantasy_tag_id })
+      .from(userFantasyTags)
+      .where(and(
+        eq(userFantasyTags.user_id, userId),
+        inArray(userFantasyTags.fantasy_tag_id, storyTags.map(t => t.fantasy_tag_id))
+      ))
+    const explicitIds = new Set(existingExplicit.map(r => r.fantasy_tag_id))
+
+    const toInsert = storyTags
+      .filter(t => !explicitIds.has(t.fantasy_tag_id))
+      .map(t => ({
+        user_id:        userId,
+        fantasy_tag_id: t.fantasy_tag_id,
+        intensity:      'curious' as const,
+        source:         'story_like' as const,
+      }))
+
+    if (toInsert.length === 0) return
+
+    await db.insert(userFantasyTags)
+      .values(toInsert)
+      .onConflictDoNothing()
+  } catch {
+    // Inference must never break the like response
+  }
+}
 
 export async function POST(
   _req: NextRequest,
@@ -25,6 +66,9 @@ export async function POST(
       .set({ like_count: sql`${stories.like_count} + 1` })
       .where(eq(stories.id, storyId))
       .returning({ likeCount: stories.like_count, authorId: stories.author_user_id })
+
+    // Behavioral inference — fire-and-forget, does not block response
+    void inferTagsFromStory(userId, storyId)
 
     try {
       if (updated?.authorId) {
