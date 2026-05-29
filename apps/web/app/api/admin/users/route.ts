@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { users, userProfiles } from '@/db/schema'
-import { eq, ilike, or, and, isNull, isNotNull, desc, sql } from 'drizzle-orm'
+import { eq, ne, ilike, or, and, isNull, isNotNull, desc, sql } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
   const limit  = 25
   const offset = (page - 1) * limit
 
-  const conditions: any[] = []
+  // Never expose admin accounts in the dreamer list
+  const conditions: any[] = [
+    or(isNull(userProfiles.platform_role), ne(userProfiles.platform_role, 'admin'))
+  ]
 
   if (search) {
     conditions.push(

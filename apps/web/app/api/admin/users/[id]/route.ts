@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { users, userProfiles, stories } from '@/db/schema'
-import { eq, desc, sql } from 'drizzle-orm'
+import {
+  users, userProfiles, stories,
+  bookingRequests, fantasyTagOverlapScores,
+  notifications, audioRecordings,
+} from '@/db/schema'
+import { eq, and, desc, sql, isNull, ne } from 'drizzle-orm'
 
 export async function GET(
   _req: NextRequest,
@@ -109,4 +113,44 @@ export async function PATCH(
   }
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await auth()
+  const user = session?.user as any
+  if (!session || user?.platform_role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { id } = params
+
+  // Verify user exists and is not an admin account
+  const [target] = await db
+    .select({ id: users.id, platform_role: userProfiles.platform_role })
+    .from(users)
+    .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
+    .where(eq(users.id, id))
+    .limit(1)
+  if (!target) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (target.platform_role === 'admin') {
+    return NextResponse.json({ error: 'Admin accounts cannot be deleted here' }, { status: 403 })
+  }
+
+  // Delete in dependency order — tables without cascade FK must go first
+  await db.delete(bookingRequests).where(eq(bookingRequests.user_id, id))
+  await db.delete(fantasyTagOverlapScores).where(eq(fantasyTagOverlapScores.user_id, id))
+  await db.delete(notifications).where(
+    and(eq(notifications.recipient_type, 'user'), eq(notifications.recipient_id, id))
+  )
+  // Stories and audio authored by this user (junction tables cascade automatically)
+  await db.delete(stories).where(eq(stories.author_user_id, id))
+  await db.delete(audioRecordings).where(eq(audioRecordings.author_user_id, id))
+  // Finally delete the user — cascades: user_accounts, user_profiles, user_fantasy_tags,
+  // likes, saves, comments, push_subscriptions
+  await db.delete(users).where(eq(users.id, id))
+
+  return NextResponse.json({ success: true })
 }

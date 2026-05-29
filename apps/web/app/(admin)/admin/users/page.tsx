@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, ChevronLeft, ChevronRight, X, MoreHorizontal, Check } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, X, MoreHorizontal, Trash2 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -99,30 +99,53 @@ function KebabMenu({
   onView,
   onFlag,
   onBan,
+  onDelete,
   isFlagged = false,
   isBanned = false,
 }: {
   onView: () => void
   onFlag: () => void
   onBan: () => void
+  onDelete: () => void
   isFlagged?: boolean
   isBanned?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+    }
+    setOpen(o => !o)
+  }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const items = [
+    { label: 'View details', action: () => { onView(); setOpen(false) }, danger: false },
+    { label: isFlagged ? 'Unflag user' : 'Flag user', action: () => { onFlag(); setOpen(false) }, danger: false },
+    { label: isBanned ? 'Unban account' : 'Ban account', action: () => { onBan(); setOpen(false) }, danger: !isBanned },
+    { label: 'Delete account', action: () => { onDelete(); setOpen(false) }, danger: true },
+  ]
+
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
-        onClick={() => setOpen(o => !o)}
+        ref={btnRef}
+        onClick={handleOpen}
         className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] hover:text-[#eeeef0] hover:border-[rgba(232,96,122,0.4)] transition-all"
       >
         <MoreHorizontal size={14} />
@@ -130,28 +153,36 @@ function KebabMenu({
       <AnimatePresence>
         {open && (
           <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, scale: 0.95, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-10 bg-[#0d1117] border border-[#1c2333] rounded-[12px] py-1 z-50 min-w-[160px]"
-            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+            style={{
+              position: 'fixed',
+              top: pos.top,
+              right: pos.right,
+              background: '#0d1117',
+              border: '1px solid #1c2333',
+              borderRadius: 12,
+              padding: '4px 0',
+              zIndex: 9999,
+              minWidth: 160,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            }}
           >
-            {[
-              { label: 'View details',                  action: () => { onView(); setOpen(false) } },
-              { label: isFlagged ? 'Unflag user' : 'Flag user', action: () => { onFlag(); setOpen(false) } },
-              { label: isBanned  ? 'Unban account' : 'Ban account', action: () => { onBan(); setOpen(false) }, danger: !isBanned },
-            ].map(item => (
+            {items.map(item => (
               <button key={item.label} onClick={item.action}
-                className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-white/[0.04]"
+                className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-white/[0.04] flex items-center gap-2"
                 style={{ color: item.danger ? '#ef4444' : '#eeeef0' }}>
+                {item.label === 'Delete account' && <Trash2 size={12} />}
                 {item.label}
               </button>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   )
 }
 
@@ -192,6 +223,66 @@ function BanModal({
               className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer"
               style={{ background: '#ef4444' }}>
               Ban account
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Delete confirm modal ───────────────────────────────────────────────────
+
+function DeleteModal({
+  alias,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  alias: string | null
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-[6px] z-[900] flex items-center justify-center px-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[440px] overflow-hidden"
+      >
+        <div className="h-[2px]" style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }} />
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
+              <Trash2 size={16} color="#ef4444" />
+            </div>
+            <h3 style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] text-[#eeeef0]">
+              Delete account
+            </h3>
+          </div>
+          <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-1">
+            This will permanently delete <span className="text-[#eeeef0]">{alias ? `@${alias.replace('@', '')}` : 'this account'}</span> and wipe all associated data:
+          </p>
+          <ul className="text-[12px] text-[#6b7280] leading-[1.7] mb-5 ml-2">
+            <li>· Profile, preferences, and tags</li>
+            <li>· All stories and audio recordings</li>
+            <li>· Likes, saves, comments, and bookings</li>
+            <li>· Push subscriptions and notifications</li>
+          </ul>
+          <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
+          <div className="flex gap-3">
+            <button onClick={onCancel} disabled={isPending}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50">
+              Cancel
+            </button>
+            <button onClick={onConfirm} disabled={isPending}
+              className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
+              style={{ background: '#ef4444' }}>
+              {isPending ? 'Deleting…' : 'Delete permanently'}
             </button>
           </div>
         </div>
@@ -399,8 +490,9 @@ export default function AdminUsersPage() {
   const [search, setSearch]             = useState('')
   const [debouncedSearch, setDebounced] = useState('')
   const [page, setPage]   = useState(1)
-  const [drawerUserId, setDrawerUserId] = useState<string | null>(null)
-  const [banUserId, setBanUserId]       = useState<string | null>(null)
+  const [drawerUserId, setDrawerUserId]   = useState<string | null>(null)
+  const [banUserId, setBanUserId]         = useState<string | null>(null)
+  const [deleteUserId, setDeleteUserId]   = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const queryClient = useQueryClient()
 
@@ -448,11 +540,23 @@ export default function AdminUsersPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
   })
 
+  const deleteMutation = useMutation<void, Error, string>({
+    mutationFn: async (id) => {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed')
+    },
+    onSuccess: () => {
+      setDeleteUserId(null)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
+
   const rows       = data?.data ?? []
   const meta       = data?.meta
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1
 
-  const banTarget  = rows.find(r => r.id === banUserId)
+  const banTarget    = rows.find(r => r.id === banUserId)
+  const deleteTarget = rows.find(r => r.id === deleteUserId)
 
   return (
     <motion.div
@@ -597,6 +701,7 @@ export default function AdminUsersPage() {
                           onView={() => setDrawerUserId(row.id)}
                           onFlag={() => flagMutation.mutate({ id: row.id, action: isFlagged ? 'unflag' : 'flag' })}
                           onBan={() => isBanned ? banMutation.mutate({ id: row.id, action: 'unban' }) : setBanUserId(row.id)}
+                          onDelete={() => setDeleteUserId(row.id)}
                           isFlagged={isFlagged}
                           isBanned={isBanned}
                         />
@@ -646,6 +751,7 @@ export default function AdminUsersPage() {
                           onView={() => setDrawerUserId(row.id)}
                           onFlag={() => flagMutation.mutate({ id: row.id, action: isFlagged ? 'unflag' : 'flag' })}
                           onBan={() => isBanned ? banMutation.mutate({ id: row.id, action: 'unban' }) : setBanUserId(row.id)}
+                          onDelete={() => setDeleteUserId(row.id)}
                           isFlagged={isFlagged}
                           isBanned={isBanned}
                         />
@@ -697,6 +803,19 @@ export default function AdminUsersPage() {
             alias={banTarget?.alias ?? null}
             onConfirm={() => banMutation.mutate({ id: banUserId!, action: 'ban' })}
             onCancel={() => setBanUserId(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Delete modal */}
+      <AnimatePresence>
+        {deleteUserId && (
+          <DeleteModal
+            key="delete"
+            alias={deleteTarget?.alias ?? null}
+            onConfirm={() => deleteMutation.mutate(deleteUserId!)}
+            onCancel={() => setDeleteUserId(null)}
+            isPending={deleteMutation.isPending}
           />
         )}
       </AnimatePresence>

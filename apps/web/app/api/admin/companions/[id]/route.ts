@@ -7,7 +7,9 @@ import {
   companionPhotos, companionVideos,
   companionFantasyTags, fantasyTags,
   companionVibeTags, vibeTags,
-  sessionCards,
+  sessionCards, companionPaymentSetup,
+  bookingRequests, fantasyTagOverlapScores,
+  notifications, stories, audioRecordings,
 } from '@/db/schema'
 import { eq, and, isNull, asc } from 'drizzle-orm'
 
@@ -181,6 +183,60 @@ export async function PATCH(
       }
     }
   }
+
+  return NextResponse.json({ success: true })
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await auth()
+  const user = session?.user as any
+  if (!session || user?.platform_role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { id } = params
+
+  // Verify companion exists and get profile_id
+  const [companion] = await db
+    .select({ id: companions.id })
+    .from(companions)
+    .where(eq(companions.id, id))
+    .limit(1)
+  if (!companion) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const [profile] = await db
+    .select({ id: companionProfiles.id })
+    .from(companionProfiles)
+    .where(eq(companionProfiles.companion_id, id))
+    .limit(1)
+
+  // Delete tables without cascade FKs first
+  if (profile) {
+    await db.delete(bookingRequests).where(eq(bookingRequests.companion_profile_id, profile.id))
+    await db.delete(fantasyTagOverlapScores).where(eq(fantasyTagOverlapScores.companion_profile_id, profile.id))
+  }
+  await db.delete(notifications).where(
+    and(eq(notifications.recipient_type, 'companion'), eq(notifications.recipient_id, id))
+  )
+  await db.delete(companionVerifications).where(eq(companionVerifications.companion_id, id))
+  await db.delete(companionLegalDocs).where(eq(companionLegalDocs.companion_id, id))
+  await db.delete(companionPaymentSetup).where(eq(companionPaymentSetup.companion_id, id))
+  // Null out authored stories and audio (preserve content, disassociate author)
+  await db
+    .update(stories)
+    .set({ author_companion_id: null, author_type: 'admin' })
+    .where(eq(stories.author_companion_id, id))
+  await db
+    .update(audioRecordings)
+    .set({ author_companion_id: null, companion_profile_id: null, author_type: 'user' })
+    .where(eq(audioRecordings.author_companion_id, id))
+  // Delete the companion — cascades: companion_accounts, companion_profiles (→ photos, videos,
+  // languages, tags, session_cards, story_bridges, analytics_events), onboarding_progress,
+  // didit_extracted_data
+  await db.delete(companions).where(eq(companions.id, id))
 
   return NextResponse.json({ success: true })
 }

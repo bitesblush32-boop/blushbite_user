@@ -1,0 +1,492 @@
+{
+  "communities": {
+    "0": [
+      "apps_web_app_api_admin_companions_id_approve_route_ts",
+      "apps_web_app_api_admin_companions_id_reject_route_ts",
+      "apps_web_app_api_admin_content_bulk_import_route_ts",
+      "apps_web_app_api_admin_content_create_route_ts",
+      "apps_web_app_api_admin_stories_bulk_route_ts",
+      "apps_web_app_api_admin_stories_single_route_ts",
+      "apps_web_app_api_admin_tags_id_route_ts",
+      "apps_web_app_api_admin_tags_route_ts",
+      "apps_web_app_api_analytics_track_route_ts",
+      "apps_web_app_api_auth_complete_onboarding_route_ts",
+      "apps_web_app_api_auth_register_route_ts",
+      "apps_web_app_api_companion_bridge_link_route_ts",
+      "apps_web_app_api_companion_bridge_route_ts",
+      "apps_web_app_api_companion_bridge_storyid_route_ts",
+      "apps_web_app_api_companion_legal_sign_route_ts",
+      "apps_web_app_api_companions_media_photo_route_ts",
+      "apps_web_app_api_companions_media_video_route_ts",
+      "apps_web_app_api_companions_onboarding_identity_route_ts",
+      "apps_web_app_api_companions_onboarding_legal_route_ts",
+      "apps_web_app_api_companions_onboarding_submit_route_ts",
+      "apps_web_app_api_companions_onboarding_verify_start_route_ts",
+      "apps_web_app_api_dev_reset_test_user_route_ts",
+      "apps_web_app_api_dev_test_push_route_ts",
+      "apps_web_app_api_location_route_ts",
+      "apps_web_app_api_push_subscribe_route_ts",
+      "apps_web_app_api_push_unsubscribe_route_ts",
+      "apps_web_app_api_stories_id_comments_commentid_like_route_ts",
+      "apps_web_app_api_stories_id_comments_commentid_route_ts",
+      "apps_web_app_api_stories_id_comments_route_ts",
+      "apps_web_app_api_stories_id_like_route_ts",
+      "apps_web_app_api_stories_id_save_route_ts",
+      "apps_web_app_api_stories_route_ts",
+      "apps_web_app_api_stories_views_route_ts",
+      "apps_web_app_api_upload_presigned_url_route_ts",
+      "apps_web_app_api_users_avatar_route_ts",
+      "apps_web_app_api_users_posts_id_route_ts",
+      "apps_web_app_api_webhooks_didit_route_ts",
+      "route_delete",
+      "route_getcompanionprofile",
+      "route_getusagecount",
+      "route_isatleast18",
+      "route_post",
+      "route_toslug"
+    ],
+    "1": [
+      "apps_web_app_api_admin_activity_route_ts",
+      "apps_web_app_api_admin_audio_route_ts",
+      "apps_web_app_api_admin_bookings_route_ts",
+      "apps_web_app_api_admin_bridges_route_ts",
+      "apps_web_app_api_admin_companions_id_verification_route_ts",
+      "apps_web_app_api_admin_companions_route_ts",
+      "apps_web_app_api_admin_content_route_ts",
+      "apps_web_app_api_admin_stats_analytics_route_ts",
+      "apps_web_app_api_admin_stats_counts_route_ts",
+      "apps_web_app_api_admin_stats_overview_route_ts",
+      "apps_web_app_api_admin_users_route_ts",
+      "apps_web_app_api_companion_bridge_my_links_route_ts",
+      "apps_web_app_api_companion_bridge_stories_route_ts",
+      "apps_web_app_api_companions_analytics_summary_route_ts",
+      "apps_web_app_api_companions_nearby_route_ts",
+      "apps_web_app_api_companions_onboarding_profile_route_ts",
+      "apps_web_app_api_companions_onboarding_submit_status_route_ts",
+      "apps_web_app_api_companions_onboarding_verify_status_route_ts",
+      "apps_web_app_api_companions_settings_route_ts",
+      "apps_web_app_api_confessions_route_ts",
+      "apps_web_app_api_health_route_ts",
+      "apps_web_app_api_notifications_count_route_ts",
+      "apps_web_app_api_platform_stories_route_ts",
+      "apps_web_app_api_stories_id_bridges_route_ts",
+      "apps_web_app_api_tags_route_ts",
+      "apps_web_app_api_upload_file_route_ts",
+      "apps_web_app_api_users_liked_route_ts",
+      "apps_web_app_api_users_photos_route_ts",
+      "apps_web_app_api_users_posts_route_ts",
+      "apps_web_app_api_users_saved_confessions_route_ts",
+      "apps_web_app_companion_companion_bridge_page_tsx",
+      "page_bridgepageinner",
+      "route_cnt",
+      "route_get",
+      "route_minutestokey",
+      "route_put",
+      "route_q"
+    ],
+    "2": [
+      "apps_web_app_api_admin_audio_id_route_ts",
+      "apps_web_app_api_admin_bookings_id_route_ts",
+      "apps_web_app_api_admin_bridges_id_route_ts",
+      "apps_web_app_api_admin_companions_id_photos_route_ts",
+      "apps_web_app_api_admin_companions_id_route_ts",
+      "apps_web_app_api_admin_companions_id_videos_route_ts",
+      "apps_web_app_api_admin_content_id_route_ts",
+      "apps_web_app_api_admin_users_id_route_ts",
+      "apps_web_app_api_companions_bookings_id_route_ts",
+      "apps_web_app_api_companions_profile_full_route_ts",
+      "apps_web_app_api_companions_profile_route_ts",
+      "apps_web_app_api_companions_settings_deactivate_route_ts",
+      "apps_web_app_api_notifications_id_read_route_ts",
+      "apps_web_app_api_notifications_read_all_route_ts",
+      "apps_web_app_api_notifications_route_ts",
+      "apps_web_app_api_users_profile_route_ts",
+      "route_ensureprofile",
+      "route_getorcreateprofile",
+      "route_patch",
+      "route_recomputecompleteness",
+      "route_resolverecipient"
+    ],
+    "3": [
+      "apps_web_app_companion_companion_profile_edit_page_tsx",
+      "apps_web_app_companion_companion_profile_settings_page_tsx",
+      "page_cmtofeet",
+      "page_debounce",
+      "page_durkeyfromminutes",
+      "page_emptycard",
+      "page_enteredit",
+      "page_flushsave",
+      "page_goback",
+      "page_gonext",
+      "page_gotostep",
+      "page_handlechip",
+      "page_handleheight",
+      "page_handlevideofile",
+      "page_patchsection",
+      "page_processvideofile",
+      "page_savesection",
+      "page_startverification",
+      "page_togglefantasy",
+      "page_togglevibe"
+    ],
+    "4": [
+      "apps_web_app_admin_admin_audio_page_tsx",
+      "apps_web_app_admin_admin_bookings_page_tsx",
+      "apps_web_app_admin_admin_content_page_tsx",
+      "apps_web_app_admin_admin_users_page_tsx",
+      "apps_web_app_companion_companion_notifications_page_tsx",
+      "page_authorlabel",
+      "page_avatar",
+      "page_bulkaction",
+      "page_companionnotificationspage",
+      "page_formatdate",
+      "page_formatdur",
+      "page_handler",
+      "page_handlesearch",
+      "page_initials",
+      "page_notificon",
+      "page_relativetime",
+      "page_seek",
+      "page_statusbadge",
+      "page_toggleselect"
+    ],
+    "5": [
+      "apps_web_app_admin_admin_content_create_page_tsx",
+      "apps_web_app_auth_auth_signin_page_tsx",
+      "page_e",
+      "page_getstrength",
+      "page_handledrop",
+      "page_handlefile",
+      "page_handleimport",
+      "page_handlesubmit",
+      "page_multichips",
+      "page_setmode",
+      "page_toggleemail",
+      "page_togglemode"
+    ],
+    "6": [
+      "apps_web_app_companion_companion_legal_page_tsx",
+      "apps_web_app_dreamer_admin_generate_page_tsx",
+      "page_generatepageimage",
+      "page_handlesign",
+      "page_pause",
+      "page_saving",
+      "page_start",
+      "page_toggle",
+      "page_uploadimagedataurl"
+    ],
+    "7": [
+      "apps_web_app_dreamer_create_page_tsx",
+      "page_addcategory",
+      "page_handleinputkeydown",
+      "page_highlightmatch",
+      "page_onpd",
+      "page_onpointerdown",
+      "page_removecategory",
+      "page_togglegridchip",
+      "page_totitlecase"
+    ],
+    "8": [
+      "apps_web_app_companion_companion_profile_page_tsx",
+      "apps_web_app_dreamer_profile_page_tsx",
+      "page_handleavatarchange",
+      "page_handlephotochange",
+      "page_likestabcontent",
+      "page_skeleton"
+    ],
+    "9": [
+      "apps_web_app_dreamer_notifications_page_tsx",
+      "page_formatrelative",
+      "page_groupnotifications",
+      "page_handletap",
+      "page_urlbase64touint8array"
+    ],
+    "10": [
+      "apps_web_app_privacy_page_tsx",
+      "apps_web_app_terms_page_tsx",
+      "page_p",
+      "page_section",
+      "page_ul"
+    ],
+    "11": [
+      "apps_web_app_admin_admin_activity_page_tsx",
+      "page_adminactivitypage",
+      "page_eventlabel",
+      "page_formatrelativetime"
+    ],
+    "12": [
+      "apps_web_app_admin_admin_companions_page_tsx",
+      "page_admincompanionspage",
+      "page_livetoggle",
+      "page_verificationbadge"
+    ],
+    "13": [
+      "apps_web_app_admin_admin_companions_id_page_tsx",
+      "page_invalidate",
+      "page_maskdocnumber",
+      "page_matchstatus"
+    ],
+    "14": [
+      "apps_web_app_admin_admin_layout_tsx",
+      "layout_badge",
+      "layout_navgroup"
+    ],
+    "15": [
+      "apps_web_app_auth_auth_onboarding_page_tsx",
+      "page_handlecontinue",
+      "page_handleskip"
+    ],
+    "16": [
+      "apps_web_app_providers_tsx",
+      "providers_providers"
+    ],
+    "17": [
+      "apps_web_app_robots_ts",
+      "robots_robots"
+    ],
+    "18": [
+      "apps_web_app_sitemap_ts",
+      "sitemap_sitemap"
+    ],
+    "19": [
+      "apps_web_app_admin_layout_tsx",
+      "layout_adminlayout"
+    ],
+    "20": [
+      "apps_web_app_admin_admin_tags_page_tsx",
+      "page_singularize"
+    ],
+    "21": [
+      "adminutils_statusbadge",
+      "apps_web_app_admin_admin_components_adminutils_tsx"
+    ],
+    "22": [
+      "apps_web_app_auth_layout_tsx",
+      "layout_authlayout"
+    ],
+    "23": [
+      "apps_web_app_companion_companion_analytics_page_tsx",
+      "page_fmtdate"
+    ],
+    "24": [
+      "apps_web_app_dreamer_page_tsx",
+      "page_homepage"
+    ],
+    "25": [
+      "apps_web_app_dreamer_companions_page_tsx",
+      "page_companionspage"
+    ],
+    "26": [
+      "apps_web_app_dreamer_confessions_page_tsx",
+      "page_confessionspage"
+    ],
+    "27": [
+      "apps_web_app_dreamer_stories_page_tsx",
+      "page_storiespage"
+    ],
+    "28": [
+      "apps_web_app_layout_tsx"
+    ],
+    "29": [
+      "apps_web_app_admin_admin_page_tsx"
+    ],
+    "30": [
+      "apps_web_app_admin_admin_bridges_page_tsx"
+    ],
+    "31": [
+      "apps_web_app_auth_auth_error_page_tsx"
+    ],
+    "32": [
+      "apps_web_app_companion_layout_tsx"
+    ],
+    "33": [
+      "apps_web_app_dreamer_layout_tsx"
+    ],
+    "34": [
+      "apps_web_app_api_auth_nextauth_route_ts"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06,
+    "1": 0.06,
+    "2": 0.11,
+    "3": 0.14,
+    "4": 0.11,
+    "5": 0.18,
+    "6": 0.28,
+    "7": 0.31,
+    "8": 0.33,
+    "9": 0.4,
+    "10": 0.6,
+    "11": 0.5,
+    "12": 0.5,
+    "13": 0.5,
+    "14": 0.67,
+    "15": 0.67,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0
+  },
+  "gods": [
+    {
+      "id": "route_get",
+      "label": "GET()",
+      "degree": 46
+    },
+    {
+      "id": "route_post",
+      "label": "POST()",
+      "degree": 37
+    },
+    {
+      "id": "route_patch",
+      "label": "PATCH()",
+      "degree": 23
+    },
+    {
+      "id": "route_delete",
+      "label": "DELETE()",
+      "degree": 15
+    },
+    {
+      "id": "page_relativetime",
+      "label": "relativeTime()",
+      "degree": 5
+    },
+    {
+      "id": "page_debounce",
+      "label": "debounce()",
+      "degree": 5
+    },
+    {
+      "id": "page_flushsave",
+      "label": "flushSave()",
+      "degree": 4
+    },
+    {
+      "id": "route_getcompanionprofile",
+      "label": "getCompanionProfile()",
+      "degree": 4
+    },
+    {
+      "id": "page_toggle",
+      "label": "toggle()",
+      "degree": 3
+    },
+    {
+      "id": "page_handlefile",
+      "label": "handleFile()",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "BridgePageInner()",
+      "target": "GET()",
+      "source_files": [
+        "apps\\web\\app\\(companion)\\companion\\bridge\\page.tsx",
+        "apps\\web\\app\\api\\users\\saved\\confessions\\route.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `BridgePageInner()` unexpectedly reaches hub `GET()`"
+    },
+    {
+      "source": "POST()",
+      "target": "GET()",
+      "source_files": [
+        "apps\\web\\app\\api\\webhooks\\didit\\route.ts",
+        "apps\\web\\app\\api\\users\\saved\\confessions\\route.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "PATCH()",
+      "target": "DELETE()",
+      "source_files": [
+        "apps\\web\\app\\api\\users\\profile\\route.ts",
+        "apps\\web\\app\\api\\users\\posts\\[id]\\route.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "toggle()",
+      "target": "pause()",
+      "source_files": [
+        "apps\\web\\app\\(companion)\\companion\\legal\\page.tsx",
+        "apps\\web\\app\\(dreamer)\\admin-generate\\page.tsx"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "toggleMode()",
+      "target": "setMode()",
+      "source_files": [
+        "apps\\web\\app\\(auth)\\auth\\signin\\page.tsx",
+        "apps\\web\\app\\(admin)\\admin\\content\\create\\page.tsx"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `GET()` connect `Community 1` to `Community 0`, `Community 2`?",
+      "why": "High betweenness centrality (0.119) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `POST()` connect `Community 0` to `Community 1`?",
+      "why": "High betweenness centrality (0.087) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `DELETE()` connect `Community 0` to `Community 1`, `Community 2`?",
+      "why": "High betweenness centrality (0.040) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 3 inferred relationships involving `GET()` (e.g. with `BridgePageInner()` and `POST()`) actually correct?",
+      "why": "`GET()` has 3 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `POST()` (e.g. with `GET()` and `DELETE()`) actually correct?",
+      "why": "`POST()` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `DELETE()` (e.g. with `PATCH()` and `POST()`) actually correct?",
+      "why": "`DELETE()` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

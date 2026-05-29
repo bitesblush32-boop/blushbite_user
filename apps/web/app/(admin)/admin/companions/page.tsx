@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Filter, ChevronLeft, ChevronRight, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, ExternalLink, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 
 const TABS = [
@@ -95,6 +95,71 @@ function LiveToggle({ companionId, isLive, onToggle }: { companionId: string; is
   )
 }
 
+// ── Delete companion modal ──────────────────────────────────────────────────
+
+function DeleteCompanionModal({
+  name,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  name: string | null
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-[6px] z-[900] flex items-center justify-center px-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[440px] overflow-hidden"
+      >
+        <div className="h-[2px]" style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }} />
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <Trash2 size={16} color="#ef4444" />
+              </div>
+              <h3 style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] text-[#eeeef0]">
+                Delete companion
+              </h3>
+            </div>
+            <button onClick={onCancel} className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all">
+              <X size={16} />
+            </button>
+          </div>
+          <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-1">
+            This will permanently delete <span className="text-[#eeeef0]">{name ?? 'this companion'}</span> and wipe all associated data:
+          </p>
+          <ul className="text-[12px] text-[#6b7280] leading-[1.7] mb-5 ml-2">
+            <li>· Profile, photos, videos, and session cards</li>
+            <li>· Verification, legal docs, and payment setup</li>
+            <li>· All booking requests and analytics events</li>
+            <li>· Authored stories and audio recordings</li>
+          </ul>
+          <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
+          <div className="flex gap-3">
+            <button onClick={onCancel} disabled={isPending}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50">
+              Cancel
+            </button>
+            <button onClick={onConfirm} disabled={isPending}
+              className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
+              style={{ background: '#ef4444' }}>
+              {isPending ? 'Deleting…' : 'Delete permanently'}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 const cardItem = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
@@ -109,6 +174,7 @@ export default function AdminCompanionsPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [deleteCompanionId, setDeleteCompanionId] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const queryClient = useQueryClient()
 
@@ -170,9 +236,21 @@ export default function AdminCompanionsPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/admin/companions/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed')
+    },
+    onSuccess: () => {
+      setDeleteCompanionId(null)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'companions'] })
+    },
+  })
+
   const rows = data?.data ?? []
   const meta = data?.meta
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1
+  const deleteTarget = rows.find(r => r.id === deleteCompanionId)
 
   return (
     <motion.div
@@ -302,12 +380,21 @@ export default function AdminCompanionsPage() {
                     </td>
                     {/* Actions */}
                     <td className="px-4 py-4">
-                      <Link
-                        href={`/admin/companions/${c.id}`}
-                        className="flex items-center gap-1 text-[12px] text-[#e8607a] opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Review <ExternalLink size={11} />
-                      </Link>
+                      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link
+                          href={`/admin/companions/${c.id}`}
+                          className="flex items-center gap-1 text-[12px] text-[#e8607a]"
+                        >
+                          Review <ExternalLink size={11} />
+                        </Link>
+                        <button
+                          onClick={() => setDeleteCompanionId(c.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] hover:text-[#ef4444] hover:border-[rgba(239,68,68,0.4)] transition-all"
+                          title="Delete companion"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </td>
                   </motion.tr>
                 ))}
@@ -384,6 +471,19 @@ export default function AdminCompanionsPage() {
           </button>
         </div>
       )}
+
+      {/* Delete modal */}
+      <AnimatePresence>
+        {deleteCompanionId && (
+          <DeleteCompanionModal
+            key="delete-companion"
+            name={deleteTarget?.full_name ?? deleteTarget?.alias ?? null}
+            onConfirm={() => deleteMutation.mutate(deleteCompanionId!)}
+            onCancel={() => setDeleteCompanionId(null)}
+            isPending={deleteMutation.isPending}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
