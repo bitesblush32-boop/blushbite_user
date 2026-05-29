@@ -36,6 +36,25 @@ export async function POST(req: NextRequest) {
 
   const { vibes, gender, desiredGenders, role } = result.data
 
+  // Guard: if onboarding already complete, return existing role — role is locked forever
+  const existingUser = await db
+    .select({ onboarding_complete: users.onboarding_complete })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+
+  if (existingUser[0]?.onboarding_complete) {
+    const existingProfile = await db
+      .select({ platform_role: userProfiles.platform_role })
+      .from(userProfiles)
+      .where(eq(userProfiles.user_id, session.user.id))
+      .limit(1)
+    const lockedRole = existingProfile[0]?.platform_role ?? 'dreamer'
+    // Return the raw role token the client expects ('dream' for companion, 'dreamer' for dreamer)
+    const clientRole = lockedRole === 'companion' ? 'dream' : lockedRole
+    return NextResponse.json({ success: true, platform_role: clientRole, already_complete: true })
+  }
+
   // Upsert user_profiles — vibes/gender/desired_genders live here in new schema
   await db.insert(userProfiles)
     .values({

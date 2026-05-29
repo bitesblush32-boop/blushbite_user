@@ -29,3 +29,20 @@ export interface Audio {
   tags: string[]
   gradient: string
 }
+
+export interface CompanionFeedItem {
+  id:              string
+  companionId:     string
+  name:            string | null
+  age:             number | null
+  city:            string | null
+  minPrice:        string | null
+  currency:        string
+  vibe:            string | null
+  tags:            string[]
+  primaryPhotoUrl: string | null
+  gradient:        string
+  isVerified:      boolean
+  sessionModality: string
+  overlapScore:    number
+}

@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+
+const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false })
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Camera,
-  LayoutGrid, Heart, Bookmark, BookMarked, Pencil,
+  LayoutGrid, Heart, Bookmark, BookMarked, Pencil, MapPin,
 } from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
@@ -383,6 +386,47 @@ export default function ProfilePage() {
   })
   const posts = postsData?.data ?? []
 
+  // ── Location detection ─────────────────────────────────────────────────────
+  type LocationStatus = 'idle' | 'detecting' | 'failed' | 'picking'
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle')
+  const geoAttemptedRef = useRef(false)
+
+  const attemptGeolocation = useCallback(async () => {
+    if (!navigator.geolocation) { setLocationStatus('failed'); return }
+    setLocationStatus('detecting')
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        try {
+          const res  = await fetch('/api/users/location', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          })
+          const json = await res.json()
+          if (!res.ok || !json.data?.city) throw new Error()
+          const { city, country } = json.data
+          await fetch('/api/users/profile', {
+            method:  'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ city, ...(country ? { country } : {}) }),
+          })
+          setProfileOverride(o => ({ ...(o ?? {}), city, ...(country ? { country } : {}) }))
+          setLocationStatus('idle')
+        } catch {
+          setLocationStatus('failed')
+        }
+      },
+      () => setLocationStatus('failed'),
+      { timeout: 8000, maximumAge: 300_000 },
+    )
+  }, [])
+
+  useEffect(() => {
+    if (loading || profile?.city || geoAttemptedRef.current) return
+    geoAttemptedRef.current = true
+    attemptGeolocation()
+  }, [loading, profile?.city, attemptGeolocation])
+
   // ── Avatar upload ──────────────────────────────────────────────────────────
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -508,6 +552,51 @@ export default function ProfilePage() {
                 {profile.bio}
               </p>
             )}
+
+            {/* ── Location block ── */}
+            {profile?.city ? (
+              <button
+                onClick={() => setLocationStatus('picking')}
+                className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer p-0 transition-opacity hover:opacity-70"
+                style={{ fontSize: 12, color: '#6b7280' }}
+              >
+                <MapPin size={12} color="#6b7280" />
+                {[profile.city, profile.country].filter(Boolean).join(', ')}
+              </button>
+            ) : locationStatus === 'detecting' ? (
+              <div className="flex items-center gap-[5px]" style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic' }}>
+                <MapPin size={11} color="#4b5563" />
+                Locating…
+              </div>
+            ) : locationStatus === 'picking' ? (
+              <LocationPicker
+                onSaved={city => {
+                  setProfileOverride(o => ({ ...(o ?? {}), city }))
+                  setLocationStatus('idle')
+                }}
+                onCancel={() => setLocationStatus(profile?.city ? 'idle' : 'failed')}
+              />
+            ) : locationStatus === 'failed' ? (
+              <div className="flex flex-col items-center gap-[10px]">
+                <span style={{ fontSize: 11, color: '#4b5563' }}>We couldn't find your location</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { geoAttemptedRef.current = false; attemptGeolocation() }}
+                    className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
+                    style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280', border: '1px solid #1c2333' }}
+                  >
+                    Try again
+                  </button>
+                  <button
+                    onClick={() => setLocationStatus('picking')}
+                    className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
+                    style={{ background: 'rgba(232,96,122,0.08)', color: '#e8607a', border: '1px solid rgba(232,96,122,0.3)' }}
+                  >
+                    Add manually
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             <span className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
               style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>

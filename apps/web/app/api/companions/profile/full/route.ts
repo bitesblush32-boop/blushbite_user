@@ -5,6 +5,7 @@ import {
   companions, companionProfiles, companionPhotos, companionVideos,
   companionVibeTags, companionFantasyTags, fantasyTags, vibeTags,
   sessionCards, stories, companionVerifications,
+  companionLanguages, languages,
 } from '@/db/schema'
 import { eq, and, isNull, desc, asc, count } from 'drizzle-orm'
 import { z } from 'zod'
@@ -77,6 +78,7 @@ export async function GET() {
     photos, videos, companionStories, verification,
     fantasyTagRows, vibeTagRows, sessionCardRows,
     availableVibeTagRows, availableFantasyTagRows,
+    languageRows, availableLanguageRows,
   ] = await Promise.all([
     db.select().from(companionPhotos)
       .where(and(eq(companionPhotos.companion_profile_id, profile.id), isNull(companionPhotos.deleted_at)))
@@ -110,6 +112,12 @@ export async function GET() {
       .from(fantasyTags)
       .where(eq(fantasyTags.is_active, true))
       .orderBy(asc(fantasyTags.id)),
+    db.select({ language_id: companionLanguages.language_id, fluency: companionLanguages.fluency })
+      .from(companionLanguages)
+      .where(eq(companionLanguages.companion_profile_id, profile.id)),
+    db.select({ id: languages.id, code: languages.code, name: languages.name })
+      .from(languages)
+      .orderBy(asc(languages.name)),
   ])
 
   return NextResponse.json({
@@ -139,6 +147,11 @@ export async function GET() {
       ethnicity:            profile.ethnicity,
       eye_color:            profile.eye_color,
       hair_color:           profile.hair_color,
+      gender:               profile.gender,
+      skin_color:           profile.skin_color,
+      session_modality:     profile.session_modality,
+      instagram_handle:     profile.instagram_handle,
+      website_url:          profile.website_url,
       whatsapp_number:      profile.whatsapp_number,
       profile_completeness: profile.profile_completeness,
       is_visible_to_users:  profile.is_visible_to_users,
@@ -153,8 +166,10 @@ export async function GET() {
     } : null,
     selected_fantasy_tag_ids: fantasyTagRows.map(r => r.fantasy_tag_id),
     selected_vibe_tag_ids:    vibeTagRows.map(r => r.vibe_tag_id),
+    selected_languages:       languageRows,
     available_fantasy_tags:   availableFantasyTagRows,
     available_vibe_tags:      availableVibeTagRows,
+    available_languages:      availableLanguageRows,
     session_cards:            sessionCardRows,
   })
 }
@@ -170,12 +185,14 @@ const basicsSchema = z.object({
   availability_status: z.enum(['available', 'busy', 'offline']).optional(),
 })
 const physicalSchema = z.object({
-  section:   z.literal('physical'),
-  height_cm: z.number().int().min(140).max(220).nullable().optional(),
-  body_type: z.enum(['slim','athletic','average','curvy','plus_size','prefer_not_to_say']).nullable().optional(),
-  ethnicity: z.string().max(50).nullable().optional(),
-  eye_color: z.string().max(30).nullable().optional(),
-  hair_color:z.string().max(30).nullable().optional(),
+  section:    z.literal('physical'),
+  height_cm:  z.number().int().min(140).max(220).nullable().optional(),
+  body_type:  z.enum(['slim','athletic','average','curvy','plus_size','prefer_not_to_say']).nullable().optional(),
+  ethnicity:  z.string().max(50).nullable().optional(),
+  eye_color:  z.string().max(30).nullable().optional(),
+  hair_color: z.string().max(30).nullable().optional(),
+  gender:     z.enum(['woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say']).nullable().optional(),
+  skin_color: z.enum(['fair','light','medium','olive','brown','dark','ebony','prefer_not_to_say']).nullable().optional(),
 })
 const whatsappSchema = z.object({
   section:          z.literal('whatsapp'),
@@ -191,6 +208,23 @@ const tagsSchema = z.object({
   section:          z.literal('tags'),
   fantasy_tag_ids:  z.array(z.number().int()).optional(),
   vibe_tag_ids:     z.array(z.number().int()).optional(),
+  languages:        z.array(z.object({
+    language_id: z.number().int(),
+    fluency:     z.enum(['native', 'fluent', 'conversational']),
+  })).optional(),
+})
+const modalitySchema = z.object({
+  section:          z.literal('modality'),
+  session_modality: z.enum(['in_person', 'online', 'both']),
+})
+const socialSchema = z.object({
+  section:          z.literal('social'),
+  instagram_handle: z.string().max(100).nullable().optional(),
+  website_url:      z.string().url().max(500).nullable().optional(),
+})
+const liveSchema = z.object({
+  section:  z.literal('live'),
+  is_live:  z.boolean(),
 })
 const servicesSchema = z.object({
   section:       z.literal('services'),
@@ -235,6 +269,7 @@ const deleteVideoSchema = z.object({
 const patchSchema = z.discriminatedUnion('section', [
   basicsSchema, physicalSchema, whatsappSchema, legalSchema,
   tagsSchema, servicesSchema, availabilitySchema,
+  modalitySchema, socialSchema, liveSchema,
   setPrimaryPhotoSchema, deletePhotoSchema, addPhotoSchema,
   addVideoSchema, deleteVideoSchema,
 ])
@@ -280,11 +315,13 @@ export async function PATCH(req: NextRequest) {
     }
     case 'physical': {
       const set: Record<string, unknown> = { updated_at: now }
-      if (data.height_cm !== undefined) set.height_cm = data.height_cm
-      if (data.body_type !== undefined) set.body_type = data.body_type
-      if (data.ethnicity !== undefined) set.ethnicity = data.ethnicity
-      if (data.eye_color !== undefined) set.eye_color = data.eye_color
-      if (data.hair_color!== undefined) set.hair_color= data.hair_color
+      if (data.height_cm  !== undefined) set.height_cm  = data.height_cm
+      if (data.body_type  !== undefined) set.body_type  = data.body_type
+      if (data.ethnicity  !== undefined) set.ethnicity  = data.ethnicity
+      if (data.eye_color  !== undefined) set.eye_color  = data.eye_color
+      if (data.hair_color !== undefined) set.hair_color = data.hair_color
+      if (data.gender     !== undefined) set.gender     = data.gender
+      if (data.skin_color !== undefined) set.skin_color = data.skin_color
       await db.update(companionProfiles).set(set).where(eq(companionProfiles.companion_id, companion.id))
       break
     }
@@ -328,6 +365,41 @@ export async function PATCH(req: NextRequest) {
             .onConflictDoNothing()
         }
       }
+      if (data.languages !== undefined) {
+        await db.delete(companionLanguages)
+          .where(eq(companionLanguages.companion_profile_id, profile.id))
+        if (data.languages.length > 0) {
+          await db.insert(companionLanguages)
+            .values(data.languages.map(l => ({
+              companion_profile_id: profile.id,
+              language_id: l.language_id,
+              fluency: l.fluency,
+            })))
+            .onConflictDoNothing()
+        }
+      }
+      break
+    }
+    case 'modality': {
+      await db.update(companionProfiles)
+        .set({ session_modality: data.session_modality, updated_at: now })
+        .where(eq(companionProfiles.companion_id, companion.id))
+      break
+    }
+    case 'social': {
+      const set: Record<string, unknown> = { updated_at: now }
+      if (data.instagram_handle !== undefined) set.instagram_handle = data.instagram_handle
+      if (data.website_url      !== undefined) set.website_url      = data.website_url
+      await db.update(companionProfiles).set(set).where(eq(companionProfiles.companion_id, companion.id))
+      break
+    }
+    case 'live': {
+      if (profile.profile_completeness < 70) {
+        return NextResponse.json({ error: 'Complete 70% of your profile first.' }, { status: 403 })
+      }
+      await db.update(companionProfiles)
+        .set({ is_live: data.is_live, updated_at: now })
+        .where(eq(companionProfiles.companion_id, companion.id))
       break
     }
     case 'services': {

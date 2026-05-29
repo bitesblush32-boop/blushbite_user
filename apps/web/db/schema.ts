@@ -214,13 +214,18 @@ export const companionProfiles = pgTable('companion_profiles', {
   is_visible_to_users:  boolean('is_visible_to_users').notNull().default(false),
   // WhatsApp (E.164 format e.g. "+31612345678")
   whatsapp_number:      varchar('whatsapp_number', { length: 20 }),
+  // Social / modality (added v2)
+  session_modality:     varchar('session_modality', { length: 20 }).notNull().default('in_person'),
+  instagram_handle:     varchar('instagram_handle', { length: 100 }),
+  website_url:          text('website_url'),
   created_at:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at:           timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  availabilityCheck: check('cp_availability_check', sql`${table.availability_status} IN ('available', 'busy', 'offline')`),
-  bodyTypeCheck:     check('cp_body_type_check', sql`${table.body_type} IS NULL OR ${table.body_type} IN ('slim','athletic','average','curvy','plus_size','prefer_not_to_say')`),
-  genderCheck:       check('cp_gender_check', sql`${table.gender} IN ('woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say') OR ${table.gender} IS NULL`),
-  skinColorCheck:    check('cp_skin_color_check', sql`${table.skin_color} IN ('fair','light','medium','olive','brown','dark','ebony','prefer_not_to_say') OR ${table.skin_color} IS NULL`),
+  availabilityCheck:  check('cp_availability_check', sql`${table.availability_status} IN ('available', 'busy', 'offline')`),
+  bodyTypeCheck:      check('cp_body_type_check', sql`${table.body_type} IS NULL OR ${table.body_type} IN ('slim','athletic','average','curvy','plus_size','prefer_not_to_say')`),
+  genderCheck:        check('cp_gender_check', sql`${table.gender} IN ('woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say') OR ${table.gender} IS NULL`),
+  skinColorCheck:     check('cp_skin_color_check', sql`${table.skin_color} IN ('fair','light','medium','olive','brown','dark','ebony','prefer_not_to_say') OR ${table.skin_color} IS NULL`),
+  sessionModalityCheck: check('cp_session_modality_check', sql`${table.session_modality} IN ('in_person', 'online', 'both')`),
 }))
 
 export const companionPhotos = pgTable('companion_photos', {

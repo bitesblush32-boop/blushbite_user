@@ -1,14 +1,17 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import {
   Camera,
-  LayoutGrid, Heart, Bookmark, BookMarked, Settings2,
+  LayoutGrid, Heart, Bookmark, BookMarked, Settings2, MapPin,
 } from 'lucide-react'
+
+const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false })
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
 import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollectionCard'
 import { LikedGrid } from '@/components/ui/LikedGrid'
@@ -608,6 +611,53 @@ export default function CompanionProfilePage() {
   })
   const posts = postsData ?? []
 
+  // ── Location detection ─────────────────────────────────────────────────────
+  type LocationStatus = 'idle' | 'detecting' | 'failed' | 'picking'
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle')
+  const geoAttemptedRef = useRef(false)
+
+  const saveCompanionCity = useCallback(async (city: string) => {
+    await fetch('/api/companions/profile', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ section: 'B', city }),
+    })
+    queryClient.setQueryData<CompanionProfileData | null>(
+      ['companion', 'profile', 'full'],
+      old => old ? { ...old, profile: { ...old.profile, city } } : old,
+    )
+  }, [queryClient])
+
+  const attemptGeolocation = useCallback(async () => {
+    if (!navigator.geolocation) { setLocationStatus('failed'); return }
+    setLocationStatus('detecting')
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        try {
+          const res  = await fetch('/api/users/location', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          })
+          const json = await res.json()
+          if (!res.ok || !json.data?.city) throw new Error()
+          await saveCompanionCity(json.data.city)
+          setLocationStatus('idle')
+        } catch {
+          setLocationStatus('failed')
+        }
+      },
+      () => setLocationStatus('failed'),
+      { timeout: 8000, maximumAge: 300_000 },
+    )
+  }, [saveCompanionCity])
+
+  useEffect(() => {
+    if (loading || profileData?.profile?.city || geoAttemptedRef.current) return
+    geoAttemptedRef.current = true
+    attemptGeolocation()
+  }, [loading, profileData?.profile?.city, attemptGeolocation])
+
   // ── Sync avatar from profile data ─────────────────────────────────────────
   useEffect(() => {
     if (!profileData) return
@@ -755,6 +805,55 @@ export default function CompanionProfilePage() {
               </p>
             )}
 
+            {/* ── Location block ── */}
+            {profileData?.profile?.city ? (
+              <button
+                onClick={() => setLocationStatus('picking')}
+                className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer p-0 transition-opacity hover:opacity-70"
+                style={{ fontSize: 12, color: '#6b7280' }}
+              >
+                <MapPin size={12} color="#6b7280" />
+                {profileData.profile.city}
+              </button>
+            ) : locationStatus === 'detecting' ? (
+              <div className="flex items-center gap-[5px]" style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic' }}>
+                <MapPin size={11} color="#4b5563" />
+                Locating…
+              </div>
+            ) : locationStatus === 'picking' ? (
+              <LocationPicker
+                saveCity={saveCompanionCity}
+                onSaved={city => {
+                  queryClient.setQueryData<CompanionProfileData | null>(
+                    ['companion', 'profile', 'full'],
+                    old => old ? { ...old, profile: { ...old.profile, city } } : old,
+                  )
+                  setLocationStatus('idle')
+                }}
+                onCancel={() => setLocationStatus(profileData?.profile?.city ? 'idle' : 'failed')}
+              />
+            ) : locationStatus === 'failed' ? (
+              <div className="flex flex-col items-center gap-[10px]">
+                <span style={{ fontSize: 11, color: '#4b5563' }}>We couldn't find your location</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { geoAttemptedRef.current = false; attemptGeolocation() }}
+                    className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
+                    style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280', border: '1px solid #1c2333' }}
+                  >
+                    Try again
+                  </button>
+                  <button
+                    onClick={() => setLocationStatus('picking')}
+                    className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
+                    style={{ background: 'rgba(232,96,122,0.08)', color: '#e8607a', border: '1px solid rgba(232,96,122,0.3)' }}
+                  >
+                    Add manually
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             {/* Role badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
@@ -772,7 +871,7 @@ export default function CompanionProfilePage() {
             {/* Profile completeness prompt */}
             {completeness < 100 && (
               <button
-                onClick={() => router.push('/companion/profile/settings')}
+                onClick={() => router.push('/companion/profile/builder')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   fontSize: 12, color: '#e8607a', background: 'rgba(232,96,122,0.08)',
@@ -812,7 +911,7 @@ export default function CompanionProfilePage() {
                 my vibe
               </span>
               <button
-                onClick={() => router.push('/companion/profile/settings')}
+                onClick={() => router.push('/companion/profile/builder')}
                 className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
                 style={{ fontSize: 12, color: '#e8607a', padding: 0 }}
               >
@@ -828,24 +927,13 @@ export default function CompanionProfilePage() {
                 ))}
               </div>
             ) : (
-              <button onClick={() => router.push('/companion/profile/settings')}
+              <button onClick={() => router.push('/companion/profile/builder')}
                 className="text-[12px] bg-transparent border-none cursor-pointer p-0 transition-colors hover:text-[#eeeef0]"
                 style={{ color: '#4b5563', fontStyle: 'italic' }}>
                 Nothing yet — tap Edit to add your vibe tags.
               </button>
             )}
 
-            {profileData?.profile?.city && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-                  Location
-                </div>
-                <span className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-                  style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>
-                  {profileData.profile.city}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* ── Section 3b: Desires (fantasy tags) ──────────── */}
@@ -856,7 +944,7 @@ export default function CompanionProfilePage() {
                   my desires
                 </span>
                 <button
-                  onClick={() => router.push('/companion/profile/settings')}
+                  onClick={() => router.push('/companion/profile/builder')}
                   className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
                   style={{ fontSize: 12, color: '#e8607a', padding: 0 }}
                 >

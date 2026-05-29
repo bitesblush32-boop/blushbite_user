@@ -5,6 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { companions, stories, audios } from '@/lib/data'
+import { useRecommendedCompanions } from '@/hooks/useRecommendedCompanions'
 import { useMoodStore } from '@/store/moodStore'
 import { useUIStore } from '@/store/uiStore'
 import { usePlayerStore } from '@/store/playerStore'
@@ -29,6 +30,7 @@ export default function HomePage() {
   const { intensity, setIntensity } = useMoodStore()
   const openModal = useUIStore((s) => s.openModal)
   const play = usePlayerStore((s) => s.play)
+  const { companionCards, isLoading: companionsLoading } = useRecommendedCompanions()
   const router = useRouter()
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
@@ -323,15 +325,23 @@ export default function HomePage() {
             WebkitOverflowScrolling: 'touch',
           } as React.CSSProperties}
         >
-          {companions.map((c) => (
-            <motion.div
-              key={c.id}
-              variants={cardItem}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
-            >
-              <CompanionCard companion={c} />
-            </motion.div>
-          ))}
+          {companionsLoading
+            ? [...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{ width: 220, height: 280, flexShrink: 0, scrollSnapAlign: 'start', borderRadius: 14, background: '#111620', animation: 'pulse 1.5s ease-in-out infinite' }}
+                />
+              ))
+            : companionCards.map((c) => (
+                <motion.div
+                  key={c.id}
+                  variants={cardItem}
+                  style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+                >
+                  <CompanionCard companion={c} />
+                </motion.div>
+              ))
+          }
         </motion.div>
       </div>
 
