@@ -87,7 +87,7 @@ function StepVibes({
               key={vibe}
               onClick={() => !disabled && toggleVibe(vibe)}
               whileTap={!disabled ? { scale: 0.95 } : undefined}
-              className="text-[12px] px-[14px] py-[7px] rounded-full border transition-all duration-150"
+              className="text-[13px] px-[14px] py-[11px] rounded-full border transition-all duration-150 min-h-[44px]"
               style={{
                 borderColor: selected ? 'rgba(232,96,122,0.45)' : '#1c2333',
                 color: selected ? '#e8607a' : '#6b7280',
@@ -140,7 +140,7 @@ function StepGender({
             <button
               key={gender}
               onClick={() => setData(d => ({ ...d, gender }))}
-              className="text-[13px] py-[10px] px-4 rounded-[10px] text-left border transition-all flex justify-between items-center"
+              className="text-[13px] py-[13px] px-4 rounded-[10px] text-left border transition-all flex justify-between items-center min-h-[44px]"
               style={{
                 borderColor: selected ? 'rgba(232,96,122,0.45)' : '#1c2333',
                 background: selected ? 'rgba(232,96,122,0.1)' : '#161d2a',
@@ -208,7 +208,7 @@ function StepDesiredGenders({
             <button
               key={gender}
               onClick={() => toggleDesiredGender(gender)}
-              className="text-[13px] py-[10px] px-4 rounded-[10px] text-left border transition-all flex justify-between items-center"
+              className="text-[13px] py-[13px] px-4 rounded-[10px] text-left border transition-all flex justify-between items-center min-h-[44px]"
               style={{
                 borderColor: selected ? 'rgba(232,96,122,0.45)' : '#1c2333',
                 background: selected ? 'rgba(232,96,122,0.1)' : '#161d2a',
@@ -236,13 +236,13 @@ function StepDesiredGenders({
         })}
       </div>
 
-      <p
+      <button
         onClick={() => setData(d => ({ ...d, desiredGenders: [...ALL_GENDERS] }))}
-        className="text-[12px] text-[#6b7280] cursor-pointer mt-3 text-center hover:text-[#eeeef0] transition-colors"
+        className="w-full text-[12px] text-[#6b7280] cursor-pointer mt-3 text-center hover:text-[#eeeef0] active:text-[#eeeef0] transition-colors bg-transparent border-none min-h-[44px] flex items-center justify-center"
         style={{ textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px' }}
       >
         I&apos;m open to everyone
-      </p>
+      </button>
     </div>
   )
 }
@@ -580,11 +580,11 @@ export default function OnboardingPage() {
             </AnimatePresence>
 
             {/* Navigation */}
-            <div className="flex gap-3 mt-8">
+            <div className="flex gap-3 mt-8 items-stretch">
               {step > 1 && (
                 <button
                   onClick={() => setStep(s => s - 1)}
-                  className="px-5 py-[11px] rounded-[10px] text-[13px] text-[#6b7280] border border-[#1c2333] transition-all flex-shrink-0 hover:border-white/20 hover:text-[#eeeef0]"
+                  className="px-5 py-[13px] rounded-[10px] text-[13px] text-[#6b7280] border border-[#1c2333] transition-all flex-shrink-0 hover:border-white/20 hover:text-[#eeeef0] active:text-[#eeeef0] min-h-[44px]"
                 >
                   ← Back
                 </button>
@@ -593,7 +593,7 @@ export default function OnboardingPage() {
               <button
                 onClick={canContinue && !saving ? handleContinue : undefined}
                 disabled={!canContinue || saving}
-                className="flex-1 py-[12px] rounded-[10px] text-[14px] font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-[13px] rounded-[10px] text-[14px] font-medium transition-all duration-200 flex items-center justify-center gap-2 min-h-[44px]"
                 style={{
                   background: canContinue && !saving ? '#e8607a' : '#161d2a',
                   color: canContinue && !saving ? '#fff' : '#6b7280',
@@ -622,12 +622,12 @@ export default function OnboardingPage() {
 
             {/* Skip link (steps 2 and 3 only) */}
             {(step === 2 || step === 3) && (
-              <p
+              <button
                 onClick={handleSkip}
-                className="text-center text-[11.5px] text-[#6b7280] mt-3 cursor-pointer hover:text-[#eeeef0] transition-colors"
+                className="w-full text-center text-[11.5px] text-[#6b7280] mt-3 cursor-pointer hover:text-[#eeeef0] active:text-[#eeeef0] transition-colors bg-transparent border-none min-h-[44px] flex items-center justify-center"
               >
                 Skip for now — I&apos;ll set this later
-              </p>
+              </button>
             )}
 
             {/* Save error */}

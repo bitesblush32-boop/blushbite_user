@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSession } from 'next-auth/react'
@@ -227,38 +227,41 @@ export default function ProfileBuilderPage() {
   const { data, isLoading } = useQuery<ProfileData>({
     queryKey: ['companion', 'profile', 'full'],
     queryFn: () => fetch('/api/companions/profile/full').then(r => r.json()),
-    onSuccess: (d: ProfileData) => {
-      setFields(prev => ({
-        ...prev,
-        name:                   d.companion.name ?? '',
-        bio:                    d.profile.bio ?? '',
-        tagline:                d.profile.tagline ?? '',
-        city:                   d.profile.city ?? '',
-        availability_status:    d.profile.availability_status,
-        session_modality:       d.profile.session_modality ?? 'in_person',
-        is_live:                d.profile.is_live,
-        height_cm:              d.profile.height_cm?.toString() ?? '',
-        body_type:              d.profile.body_type ?? '',
-        ethnicity:              d.profile.ethnicity ?? '',
-        eye_color:              d.profile.eye_color ?? '',
-        hair_color:             d.profile.hair_color ?? '',
-        gender:                 d.profile.gender ?? '',
-        skin_color:             d.profile.skin_color ?? '',
-        instagram_handle:       d.profile.instagram_handle ?? '',
-        website_url:            d.profile.website_url ?? '',
-        whatsapp_number:        d.profile.whatsapp_number ?? '',
-        selected_vibe_tag_ids:  d.selected_vibe_tag_ids,
-        selected_fantasy_tag_ids: d.selected_fantasy_tag_ids,
-        selected_languages:     d.selected_languages,
-        session_cards:          d.session_cards.map(c => ({
-          title: c.title, description: c.description ?? '',
-          price: c.price ?? '', currency: c.currency,
-          duration_minutes: c.duration_minutes?.toString() ?? '',
-          session_type: c.session_type ?? 'in_person',
-        })),
-      }))
-    },
-  } as Parameters<typeof useQuery>[0])
+  })
+
+  useEffect(() => {
+    if (!data) return
+    const d = data
+    setFields(prev => ({
+      ...prev,
+      name:                     d.companion.name ?? '',
+      bio:                      d.profile.bio ?? '',
+      tagline:                  d.profile.tagline ?? '',
+      city:                     d.profile.city ?? '',
+      availability_status:      d.profile.availability_status,
+      session_modality:         d.profile.session_modality ?? 'in_person',
+      is_live:                  d.profile.is_live,
+      height_cm:                d.profile.height_cm?.toString() ?? '',
+      body_type:                d.profile.body_type ?? '',
+      ethnicity:                d.profile.ethnicity ?? '',
+      eye_color:                d.profile.eye_color ?? '',
+      hair_color:               d.profile.hair_color ?? '',
+      gender:                   d.profile.gender ?? '',
+      skin_color:               d.profile.skin_color ?? '',
+      instagram_handle:         d.profile.instagram_handle ?? '',
+      website_url:              d.profile.website_url ?? '',
+      whatsapp_number:          d.profile.whatsapp_number ?? '',
+      selected_vibe_tag_ids:    d.selected_vibe_tag_ids,
+      selected_fantasy_tag_ids: d.selected_fantasy_tag_ids,
+      selected_languages:       d.selected_languages,
+      session_cards:            d.session_cards.map(c => ({
+        title: c.title, description: c.description ?? '',
+        price: c.price ?? '', currency: c.currency,
+        duration_minutes: c.duration_minutes?.toString() ?? '',
+        session_type: c.session_type ?? 'in_person',
+      })),
+    }))
+  }, [data])
 
   const patch = useCallback(async (section: string, body: Record<string, unknown>) => {
     await fetch('/api/companions/profile/full', {

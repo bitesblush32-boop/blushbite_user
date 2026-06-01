@@ -355,7 +355,7 @@ export default function CompanionsPage() {
               onClick={requestLocation}
               disabled={geoLoading}
               style={{
-                fontSize: 11, padding: '5px 14px', borderRadius: 999,
+                fontSize: 12, padding: '10px 16px', borderRadius: 999, minHeight: 44,
                 background: 'rgba(232,96,122,0.12)', border: '1px solid rgba(232,96,122,0.35)',
                 color: '#e8607a', cursor: geoLoading ? 'default' : 'pointer', flexShrink: 0,
                 opacity: geoLoading ? 0.6 : 1,
@@ -407,7 +407,7 @@ export default function CompanionsPage() {
                 }}
                 style={{
                   flexShrink: 0,
-                  fontSize: 11, padding: '5px 12px', borderRadius: 999,
+                  fontSize: 12, padding: '10px 14px', borderRadius: 999, minHeight: 44,
                   border: isActive ? '1px solid rgba(232,96,122,0.5)' : '1px solid #1c2333',
                   background: isActive ? 'rgba(232,96,122,0.12)' : 'transparent',
                   color: isActive ? '#e8607a' : '#6b7280',
@@ -520,7 +520,8 @@ export default function CompanionsPage() {
       {/* ── Action row ────────────────────────────────────────────────────────── */}
       {showStack && (
         <div style={{
-          padding: '16px 24px 28px',
+          padding: '16px 24px',
+          paddingBottom: 'calc(64px + env(safe-area-inset-bottom) + 16px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24,
           flexShrink: 0, zIndex: 2,
         }}>

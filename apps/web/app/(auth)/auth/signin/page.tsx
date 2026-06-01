@@ -451,8 +451,9 @@ function SignInContent() {
                               type="email"
                               placeholder="your@email.com"
                               autoComplete="email"
+                              inputMode="email"
                               {...(mode === 'signin' ? siForm.register('email') : regForm.register('email'))}
-                              className="w-full rounded-[10px] py-[13px] px-4 text-[13.5px] text-[#eeeef0] placeholder:text-[#6b7280] outline-none transition-all duration-200"
+                              className="w-full rounded-[10px] py-[13px] px-4 text-[16px] text-[#eeeef0] placeholder:text-[#6b7280] outline-none transition-all duration-200"
                               style={{
                                 background: '#161d2a',
                                 border: '1px solid #1c2333',
@@ -476,7 +477,7 @@ function SignInContent() {
                                 placeholder="Password"
                                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                                 {...(mode === 'signin' ? siForm.register('password') : regForm.register('password'))}
-                                className="w-full rounded-[10px] py-[13px] pl-4 pr-11 text-[13.5px] text-[#eeeef0] placeholder:text-[#6b7280] outline-none transition-all duration-200"
+                                className="w-full rounded-[10px] py-[13px] pl-4 pr-11 text-[16px] text-[#eeeef0] placeholder:text-[#6b7280] outline-none transition-all duration-200"
                                 style={{
                                   background: '#161d2a',
                                   border: '1px solid #1c2333',
@@ -518,7 +519,7 @@ function SignInContent() {
                                     placeholder="Confirm password"
                                     autoComplete="new-password"
                                     {...regForm.register('confirmPassword')}
-                                    className="w-full rounded-[10px] py-[13px] pl-4 pr-11 text-[13.5px] text-[#eeeef0] placeholder:text-[#6b7280] outline-none transition-all duration-200"
+                                    className="w-full rounded-[10px] py-[13px] pl-4 pr-11 text-[16px] text-[#eeeef0] placeholder:text-[#6b7280] outline-none transition-all duration-200"
                                     style={{
                                       background: '#161d2a',
                                       border: '1px solid #1c2333',

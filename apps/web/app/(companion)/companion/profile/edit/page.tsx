@@ -104,7 +104,7 @@ function durKeyFromMinutes(m: number | null): string {
 const inputBase: React.CSSProperties = {
   width: '100%', background: '#161d2a', border: '1px solid #1c2333',
   borderRadius: 10, padding: '11px 14px', color: '#eeeef0',
-  fontSize: 14, outline: 'none', transition: 'border-color 0.15s',
+  fontSize: 16, outline: 'none', transition: 'border-color 0.15s',
 }
 
 // ── Sub-components ───────────────────────────────────────────────────────────
@@ -509,7 +509,7 @@ export default function EditProfilePage() {
             onChange={e => setBio(e.target.value.slice(0, 500))}
             rows={5}
             placeholder="Your story. Your energy. What makes an evening with you unforgettable."
-            style={{ ...inputBase, resize: 'vertical', fontFamily: "'Playfair Display', serif", lineHeight: 1.7, fontSize: 13.5 } as React.CSSProperties}
+            style={{ ...inputBase, resize: 'vertical', fontFamily: "'Playfair Display', serif", lineHeight: 1.7, fontSize: 16 } as React.CSSProperties}
             onFocus={e => { e.currentTarget.style.borderColor = '#e8607a' }}
             onBlur={e => { e.currentTarget.style.borderColor = '#1c2333' }}
           />
@@ -568,7 +568,7 @@ export default function EditProfilePage() {
                         else if (selectedFantasy.length < 7) setSelectedFantasy(p => [...p, tag.id])
                       }}
                       style={{
-                        fontSize: 11, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                        fontSize: 12, padding: '10px 12px', minHeight: 44, borderRadius: 999, cursor: 'pointer',
                         border:      active ? '1px solid rgba(232,96,122,0.5)' : '1px solid #1c2333',
                         color:       active ? '#e8607a' : '#6b7280',
                         background:  active ? 'rgba(232,96,122,0.1)' : 'transparent',
@@ -597,7 +597,7 @@ export default function EditProfilePage() {
                     else if (selectedVibes.length < 5) setSelectedVibes(p => [...p, vibe])
                   }}
                   style={{
-                    fontSize: 11, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                    fontSize: 12, padding: '10px 12px', minHeight: 44, borderRadius: 999, cursor: 'pointer',
                     border:     active ? '1px solid rgba(201,169,110,0.4)' : '1px solid #1c2333',
                     color:      active ? '#c9a96e' : '#6b7280',
                     background: active ? 'rgba(201,169,110,0.1)' : 'transparent',
@@ -624,7 +624,7 @@ export default function EditProfilePage() {
                     else setSelectedLangs(p => [...p, lang.code])
                   }}
                   style={{
-                    fontSize: 11, padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                    fontSize: 12, padding: '10px 12px', minHeight: 44, borderRadius: 999, cursor: 'pointer',
                     border:     '1px solid #1c2333',
                     color:      active ? '#eeeef0' : '#6b7280',
                     background: active ? '#161d2a' : 'transparent',
@@ -945,7 +945,7 @@ export default function EditProfilePage() {
               const label: Record<string, string> = { woman: 'Woman', man: 'Man', non_binary: 'Non-binary', trans_woman: 'Trans woman', trans_man: 'Trans man', other: 'Other' }
               return (
                 <button key={g} type="button" onClick={() => setGender(g)}
-                  className="text-[12px] px-[14px] py-[7px] rounded-full border cursor-pointer transition-all duration-150"
+                  className="text-[12px] px-[14px] py-[11px] rounded-full border cursor-pointer transition-all duration-150 min-h-[44px]"
                   style={{ borderColor: gender === g ? '#e8607a' : '#1c2333', color: gender === g ? '#e8607a' : '#6b7280', background: gender === g ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
                   {label[g]}
                 </button>
@@ -964,7 +964,7 @@ export default function EditProfilePage() {
             <div className="flex flex-wrap gap-2">
               {['slim','athletic','average','curvy','plus_size','prefer_not_to_say'].map(b => (
                 <button key={b} type="button" onClick={() => setBodyType(b)}
-                  className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
+                  className="text-[12px] px-[12px] py-[11px] rounded-full border cursor-pointer transition-all duration-150 min-h-[44px]"
                   style={{ borderColor: bodyType === b ? '#e8607a' : '#1c2333', color: bodyType === b ? '#e8607a' : '#6b7280', background: bodyType === b ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
                   {b.replace(/_/g, ' ')}
                 </button>
@@ -983,7 +983,7 @@ export default function EditProfilePage() {
             <div className="flex flex-wrap gap-2">
               {['brown','blue','green','hazel','grey'].map(c => (
                 <button key={c} type="button" onClick={() => setEyeColor(c)}
-                  className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
+                  className="text-[12px] px-[12px] py-[11px] rounded-full border cursor-pointer transition-all duration-150 min-h-[44px]"
                   style={{ borderColor: eyeColor === c ? '#e8607a' : '#1c2333', color: eyeColor === c ? '#e8607a' : '#6b7280', background: eyeColor === c ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
                   {c}
                 </button>
@@ -994,7 +994,7 @@ export default function EditProfilePage() {
             <div className="flex flex-wrap gap-2">
               {['blonde','brown','black','auburn','grey','red','dark'].map(c => (
                 <button key={c} type="button" onClick={() => setHairColor(c)}
-                  className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
+                  className="text-[12px] px-[12px] py-[11px] rounded-full border cursor-pointer transition-all duration-150 min-h-[44px]"
                   style={{ borderColor: hairColor === c ? '#e8607a' : '#1c2333', color: hairColor === c ? '#e8607a' : '#6b7280', background: hairColor === c ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
                   {c}
                 </button>
@@ -1007,7 +1007,7 @@ export default function EditProfilePage() {
           <div className="flex flex-wrap gap-2">
             {['fair','light','medium','olive','brown','dark'].map(c => (
               <button key={c} type="button" onClick={() => setSkinColor(c)}
-                className="text-[12px] px-[14px] py-[7px] rounded-full border cursor-pointer transition-all duration-150"
+                className="text-[12px] px-[14px] py-[11px] rounded-full border cursor-pointer transition-all duration-150 min-h-[44px]"
                 style={{ borderColor: skinColor === c ? '#e8607a' : '#1c2333', color: skinColor === c ? '#e8607a' : '#6b7280', background: skinColor === c ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
                 {c}
               </button>
@@ -1065,7 +1065,7 @@ export default function EditProfilePage() {
               const labels = { in_person: 'In person', online: 'Online', both: 'Both' }
               return (
                 <button key={m} type="button" onClick={() => setSessionModality(m)}
-                  className="flex-1 text-[12px] py-[10px] rounded-[10px] border cursor-pointer transition-all duration-150 font-medium"
+                  className="flex-1 text-[12px] py-[13px] rounded-[10px] border cursor-pointer transition-all duration-150 font-medium min-h-[44px]"
                   style={{ borderColor: sessionModality === m ? '#e8607a' : '#1c2333', color: sessionModality === m ? '#e8607a' : '#6b7280', background: sessionModality === m ? 'rgba(232,96,122,0.08)' : 'transparent' }}>
                   {labels[m]}
                 </button>

@@ -551,8 +551,8 @@ export default function Header() {
             onMouseEnter={() => setPlusHover(true)}
             onMouseLeave={() => setPlusHover(false)}
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -594,8 +594,8 @@ export default function Header() {
               onClick={() => setSettingsOpen(true)}
               className="flex items-center justify-center rounded-full transition-all duration-150"
               style={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 background: 'transparent',
                 border: 'none',
                 color: settingsOpen ? '#e8607a' : '#6b7280',
@@ -613,8 +613,8 @@ export default function Header() {
                 onClick={() => router.push('/notifications')}
                 className="flex items-center justify-center rounded-full transition-all duration-150"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   background: pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent',
                   border: 'none',
                   color: pathname === '/notifications' ? '#e8607a' : '#6b7280',

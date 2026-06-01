@@ -24,12 +24,13 @@ export default function BottomNav() {
     <motion.div
       className="bb-bottom-nav fixed left-0 right-0 z-[800]"
       style={{
-        height: 64,
+        height: 'calc(64px + env(safe-area-inset-bottom))',
         width: '100%',
         background: 'rgba(7,9,15,0.96)',
         backdropFilter: 'blur(24px)',
         borderTop: '1px solid #1c2333',
         willChange: 'transform',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
       initial={{ y: 64, opacity: 0 }}
       animate={{
