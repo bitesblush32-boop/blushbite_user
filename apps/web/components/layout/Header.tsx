@@ -573,7 +573,7 @@ export default function Header() {
         </div>
 
         <div style={{ justifySelf: 'center' }}>
-          <Link href="/" className="flex-shrink-0 block">
+          <Link href="/home" className="flex-shrink-0 block">
             <Image
               src="/bb_croped.png"
               alt="BlushBite"

@@ -29,11 +29,11 @@ export default auth((req) => {
   if (path === HEALTH_PATH) return
   if (path.startsWith(WEBHOOK_PREFIX)) return
 
-  // Allow public pages (redirect logged-in users away from sign-in)
-  const isPublic = PUBLIC_ROUTES.some(r => path.startsWith(r))
+  // Allow public pages (redirect logged-in users away from sign-in and landing)
+  const isPublic = path === '/' || PUBLIC_ROUTES.some(r => path.startsWith(r))
   if (isPublic) {
-    if (req.auth && path.startsWith('/auth/signin')) {
-      return Response.redirect(new URL('/', nextUrl))
+    if (req.auth && (path === '/' || path.startsWith('/auth/signin'))) {
+      return Response.redirect(new URL('/home', nextUrl))
     }
     return
   }
