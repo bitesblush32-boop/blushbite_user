@@ -60,3 +60,10 @@ apps/web/db/complete-schema.sql
 .graphify_python
 .graphifyignore
 .claude/settings.local.json
+.graphify_ast.json
+.graphify_cached.json
+.graphify_cached.json
+.graphify_incremental.json
+.graphify_old.json
+.graphify_semantic.json
+.graphify_cached.json

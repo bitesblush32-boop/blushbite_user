@@ -31,7 +31,7 @@ export default function HomePage() {
   const { intensity, setIntensity } = useMoodStore()
   const openModal = useUIStore((s) => s.openModal)
   const play = usePlayerStore((s) => s.play)
-  const { companionCards, isLoading: companionsLoading } = useRecommendedCompanions()
+  const { companionCards, companions: realCompanions, isLoading: companionsLoading } = useRecommendedCompanions()
   const router = useRouter()
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
@@ -47,7 +47,9 @@ export default function HomePage() {
     { kind: 'companion' as const, item: companions[i % companions.length] },
   ])
 
-  const featured = companions[0]
+  // Use top real recommendation; fall back to dummy while loading
+  const topReal = companionCards[0] ?? null
+  const featured = topReal ?? companions[0]
 
   return (
     <motion.main
@@ -124,19 +126,24 @@ export default function HomePage() {
             className="w-full h-[180px] md:w-[260px] md:h-auto flex-shrink-0 relative overflow-hidden"
             style={{ background: featured.gradient }}
           >
-            {/* Silhouette */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <svg
-                width="120"
-                height="240"
-                viewBox="0 0 80 160"
-                fill="white"
-                style={{ opacity: 0.2, filter: 'blur(0.5px)' }}
-              >
-                <ellipse cx="40" cy="26" rx="20" ry="24" />
-                <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q56 182 40 184 Q24 182 12 170Z" />
-              </svg>
-            </div>
+            {/* Real photo if available, silhouette fallback */}
+            {'photoUrl' in featured && featured.photoUrl ? (
+              <img
+                src={featured.photoUrl}
+                alt={featured.name}
+                className="absolute inset-0 w-full h-full object-cover object-top"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg
+                  width="120" height="240" viewBox="0 0 80 160"
+                  fill="white" style={{ opacity: 0.2, filter: 'blur(0.5px)' }}
+                >
+                  <ellipse cx="40" cy="26" rx="20" ry="24" />
+                  <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q56 182 40 184 Q24 182 12 170Z" />
+                </svg>
+              </div>
+            )}
 
             {/* Fade to card body — right on desktop, bottom on mobile */}
             <div

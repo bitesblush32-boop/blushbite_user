@@ -2,8 +2,41 @@
 
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { companions } from '@/lib/data'
+import { useQuery } from '@tanstack/react-query'
+import { companions as dummyCompanions } from '@/lib/data'
 import { useUIStore } from '@/store/uiStore'
+
+// Shape returned by /api/companions/[profileId]
+interface RealCompanionProfile {
+  id:              string
+  companionId:     string
+  name:            string | null
+  age:             number | null
+  city:            string | null
+  bio:             string | null
+  tagline:         string | null
+  minPrice:        string | null
+  currency:        string
+  isVerified:      boolean
+  gradient:        string
+  primaryPhotoUrl: string | null
+  photoUrls:       string[]
+  tags:            string[]
+  sessionCards:    Array<{
+    id:              string
+    title:           string | null
+    description:     string | null
+    price:           string | null
+    sessionType:     string | null
+    durationMinutes: number | null
+  }>
+}
+
+// UUID-shaped IDs are real DB profile IDs; short numeric IDs are dummy data
+function isRealId(id: string | null): boolean {
+  if (!id) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+}
 
 // ─── Per-vibe bios ────────────────────────────────────────────────────────────
 
@@ -48,15 +81,69 @@ const SESSIONS = [
 
 export default function ProfileDrawer() {
   const { activeCompanionId, closeModal, openBookingModal } = useUIStore()
-  const companion = companions.find((c) => c.id === activeCompanionId) ?? null
-
   const [selectedDuration, setSelectedDuration] = useState('2h')
 
-  const bio = companion ? (VIBE_BIOS[companion.vibe] ?? VIBE_BIOS['Romantic & in control']) : ''
+  const realId = isRealId(activeCompanionId)
+
+  // Fetch real companion data when ID is a DB UUID
+  const { data: realProfile, isLoading: realLoading } = useQuery<RealCompanionProfile>({
+    queryKey: ['companion-profile', activeCompanionId],
+    queryFn: async () => {
+      const res = await fetch(`/api/companions/${activeCompanionId}`)
+      if (!res.ok) throw new Error('Failed to load companion')
+      return res.json()
+    },
+    enabled: realId && !!activeCompanionId,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Normalise to a common display shape whether dummy or real
+  const dummyMatch = !realId ? dummyCompanions.find((c) => c.id === activeCompanionId) ?? null : null
+
+  const display = realProfile
+    ? {
+        name:     realProfile.name ?? 'Companion',
+        age:      realProfile.age,
+        city:     realProfile.city ?? '',
+        vibe:     realProfile.tagline ?? '',
+        tags:     realProfile.tags,
+        price:    realProfile.minPrice ?? '—',
+        gradient: realProfile.gradient,
+        photoUrl: realProfile.primaryPhotoUrl,
+        bio:      realProfile.bio ?? VIBE_BIOS['Romantic & in control'],
+        isVerified: realProfile.isVerified,
+        sessions: realProfile.sessionCards.length > 0
+          ? realProfile.sessionCards.map(sc => ({
+              name: sc.title ?? 'Session',
+              desc: sc.description ?? '',
+              price: sc.price ?? 'On request',
+              pills: sc.durationMinutes
+                ? [`${sc.durationMinutes} min`]
+                : [],
+            }))
+          : SESSIONS.map(s => ({ ...s, price: `From —` })),
+      }
+    : dummyMatch
+    ? {
+        name:     dummyMatch.name,
+        age:      dummyMatch.age,
+        city:     dummyMatch.city,
+        vibe:     dummyMatch.vibe,
+        tags:     dummyMatch.tags,
+        price:    dummyMatch.price,
+        gradient: dummyMatch.gradient,
+        photoUrl: dummyMatch.photoUrl ?? undefined,
+        bio:      VIBE_BIOS[dummyMatch.vibe] ?? VIBE_BIOS['Romantic & in control'],
+        isVerified: true,
+        sessions: SESSIONS.map(s => ({ ...s, price: `From ${dummyMatch.price}` })),
+      }
+    : null
+
+  const isOpen = !!activeCompanionId && (realLoading || !!display)
 
   return (
     <AnimatePresence>
-      {companion && (
+      {isOpen && (
         <>
           {/* Overlay */}
           <motion.div
@@ -79,33 +166,45 @@ export default function ProfileDrawer() {
               className="modal"
               style={{ maxWidth: '860px' }}
             >
+              {/* ── Loading skeleton ─────────────────────────────────────────── */}
+              {realLoading && (
+                <div className="p-8 flex flex-col gap-4 animate-pulse" style={{ minHeight: 280 }}>
+                  <div className="h-4 w-24 rounded-full bg-[#1c2333]" />
+                  <div className="h-9 w-48 rounded-[8px] bg-[#1c2333]" />
+                  <div className="h-3 w-32 rounded-full bg-[#1c2333]" />
+                  <div className="flex gap-2 mt-2">
+                    {[80, 60, 72].map(w => <div key={w} className="h-6 rounded-full bg-[#1c2333]" style={{ width: w }} />)}
+                  </div>
+                </div>
+              )}
+
               {/* ── SECTION A: Hero band ──────────────────────────────────────── */}
+              {display && (<>
               <div className="flex relative overflow-hidden" style={{ minHeight: '280px' }}>
 
                 {/* Image strip */}
                 <div
                   className="w-[220px] flex-shrink-0 relative overflow-hidden"
-                  style={{ background: companion.gradient }}
+                  style={{ background: display.gradient }}
                 >
-                  {/* Silhouette */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg
-                      width="100"
-                      height="200"
-                      viewBox="0 0 80 160"
-                      fill="rgba(255,255,255,0.18)"
-                    >
-                      <ellipse cx="40" cy="26" rx="20" ry="24" />
-                      <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q58 182 40 184 Q24 182 12 170Z" />
-                    </svg>
-                  </div>
-
+                  {display.photoUrl ? (
+                    <img
+                      src={display.photoUrl}
+                      alt={display.name}
+                      className="absolute inset-0 w-full h-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg width="100" height="200" viewBox="0 0 80 160" fill="rgba(255,255,255,0.18)">
+                        <ellipse cx="40" cy="26" rx="20" ry="24" />
+                        <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q58 182 40 184 Q24 182 12 170Z" />
+                      </svg>
+                    </div>
+                  )}
                   {/* Right fade */}
                   <div
                     className="absolute inset-0"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 55%, #0d1117 100%)',
-                    }}
+                    style={{ background: 'linear-gradient(90deg, transparent 55%, #0d1117 100%)' }}
                   />
                 </div>
 
@@ -116,10 +215,7 @@ export default function ProfileDrawer() {
                   <button
                     onClick={closeModal}
                     className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-[#6b7280] text-[18px] cursor-pointer transition-all duration-150 leading-none"
-                    style={{
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid #1c2333',
-                    }}
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #1c2333' }}
                     onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLButtonElement
                       el.style.color = '#eeeef0'
@@ -139,7 +235,7 @@ export default function ProfileDrawer() {
                     {/* Hero chip */}
                     <span className="hero-chip">
                       <span className="w-[6px] h-[6px] rounded-full bg-current inline-block" />
-                      Verified companion
+                      {display.isVerified ? 'Verified companion' : 'Companion'}
                     </span>
 
                     {/* Name */}
@@ -147,29 +243,26 @@ export default function ProfileDrawer() {
                       className="text-[#eeeef0] leading-[1.1] mb-1"
                       style={{ fontFamily: "'Playfair Display', serif", fontSize: '34px' }}
                     >
-                      {companion.name}
+                      {display.name}{display.age ? <span style={{ fontSize: 20, color: '#6b7280', fontFamily: 'inherit' }}>, {display.age}</span> : null}
                     </h2>
 
-                    {/* Vibe */}
-                    <p className="text-[13px] text-[#6b7280] mb-4">{companion.vibe}</p>
+                    {/* Vibe / tagline */}
+                    <p className="text-[13px] text-[#6b7280] mb-4">{display.vibe}</p>
 
                     {/* Badges */}
                     <div className="flex items-center gap-3 mb-5 flex-wrap">
-                      <span className="verified-badge">✦ Verified &amp; Licensed</span>
+                      {display.isVerified && <span className="verified-badge">✦ Verified &amp; Licensed</span>}
                       <span
                         className="text-[11px] text-[#e8607a] px-[10px] py-1 rounded-full"
-                        style={{
-                          background: 'rgba(232,96,122,0.1)',
-                          border: '1px solid rgba(232,96,122,0.25)',
-                        }}
+                        style={{ background: 'rgba(232,96,122,0.1)', border: '1px solid rgba(232,96,122,0.25)' }}
                       >
-                        Active · {companion.city}
+                        Active · {display.city}
                       </span>
                     </div>
 
                     {/* Tags */}
                     <div className="flex flex-wrap gap-[6px]">
-                      {companion.tags.map((tag) => (
+                      {display.tags.map((tag) => (
                         <span
                           key={tag}
                           className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]"
@@ -197,7 +290,7 @@ export default function ProfileDrawer() {
 
                 {/* Bio */}
                 <p className="text-[13.5px] text-[#6b7280] leading-[1.75] mb-8 max-w-[520px]">
-                  {bio}
+                  {display.bio}
                 </p>
 
                 {/* Session packages */}
@@ -206,13 +299,11 @@ export default function ProfileDrawer() {
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                  {SESSIONS.map((session) => (
+                  {display.sessions.map((session) => (
                     <div key={session.name} className="session-card">
                       <div className="session-name">{session.name}</div>
                       <p className="session-desc">{session.desc}</p>
-                      <div className="session-price">
-                        {session.name === 'Weekend retreat' ? 'On request' : `From ${companion.price}`}
-                      </div>
+                      <div className="session-price">{session.price}</div>
                       <div className="flex gap-2 flex-wrap">
                         {session.pills.map((pill) => (
                           <button
@@ -240,6 +331,7 @@ export default function ProfileDrawer() {
                   Your identity stays anonymous until you choose to share it.
                 </p>
               </div>
+              </>)}
             </motion.div>
           </motion.div>
         </>
