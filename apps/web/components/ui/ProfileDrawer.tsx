@@ -132,7 +132,7 @@ export default function ProfileDrawer() {
         tags:     dummyMatch.tags,
         price:    dummyMatch.price,
         gradient: dummyMatch.gradient,
-        photoUrl: dummyMatch.photoUrl ?? undefined,
+        photoUrl: undefined,
         bio:      VIBE_BIOS[dummyMatch.vibe] ?? VIBE_BIOS['Romantic & in control'],
         isVerified: true,
         sessions: SESSIONS.map(s => ({ ...s, price: `From ${dummyMatch.price}` })),
