@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
   stories, bookingRequests, fantasyTags, fantasyCategories,
@@ -7,12 +7,9 @@ import {
 } from '@/db/schema'
 import { eq, sql, asc, desc, isNull } from 'drizzle-orm'
 
-export async function GET(_req: NextRequest) {
-  const session = await auth()
-  const user = session?.user as any
-  if (!session || user?.platform_role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+export async function GET(req: NextRequest) {
+  const guard = await requireAdmin(req)
+  if (!guard.ok) return guard.response
 
   const [contentByAuthor, bookingFunnel, topFantasyTags] = await Promise.all([
 

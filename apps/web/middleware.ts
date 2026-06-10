@@ -18,16 +18,25 @@ const AUTH_API_PREFIX  = '/api/auth'
 const ADMIN_API_PREFIX = '/api/admin'
 const HEALTH_PATH      = '/api/health'
 const WEBHOOK_PREFIX   = '/api/webhooks'
+const PUBLIC_API_PATHS = ['/api/tags']
 
 export default auth((req) => {
   const { nextUrl } = req
   const path        = nextUrl.pathname
 
-  // Always allow NextAuth API routes, admin API routes, and health check
+  // Always allow NextAuth API routes and health check
   if (path.startsWith(AUTH_API_PREFIX)) return
-  if (path.startsWith(ADMIN_API_PREFIX)) return
   if (path === HEALTH_PATH) return
+
+  // Admin API — require admin role from JWT (no DB hit, ~5ms)
+  if (path.startsWith(ADMIN_API_PREFIX)) {
+    if (!req.auth || (req.auth.user as any)?.platform_role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    return
+  }
   if (path.startsWith(WEBHOOK_PREFIX)) return
+  if (PUBLIC_API_PATHS.some(p => path === p)) return
 
   // Allow public pages (redirect logged-in users away from sign-in and landing)
   const isPublic = path === '/' || PUBLIC_ROUTES.some(r => path.startsWith(r))

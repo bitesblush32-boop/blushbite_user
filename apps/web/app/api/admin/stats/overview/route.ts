@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
   users,
@@ -18,12 +18,9 @@ const cnt = (rows: { n: unknown }[]) => Number(rows[0]?.n ?? 0)
 const q   = (table: Parameters<typeof db.select>[0] extends undefined ? never : any) =>
   db.select({ n: sql`count(*)` })
 
-export async function GET() {
-  const session = await auth()
-  const user = session?.user as any
-  if (!session || user?.platform_role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+export async function GET(req: NextRequest) {
+  const guard = await requireAdmin(req)
+  if (!guard.ok) return guard.response
 
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)

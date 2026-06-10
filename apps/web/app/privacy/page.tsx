@@ -1,6 +1,7 @@
-'use client'
+// Server Component — no 'use client'. Statically generated (ISR 24h).
+// No framer-motion needed: entrance animation uses existing @keyframes fadeUp from globals.css.
+export const revalidate = 86400
 
-import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -90,11 +91,9 @@ export default function PrivacyPage() {
       </header>
 
       {/* ── Body ──────────────────────────────────────────────────────────────── */}
-      <motion.main
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      <main
         className="relative z-10 max-w-[860px] mx-auto px-5 md:px-10 pt-[95px] pb-20"
+        style={{ animation: 'fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both' }}
       >
         {/* Page headline */}
         <div className="mb-12">
@@ -283,7 +282,7 @@ export default function PrivacyPage() {
           © 2025 BlushBite · EU-hosted · GDPR compliant ·{' '}
           <Link href="/terms" className="hover:text-[#e8607a] transition-colors">Terms of Service</Link>
         </p>
-      </motion.main>
+      </main>
     </div>
   )
 }

@@ -2,6 +2,8 @@
 
 // Public landing page — /
 // No auth required. Authenticated users → /home via middleware.
+// force-static ensures this is pre-rendered at build time and served from CDN.
+export const dynamic = 'force-static'
 
 import { motion, useInView } from 'framer-motion'
 import { useRef, useState } from 'react'
