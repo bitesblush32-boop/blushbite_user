@@ -29,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session:    authConfig.callbacks!.session    as any,
     authorized: authConfig.callbacks!.authorized as any,
 
-    async jwt({ token, user, account, profile }: { token: JWT; user: User; account: Account | null; profile?: Profile }) {
+    async jwt({ token, user, account, profile }) {
 
       // ── Credentials sign-in ──────────────────────────────────────────────
       // user is present and account.type === 'credentials' (or account is null)
