@@ -1,7 +1,8 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type Account, type Profile, type User } from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Twitter from 'next-auth/providers/twitter'
 import Credentials from 'next-auth/providers/credentials'
+import { type JWT } from 'next-auth/jwt'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
@@ -28,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session:    authConfig.callbacks!.session    as any,
     authorized: authConfig.callbacks!.authorized as any,
 
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile }: { token: JWT; user: User; account: Account | null; profile?: Profile }) {
 
       // ── Credentials sign-in ──────────────────────────────────────────────
       // user is present and account.type === 'credentials' (or account is null)

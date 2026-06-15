@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
-import sharp from 'sharp'
 import { auth } from '@/auth'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
-import { r2, R2_BUCKET, R2_PUBLIC_URL } from '@/lib/r2'
+import { uploadBuffer, deleteAsset, extractPublicId } from '@/lib/cloudinary'
 
-const MAX_BYTES       = 5 * 1024 * 1024 // 5 MB
-const ALLOWED_TYPES   = ['image/jpeg', 'image/png']
+const MAX_BYTES     = 5 * 1024 * 1024 // 5 MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-// ─── POST /api/user/avatar ────────────────────────────────────────────────────
+// ─── POST /api/users/avatar ───────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -33,7 +31,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: 'Only JPG and PNG images are accepted.' }, { status: 400 })
+    return NextResponse.json({ error: 'Only JPG, PNG, and WebP images are accepted.' }, { status: 400 })
   }
 
   if (file.size > MAX_BYTES) {
@@ -43,31 +41,18 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Convert to Buffer
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  // Resize + compress to WebP 400×400
-  const processed = await sharp(buffer)
-    .resize(400, 400, { fit: 'cover', position: 'center' })
-    .webp({ quality: 82 })
-    .toBuffer()
+  // ─── Upload to Cloudinary with face-aware crop ─────────────────────────────
+  // Cloudinary handles resize + crop server-side — no sharp needed
+  const { url: avatarUrl } = await uploadBuffer(buffer, {
+    folder:        `blushbite/avatars/${userId}`,
+    resourceType:  'image',
+    transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face', quality: 'auto', fetch_format: 'auto' }],
+  })
 
-  // Build storage key
-  const key = `avatars/${userId}/${Date.now()}.webp`
+  const now = new Date()
 
-  // Upload to R2
-  await r2.send(new PutObjectCommand({
-    Bucket:       R2_BUCKET,
-    Key:          key,
-    Body:         processed,
-    ContentType:  'image/webp',
-    CacheControl: 'public, max-age=31536000, immutable',
-  }))
-
-  const avatarUrl = `${R2_PUBLIC_URL}/${key}`
-  const now       = new Date()
-
-  // Upsert user_profiles.avatar_url
   await db
     .insert(userProfiles)
     .values({ user_id: userId, avatar_url: avatarUrl, updated_at: now })
@@ -79,7 +64,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ data: { avatarUrl } })
 }
 
-// ─── DELETE /api/user/avatar ──────────────────────────────────────────────────
+// ─── DELETE /api/users/avatar ─────────────────────────────────────────────────
 
 export async function DELETE() {
   const session = await auth()
@@ -89,7 +74,6 @@ export async function DELETE() {
 
   const userId = session.user.id
 
-  // Fetch existing avatar_url
   const rows = await db
     .select({ avatar_url: userProfiles.avatar_url })
     .from(userProfiles)
@@ -98,13 +82,15 @@ export async function DELETE() {
 
   const existing = rows[0]?.avatar_url
 
-  // Delete from R2 if it is one of ours
-  if (existing?.startsWith(R2_PUBLIC_URL)) {
-    const key = existing.slice(R2_PUBLIC_URL.length + 1) // strip leading slash
-    try {
-      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }))
-    } catch {
-      // Non-fatal — continue to clear DB row even if R2 delete fails
+  // Delete from Cloudinary if it's one of ours
+  if (existing?.includes('res.cloudinary.com')) {
+    const publicId = extractPublicId(existing)
+    if (publicId) {
+      try {
+        await deleteAsset(publicId, 'image')
+      } catch {
+        // Non-fatal — continue to clear DB row even if Cloudinary delete fails
+      }
     }
   }
 

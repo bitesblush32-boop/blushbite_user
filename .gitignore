@@ -3,6 +3,8 @@ node_modules/
 .pnpm-store/
 tsconfig.tsbuildinfo
 graphify-out/
+landingpagebb-/
+landingpagebb-/*
 # Next.js
 apps/web/.next/
 apps/web/out/

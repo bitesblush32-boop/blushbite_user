@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { Loader2, Lock, X, Star, CheckCircle2, Phone, Video, MessageCircle, Users2, Sparkles } from 'lucide-react'
-import { useUploadToR2 } from '@/hooks/useUploadToR2'
+import { useUploadToCloudinary } from '@/hooks/useUploadToCloudinary'
 
 const DiditVerify = dynamic(() => import('@/components/ui/DiditVerify'), { ssr: false })
 
@@ -216,8 +216,8 @@ export default function EditProfilePage() {
   const [videoError, setVideoError]       = useState<string | null>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
-  const { uploadFile: uploadPhoto }     = useUploadToR2({ contentFor: 'companion_photo' })
-  const { uploadFile: uploadVideoFile } = useUploadToR2({ contentFor: 'companion_video' })
+  const { uploadFile: uploadPhoto }     = useUploadToCloudinary({ contentFor: 'companion_photo' })
+  const { uploadFile: uploadVideoFile } = useUploadToCloudinary({ contentFor: 'companion_video' })
 
   // ── Section F state ──
   const [verifyStatus, setVerifyStatus] = useState<'idle' | 'running' | 'pending' | 'approved' | 'declined' | 'skipped'>('idle')
