@@ -274,7 +274,24 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && rm -rf .next)",
       "Bash(head -5 \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\home\\\\page.tsx\")",
       "Bash(head -5 \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\page.tsx\")",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -100)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -100)",
+      "Bash(curl -s https://blushbite.co/api/auth/providers | python -m json.tool 2>/dev/null || curl -s https://blushbite.co/api/auth/providers)",
+      "Bash(curl -sv \"https://blushbite.co/api/auth/signin/google\" 2>&1 | grep -E \"^[<>*]|location:|HTTP/\")",
+      "Bash(curl -s https://blushbite.co/api/auth/csrf)",
+      "Bash(curl -sv -X POST \"https://blushbite.co/api/auth/signin/google\" \\\\\n  -H \"Content-Type: application/x-www-form-urlencoded\" \\\\\n  -H \"Origin: https://blushbite.co\" \\\\\n  --data \"csrfToken=456a763894ea541452bb9f5ce80677577cbe8cce4bb9281cc81952fef4128e34&callbackUrl=https%3A%2F%2Fblushbite.co\" \\\\\n  2>&1 | grep -E \"^[<>]|location:|HTTP/\")",
+      "Bash(curl -sv \"https://blushbite.co/api/auth/signin/google\" 2>&1 | grep -v \"^*\" | head -20)",
+      "Bash(curl -s \"https://blushbite.co/api/auth/error?error=Configuration\")",
+      "Bash(find \"/c/Users/Ravi Desai/Downloads/BlushBite/node_modules/.pnpm\" -path \"*/next-auth*beta.30*/react.js\" 2>/dev/null | head -3)",
+      "Bash(pg_dump --version 2>/dev/null && psql --version 2>/dev/null || echo \"pg tools not found\")",
+      "Bash(railway --version 2>/dev/null || echo \"Railway CLI not found\")",
+      "Bash(railway status:*)",
+      "Bash(railway link:*)",
+      "Bash(cd \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web\" && \\\\\nDATABASE_URL=\"postgresql://postgres:ROARvRZMHpcrpFYNrAVkHuBSmujjUCms@thomas.proxy.rlwy.net:28649/railway\" \\\\\npnpm drizzle-kit migrate 2>&1)",
+      "Bash(psql \"postgresql://postgres:ROARvRZMHpcrpFYNrAVkHuBSmujjUCms@thomas.proxy.rlwy.net:28649/railway\" \\\\\n  -c \"\\\\dt\" 2>&1 | grep -v \"^$\")",
+      "Bash(PGPASSWORD=BkOvFERsFRjjYFfEcCBnxzlzikQWjlpv psql \\\\\n  -h shortline.proxy.rlwy.net -U postgres -p 41696 -d railway \\\\\n  -c \"\\\\dt\" 2>&1 | grep -v \"^$\")",
+      "Bash(PGPASSWORD=BkOvFERsFRjjYFfEcCBnxzlzikQWjlpv psql \\\\\n  -h shortline.proxy.rlwy.net -U postgres -p 41696 -d railway \\\\\n  -c \"SELECT 'users' as t, COUNT\\(*\\) FROM users\n  UNION ALL SELECT 'user_profiles', COUNT\\(*\\) FROM user_profiles\n  UNION ALL SELECT 'vibe_tags', COUNT\\(*\\) FROM vibe_tags\n  UNION ALL SELECT 'companions', COUNT\\(*\\) FROM companions\n  UNION ALL SELECT 'companion_profiles', COUNT\\(*\\) FROM companion_profiles\n  UNION ALL SELECT 'stories', COUNT\\(*\\) FROM stories\n  UNION ALL SELECT 'fantasy_tags', COUNT\\(*\\) FROM fantasy_tags\n  UNION ALL SELECT 'fantasy_categories', COUNT\\(*\\) FROM fantasy_categories\n  UNION ALL SELECT 'languages', COUNT\\(*\\) FROM languages\n  UNION ALL SELECT 'mood_tags', COUNT\\(*\\) FROM mood_tags\n  UNION ALL SELECT 'orientation_tags', COUNT\\(*\\) FROM orientation_tags\n  UNION ALL SELECT 'story_categories', COUNT\\(*\\) FROM story_categories\n  UNION ALL SELECT 'companion_photos', COUNT\\(*\\) FROM companion_photos;\" 2>&1)",
+      "Bash(PGPASSWORD=BkOvFERsFRjjYFfEcCBnxzlzikQWjlpv pg_dump -h shortline.proxy.rlwy.net -U postgres -p 41696 -d railway --data-only --disable-triggers --exclude-table=__drizzle_migrations -f /tmp/blushbite_data.sql)",
+      "Read(//tmp/**)"
     ]
   }
 }

@@ -67,3 +67,7 @@ apps/web/db/complete-schema.sql
 .graphify_old.json
 .graphify_semantic.json
 .graphify_cached.json
+.claude/settings.local.json
+apps/web/tsconfig.tsbuildinfo
+apps/web/app/api/companions/apply/route.ts
+apps/web/db/verify-schema.mjs
