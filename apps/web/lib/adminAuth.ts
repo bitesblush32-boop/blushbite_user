@@ -15,7 +15,11 @@ type AdminGuardErr = { ok: false; response: NextResponse }
  *   const { userId } = guard
  */
 export async function requireAdmin(req: NextRequest): Promise<AdminGuardOk | AdminGuardErr> {
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET })
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === 'production',
+  })
   if (!token || (token as any).platform_role !== 'admin') {
     return {
       ok: false,

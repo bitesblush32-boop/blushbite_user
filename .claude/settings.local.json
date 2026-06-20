@@ -333,7 +333,11 @@
       "Bash(psql \"postgresql://postgres:ROARvRZMHpcrpFYNrAVkHuBSmujjUCms@thomas.proxy.rlwy.net:28649/railway\" -c \"\nINSERT INTO companion_onboarding_progress \\(companion_id, stage, status, completed_at, notes\\)\nVALUES \\('e0404703-f13c-451d-8829-4f47b30df88a', 1, 'completed', now\\(\\), 'Applied via landing page'\\)\nON CONFLICT \\(companion_id, stage\\) DO NOTHING;\nINSERT INTO companion_onboarding_progress \\(companion_id, stage, status, completed_at, notes\\)\nVALUES \\('e0404703-f13c-451d-8829-4f47b30df88a', 2, 'completed', now\\(\\), NULL\\)\nON CONFLICT \\(companion_id, stage\\) DO NOTHING;\n\" 2>&1)",
       "Bash(psql \"postgresql://postgres:ROARvRZMHpcrpFYNrAVkHuBSmujjUCms@thomas.proxy.rlwy.net:28649/railway\" \\\\\n  -c \"DELETE FROM companions WHERE email = 'testdebug@gmail.com' RETURNING email;\" 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\landingpagebb-\" && npm install 2>&1 | tail -5)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\landingpagebb-\" && npm ls cloudinary 2>&1)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\landingpagebb-\" && npm ls cloudinary 2>&1)",
+      "Bash(curl -s http://localhost:3000/api/admin/stats/overview 2>&1 | head -200)",
+      "Bash(curl -s -c /tmp/bb_cookies.txt -b /tmp/bb_cookies.txt \\\\\n  -X POST \"https://blushbite.co/api/auth/callback/credentials\" \\\\\n  -H \"Content-Type: application/x-www-form-urlencoded\" \\\\\n  --data-urlencode \"email=admin@blushbite.co\" \\\\\n  --data-urlencode \"password=Admin@BlushBite2024!\" \\\\\n  --data-urlencode \"csrfToken=\" \\\\\n  --data-urlencode \"callbackUrl=https://blushbite.co/admin\" \\\\\n  -w \"\\\\nHTTP Status: %{http_code}\\\\n\" 2>&1 | head -30)",
+      "Bash(ls \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\node_modules\\\\.pnpm\\\\\" | grep \"@auth+core\" | head -5)",
+      "Bash(curl -s http://localhost:3000/api/admin/stats/overview 2>&1)"
     ]
   }
 }
