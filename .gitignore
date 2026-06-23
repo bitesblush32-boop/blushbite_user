@@ -3,6 +3,8 @@ node_modules/
 .pnpm-store/
 tsconfig.tsbuildinfo
 graphify-out/
+landingpagebb-/
+landingpagebb-/*
 # Next.js
 apps/web/.next/
 apps/web/out/
@@ -60,3 +62,14 @@ apps/web/db/complete-schema.sql
 .graphify_python
 .graphifyignore
 .claude/settings.local.json
+.graphify_ast.json
+.graphify_cached.json
+.graphify_cached.json
+.graphify_incremental.json
+.graphify_old.json
+.graphify_semantic.json
+.graphify_cached.json
+.claude/settings.local.json
+apps/web/tsconfig.tsbuildinfo
+apps/web/app/api/companions/apply/route.ts
+apps/web/db/verify-schema.mjs

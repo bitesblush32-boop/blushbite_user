@@ -1,14 +1,16 @@
 import type { Companion, Story, Audio } from '@/lib/types'
 
+const CDN = 'https://res.cloudinary.com/dqq7cjhmt/image/upload/blushbite/companion_photos/seed'
+
 export const companions: Companion[] = [
-  { id: '1', name: 'Ava',   age: 26, city: 'Amsterdam', price: '€280', vibe: 'Romantic & in control',  tags: ['Romantic', 'Light roleplay', 'First-timer'],   gradient: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)' },
-  { id: '2', name: 'Nora',  age: 29, city: 'Amsterdam', price: '€320', vibe: 'Gentle but decisive',    tags: ['Soft dominance', 'Confessions', 'Intimate'],   gradient: 'linear-gradient(135deg,#0f1a28,#1f2840,#2a1020)' },
-  { id: '3', name: 'Seren', age: 31, city: 'Paris',     price: '€350', vibe: 'Intellectual & intense', tags: ['Intense', 'Roleplay', 'Experimental'],          gradient: 'linear-gradient(135deg,#201228,#1a2030,#2a1a18)' },
-  { id: '4', name: 'Kai',   age: 27, city: 'London',    price: '€260', vibe: 'Warm & unhurried',       tags: ['Gentle', 'Romantic', 'Sensory focus'],          gradient: 'linear-gradient(135deg,#0a1620,#1a1535,#201a10)' },
-  { id: '5', name: 'Maëve', age: 30, city: 'Paris',     price: '€400', vibe: 'Mysterious & precise',   tags: ['Power dynamic', 'Experimental', 'Luxury'],     gradient: 'linear-gradient(135deg,#1a1020,#2a1530,#101820)' },
-  { id: '6', name: 'Irina', age: 25, city: 'Amsterdam', price: '€290', vibe: 'Playful & confident',    tags: ['Roleplay', 'Light touch', 'Fun'],               gradient: 'linear-gradient(135deg,#101820,#201028,#102020)' },
-  { id: '7', name: 'Sol',   age: 28, city: 'London',    price: '€310', vibe: 'Calm & attentive',       tags: ['Sensory focus', 'Gentle', 'Slow burn'],        gradient: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)' },
-  { id: '8', name: 'Alara', age: 33, city: 'Paris',     price: '€380', vibe: 'Bold & expressive',      tags: ['Intense', 'Dominant energy', 'Confident'],     gradient: 'linear-gradient(135deg,#201228,#1a2030,#2a1a18)' },
+  { id: '1', name: 'Ava',   age: 26, city: 'Amsterdam', price: '€280', vibe: 'Romantic & in control',  tags: ['Romantic', 'Light roleplay', 'First-timer'],   gradient: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)', photoUrl: `${CDN}/companion-1.jpg` },
+  { id: '2', name: 'Nora',  age: 29, city: 'Amsterdam', price: '€320', vibe: 'Gentle but decisive',    tags: ['Soft dominance', 'Confessions', 'Intimate'],   gradient: 'linear-gradient(135deg,#0f1a28,#1f2840,#2a1020)', photoUrl: `${CDN}/companion-2.jpg` },
+  { id: '3', name: 'Seren', age: 31, city: 'Paris',     price: '€350', vibe: 'Intellectual & intense', tags: ['Intense', 'Roleplay', 'Experimental'],          gradient: 'linear-gradient(135deg,#201228,#1a2030,#2a1a18)', photoUrl: `${CDN}/companion-3.jpg` },
+  { id: '4', name: 'Kai',   age: 27, city: 'London',    price: '€260', vibe: 'Warm & unhurried',       tags: ['Gentle', 'Romantic', 'Sensory focus'],          gradient: 'linear-gradient(135deg,#0a1620,#1a1535,#201a10)', photoUrl: `${CDN}/companion-4.jpg` },
+  { id: '5', name: 'Maëve', age: 30, city: 'Paris',     price: '€400', vibe: 'Mysterious & precise',   tags: ['Power dynamic', 'Experimental', 'Luxury'],     gradient: 'linear-gradient(135deg,#1a1020,#2a1530,#101820)', photoUrl: `${CDN}/companion-5.jpg` },
+  { id: '6', name: 'Irina', age: 25, city: 'Amsterdam', price: '€290', vibe: 'Playful & confident',    tags: ['Roleplay', 'Light touch', 'Fun'],               gradient: 'linear-gradient(135deg,#101820,#201028,#102020)', photoUrl: `${CDN}/companion-6.jpg` },
+  { id: '7', name: 'Sol',   age: 28, city: 'London',    price: '€310', vibe: 'Calm & attentive',       tags: ['Sensory focus', 'Gentle', 'Slow burn'],        gradient: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)', photoUrl: `${CDN}/companion-7.jpg` },
+  { id: '8', name: 'Alara', age: 33, city: 'Paris',     price: '€380', vibe: 'Bold & expressive',      tags: ['Intense', 'Dominant energy', 'Confident'],     gradient: 'linear-gradient(135deg,#201228,#1a2030,#2a1a18)', photoUrl: `${CDN}/companion-8.jpg` },
 ]
 
 export const stories: Story[] = [

@@ -2,7 +2,7 @@
 // Run: node db/verify-schema.mjs
 import postgres from 'postgres'
 
-const DB_URL = 'postgresql://postgres:BkOvFERsFRjjYFfEcCBnxzlzikQWjlpv@postgres.railway.internal:41696/railway'
+const DB_URL = 'postgresql://postgres:ROARvRZMHpcrpFYNrAVkHuBSmujjUCms@thomas.proxy.rlwy.net:28649/railway'
 
 const EXPECTED_TABLES = [
   'languages', 'fantasy_categories', 'fantasy_tags', 'vibe_tags',

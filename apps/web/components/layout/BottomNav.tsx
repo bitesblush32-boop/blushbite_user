@@ -7,7 +7,7 @@ import { usePlayerStore } from '@/store/playerStore'
 import { useNotificationCountQ } from '@/hooks/useNotifications'
 
 const NAV_ITEMS = [
-  { label: 'Home',        href: '/',            icon: Home },
+  { label: 'Home',        href: '/home',         icon: Home },
   { label: 'Stories',     href: '/stories',     icon: BookOpen },
   { label: 'Companions',  href: '/companions',  icon: Users },
   { label: 'Confessions', href: '/confessions', icon: BookHeart },
@@ -54,7 +54,7 @@ export default function BottomNav() {
         }}
       >
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-          const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
+          const active = href === '/home' ? pathname === '/home' : pathname.startsWith(href)
           const color = active ? '#e8607a' : '#4b5563'
 
           return (

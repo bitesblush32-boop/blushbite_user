@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useUploadToR2 } from '@/hooks/useUploadToR2'
+import { useUploadToCloudinary } from '@/hooks/useUploadToCloudinary'
 import Image from 'next/image'
 import {
   Camera, Edit2, CheckCircle2, X, Plus, Loader2, Star,
@@ -545,7 +545,7 @@ function ProfileHeaderSection({
   onAvatarUpload: (url: string) => void
   onAvailabilityChange: (status: string) => void
 }) {
-  const { uploadFile, uploading } = useUploadToR2({
+  const { uploadFile, uploading } = useUploadToCloudinary({
     contentFor: 'companion_photo',
     onSuccess: async ({ cdnUrl, s3Key }) => {
       await patchSection('add_photo', { url: cdnUrl, storage_key: s3Key, is_primary: true })
@@ -1117,7 +1117,7 @@ function PhotosSection({
   onDelete: (id: string) => void
   onSetPrimary: (id: string) => void
 }) {
-  const { uploadFile, uploading } = useUploadToR2({
+  const { uploadFile, uploading } = useUploadToCloudinary({
     contentFor: 'companion_photo',
     onSuccess: async ({ cdnUrl, s3Key }) => {
       await patchSection('add_photo', { url: cdnUrl, storage_key: s3Key })
@@ -1180,7 +1180,7 @@ function VideosSection({
   onDelete: (id: string) => void
 }) {
   const [durationError, setDurationError] = useState('')
-  const { uploadFile, uploading } = useUploadToR2({
+  const { uploadFile, uploading } = useUploadToCloudinary({
     contentFor: 'companion_video',
     onSuccess: async ({ cdnUrl, s3Key }) => {
       await patchSection('add_video', { url: cdnUrl, storage_key: s3Key })
