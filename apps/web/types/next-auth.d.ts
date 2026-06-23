@@ -33,5 +33,6 @@ declare module 'next-auth/jwt' {
     companion_stage?: number
     companion_is_live?: boolean
     companion_legal_signed?: boolean
+    tokenRefreshedAt?: number
   }
 }

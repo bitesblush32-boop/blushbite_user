@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
   fantasyCategories, fantasyTags, vibeTags, moodTags, orientationTags, storyCategories,
@@ -8,12 +8,9 @@ import {
 } from '@/db/schema'
 import { eq, sql, asc, isNull } from 'drizzle-orm'
 
-export async function GET(_req: NextRequest) {
-  const session = await auth()
-  const user = session?.user as any
-  if (!session || user?.platform_role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+export async function GET(req: NextRequest) {
+  const guard = await requireAdmin(req)
+  if (!guard.ok) return guard.response
 
   const [
     fantCats, fantTagRows, vibeTagRows, moodTagRows, orientTagRows, storyCatRows,
@@ -101,11 +98,8 @@ function toSlug(name: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth()
-  const user = session?.user as any
-  if (!session || user?.platform_role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const guard = await requireAdmin(req)
+  if (!guard.ok) return guard.response
 
   const body = await req.json()
   const { table, name, slug, emoji, category_id, description, sort_order } = body

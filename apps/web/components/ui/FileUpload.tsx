@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { Loader2, AlertCircle, Check } from 'lucide-react'
-import { useUploadToR2 } from '@/hooks/useUploadToR2'
+import { useUploadToCloudinary } from '@/hooks/useUploadToCloudinary'
 
 interface FileUploadProps {
   contentFor?: 'companion_photo' | 'companion_video' | 'story_audio'
@@ -26,7 +26,7 @@ export function FileUpload({
   label = 'Drop file here or click to upload',
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const { uploadFile, cancel, uploading, progress, error } = useUploadToR2({
+  const { uploadFile, cancel, uploading, progress, error } = useUploadToCloudinary({
     contentFor,
     onSuccess: (result) => onSuccess?.(result.cdnUrl),
   })

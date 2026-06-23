@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import { stories, users, companions, storyCategories } from '@/db/schema'
 import { eq, and, isNull, ilike, or, sql, desc } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  const user = session?.user as any
-  if (!session || user?.platform_role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const guard = await requireAdmin(req)
+  if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)
   const filter = searchParams.get('filter') ?? 'all'

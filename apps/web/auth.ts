@@ -1,7 +1,8 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type Account, type Profile, type User } from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Twitter from 'next-auth/providers/twitter'
 import Credentials from 'next-auth/providers/credentials'
+import { type JWT } from 'next-auth/jwt'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
@@ -110,9 +111,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       // ── Subsequent requests — verify user still exists ───────────────────
-      // Wrapped in try/catch: if DB is unavailable (ECONNRESET, timeout, etc.)
-      // we return the existing token as-is so sessions survive DB downtime.
+      // Rate-limit DB refreshes to once per 5 minutes per token.
+      // Between refreshes, return the cached JWT immediately (~0ms overhead).
+      // This eliminates 2–4 DB queries per authenticated request in the common case.
+      const REFRESH_INTERVAL_MS = 5 * 60 * 1000
       if (token.id) {
+        const now = Date.now()
+        if (token.tokenRefreshedAt && now - token.tokenRefreshedAt < REFRESH_INTERVAL_MS) {
+          return token
+        }
         try {
           const row = await db
             .select({ id: users.id })
@@ -155,6 +162,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               token.companion_legal_signed = false
             }
           }
+          token.tokenRefreshedAt = Date.now()
         } catch (_dbErr) {
           // DB unreachable — return cached token so existing sessions stay valid
           console.warn('[auth] jwt callback DB error, returning cached token:', (_dbErr as Error).message)

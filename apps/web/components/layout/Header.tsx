@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
-import { useUploadToR2 } from '@/hooks/useUploadToR2'
+import { useUploadToCloudinary } from '@/hooks/useUploadToCloudinary'
 import SlidePanel from '@/components/ui/SlidePanel'
 import NotificationsPanel from '@/components/ui/NotificationsPanel'
 import { useNotifications } from '@/hooks/useNotifications'
@@ -31,7 +31,7 @@ function PostMenu({ onClose }: { onClose: () => void }) {
   const [success, setSuccess]       = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
-  const { uploadFile, uploading }   = useUploadToR2()
+  const { uploadFile, uploading }   = useUploadToCloudinary()
 
   const resetUpload = () => {
     setUploadError(null); setPhotoFile(null); setPhotoPreview(null); setVideoFile(null); setSuccess(false)
@@ -573,7 +573,7 @@ export default function Header() {
         </div>
 
         <div style={{ justifySelf: 'center' }}>
-          <Link href="/" className="flex-shrink-0 block">
+          <Link href="/home" className="flex-shrink-0 block">
             <Image
               src="/bb_croped.png"
               alt="BlushBite"

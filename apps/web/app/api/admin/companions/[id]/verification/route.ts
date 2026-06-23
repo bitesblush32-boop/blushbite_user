@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
   companions, companionProfiles, companionVerifications, diditExtractedData,
@@ -7,14 +7,11 @@ import {
 import { eq, desc } from 'drizzle-orm'
 
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await auth()
-  const user = session?.user as any
-  if (!session || user?.platform_role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const guard = await requireAdmin(req)
+  if (!guard.ok) return guard.response
 
   const { id } = params
 
