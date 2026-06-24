@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   motion, AnimatePresence,
   useMotionValue, useTransform, useAnimation,
 } from 'framer-motion'
 import { MapPin, Heart, X, Star, RefreshCw, Globe } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useDiscoverCompanions } from '@/hooks/useDiscoverCompanions'
 import type { DiscoverCompanionItem } from '@/hooks/useDiscoverCompanions'
@@ -46,18 +47,30 @@ interface SwipeCardProps {
 
 function SwipeCard({ companion, stackIndex, onLike, onSkip }: SwipeCardProps) {
   const openModal = useUIStore(s => s.openModal)
+  const qc        = useQueryClient()
   const x         = useMotionValue(0)
   const rotate    = useTransform(x, [-160, 0, 160], [-14, 0, 14])
   const roseOpacity = useTransform(x, [0, 80, 160], [0, 0.5, 1])
   const skipOpacity = useTransform(x, [-160, -80, 0], [1, 0.5, 0])
   const controls  = useAnimation()
+  // Track whether the user actually dragged so we don't open the modal on swipe-end
+  const didDragRef = useRef(false)
 
   const gradient   = companion.gradient || gradientFromId(companion.id)
   const isTop      = stackIndex === 0
   const peekScale  = stackIndex === 1 ? 0.95 : 0.90
   const peekY      = stackIndex === 1 ? 14 : 26
 
+  function prefetchProfile() {
+    qc.prefetchQuery({
+      queryKey: ['companion-profile', companion.id],
+      queryFn: () => fetch(`/api/companions/${companion.id}`).then(r => r.json()),
+      staleTime: 5 * 60 * 1000,
+    })
+  }
+
   async function handleDragEnd(_: unknown, info: { offset: { x: number } }) {
+    if (Math.abs(info.offset.x) > 10) didDragRef.current = true
     if (info.offset.x > 80) {
       await controls.start({ x: 500, rotate: 20, opacity: 0, transition: { duration: 0.3 } })
       onLike()
@@ -65,6 +78,7 @@ function SwipeCard({ companion, stackIndex, onLike, onSkip }: SwipeCardProps) {
       await controls.start({ x: -500, rotate: -20, opacity: 0, transition: { duration: 0.3 } })
       onSkip()
     } else {
+      didDragRef.current = false
       controls.start({ x: 0, rotate: 0, transition: { type: 'spring', stiffness: 300, damping: 25 } })
     }
   }
@@ -96,7 +110,11 @@ function SwipeCard({ companion, stackIndex, onLike, onSkip }: SwipeCardProps) {
           position: 'relative',
           userSelect: 'none',
         }}
-        onClick={isTop ? () => openModal(companion.companionId) : undefined}
+        onMouseEnter={isTop ? prefetchProfile : undefined}
+        onClick={isTop ? () => {
+          if (didDragRef.current) { didDragRef.current = false; return }
+          openModal(companion.id)
+        } : undefined}
       >
         {/* Photo */}
         {companion.primaryPhotoUrl && (

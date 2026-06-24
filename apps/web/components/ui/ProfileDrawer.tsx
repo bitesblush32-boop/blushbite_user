@@ -174,55 +174,72 @@ export default function ProfileDrawer() {
 
               {/* ── SECTION A: Hero band ──────────────────────────────────────── */}
               {display && (<>
-              <div className="flex relative overflow-hidden" style={{ minHeight: '280px' }}>
+              {/* Mobile: stack (image → details). Desktop: side-by-side. */}
+              <div className="flex flex-col md:flex-row relative overflow-hidden" style={{ minHeight: 'auto' }}>
+
+                {/* Close button — always top-right of the modal, above image on mobile */}
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center text-[#6b7280] text-[18px] cursor-pointer transition-all duration-150 leading-none"
+                  style={{ background: 'rgba(13,17,23,0.75)', border: '1px solid #1c2333', backdropFilter: 'blur(8px)' }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLButtonElement
+                    el.style.color = '#eeeef0'
+                    el.style.background = 'rgba(255,255,255,0.12)'
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLButtonElement
+                    el.style.color = '#6b7280'
+                    el.style.background = 'rgba(13,17,23,0.75)'
+                  }}
+                >
+                  ✕
+                </button>
 
                 {/* Image strip */}
                 <div
-                  className="w-[220px] flex-shrink-0 relative overflow-hidden"
+                  className="w-full md:w-[220px] md:flex-shrink-0 relative overflow-hidden"
                   style={{ background: display.gradient }}
                 >
                   {display.photoUrl ? (
-                    <img
-                      src={display.photoUrl}
-                      alt={display.name}
-                      className="absolute inset-0 w-full h-full object-cover object-top"
-                    />
+                    <>
+                      {/* Mobile: natural height so full image is always visible */}
+                      <img
+                        src={display.photoUrl}
+                        alt={display.name}
+                        className="w-full h-auto block md:hidden"
+                        draggable={false}
+                      />
+                      {/* Desktop: fill the fixed column height */}
+                      <img
+                        src={display.photoUrl}
+                        alt={display.name}
+                        className="hidden md:block absolute inset-0 w-full h-full object-cover object-top"
+                        draggable={false}
+                      />
+                    </>
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-[260px] md:absolute md:inset-0 md:h-full flex items-center justify-center">
                       <svg width="100" height="200" viewBox="0 0 80 160" fill="rgba(255,255,255,0.18)">
                         <ellipse cx="40" cy="26" rx="20" ry="24" />
                         <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q58 182 40 184 Q24 182 12 170Z" />
                       </svg>
                     </div>
                   )}
-                  {/* Right fade */}
+                  {/* Bottom fade — mobile only, sits over the image */}
                   <div
-                    className="absolute inset-0"
+                    className="absolute inset-x-0 bottom-0 h-20 md:hidden pointer-events-none"
+                    style={{ background: 'linear-gradient(to top, #0d1117 0%, transparent 100%)' }}
+                  />
+                  {/* Right fade — desktop only */}
+                  <div
+                    className="absolute inset-0 hidden md:block pointer-events-none"
                     style={{ background: 'linear-gradient(90deg, transparent 55%, #0d1117 100%)' }}
                   />
                 </div>
 
-                {/* Right content */}
-                <div className="flex-1 p-8 flex flex-col justify-between relative">
-
-                  {/* Close button */}
-                  <button
-                    onClick={closeModal}
-                    className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-[#6b7280] text-[18px] cursor-pointer transition-all duration-150 leading-none"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #1c2333' }}
-                    onMouseEnter={(e) => {
-                      const el = e.currentTarget as HTMLButtonElement
-                      el.style.color = '#eeeef0'
-                      el.style.background = 'rgba(255,255,255,0.12)'
-                    }}
-                    onMouseLeave={(e) => {
-                      const el = e.currentTarget as HTMLButtonElement
-                      el.style.color = '#6b7280'
-                      el.style.background = 'rgba(255,255,255,0.06)'
-                    }}
-                  >
-                    ✕
-                  </button>
+                {/* Details — below image on mobile, right column on desktop */}
+                <div className="flex-1 p-5 md:p-8 flex flex-col justify-between relative">
 
                   {/* Top group */}
                   <div>
@@ -235,16 +252,16 @@ export default function ProfileDrawer() {
                     {/* Name */}
                     <h2
                       className="text-[#eeeef0] leading-[1.1] mb-1"
-                      style={{ fontFamily: "'Playfair Display', serif", fontSize: '34px' }}
+                      style={{ fontFamily: "'Playfair Display', serif", fontSize: '28px' }}
                     >
-                      {display.name}{display.age ? <span style={{ fontSize: 20, color: '#6b7280', fontFamily: 'inherit' }}>, {display.age}</span> : null}
+                      {display.name}{display.age ? <span style={{ fontSize: 18, color: '#6b7280', fontFamily: 'inherit' }}>, {display.age}</span> : null}
                     </h2>
 
                     {/* Vibe / tagline */}
                     <p className="text-[13px] text-[#6b7280] mb-4">{display.vibe}</p>
 
                     {/* Badges */}
-                    <div className="flex items-center gap-3 mb-5 flex-wrap">
+                    <div className="flex items-center gap-3 mb-4 flex-wrap">
                       {display.isVerified && <span className="verified-badge">✦ Verified &amp; Licensed</span>}
                       <span
                         className="text-[11px] text-[#e8607a] px-[10px] py-1 rounded-full"
@@ -268,7 +285,7 @@ export default function ProfileDrawer() {
                   </div>
 
                   {/* Trust row */}
-                  <div className="flex gap-5 mt-4 mb-0 flex-wrap">
+                  <div className="flex gap-5 mt-4 flex-wrap">
                     <span className="flex items-center gap-[6px] text-[11.5px] text-[#6b7280]">
                       <span style={{ color: '#c9a96e' }}>🔒</span>Anonymous booking
                     </span>
