@@ -8,7 +8,7 @@ import {
 import { MapPin, Heart, X, Star, RefreshCw, Globe } from 'lucide-react'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useDiscoverCompanions } from '@/hooks/useDiscoverCompanions'
-import type { DiscoverCompanionItem } from '@/app/api/companions/discover/route'
+import type { DiscoverCompanionItem } from '@/hooks/useDiscoverCompanions'
 import { useUIStore } from '@/store/uiStore'
 
 // ─── Radius options ─────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ function SwipeCard({ companion, stackIndex, onLike, onSkip }: SwipeCardProps) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px 28px' }}>
           {/* Dots indicator */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-            {companion.tags.slice(0, 3).map((_, i) => (
+            {companion.tags.slice(0, 3).map((_: string, i: number) => (
               <div key={i} style={{
                 width: i === 0 ? 20 : 6, height: 4, borderRadius: 2,
                 background: i === 0 ? '#e8607a' : 'rgba(255,255,255,0.3)',
@@ -232,7 +232,7 @@ function SwipeCard({ companion, stackIndex, onLike, onSkip }: SwipeCardProps) {
 
           {companion.tags.length > 0 && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {companion.tags.map(tag => (
+              {companion.tags.map((tag: string) => (
                 <span key={tag} style={{
                   fontSize: 10, padding: '3px 10px', borderRadius: 999,
                   background: 'rgba(255,255,255,0.06)',

@@ -2,7 +2,22 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query'
 import type { InfiniteData } from '@tanstack/react-query'
-import type { DiscoverCompanionItem } from '@/app/api/companions/discover/route'
+export interface DiscoverCompanionItem {
+  id:              string
+  companionId:     string
+  name:            string | null
+  age:             number | null
+  city:            string | null
+  distance_km:     number | null
+  minPrice:        string | null
+  currency:        string
+  vibe:            string | null
+  tags:            string[]
+  primaryPhotoUrl: string | null
+  gradient:        string
+  isVerified:      boolean
+  sessionModality: string
+}
 
 interface DiscoverPage {
   items:      DiscoverCompanionItem[]

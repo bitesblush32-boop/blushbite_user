@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,6 +18,7 @@ import {
   Tags,
   Link2,
   ExternalLink,
+  LogOut,
   Menu,
   X,
 } from 'lucide-react'
@@ -101,6 +102,7 @@ function NavItem({
 }
 
 function SidebarContent({ onNav }: { onNav?: () => void }) {
+  const router = useRouter()
   const { data: counts } = useQuery<BadgeCounts>({
     queryKey: ['admin', 'counts'],
     queryFn:  () => fetch('/api/admin/stats/counts').then(r => r.json()),
@@ -151,7 +153,7 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
       <div className="h-px bg-[#1c2333] mx-3" />
 
       {/* Bottom */}
-      <div className="p-3">
+      <div className="p-3 flex flex-col gap-[2px]">
         <Link
           href="/"
           className="flex items-center gap-2 px-4 py-[9px] rounded-[10px] transition-all duration-150"
@@ -160,8 +162,21 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#6b7280' }}
         >
           <ExternalLink size={13} />
-          ← Back to platform
+          Back to platform
         </Link>
+        <button
+          onClick={async () => {
+            await fetch('/api/admin/auth/logout', { method: 'POST' })
+            router.push('/admin-login')
+          }}
+          className="flex items-center gap-2 px-4 py-[9px] rounded-[10px] transition-all duration-150 w-full text-left"
+          style={{ fontSize: 12, color: '#6b7280' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#f87171' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#6b7280' }}
+        >
+          <LogOut size={13} />
+          Sign out
+        </button>
       </div>
     </div>
   )

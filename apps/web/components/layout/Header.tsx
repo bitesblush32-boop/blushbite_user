@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
-import { ArrowLeft, Bell, BookOpen, Camera, ChevronRight, HelpCircle, ImagePlus, Loader2, LogOut, Menu, Pencil, PenLine, Plus, Shield, Video } from 'lucide-react'
+import { ArrowLeft, Bell, BookOpen, Camera, ChevronRight, HelpCircle, ImagePlus, Loader2, Menu, Pencil, PenLine, Plus, Shield, Video } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -372,15 +371,13 @@ interface UserProfile {
 }
 
 export default function Header() {
-  const { data: session } = useSession()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
   const [showPostMenu, setShowPostMenu] = useState(false)
 
-  const isCompanion = (session?.user as any)?.platform_role === 'companion'
-    || (session?.user as any)?.platform_role === 'dream'
+  const isCompanion = false
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -421,66 +418,40 @@ export default function Header() {
   const pathname = usePathname()
   const isProfile = pathname === '/profile' || (isCompanion && pathname === '/companion/profile')
 
-  const alias = session?.user?.alias ?? '??'
-  const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
+  const alias = '@guest'
+  const initials = 'BB'
 
   useEffect(() => {
     setSettingsOpen(false)
   }, [pathname])
 
-  const menuItems = isCompanion
-    ? [
-        {
-          label: 'Complete my profile',
-          href: '/companion/profile/settings',
-          icon: Pencil,
-          tone: 'default' as const,
-        },
-        {
-          label: 'Privacy & safety',
-          href: '/privacy',
-          icon: Shield,
-          tone: 'default' as const,
-        },
-        {
-          label: 'Help & support',
-          href: '/help',
-          icon: HelpCircle,
-          tone: 'default' as const,
-        },
-        {
-          label: 'Sign out',
-          icon: LogOut,
-          tone: 'danger' as const,
-          onClick: () => signOut({ callbackUrl: '/auth/signin' }),
-        },
-      ]
-    : [
-        {
-          label: 'Edit profile',
-          icon: Pencil,
-          tone: 'default' as const,
-          onClick: () => setEditProfileOpen(true),
-        },
-        {
-          label: 'Privacy & safety',
-          href: '/privacy',
-          icon: Shield,
-          tone: 'default' as const,
-        },
-        {
-          label: 'Help & support',
-          href: '/help',
-          icon: HelpCircle,
-          tone: 'default' as const,
-        },
-        {
-          label: 'Sign out',
-          icon: LogOut,
-          tone: 'danger' as const,
-          onClick: () => signOut({ callbackUrl: '/auth/signin' }),
-        },
-      ]
+  const menuItems: Array<{
+    label: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon: React.ComponentType<any>
+    tone: 'default' | 'danger'
+    href?: string
+    onClick?: () => void
+  }> = [
+    {
+      label: 'Edit profile',
+      icon: Pencil,
+      tone: 'default',
+      onClick: () => setEditProfileOpen(true),
+    },
+    {
+      label: 'Privacy & safety',
+      href: '/privacy',
+      icon: Shield,
+      tone: 'default',
+    },
+    {
+      label: 'Help & support',
+      href: '/help',
+      icon: HelpCircle,
+      tone: 'default',
+    },
+  ]
 
   const profileAccent = avatarUrl
     ? {
@@ -547,7 +518,7 @@ export default function Header() {
           <button
             type="button"
             aria-label="Write a confession"
-            onClick={() => isCompanion ? setShowPostMenu(true) : router.push('/create')}
+            onClick={() => router.push('/create')}
             onMouseEnter={() => setPlusHover(true)}
             onMouseLeave={() => setPlusHover(false)}
             style={{

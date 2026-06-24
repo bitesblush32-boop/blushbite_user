@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
 import { db } from '@/db'
 import {
   companions, companionProfiles, companionPhotos,
@@ -31,9 +30,6 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { profileId: string } }
 ) {
-  const session = await auth()
-  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const { profileId } = params
 
   const [profile] = await db

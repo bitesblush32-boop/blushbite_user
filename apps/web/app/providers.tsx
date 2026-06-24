@@ -15,8 +15,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     },
   }))
 
+  // session={null} tells SessionProvider not to fetch /api/auth/session —
+  // useSession() calls across the app return { data: null, status: 'unauthenticated' }
   return (
-    <SessionProvider>
+    <SessionProvider session={null}>
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>

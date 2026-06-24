@@ -1,12 +1,11 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
 import { db } from '@/db'
 import {
   stories,
   storyCategories,
-  users,
   companions,
-  userFantasyTags,
 } from '@/db/schema'
 import { eq, and, isNull, sql, or, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
@@ -20,12 +19,6 @@ interface Cursor { score: number; id: string }
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const userId = session.user.id
-
     const { searchParams } = new URL(req.url)
     const parsed = querySchema.safeParse({
       limit:  searchParams.get('limit') ?? undefined,
@@ -40,25 +33,7 @@ export async function GET(req: NextRequest) {
       try { cursor = JSON.parse(parsed.data.cursor) } catch { /* ignore */ }
     }
 
-    // Count user's fantasy tags for normalization
-    const userTagCountRows = await db
-      .select({ cnt: sql<number>`COUNT(*)::int` })
-      .from(userFantasyTags)
-      .where(eq(userFantasyTags.user_id, userId))
-    const userTagCount = userTagCountRows[0]?.cnt ?? 0
-
-    // Ranking score expressions
-    const tagMatchScore = userTagCount > 0
-      ? sql<number>`(
-          SELECT COUNT(*)::float
-          FROM story_fantasy_tags sft2
-          WHERE sft2.story_id = ${stories.id}
-            AND sft2.fantasy_tag_id IN (
-              SELECT fantasy_tag_id FROM user_fantasy_tags WHERE user_id = ${userId}::uuid
-            )
-        ) / GREATEST(${userTagCount}::float, 1.0)`
-      : sql<number>`0.0`
-
+    // Public ranking: engagement + recency only
     const engagementScore = sql<number>`LEAST(
       (3.0 * LN(1.0 + ${stories.save_count}::float)
      + 2.0 * LN(1.0 + ${stories.comment_count}::float)
@@ -70,11 +45,7 @@ export async function GET(req: NextRequest) {
       -0.231 * EXTRACT(EPOCH FROM (NOW() - ${stories.published_at})) / 86400.0
     )`
 
-    const finalScore = sql<number>`(
-      0.40 * (${tagMatchScore})
-    + 0.35 * (${engagementScore})
-    + 0.25 * (${recencyScore})
-    )`
+    const finalScore = sql<number>`(0.60 * (${engagementScore}) + 0.40 * (${recencyScore}))`
 
     const baseWhere = and(
       inArray(stories.author_type, ['companion', 'admin']),
@@ -85,17 +56,9 @@ export async function GET(req: NextRequest) {
 
     const cursorWhere = cursor
       ? or(
-          sql`(
-            0.40 * (${tagMatchScore})
-          + 0.35 * (${engagementScore})
-          + 0.25 * (${recencyScore})
-          ) < ${cursor.score}::float`,
+          sql`(0.60 * (${engagementScore}) + 0.40 * (${recencyScore})) < ${cursor.score}::float`,
           and(
-            sql`(
-              0.40 * (${tagMatchScore})
-            + 0.35 * (${engagementScore})
-            + 0.25 * (${recencyScore})
-            ) = ${cursor.score}::float`,
+            sql`(0.60 * (${engagementScore}) + 0.40 * (${recencyScore})) = ${cursor.score}::float`,
             sql`${stories.id}::text < ${cursor.id}`,
           ),
         )
@@ -105,32 +68,19 @@ export async function GET(req: NextRequest) {
 
     const rows = await db
       .select({
-        id:               stories.id,
-        title:            stories.title,
-        is_anonymous:     stories.is_anonymous,
-        body:             stories.body,
-        excerpt:          stories.excerpt,
-        like_count:       stories.like_count,
-        save_count:       stories.save_count,
-        view_count:       stories.view_count,
-        comment_count:    stories.comment_count,
-        published_at:     stories.published_at,
-        final_score:      finalScore,
-        // Companion alias (for companion-authored stories)
-        companion_alias:  companions.alias,
-        category_name:    storyCategories.name,
-        user_has_liked: sql<boolean>`EXISTS (
-          SELECT 1 FROM likes lk
-          WHERE lk.user_id = ${userId}::uuid
-            AND lk.content_type = 'story'
-            AND lk.content_id = ${stories.id}
-        )`,
-        user_has_saved: sql<boolean>`EXISTS (
-          SELECT 1 FROM saves sv
-          WHERE sv.user_id = ${userId}::uuid
-            AND sv.content_type = 'story'
-            AND sv.content_id = ${stories.id}
-        )`,
+        id:              stories.id,
+        title:           stories.title,
+        is_anonymous:    stories.is_anonymous,
+        body:            stories.body,
+        excerpt:         stories.excerpt,
+        like_count:      stories.like_count,
+        save_count:      stories.save_count,
+        view_count:      stories.view_count,
+        comment_count:   stories.comment_count,
+        published_at:    stories.published_at,
+        final_score:     finalScore,
+        companion_alias: companions.alias,
+        category_name:   storyCategories.name,
         mood_tags: sql<string | null>`(
           SELECT STRING_AGG(mt.name, ',' ORDER BY mt.name)
           FROM story_mood_tags smt2
@@ -139,9 +89,7 @@ export async function GET(req: NextRequest) {
         )`,
       })
       .from(stories)
-      // Companion alias: join on author_companion_id (null for admin-authored)
       .leftJoin(companions, eq(companions.id, stories.author_companion_id))
-      // storyCategories join for fallback category name
       .leftJoin(storyCategories, eq(storyCategories.id, stories.category_id))
       .where(whereClause)
       .orderBy(desc(finalScore), desc(stories.id))
@@ -175,8 +123,8 @@ export async function GET(req: NextRequest) {
         saveCount:      r.save_count,
         viewCount:      r.view_count,
         commentCount:   r.comment_count,
-        userHasLiked:   Boolean(r.user_has_liked),
-        userHasSaved:   Boolean(r.user_has_saved),
+        userHasLiked:   false,
+        userHasSaved:   false,
         moodTags:       extraCategories.length > 0 ? extraCategories : dbMoodTags,
         categoryName:   primaryCategory,
         publishedAt:    r.published_at,
