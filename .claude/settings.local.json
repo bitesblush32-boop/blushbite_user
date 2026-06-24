@@ -270,7 +270,22 @@
       "Bash(curl -s \"http://localhost:3000/api/companions/feed\" 2>&1 | node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const j=JSON.parse\\(d\\); console.log\\('Items returned:', j.items?.length ?? 0\\); if\\(j.items?.length\\) console.log\\('First item:', JSON.stringify\\(j.items[0], null, 2\\)\\);\")",
       "Bash(curl -s \"http://localhost:3000/api/companions/feed\" 2>&1)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -20)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -15)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | tail -15)",
+      "Bash(find \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app\" -path \"*onboarding*\" -type f 2>/dev/null | head -20)",
+      "Bash(find \"/c/Users/Ravi Desai/Downloads/BlushBite/apps/web/app/\\(companion\\)\" -name \"page.tsx\" -o -name \"page.ts\" | head -20)",
+      "WebFetch(domain:www.locanto.in)",
+      "WebFetch(domain:www.locanto.org)",
+      "WebFetch(domain:www.locanto.com)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsx --env-file .env.local scripts/seed-indian-companions.ts)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsx --env-file .env.local -e \"\nimport postgres from 'postgres'\nconst sql = postgres\\(process.env.DATABASE_URL!\\)\nconst rows = await sql\\\\`\n  SELECT c.name, cp.city, cp.is_visible_to_users, cp.is_live, cp.is_verified, cp.profile_completeness,\n         ph.url as photo_url\n  FROM companions c\n  JOIN companion_profiles cp ON cp.companion_id = c.id\n  LEFT JOIN companion_photos ph ON ph.companion_profile_id = cp.id AND ph.is_primary = true\n  WHERE cp.is_visible_to_users = true\n  ORDER BY cp.profile_completeness DESC\n\\\\`\nconsole.table\\(rows\\)\nawait sql.end\\(\\)\n\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node --env-file .env.local -e \"\nconst { default: postgres } = await import\\('postgres'\\)\nconst sql = postgres\\(process.env.DATABASE_URL\\)\nconst rows = await sql\\\\`\n  SELECT c.name, cp.city, cp.is_visible_to_users, cp.is_live, cp.profile_completeness\n  FROM companions c\n  JOIN companion_profiles cp ON cp.companion_id = c.id\n  WHERE cp.is_visible_to_users = true\n  ORDER BY cp.profile_completeness DESC\n\\\\`\nconsole.log\\(JSON.stringify\\(rows, null, 2\\)\\)\nawait sql.end\\(\\)\n\" --input-type=module)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && rm -rf .next && npx next build 2>&1)",
+      "Bash(curl -s http://localhost:3001/api/companions/feed | python -m json.tool 2>&1 | grep -E '\"name\"|\"city\"|\"minPrice\"|\"isVerified\"|\"primaryPhotoUrl\"' | head -30)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx tsx --env-file .env.local scripts/add-perf-indexes.ts && npx tsx --env-file .env.local scripts/update-indian-prices.ts)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next build 2>&1)",
+      "Bash(sleep 4 && curl -s http://localhost:3000/api/companions/feed | python -m json.tool 2>/dev/null | grep -E '\"minPrice\"|\"name\"' | head -20)",
+      "Bash(curl -s \"http://localhost:3000/api/companions/feed\" | python -c \"import sys,json; data=json.loads\\(sys.stdin.read\\(\\)\\); [print\\(i['name'], i['minPrice']\\) for i in data['items']]\")",
+      "Bash(curl -s \"http://localhost:3000/api/companions/discover\" | python -c \"import sys,json; data=json.loads\\(sys.stdin.read\\(\\)\\); [print\\(i['name'], i['city'], i['minPrice']\\) for i in data['items']]\")"
     ]
   }
 }

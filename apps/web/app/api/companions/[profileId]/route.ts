@@ -6,6 +6,11 @@ import {
 } from '@/db/schema'
 import { eq, and, isNull, asc } from 'drizzle-orm'
 
+function sym(code: string): string {
+  const map: Record<string, string> = { EUR: '€', INR: '₹', USD: '$', GBP: '£' }
+  return map[code] ?? code
+}
+
 const GRADIENTS = [
   'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)',
   'linear-gradient(135deg,#0f1a28,#1f2840,#2a1020)',
@@ -96,10 +101,10 @@ export async function GET(
 
   const primaryPhoto = photoRows.find(p => p.is_primary)?.url ?? photoRows[0]?.url ?? null
   const currency = profile.currency ?? 'EUR'
-  const currencySymbol = currency === 'EUR' ? '€' : currency
+  const currSym = sym(currency)
 
   const minPrice = sessionCardRows.length > 0
-    ? `${currencySymbol}${Math.round(parseFloat(sessionCardRows.reduce((min, sc) =>
+    ? `${currSym}${Math.round(parseFloat(sessionCardRows.reduce((min, sc) =>
         sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
         sessionCardRows[0]
       ).price ?? '0'))}`
@@ -125,7 +130,7 @@ export async function GET(
       id:              sc.id,
       title:           sc.title,
       description:     sc.description,
-      price:           sc.price ? `${currencySymbol}${Math.round(parseFloat(sc.price))}` : null,
+      price:           sc.price ? `${currSym}${Math.round(parseFloat(sc.price))}` : null,
       sessionType:     sc.session_type,
       durationMinutes: sc.duration_minutes,
     })),

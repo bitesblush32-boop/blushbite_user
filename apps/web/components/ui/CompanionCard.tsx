@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Companion } from '@/lib/types'
 import { useUIStore } from '@/store/uiStore'
 
@@ -11,17 +12,25 @@ interface Props {
 
 function CompanionCard({ companion, style }: Props) {
   const openModal = useUIStore((s) => s.openModal)
+  const qc = useQueryClient()
+
+  const prefetchProfile = useCallback(() => {
+    qc.prefetchQuery({
+      queryKey: ['companion-profile', companion.id],
+      queryFn: () => fetch(`/api/companions/${companion.id}`).then(r => r.json()),
+      staleTime: 5 * 60 * 1000,
+    })
+  }, [companion.id, qc])
 
   return (
     <div
       className="w-[220px] flex-shrink-0 bg-[#111620] border border-[#1c2333] rounded-[14px] overflow-hidden cursor-pointer relative group transition-all duration-[250ms] hover:-translate-y-1"
       style={{
         ...style,
-        // box-shadow on hover is handled via Tailwind peer — applied here as inline so it
-        // doesn't require a custom config entry
       }}
       onClick={() => openModal(companion.id)}
       onMouseEnter={(e) => {
+        prefetchProfile()
         ;(e.currentTarget as HTMLDivElement).style.boxShadow =
           '0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2)'
       }}

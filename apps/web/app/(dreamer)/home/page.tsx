@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { companions, stories, audios } from '@/lib/data'
+import { stories, audios } from '@/lib/data'
+import type { Companion } from '@/lib/types'
 import { useRecommendedCompanions } from '@/hooks/useRecommendedCompanions'
 import { useMoodStore } from '@/store/moodStore'
 import { useUIStore } from '@/store/uiStore'
@@ -44,12 +45,14 @@ export default function HomePage() {
   const confessions = stories.filter((s) => s.type === 'Confession')
   const bridgeItems = confessions.flatMap((confession, i) => [
     { kind: 'story' as const, item: confession },
-    { kind: 'companion' as const, item: companions[i % companions.length] },
+    ...(companionCards.length > 0
+      ? [{ kind: 'companion' as const, item: companionCards[i % companionCards.length] }]
+      : []),
   ])
 
-  // Use top real recommendation; fall back to dummy while loading
+  // Use top real recommendation only — no dummy fallback
   const topReal = companionCards[0] ?? null
-  const featured = topReal ?? companions[0]
+  const featured = topReal
 
   return (
     <motion.main
@@ -114,7 +117,7 @@ export default function HomePage() {
       <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 mb-14">
 
         {/* Featured companion card — unique large layout, built inline */}
-        <div
+        {featured && <div
           className="bg-[#111620] border border-[#1c2333] rounded-[20px] overflow-hidden flex flex-col md:flex-row relative min-h-[360px] cursor-pointer transition-shadow duration-300"
           style={{ boxShadow: heroShadow ? '0 0 40px rgba(232,96,122,0.18)' : 'none' }}
           onMouseEnter={() => setHeroShadow(true)}
@@ -250,7 +253,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Mood panel */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[20px] p-7 flex flex-col">
@@ -518,7 +521,7 @@ export default function HomePage() {
                   className="rounded-[14px]"
                   style={{ border: '1px solid rgba(201,169,110,0.25)' }}
                 >
-                  <CompanionCard companion={entry.item as typeof companions[0]} />
+                  <CompanionCard companion={entry.item as Companion} />
                 </div>
               )}
             </motion.div>

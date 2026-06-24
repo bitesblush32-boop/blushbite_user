@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') && pathname !== '/admin-login') {
     const session = req.cookies.get('admin_session')?.value
     const secret  = process.env.ADMIN_SESSION_SECRET
 

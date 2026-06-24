@@ -144,7 +144,11 @@ export async function PATCH(
 
   if (typeof body.is_live === 'boolean') {
     await db.update(companionProfiles)
-      .set({ is_live: body.is_live, ...(body.is_live ? { approved_at: new Date() } : {}) })
+      .set({
+        is_live: body.is_live,
+        is_visible_to_users: body.is_live,
+        ...(body.is_live ? { approved_at: new Date() } : {}),
+      })
       .where(eq(companionProfiles.companion_id, id))
   }
 

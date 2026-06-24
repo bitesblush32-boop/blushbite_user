@@ -26,6 +26,11 @@ export interface CompanionFeedItem {
   overlapScore:     number
 }
 
+function currencySymbol(code: string): string {
+  const map: Record<string, string> = { EUR: '€', INR: '₹', USD: '$', GBP: '£' }
+  return map[code] ?? code
+}
+
 const GRADIENTS = [
   'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)',
   'linear-gradient(135deg,#0f1a28,#1f2840,#2a1020)',
@@ -75,9 +80,14 @@ export async function GET(req: NextRequest) {
 
   const rows = await db
     .select({
-      profileId:   companionProfiles.id,
-      companionId: companionProfiles.companion_id,
-      score:       sql<number>`${companionProfiles.profile_completeness} / 100.0`,
+      profileId:        companionProfiles.id,
+      companionId:      companionProfiles.companion_id,
+      score:            sql<number>`${companionProfiles.profile_completeness} / 100.0`,
+      tagline:          companionProfiles.tagline,
+      city:             companionProfiles.city,
+      currency:         companionProfiles.currency,
+      is_verified:      companionProfiles.is_verified,
+      session_modality: companionProfiles.session_modality,
     })
     .from(companionProfiles)
     .where(and(
@@ -87,7 +97,16 @@ export async function GET(req: NextRequest) {
     .orderBy(desc(companionProfiles.profile_completeness), asc(companionProfiles.id))
     .limit(LIMIT + 1)
 
-  const profileRows = rows.map(r => ({ profileId: r.profileId, companionId: r.companionId, score: Number(r.score) }))
+  const profileRows = rows.map(r => ({
+    profileId:        r.profileId,
+    companionId:      r.companionId,
+    score:            Number(r.score),
+    tagline:          r.tagline,
+    city:             r.city,
+    currency:         r.currency,
+    is_verified:      r.is_verified,
+    session_modality: r.session_modality,
+  }))
 
   const hasNextPage = profileRows.length > LIMIT
   const pageRows = profileRows.slice(0, LIMIT)
@@ -98,8 +117,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items: [], nextCursor: null })
   }
 
-  // Batch-load supplementary data
-  const [companionRows, photoRows, sessionCardRows, vibeTagRows, profileDetailRows] = await Promise.all([
+  // Batch-load supplementary data (profile details already in pageRows from initial query)
+  const [companionRows, photoRows, sessionCardRows, vibeTagRows] = await Promise.all([
     db.select({
       id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth,
     }).from(companions).where(inArray(companions.id, companionIds)),
@@ -122,18 +141,6 @@ export async function GET(req: NextRequest) {
     }).from(companionVibeTags)
       .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
       .where(inArray(companionVibeTags.companion_profile_id, profileIds)),
-
-    db.select({
-      id:               companionProfiles.id,
-      companion_id:     companionProfiles.companion_id,
-      tagline:          companionProfiles.tagline,
-      city:             companionProfiles.city,
-      currency:         companionProfiles.currency,
-      is_verified:      companionProfiles.is_verified,
-      session_modality: companionProfiles.session_modality,
-    })
-    .from(companionProfiles)
-    .where(inArray(companionProfiles.id, profileIds)),
   ])
 
   // Index maps
@@ -158,17 +165,15 @@ export async function GET(req: NextRequest) {
     const arr = vibeTagMapByProfile.get(vt.companion_profile_id)!
     if (arr.length < 3) arr.push(vt.name)
   }
-  const profileDetailMap = new Map(profileDetailRows.map(p => [p.id, p]))
 
-  // Build items
+  // Build items (profile details come from merged initial query — no profileDetailMap needed)
   const items: CompanionFeedItem[] = pageRows.map(row => {
-    const profile = profileDetailMap.get(row.profileId)
     const comp = companionMap.get(row.companionId)
     const priceInfo = minPriceMap.get(row.profileId)
     const tags = vibeTagMapByProfile.get(row.profileId) ?? []
 
     const minPrice = priceInfo
-      ? `${priceInfo.currency === 'EUR' ? '€' : priceInfo.currency}${Math.round(parseFloat(priceInfo.price))}`
+      ? `${currencySymbol(priceInfo.currency)}${Math.round(parseFloat(priceInfo.price))}`
       : null
 
     return {
@@ -176,15 +181,15 @@ export async function GET(req: NextRequest) {
       companionId:     row.companionId,
       name:            comp?.name ?? null,
       age:             ageFromDob(comp?.date_of_birth ?? null),
-      city:            profile?.city ?? null,
+      city:            row.city ?? null,
       minPrice,
-      currency:        profile?.currency ?? 'EUR',
-      vibe:            profile?.tagline ?? null,
+      currency:        row.currency ?? 'EUR',
+      vibe:            row.tagline ?? null,
       tags,
       primaryPhotoUrl: photoMap.get(row.profileId) ?? null,
       gradient:        gradientFromId(row.profileId),
-      isVerified:      profile?.is_verified ?? false,
-      sessionModality: profile?.session_modality ?? 'in_person',
+      isVerified:      row.is_verified ?? false,
+      sessionModality: row.session_modality ?? 'in_person',
       overlapScore:    row.score,
     }
   })
