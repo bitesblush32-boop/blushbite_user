@@ -22,49 +22,45 @@ import type { Story } from '@/hooks/useInfiniteConfessions'
 // Middle anchors at #07090f so the image's #07090f base matches seamlessly.
 
 const GRADIENT_MAP: Record<string, string> = {
-  Romantic:     'linear-gradient(180deg, #1c0c1e 0%, #07090f 35%, #07090f 65%, #120818 100%)',
-  Intense:      'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #10091a 100%)',
-  Confessions:  'linear-gradient(180deg, #11101e 0%, #07090f 35%, #07090f 65%, #0d0a1a 100%)',
-  'Dark Romance':'linear-gradient(180deg, #1a0c1c 0%, #07090f 35%, #07090f 65%, #130818 100%)',
-  BDSM:         'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #100918 100%)',
-  default:      'linear-gradient(180deg, #10101e 0%, #07090f 35%, #07090f 65%, #0d0b1c 100%)',
+  Romantic: 'linear-gradient(180deg, #1c0c1e 0%, #07090f 35%, #07090f 65%, #120818 100%)',
+  Intense: 'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #10091a 100%)',
+  Confessions: 'linear-gradient(180deg, #11101e 0%, #07090f 35%, #07090f 65%, #0d0a1a 100%)',
+  'Dark Romance': 'linear-gradient(180deg, #1a0c1c 0%, #07090f 35%, #07090f 65%, #130818 100%)',
+  BDSM: 'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #100918 100%)',
+  default: 'linear-gradient(180deg, #10101e 0%, #07090f 35%, #07090f 65%, #0d0b1c 100%)',
 }
 
 function getGradient(categoryName: string, moodTags: string[]): string {
-  return (
-    GRADIENT_MAP[categoryName] ??
-    GRADIENT_MAP[moodTags[0] ?? ''] ??
-    GRADIENT_MAP['default']
-  )
+  return GRADIENT_MAP[categoryName] ?? GRADIENT_MAP[moodTags[0] ?? ''] ?? GRADIENT_MAP['default']
 }
 
 // ─── Bridge companion type ─────────────────────────────────────────────────────
 
 interface BridgeCompanion {
-  id:                  string
-  companion_id:        string
-  alias:               string | null
-  name:                string | null
-  tagline:             string | null
-  city:                string | null
+  id: string
+  companion_id: string
+  alias: string | null
+  name: string | null
+  tagline: string | null
+  city: string | null
   availability_status: string
-  photo_url:           string | null
+  photo_url: string | null
 }
 
 // ─── ConfessionCard ───────────────────────────────────────────────────────────
 
 interface Props {
-  story:    Story
+  story: Story
   isActive: boolean
 }
 
 const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) {
-  const [currentPage, setCurrentPage]   = useState(0)
+  const [currentPage, setCurrentPage] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const settingsRef                     = useRef<HTMLDivElement>(null)
+  const settingsRef = useRef<HTMLDivElement>(null)
 
-  const confessionFontSize    = useUIStore(s => s.confessionFontSize)
-  const setConfessionFontSize = useUIStore(s => s.setConfessionFontSize)
+  const confessionFontSize = useUIStore((s) => s.confessionFontSize)
+  const setConfessionFontSize = useUIStore((s) => s.setConfessionFontSize)
 
   // totalPages is reported back by StoryPageContent via onTotalPages callback
   const [totalPages, setTotalPages] = useState(2)
@@ -83,22 +79,22 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
     return () => document.removeEventListener('mousedown', onPointerDown)
   }, [settingsOpen])
 
-  const lastTapRef    = useRef<number>(0)
+  const lastTapRef = useRef<number>(0)
   const touchFiredRef = useRef(false)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const [heartVisible, setHeartVisible] = useState(false)
-  const [heartPos, setHeartPos]         = useState({ x: 0, y: 0 })
+  const [heartPos, setHeartPos] = useState({ x: 0, y: 0 })
 
-  const isLiked                                    = story.userHasLiked
-  const likeMutation                               = useLikeMutation()
-  const openModal                                  = useUIStore((s) => s.openModal)
+  const isLiked = story.userHasLiked
+  const likeMutation = useLikeMutation()
+  const openModal = useUIStore((s) => s.openModal)
   const { isCompanion, bridgeStatus, loading: bridgeLoading, bridge } = useBridgeMutation(story.id)
 
   // Fetch bridge companions — only when this card is active (avoids mass requests)
   const { data: bridgesData } = useQuery<{ data: BridgeCompanion[] }>({
     queryKey: ['story-bridges', story.id],
-    queryFn:  () => fetch(`/api/stories/${story.id}/bridges`).then(r => r.json()),
-    enabled:  isActive,
+    queryFn: () => fetch(`/api/stories/${story.id}/bridges`).then((r) => r.json()),
+    enabled: isActive,
     staleTime: 60_000,
   })
   const bridges = bridgesData?.data ?? []
@@ -110,14 +106,14 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
       const clientX = e.changedTouches[0]?.clientX
       const clientY = e.changedTouches[0]?.clientY
       if (!clientX || !clientY) return
-      
+
       const dx = Math.abs(clientX - touchStartRef.current.x)
       const dy = Math.abs(clientY - touchStartRef.current.y)
       // If moved more than 30px, it's a swipe, not a tap
       if (dx > 30 || dy > 30) return
-      
+
       // It's a tap — trigger double-tap with same logic as mouse
-      const now   = Date.now()
+      const now = Date.now()
       const delta = now - lastTapRef.current
       lastTapRef.current = now
 
@@ -136,12 +132,12 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         touchFiredRef.current = false
         return
       }
-      const now   = Date.now()
+      const now = Date.now()
       const delta = now - lastTapRef.current
       lastTapRef.current = now
 
       if (delta < 300 && delta > 0) {
-        const rect    = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
         const clientX = (e as React.MouseEvent).clientX
         const clientY = (e as React.MouseEvent).clientY
         setHeartPos({ x: clientX - rect.left, y: clientY - rect.top })
@@ -164,13 +160,13 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
   return (
     <div
       style={{
-        display:       'flex',
+        display: 'flex',
         flexDirection: 'column',
-        width:         '100%',
-        height:        '100%',
-        position:      'relative',
-        overflow:      'hidden',
-        background:    '#07090f',
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        background: '#07090f',
       }}
     >
       {/* Mood gradient — covers full card so colours flow top→body→footer */}
@@ -178,31 +174,34 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
       {/* Rose brand glow */}
       <div
         className="absolute inset-0 pointer-events-none z-[1]"
-        style={{ background: 'radial-gradient(ellipse 70% 35% at 50% 90%, rgba(232,96,122,0.10) 0%, transparent 70%)' }}
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 35% at 50% 90%, rgba(232,96,122,0.10) 0%, transparent 70%)',
+        }}
       />
 
       {/* ── HEADER ───────────────────────────────────────────────────────── */}
       {/* Solid #111620 card background — always readable regardless of body image */}
       <div
         style={{
-          flexShrink:    0,
-          zIndex:        20,
-          paddingTop:    'max(14px, env(safe-area-inset-top))',
-          paddingLeft:   16,
-          paddingRight:  16,
+          flexShrink: 0,
+          zIndex: 20,
+          paddingTop: 'max(14px, env(safe-area-inset-top))',
+          paddingLeft: 16,
+          paddingRight: 16,
           paddingBottom: 12,
-          background:    '#111620',
-          borderBottom:  '1px solid #1c2333',
+          background: '#111620',
+          borderBottom: '1px solid #1c2333',
         }}
       >
         {/* Rose top-accent line */}
         <div
           style={{
-            position:   'absolute',
-            top:        0,
-            left:       0,
-            right:      0,
-            height:     2,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 2,
             background: 'linear-gradient(90deg, transparent, #e8607a, transparent)',
           }}
         />
@@ -212,13 +211,13 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           <>
             <p
               style={{
-                fontFamily:   "'Playfair Display', serif",
-                fontSize:     18,
-                color:        '#eeeef0',
-                fontStyle:    'italic',
-                margin:       0,
-                lineHeight:   1.35,
-                wordWrap:     'break-word',
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 18,
+                color: '#eeeef0',
+                fontStyle: 'italic',
+                margin: 0,
+                lineHeight: 1.35,
+                wordWrap: 'break-word',
                 overflowWrap: 'break-word',
               }}
             >
@@ -227,10 +226,10 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
             {/* Author name below title */}
             <p
               style={{
-                fontSize:   11,
-                color:      '#6b7280',
-                fontStyle:  'italic',
-                margin:     '4px 0 0 0',
+                fontSize: 11,
+                color: '#6b7280',
+                fontStyle: 'italic',
+                margin: '4px 0 0 0',
                 lineHeight: 1.3,
               }}
             >
@@ -242,10 +241,10 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           <p
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize:   16,
-              color:      '#6b7280',
-              fontStyle:  'italic',
-              margin:     0,
+              fontSize: 16,
+              color: '#6b7280',
+              fontStyle: 'italic',
+              margin: 0,
               lineHeight: 1.35,
             }}
           >
@@ -257,9 +256,9 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
         {(story.categoryName || secondaryChips.length > 0) && (
           <div
             style={{
-              display:   'flex',
-              flexWrap:  'wrap',
-              gap:       4,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 4,
               marginTop: 6,
             }}
           >
@@ -267,12 +266,12 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
             {story.categoryName && (
               <span
                 style={{
-                  fontSize:     10,
-                  fontWeight:   500,
-                  color:        '#e8607a',
-                  background:   'rgba(232,96,122,0.12)',
-                  border:       '1px solid rgba(232,96,122,0.3)',
-                  padding:      '3px 9px',
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: '#e8607a',
+                  background: 'rgba(232,96,122,0.12)',
+                  border: '1px solid rgba(232,96,122,0.3)',
+                  padding: '3px 9px',
                   borderRadius: 999,
                 }}
               >
@@ -281,16 +280,16 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
             )}
 
             {/* Extra categories — rose chips */}
-            {secondaryChips.map(t => (
+            {secondaryChips.map((t) => (
               <span
                 key={t}
                 style={{
-                  fontSize:     10,
-                  fontWeight:   500,
-                  color:        '#e8607a',
-                  background:   'rgba(232,96,122,0.12)',
-                  border:       '1px solid rgba(232,96,122,0.3)',
-                  padding:      '3px 9px',
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: '#e8607a',
+                  background: 'rgba(232,96,122,0.12)',
+                  border: '1px solid rgba(232,96,122,0.3)',
+                  padding: '3px 9px',
                   borderRadius: 999,
                 }}
               >
@@ -333,16 +332,16 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
               exit={{ opacity: 0 }}
               transition={{ duration: 0.85, ease: 'easeOut' }}
               style={{
-                position:       'absolute',
-                left:           heartPos.x - 40,
-                top:            heartPos.y - 40,
-                width:          80,
-                height:         80,
-                display:        'flex',
-                alignItems:     'center',
+                position: 'absolute',
+                left: heartPos.x - 40,
+                top: heartPos.y - 40,
+                width: 80,
+                height: 80,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                pointerEvents:  'none',
-                zIndex:         25,
+                pointerEvents: 'none',
+                zIndex: 25,
               }}
             >
               <Heart
@@ -361,17 +360,17 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
       {/* Solid #111620 card background — mirrors the header */}
       <div
         style={{
-          flexShrink:    0,
-          zIndex:        20,
+          flexShrink: 0,
+          zIndex: 20,
           paddingBottom: 6,
-          paddingLeft:   16,
-          paddingRight:  16,
-          paddingTop:    10,
-          background:    '#111620',
-          borderTop:     '1px solid #1c2333',
-          display:       'flex',
+          paddingLeft: 16,
+          paddingRight: 16,
+          paddingTop: 10,
+          background: '#111620',
+          borderTop: '1px solid #1c2333',
+          display: 'flex',
           flexDirection: 'column',
-          gap:           8,
+          gap: 8,
         }}
       >
         {/* Page progress dots — centered */}
@@ -381,11 +380,11 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
               <div
                 key={i}
                 style={{
-                  width:        i === currentPage ? 18 : 5,
-                  height:       5,
+                  width: i === currentPage ? 18 : 5,
+                  height: 5,
                   borderRadius: 999,
-                  background:   i === currentPage ? '#e8607a' : '#1c2333',
-                  transition:   'width 0.2s ease, background 0.2s ease',
+                  background: i === currentPage ? '#e8607a' : '#1c2333',
+                  transition: 'width 0.2s ease, background 0.2s ease',
                 }}
               />
             ))}
@@ -405,32 +404,37 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
           />
 
           {/* 3-dot settings — font size */}
-          <div ref={settingsRef} style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>
+          <div
+            ref={settingsRef}
+            style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}
+          >
             <motion.button
               whileTap={{ scale: 0.85 }}
-              onClick={() => setSettingsOpen(o => !o)}
+              onClick={() => setSettingsOpen((o) => !o)}
               style={{
-                display:        'flex',
-                flexDirection:  'column',
-                alignItems:     'center',
-                gap:            3,
-                background:     'none',
-                border:         'none',
-                cursor:         'pointer',
-                padding:        0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
               }}
             >
-              <div style={{
-                width:          40,
-                height:         40,
-                borderRadius:   '50%',
-                background:     settingsOpen ? 'rgba(232,96,122,0.12)' : 'rgba(28,35,51,0.8)',
-                border:         `1px solid ${settingsOpen ? 'rgba(232,96,122,0.35)' : '#1c2333'}`,
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'center',
-                transition:     'background 0.2s, border-color 0.2s',
-              }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: settingsOpen ? 'rgba(232,96,122,0.12)' : 'rgba(28,35,51,0.8)',
+                  border: `1px solid ${settingsOpen ? 'rgba(232,96,122,0.35)' : '#1c2333'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s, border-color 0.2s',
+                }}
+              >
                 <MoreVertical size={16} style={{ color: settingsOpen ? '#e8607a' : '#6b7280' }} />
               </div>
               <span style={{ fontSize: 10, color: '#6b7280', lineHeight: 1 }}>Size</span>
@@ -445,43 +449,63 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
                   style={{
-                    position:     'absolute',
-                    bottom:       'calc(100% + 8px)',
-                    right:        0,
-                    background:   '#161d2a',
-                    border:       '1px solid #1c2333',
+                    position: 'absolute',
+                    bottom: 'calc(100% + 8px)',
+                    right: 0,
+                    background: '#161d2a',
+                    border: '1px solid #1c2333',
                     borderRadius: 12,
-                    padding:      '8px 4px',
-                    zIndex:       50,
-                    minWidth:     148,
-                    boxShadow:    '0 8px 24px rgba(0,0,0,0.5)',
+                    padding: '8px 4px',
+                    zIndex: 50,
+                    minWidth: 148,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                   }}
                 >
-                  <p style={{ fontSize: 10, color: '#6b7280', padding: '2px 12px 8px', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                  <p
+                    style={{
+                      fontSize: 10,
+                      color: '#6b7280',
+                      padding: '2px 12px 8px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      margin: 0,
+                    }}
+                  >
                     Text size
                   </p>
-                  {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map(s => (
+                  {(['sm', 'md', 'lg', 'xl'] as FontSize[]).map((s) => (
                     <button
                       key={s}
                       type="button"
-                      onClick={() => { setConfessionFontSize(s); setSettingsOpen(false) }}
+                      onClick={() => {
+                        setConfessionFontSize(s)
+                        setSettingsOpen(false)
+                      }}
                       style={{
-                        display:    'flex',
+                        display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        width:      '100%',
-                        padding:    '8px 12px',
-                        fontSize:   13,
-                        textAlign:  'left',
-                        color:      confessionFontSize === s ? '#e8607a' : '#eeeef0',
+                        width: '100%',
+                        padding: '8px 12px',
+                        fontSize: 13,
+                        textAlign: 'left',
+                        color: confessionFontSize === s ? '#e8607a' : '#eeeef0',
                         background: confessionFontSize === s ? 'rgba(232,96,122,0.08)' : 'none',
-                        border:     'none',
-                        cursor:     'pointer',
+                        border: 'none',
+                        cursor: 'pointer',
                         borderRadius: 8,
                       }}
                     >
                       <span>{FONT_SIZE_LABELS[s]}</span>
-                      <span style={{ fontSize: FONT_SIZE_PX[s], color: confessionFontSize === s ? '#e8607a' : '#6b7280', lineHeight: 1 }}>Aa</span>
+                      <span
+                        style={{
+                          fontSize: FONT_SIZE_PX[s],
+                          color: confessionFontSize === s ? '#e8607a' : '#6b7280',
+                          lineHeight: 1,
+                        }}
+                      >
+                        Aa
+                      </span>
                     </button>
                   ))}
                 </motion.div>
@@ -495,52 +519,72 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
               onClick={bridge}
               disabled={bridgeLoading || bridgeStatus !== 'idle'}
               style={{
-                display:       'flex',
+                display: 'flex',
                 flexDirection: 'column',
-                alignItems:    'center',
-                gap:           3,
-                background:    'none',
-                border:        'none',
-                cursor:        bridgeStatus === 'idle' ? 'pointer' : 'default',
-                padding:       0,
-                flexShrink:    0,
+                alignItems: 'center',
+                gap: 3,
+                background: 'none',
+                border: 'none',
+                cursor: bridgeStatus === 'idle' ? 'pointer' : 'default',
+                padding: 0,
+                flexShrink: 0,
               }}
             >
-              <div style={{
-                width:          40,
-                height:         40,
-                borderRadius:   '50%',
-                background:     bridgeStatus === 'approved' ? 'rgba(74,222,128,0.15)'
-                              : bridgeStatus === 'pending'  ? 'rgba(201,169,110,0.15)'
-                              : 'rgba(28,35,51,0.8)',
-                border:         `1px solid ${
-                                  bridgeStatus === 'approved' ? 'rgba(74,222,128,0.4)'
-                                : bridgeStatus === 'pending'  ? 'rgba(201,169,110,0.4)'
-                                : '#1c2333'}`,
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'center',
-                transition:     'background 0.2s, border-color 0.2s',
-              }}>
-                {bridgeLoading
-                  ? <Loader2 size={16} style={{ color: '#6b7280', animation: 'spin 1s linear infinite' }} />
-                  : <Link2 size={16} style={{
-                      color: bridgeStatus === 'approved' ? '#4ade80'
-                           : bridgeStatus === 'pending'  ? '#c9a96e'
-                           : '#6b7280',
-                    }} />
-                }
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background:
+                    bridgeStatus === 'approved'
+                      ? 'rgba(74,222,128,0.15)'
+                      : bridgeStatus === 'pending'
+                        ? 'rgba(201,169,110,0.15)'
+                        : 'rgba(28,35,51,0.8)',
+                  border: `1px solid ${
+                    bridgeStatus === 'approved'
+                      ? 'rgba(74,222,128,0.4)'
+                      : bridgeStatus === 'pending'
+                        ? 'rgba(201,169,110,0.4)'
+                        : '#1c2333'
+                  }`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s, border-color 0.2s',
+                }}
+              >
+                {bridgeLoading ? (
+                  <Loader2
+                    size={16}
+                    style={{ color: '#6b7280', animation: 'spin 1s linear infinite' }}
+                  />
+                ) : (
+                  <Link2
+                    size={16}
+                    style={{
+                      color:
+                        bridgeStatus === 'approved'
+                          ? '#4ade80'
+                          : bridgeStatus === 'pending'
+                            ? '#c9a96e'
+                            : '#6b7280',
+                    }}
+                  />
+                )}
               </div>
               <span style={{ fontSize: 10, color: '#6b7280', lineHeight: 1 }}>
-                {bridgeStatus === 'approved' ? 'Bridged'
-                 : bridgeStatus === 'pending'  ? 'Pending'
-                 : bridgeStatus === 'rejected' ? 'Declined'
-                 : 'Bridge'}
+                {bridgeStatus === 'approved'
+                  ? 'Bridged'
+                  : bridgeStatus === 'pending'
+                    ? 'Pending'
+                    : bridgeStatus === 'rejected'
+                      ? 'Declined'
+                      : 'Bridge'}
               </span>
             </motion.button>
           )}
         </div>
-
       </div>
     </div>
   )

@@ -1,19 +1,19 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 
 export interface SavedPost {
-  id:         string
-  title:      string | null
-  excerpt:    string | null
+  id: string
+  title: string | null
+  excerpt: string | null
   firstImage: string | null
   categories: string[]
-  authorType: string   // 'user' | 'companion' | 'admin'
-  likeCount:  number
-  saveCount:  number
-  savedAt:    string
+  authorType: string // 'user' | 'companion' | 'admin'
+  likeCount: number
+  saveCount: number
+  savedAt: string
 }
 
 interface Page {
-  data:       SavedPost[]
+  data: SavedPost[]
   nextCursor: string | null
 }
 
@@ -28,22 +28,22 @@ async function fetchSaved(cursor?: string): Promise<Page> {
 
 export function useSavedConfessions() {
   const query = useInfiniteQuery<Page, Error>({
-    queryKey:         ['saved', 'confessions'],
-    queryFn:          ({ pageParam }) => fetchSaved(pageParam as string | undefined),
+    queryKey: ['saved', 'confessions'],
+    queryFn: ({ pageParam }) => fetchSaved(pageParam as string | undefined),
     initialPageParam: undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    staleTime:        5 * 60 * 1000,
-    gcTime:           10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 
-  const items = query.data?.pages.flatMap(p => p.data) ?? []
+  const items = query.data?.pages.flatMap((p) => p.data) ?? []
 
   return {
     items,
-    total:         items.length,
+    total: items.length,
     fetchNextPage: query.fetchNextPage,
-    hasNextPage:   query.hasNextPage,
-    isLoading:     query.isLoading,
-    isFetching:    query.isFetching,
+    hasNextPage: query.hasNextPage,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
   }
 }

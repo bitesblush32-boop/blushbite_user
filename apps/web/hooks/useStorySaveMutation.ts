@@ -1,9 +1,15 @@
 import { useMutation, useQueryClient, InfiniteData } from '@tanstack/react-query'
 import type { Story } from './useInfiniteConfessions'
 
-interface FeedPage { items: Story[]; nextCursor: { score: number; id: string } | null }
+interface FeedPage {
+  items: Story[]
+  nextCursor: { score: number; id: string } | null
+}
 
-interface Args { storyId: string; currentlySaved: boolean }
+interface Args {
+  storyId: string
+  currentlySaved: boolean
+}
 
 export function useStorySaveMutation() {
   const queryClient = useQueryClient()
@@ -21,27 +27,24 @@ export function useStorySaveMutation() {
       await queryClient.cancelQueries({ queryKey: ['stories'] })
       const snapshot = queryClient.getQueryData(['stories', 'feed'])
 
-      queryClient.setQueryData<InfiniteData<FeedPage>>(
-        ['stories', 'feed'],
-        (old) => {
-          if (!old) return old
-          return {
-            ...old,
-            pages: old.pages.map(page => ({
-              ...page,
-              items: page.items.map(s =>
-                s.id === storyId
-                  ? {
-                      ...s,
-                      userHasSaved: !currentlySaved,
-                      saveCount: s.saveCount + (currentlySaved ? -1 : 1),
-                    }
-                  : s
-              ),
-            })),
-          }
+      queryClient.setQueryData<InfiniteData<FeedPage>>(['stories', 'feed'], (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((s) =>
+              s.id === storyId
+                ? {
+                    ...s,
+                    userHasSaved: !currentlySaved,
+                    saveCount: s.saveCount + (currentlySaved ? -1 : 1),
+                  }
+                : s
+            ),
+          })),
         }
-      )
+      })
       return { snapshot }
     },
     onError: (_err, _vars, ctx) => {

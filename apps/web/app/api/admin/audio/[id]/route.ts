@@ -4,10 +4,7 @@ import { db } from '@/db'
 import { audioRecordings } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -17,15 +14,18 @@ export async function PATCH(
   const now = new Date()
 
   if (action === 'approve') {
-    await db.update(audioRecordings)
+    await db
+      .update(audioRecordings)
       .set({ moderation_status: 'approved' })
       .where(eq(audioRecordings.id, params.id))
   } else if (action === 'reject') {
-    await db.update(audioRecordings)
+    await db
+      .update(audioRecordings)
       .set({ moderation_status: 'rejected' })
       .where(eq(audioRecordings.id, params.id))
   } else if (action === 'delete') {
-    await db.update(audioRecordings)
+    await db
+      .update(audioRecordings)
       .set({ deleted_at: now })
       .where(eq(audioRecordings.id, params.id))
   } else {

@@ -4,10 +4,7 @@ import { db } from '@/db'
 import { stories } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -17,11 +14,18 @@ export async function PATCH(
   const now = new Date()
 
   if (action === 'approve') {
-    await db.update(stories)
-      .set({ moderation_status: 'approved', is_published: true, published_at: now, moderated_at: now })
+    await db
+      .update(stories)
+      .set({
+        moderation_status: 'approved',
+        is_published: true,
+        published_at: now,
+        moderated_at: now,
+      })
       .where(eq(stories.id, params.id))
   } else if (action === 'reject') {
-    await db.update(stories)
+    await db
+      .update(stories)
       .set({ moderation_status: 'rejected', is_published: false, moderated_at: now })
       .where(eq(stories.id, params.id))
   } else if (action === 'feature') {

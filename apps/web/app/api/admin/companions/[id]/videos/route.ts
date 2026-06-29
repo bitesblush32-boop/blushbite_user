@@ -4,10 +4,7 @@ import { db } from '@/db'
 import { companionVideos } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -17,11 +14,13 @@ export async function PATCH(
   }
 
   if (action === 'approve') {
-    await db.update(companionVideos)
+    await db
+      .update(companionVideos)
       .set({ is_approved: true })
       .where(eq(companionVideos.id, video_id))
   } else if (action === 'reject') {
-    await db.update(companionVideos)
+    await db
+      .update(companionVideos)
       .set({ deleted_at: new Date() })
       .where(eq(companionVideos.id, video_id))
   } else {

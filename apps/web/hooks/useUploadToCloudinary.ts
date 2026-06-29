@@ -4,20 +4,20 @@ import { useState, useRef } from 'react'
 
 interface UploadState {
   uploading: boolean
-  progress:  number
-  error:     string | null
+  progress: number
+  error: string | null
 }
 
 export interface UploadResult {
-  cdnUrl:   string
+  cdnUrl: string
   publicId: string
-  s3Key:    string // alias for publicId — backwards compat
+  s3Key: string // alias for publicId — backwards compat
 }
 
 interface UseUploadToCloudinaryOptions {
   contentFor?: 'companion_photo' | 'companion_video' | 'story_audio'
-  onSuccess?:  (result: UploadResult) => void
-  onError?:    (error: string) => void
+  onSuccess?: (result: UploadResult) => void
+  onError?: (error: string) => void
 }
 
 /**
@@ -30,25 +30,25 @@ interface UseUploadToCloudinaryOptions {
 export function useUploadToCloudinary(options: UseUploadToCloudinaryOptions = {}) {
   const [state, setState] = useState<UploadState>({
     uploading: false,
-    progress:  0,
-    error:     null,
+    progress: 0,
+    error: null,
   })
 
   const abortControllerRef = useRef<AbortController | null>(null)
-  const retryCountRef      = useRef(0)
-  const MAX_RETRIES        = 3
+  const retryCountRef = useRef(0)
+  const MAX_RETRIES = 3
 
   async function uploadFile(file: File): Promise<UploadResult | null> {
     if (!file) {
       const err = 'No file selected'
-      setState(s => ({ ...s, error: err }))
+      setState((s) => ({ ...s, error: err }))
       options.onError?.(err)
       return null
     }
 
     if (file.size > 100 * 1024 * 1024) {
       const err = 'File too large (max 100MB)'
-      setState(s => ({ ...s, error: err }))
+      setState((s) => ({ ...s, error: err }))
       options.onError?.(err)
       return null
     }
@@ -61,10 +61,10 @@ export function useUploadToCloudinary(options: UseUploadToCloudinaryOptions = {}
         abortControllerRef.current = new AbortController()
 
         const uploadRes = await fetch('/api/upload/file', {
-          method:  'PUT',
+          method: 'PUT',
           headers: { 'Content-Type': file.type || 'application/octet-stream' },
-          body:    file,
-          signal:  abortControllerRef.current.signal,
+          body: file,
+          signal: abortControllerRef.current.signal,
           credentials: 'include',
         })
 
@@ -76,7 +76,7 @@ export function useUploadToCloudinary(options: UseUploadToCloudinaryOptions = {}
         const result: UploadResult = {
           cdnUrl,
           publicId: publicId ?? s3Key,
-          s3Key:    s3Key ?? publicId,
+          s3Key: s3Key ?? publicId,
         }
 
         setState({ uploading: false, progress: 100, error: null })
@@ -88,7 +88,7 @@ export function useUploadToCloudinary(options: UseUploadToCloudinaryOptions = {}
         if (retryCountRef.current < MAX_RETRIES) {
           retryCountRef.current += 1
           console.warn(`[Upload] Retrying (${retryCountRef.current}/${MAX_RETRIES})`)
-          await new Promise(resolve =>
+          await new Promise((resolve) =>
             setTimeout(resolve, Math.pow(2, retryCountRef.current) * 1000)
           )
           return attemptUpload()

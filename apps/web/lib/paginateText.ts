@@ -3,9 +3,9 @@ export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
 /** Approximate characters that fit per page at each font size */
 export const FONT_SIZE_CHARS: Record<FontSize, number> = {
   sm: 1100,
-  md:  700,
-  lg:  480,
-  xl:  320,
+  md: 700,
+  lg: 480,
+  xl: 320,
 }
 
 /** Rendered px value for each font size label */
@@ -27,7 +27,10 @@ export function paginateText(body: string, maxChars = 700): string[] {
   const sections = body.split('\n\n---\n\n')
   const pages: string[] = []
   for (const section of sections) {
-    if (section.length <= maxChars) { pages.push(section.trim()); continue }
+    if (section.length <= maxChars) {
+      pages.push(section.trim())
+      continue
+    }
     let remaining = section.trim()
     while (remaining.length > maxChars) {
       let cut = remaining.lastIndexOf(' ', maxChars)
@@ -50,8 +53,9 @@ function fitText(el: HTMLElement, text: string, maxH: number): string {
   if (el.scrollHeight <= maxH) return text
   // Binary search on word boundaries
   const words = text.split(' ')
-  let lo = 1, hi = words.length - 1
-  if (hi < 1) return text  // single token — return as-is
+  let lo = 1,
+    hi = words.length - 1
+  if (hi < 1) return text // single token — return as-is
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2)
     el.textContent = words.slice(0, mid).join(' ')
@@ -62,33 +66,33 @@ function fitText(el: HTMLElement, text: string, maxH: number): string {
 }
 
 export function computePages(
-  text:            string,
-  fontSize:        FontSize,
-  containerWidth:  number,
-  containerHeight: number,
+  text: string,
+  fontSize: FontSize,
+  containerWidth: number,
+  containerHeight: number
 ): string[] {
   if (typeof document === 'undefined' || !containerWidth || !containerHeight) {
     return paginateText(text, FONT_SIZE_CHARS[fontSize])
   }
   // Padding values must match StoryPageContent's text rendering padding
-  const availW = Math.max(80, containerWidth  - 56)   // 28px × 2
-  const availH = Math.max(80, containerHeight - 72)   // 36px × 2
+  const availW = Math.max(80, containerWidth - 56) // 28px × 2
+  const availH = Math.max(80, containerHeight - 72) // 36px × 2
 
   const el = document.createElement('div')
   el.setAttribute('aria-hidden', 'true')
   Object.assign(el.style, {
-    position:      'fixed',
-    left:          '-99999px',
-    top:           '0',
-    width:         `${availW}px`,
-    overflow:      'hidden',
-    fontFamily:    "'Playfair Display', serif",
-    fontSize:      `${FONT_SIZE_PX[fontSize]}px`,
-    lineHeight:    '2.0',
+    position: 'fixed',
+    left: '-99999px',
+    top: '0',
+    width: `${availW}px`,
+    overflow: 'hidden',
+    fontFamily: "'Playfair Display', serif",
+    fontSize: `${FONT_SIZE_PX[fontSize]}px`,
+    lineHeight: '2.0',
     letterSpacing: '0.02em',
-    whiteSpace:    'pre-wrap',
-    wordBreak:     'break-word',
-    boxSizing:     'border-box',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    boxSizing: 'border-box',
   })
   document.body.appendChild(el)
 
@@ -100,7 +104,7 @@ export function computePages(
       const page = fitText(el, remaining, availH)
       pages.push(page.trim())
       const next = remaining.slice(page.length).trimStart()
-      if (next === remaining) break          // safety: nothing consumed
+      if (next === remaining) break // safety: nothing consumed
       remaining = next
     }
   }

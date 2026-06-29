@@ -5,10 +5,7 @@ import { db } from '@/db'
 import { companions, companionProfiles, companionOnboardingProgress } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -16,21 +13,25 @@ export async function POST(
   const now = new Date()
 
   // 1. Set is_live + verified
-  await db.update(companionProfiles)
+  await db
+    .update(companionProfiles)
     .set({ is_live: true, approved_at: now, is_verified: true, verified_at: now })
     .where(eq(companionProfiles.companion_id, id))
 
   // 2. Upsert onboarding stage 7 = completed
-  await db.insert(companionOnboardingProgress).values({
-    companion_id: id,
-    stage:        7,
-    status:       'completed',
-    completed_at: now,
-    notes:        null,
-  }).onConflictDoUpdate({
-    target: [companionOnboardingProgress.companion_id, companionOnboardingProgress.stage],
-    set:    { status: 'completed', completed_at: now, notes: null },
-  })
+  await db
+    .insert(companionOnboardingProgress)
+    .values({
+      companion_id: id,
+      stage: 7,
+      status: 'completed',
+      completed_at: now,
+      notes: null,
+    })
+    .onConflictDoUpdate({
+      target: [companionOnboardingProgress.companion_id, companionOnboardingProgress.stage],
+      set: { status: 'completed', completed_at: now, notes: null },
+    })
 
   // 3. Send approval email
   try {
@@ -44,10 +45,10 @@ export async function POST(
       const firstName = (companion.name ?? 'there').split(' ')[0]
       const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
-        from:    `BlushBite <${process.env.FROM_EMAIL ?? 'admin@blushbite.co'}>`,
-        to:      companion.email,
+        from: `BlushBite <${process.env.FROM_EMAIL ?? 'admin@blushbite.co'}>`,
+        to: companion.email,
         subject: "You're in — your BlushBite application is approved",
-        html:    buildApprovalEmail(firstName),
+        html: buildApprovalEmail(firstName),
       })
     }
   } catch (err) {

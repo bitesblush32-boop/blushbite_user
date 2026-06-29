@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
-  stories, bookingRequests, fantasyTags, fantasyCategories,
-  companionFantasyTags, storyFantasyTags,
+  stories,
+  bookingRequests,
+  fantasyTags,
+  fantasyCategories,
+  companionFantasyTags,
+  storyFantasyTags,
 } from '@/db/schema'
 import { eq, sql, asc, desc, isNull } from 'drizzle-orm'
 
@@ -12,7 +16,6 @@ export async function GET(req: NextRequest) {
   if (!guard.ok) return guard.response
 
   const [contentByAuthor, bookingFunnel, topFantasyTags] = await Promise.all([
-
     // Content breakdown by author_type
     db
       .select({
@@ -27,7 +30,7 @@ export async function GET(req: NextRequest) {
     db
       .select({
         status: bookingRequests.status,
-        count:  sql<number>`COUNT(*)::int`,
+        count: sql<number>`COUNT(*)::int`,
       })
       .from(bookingRequests)
       .groupBy(bookingRequests.status),
@@ -35,10 +38,10 @@ export async function GET(req: NextRequest) {
     // Top 10 fantasy tags by combined usage (companions + stories)
     db
       .select({
-        id:            fantasyTags.id,
-        name:          fantasyTags.name,
+        id: fantasyTags.id,
+        name: fantasyTags.name,
         category_name: fantasyCategories.name,
-        usage_count:   sql<number>`(
+        usage_count: sql<number>`(
           SELECT COUNT(*)::int FROM companion_fantasy_tags WHERE fantasy_tag_id = ${fantasyTags.id}
         ) + (
           SELECT COUNT(*)::int FROM story_fantasy_tags WHERE fantasy_tag_id = ${fantasyTags.id}
@@ -54,7 +57,6 @@ export async function GET(req: NextRequest) {
         )
       )
       .limit(10),
-
   ])
 
   // Normalise content_by_author into a map
@@ -73,17 +75,17 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     data: {
       content_by_author: {
-        admin:     contentMap['admin']     ?? 0,
+        admin: contentMap['admin'] ?? 0,
         companion: contentMap['companion'] ?? 0,
-        user:      contentMap['user']      ?? 0,
+        user: contentMap['user'] ?? 0,
       },
       booking_funnel: {
-        pending:   funnelMap['pending']   ?? 0,
-        accepted:  funnelMap['accepted']  ?? 0,
+        pending: funnelMap['pending'] ?? 0,
+        accepted: funnelMap['accepted'] ?? 0,
         completed: funnelMap['completed'] ?? 0,
-        declined:  funnelMap['declined']  ?? 0,
+        declined: funnelMap['declined'] ?? 0,
         cancelled: funnelMap['cancelled'] ?? 0,
-        total:     totalBookings,
+        total: totalBookings,
       },
       top_fantasy_tags: topFantasyTags,
     },

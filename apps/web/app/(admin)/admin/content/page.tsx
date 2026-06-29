@@ -40,14 +40,14 @@ interface Meta {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const TABS = [
-  { key: 'all',       label: 'All' },
-  { key: 'pending',   label: 'Pending' },
-  { key: 'approved',  label: 'Approved' },
-  { key: 'rejected',  label: 'Rejected' },
-  { key: 'featured',  label: 'Featured' },
-  { key: 'user',      label: 'User Posts' },
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'featured', label: 'Featured' },
+  { key: 'user', label: 'User Posts' },
   { key: 'companion', label: 'Companion Posts' },
-  { key: 'admin',     label: 'Admin Content' },
+  { key: 'admin', label: 'Admin Content' },
 ]
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -64,7 +64,8 @@ function relativeTime(iso: string) {
 function authorLabel(item: StoryListItem) {
   if (item.is_anonymous) return 'Anonymous'
   if (item.author_type === 'admin') return 'Admin'
-  if (item.author_type === 'companion') return item.companion_name ?? item.companion_alias ?? 'Companion'
+  if (item.author_type === 'companion')
+    return item.companion_name ?? item.companion_alias ?? 'Companion'
   return item.user_alias ?? 'User'
 }
 
@@ -72,14 +73,16 @@ function authorLabel(item: StoryListItem) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { color: string; bg: string; border: string }> = {
-    pending:  { color: '#c9a96e', bg: 'rgba(201,169,110,0.10)', border: 'rgba(201,169,110,0.30)' },
-    approved: { color: '#4ade80', bg: 'rgba(74,222,128,0.08)',  border: 'rgba(74,222,128,0.30)' },
-    rejected: { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)' },
+    pending: { color: '#c9a96e', bg: 'rgba(201,169,110,0.10)', border: 'rgba(201,169,110,0.30)' },
+    approved: { color: '#4ade80', bg: 'rgba(74,222,128,0.08)', border: 'rgba(74,222,128,0.30)' },
+    rejected: { color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.30)' },
   }
   const s = map[status] ?? map.pending
   return (
-    <span className="text-[11px] px-[10px] py-1 rounded-full capitalize"
-      style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
+    <span
+      className="text-[11px] px-[10px] py-1 rounded-full capitalize"
+      style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}
+    >
       {status}
     </span>
   )
@@ -97,20 +100,32 @@ function DeleteModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel:
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[400px] overflow-hidden"
       >
-        <div className="h-[2px]" style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }} />
+        <div
+          className="h-[2px]"
+          style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }}
+        />
         <div className="p-6">
-          <h3 style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] text-[#eeeef0] mb-2">Delete story</h3>
+          <h3
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-[20px] text-[#eeeef0] mb-2"
+          >
+            Delete story
+          </h3>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-5">
             This will soft-delete the story. It will no longer appear in any feed.
           </p>
           <div className="flex gap-3">
-            <button onClick={onCancel}
-              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0]">
+            <button
+              onClick={onCancel}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0]"
+            >
               Cancel
             </button>
-            <button onClick={onConfirm}
+            <button
+              onClick={onConfirm}
               className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer"
-              style={{ background: '#ef4444' }}>
+              style={{ background: '#ef4444' }}
+            >
               Delete
             </button>
           </div>
@@ -140,13 +155,14 @@ function StoryItem({
 }) {
   const [expanded, setExpanded] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
-  const isPending  = story.moderation_status === 'pending'
+  const isPending = story.moderation_status === 'pending'
   const isApproved = story.moderation_status === 'approved'
   const isRejected = story.moderation_status === 'rejected'
 
   return (
     <>
-      <motion.div variants={cardItem}
+      <motion.div
+        variants={cardItem}
         className="relative bg-[#111620] border rounded-[16px] p-5 transition-colors"
         style={{ borderColor: selected ? 'rgba(232,96,122,0.4)' : '#1c2333' }}
       >
@@ -154,7 +170,10 @@ function StoryItem({
         <button
           onClick={() => onSelect(story.id)}
           className="absolute top-4 left-4 w-5 h-5 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-all"
-          style={{ background: selected ? '#e8607a' : 'transparent', borderColor: selected ? '#e8607a' : '#1c2333' }}
+          style={{
+            background: selected ? '#e8607a' : 'transparent',
+            borderColor: selected ? '#e8607a' : '#1c2333',
+          }}
         >
           {selected && <Check size={11} color="white" />}
         </button>
@@ -167,8 +186,13 @@ function StoryItem({
               {story.author_type}
             </span>
             {story.is_featured && (
-              <span className="inline-flex items-center gap-1 text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-                style={{ background: 'rgba(201,169,110,0.10)', border: '1px solid rgba(201,169,110,0.30)' }}>
+              <span
+                className="inline-flex items-center gap-1 text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                style={{
+                  background: 'rgba(201,169,110,0.10)',
+                  border: '1px solid rgba(201,169,110,0.30)',
+                }}
+              >
                 <Star size={9} fill="#c9a96e" /> Featured
               </span>
             )}
@@ -178,47 +202,89 @@ function StoryItem({
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
             {isPending && (
               <>
-                <button onClick={() => onAction(story.id, 'approve')}
+                <button
+                  onClick={() => onAction(story.id, 'approve')}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#4ade80', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.30)' }}>
+                  style={{
+                    color: '#4ade80',
+                    background: 'rgba(74,222,128,0.08)',
+                    border: '1px solid rgba(74,222,128,0.30)',
+                  }}
+                >
                   <Check size={10} /> Approve
                 </button>
-                <button onClick={() => onAction(story.id, 'reject')}
+                <button
+                  onClick={() => onAction(story.id, 'reject')}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.30)' }}>
+                  style={{
+                    color: '#ef4444',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.30)',
+                  }}
+                >
                   <X size={10} /> Reject
                 </button>
-                <button onClick={() => onAction(story.id, story.is_featured ? 'unfeature' : 'feature')}
+                <button
+                  onClick={() => onAction(story.id, story.is_featured ? 'unfeature' : 'feature')}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#c9a96e', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.30)' }}>
+                  style={{
+                    color: '#c9a96e',
+                    background: 'rgba(201,169,110,0.08)',
+                    border: '1px solid rgba(201,169,110,0.30)',
+                  }}
+                >
                   <Star size={9} /> {story.is_featured ? 'Unfeature' : 'Feature'}
                 </button>
               </>
             )}
             {isApproved && (
               <>
-                <button onClick={() => onAction(story.id, story.is_featured ? 'unfeature' : 'feature')}
+                <button
+                  onClick={() => onAction(story.id, story.is_featured ? 'unfeature' : 'feature')}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#c9a96e', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.30)' }}>
+                  style={{
+                    color: '#c9a96e',
+                    background: 'rgba(201,169,110,0.08)',
+                    border: '1px solid rgba(201,169,110,0.30)',
+                  }}
+                >
                   <Star size={9} /> {story.is_featured ? 'Unfeature' : 'Feature'}
                 </button>
-                <button onClick={() => setShowDelete(true)}
+                <button
+                  onClick={() => setShowDelete(true)}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.30)' }}>
+                  style={{
+                    color: '#ef4444',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.30)',
+                  }}
+                >
                   <Trash2 size={10} /> Delete
                 </button>
               </>
             )}
             {isRejected && (
               <>
-                <button onClick={() => onAction(story.id, 'approve')}
+                <button
+                  onClick={() => onAction(story.id, 'approve')}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#4ade80', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.30)' }}>
+                  style={{
+                    color: '#4ade80',
+                    background: 'rgba(74,222,128,0.08)',
+                    border: '1px solid rgba(74,222,128,0.30)',
+                  }}
+                >
                   <RotateCcw size={10} /> Restore
                 </button>
-                <button onClick={() => setShowDelete(true)}
+                <button
+                  onClick={() => setShowDelete(true)}
                   className="inline-flex items-center gap-1 text-[11px] px-3 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
-                  style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.30)' }}>
+                  style={{
+                    color: '#ef4444',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.30)',
+                  }}
+                >
                   <Trash2 size={10} /> Delete
                 </button>
               </>
@@ -228,8 +294,10 @@ function StoryItem({
 
         {/* Title + body */}
         <div className="pl-8 mt-3">
-          <div style={{ fontFamily: "'Playfair Display', serif" }}
-            className="text-[16px] text-[#eeeef0] leading-[1.3] overflow-hidden text-ellipsis whitespace-nowrap">
+          <div
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-[16px] text-[#eeeef0] leading-[1.3] overflow-hidden text-ellipsis whitespace-nowrap"
+          >
             {story.title}
           </div>
 
@@ -245,8 +313,10 @@ function StoryItem({
                 {story.excerpt}
               </div>
               {story.excerpt.length > 120 && (
-                <button onClick={() => setExpanded(e => !e)}
-                  className="text-[12px] text-[#e8607a] mt-1 hover:opacity-80 transition-opacity">
+                <button
+                  onClick={() => setExpanded((e) => !e)}
+                  className="text-[12px] text-[#e8607a] mt-1 hover:opacity-80 transition-opacity"
+                >
                   {expanded ? 'Show less' : 'Read more'}
                 </button>
               )}
@@ -274,7 +344,10 @@ function StoryItem({
         {showDelete && (
           <DeleteModal
             key="del"
-            onConfirm={() => { onAction(story.id, 'delete'); setShowDelete(false) }}
+            onConfirm={() => {
+              onAction(story.id, 'delete')
+              setShowDelete(false)
+            }}
             onCancel={() => setShowDelete(false)}
           />
         )}
@@ -302,10 +375,16 @@ export default function AdminContentPage() {
   const handleSearch = (val: string) => {
     setSearch(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => { setDebouncedSearch(val); setPage(1) }, 300)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(val)
+      setPage(1)
+    }, 300)
   }
 
-  useEffect(() => { setPage(1); setSelected(new Set()) }, [tab])
+  useEffect(() => {
+    setPage(1)
+    setSelected(new Set())
+  }, [tab])
 
   const queryKey = ['admin', 'content', tab, debouncedSearch, page]
 
@@ -321,7 +400,12 @@ export default function AdminContentPage() {
     staleTime: 30_000,
   })
 
-  const actionMutation = useMutation<void, Error, { id: string; action: string }, { prev: unknown }>({
+  const actionMutation = useMutation<
+    void,
+    Error,
+    { id: string; action: string },
+    { prev: unknown }
+  >({
     mutationFn: async ({ id, action }) => {
       const res = await fetch(`/api/admin/content/${id}`, {
         method: 'PATCH',
@@ -340,11 +424,13 @@ export default function AdminContentPage() {
           data: old.data
             .map((s: StoryListItem) => {
               if (s.id !== id) return s
-              if (action === 'approve')   return { ...s, moderation_status: 'approved', is_published: true }
-              if (action === 'reject')    return { ...s, moderation_status: 'rejected', is_published: false }
-              if (action === 'feature')   return { ...s, is_featured: true }
+              if (action === 'approve')
+                return { ...s, moderation_status: 'approved', is_published: true }
+              if (action === 'reject')
+                return { ...s, moderation_status: 'rejected', is_published: false }
+              if (action === 'feature') return { ...s, is_featured: true }
               if (action === 'unfeature') return { ...s, is_featured: false }
-              if (action === 'delete')    return null
+              if (action === 'delete') return null
               return s
             })
             .filter(Boolean),
@@ -360,12 +446,16 @@ export default function AdminContentPage() {
 
   const bulkAction = async (action: string) => {
     const ids = Array.from(selected)
-    await Promise.all(ids.map(id => actionMutation.mutateAsync({ id, action })))
+    await Promise.all(ids.map((id) => actionMutation.mutateAsync({ id, action })))
     setSelected(new Set())
   }
 
   const toggleSelect = (id: string) =>
-    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+    setSelected((prev) => {
+      const n = new Set(prev)
+      n.has(id) ? n.delete(id) : n.add(id)
+      return n
+    })
 
   const rows = data?.data ?? []
   const meta = data?.meta
@@ -388,26 +478,37 @@ export default function AdminContentPage() {
               Stories & Confessions
             </h1>
             {pendingCount > 0 && (
-              <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e] font-medium"
-                style={{ background: 'rgba(201,169,110,0.12)', border: '1px solid rgba(201,169,110,0.35)' }}>
+              <span
+                className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e] font-medium"
+                style={{
+                  background: 'rgba(201,169,110,0.12)',
+                  border: '1px solid rgba(201,169,110,0.35)',
+                }}
+              >
                 {pendingCount} pending
               </span>
             )}
           </div>
           <p className="text-[12px] text-[#6b7280]">{meta ? `${meta.total} total` : 'Loading…'}</p>
         </div>
-        <Link href="/admin/content/create"
-          className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-[18px] py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer transition-all hover:-translate-y-px whitespace-nowrap flex-shrink-0">
+        <Link
+          href="/admin/content/create"
+          className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-[18px] py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer transition-all hover:-translate-y-px whitespace-nowrap flex-shrink-0"
+        >
           + Write story
         </Link>
       </div>
 
       {/* Search */}
       <div className="relative max-w-[400px] mb-6">
-        <Search size={14} color="#6b7280" className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search
+          size={14}
+          color="#6b7280"
+          className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none"
+        />
         <input
           value={search}
-          onChange={e => handleSearch(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search by title or excerpt…"
           className="w-full bg-[#111620] border border-[#1c2333] rounded-[10px] pl-[38px] pr-4 py-[10px] text-[13px] text-[#eeeef0] placeholder-[#6b7280] outline-none transition-colors focus:border-[rgba(232,96,122,0.5)]"
         />
@@ -415,14 +516,17 @@ export default function AdminContentPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
             className="text-[12px] px-[14px] py-[6px] rounded-full border cursor-pointer transition-all duration-150 whitespace-nowrap flex-shrink-0"
             style={{
               borderColor: tab === t.key ? '#e8607a' : '#1c2333',
-              color:       tab === t.key ? '#e8607a' : '#6b7280',
-              background:  tab === t.key ? 'rgba(232,96,122,0.08)' : 'transparent',
-            }}>
+              color: tab === t.key ? '#e8607a' : '#6b7280',
+              background: tab === t.key ? 'rgba(232,96,122,0.08)' : 'transparent',
+            }}
+          >
             {t.label}
           </button>
         ))}
@@ -439,18 +543,32 @@ export default function AdminContentPage() {
             className="bg-[#111620] border border-[#1c2333] rounded-[14px] px-5 py-3 flex items-center gap-4 mb-4 flex-wrap"
           >
             <span className="text-[13px] text-[#eeeef0] font-medium">{selected.size} selected</span>
-            <button onClick={() => bulkAction('approve')}
+            <button
+              onClick={() => bulkAction('approve')}
               className="text-[12px] px-4 py-[6px] rounded-full cursor-pointer transition-all hover:opacity-80"
-              style={{ color: '#4ade80', background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.30)' }}>
+              style={{
+                color: '#4ade80',
+                background: 'rgba(74,222,128,0.08)',
+                border: '1px solid rgba(74,222,128,0.30)',
+              }}
+            >
               Approve all
             </button>
-            <button onClick={() => bulkAction('reject')}
+            <button
+              onClick={() => bulkAction('reject')}
               className="text-[12px] px-4 py-[6px] rounded-full cursor-pointer transition-all hover:opacity-80"
-              style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.30)' }}>
+              style={{
+                color: '#ef4444',
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.30)',
+              }}
+            >
               Reject all
             </button>
-            <button onClick={() => setSelected(new Set())}
-              className="text-[12px] text-[#6b7280] px-4 py-[6px] rounded-full border border-[#1c2333] cursor-pointer transition-all hover:text-[#eeeef0]">
+            <button
+              onClick={() => setSelected(new Set())}
+              className="text-[12px] text-[#6b7280] px-4 py-[6px] rounded-full border border-[#1c2333] cursor-pointer transition-all hover:text-[#eeeef0]"
+            >
               Clear selection
             </button>
           </motion.div>
@@ -462,19 +580,30 @@ export default function AdminContentPage() {
         {isLoading ? (
           <div key="loading" className="flex flex-col gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5 animate-pulse h-[130px]" />
+              <div
+                key={i}
+                className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5 animate-pulse h-[130px]"
+              />
             ))}
           </div>
         ) : rows.length === 0 ? (
-          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="text-center text-[#6b7280] text-[13px] py-20">
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-[#6b7280] text-[13px] py-20"
+          >
             Nothing here yet. Your taste is still forming.
           </motion.div>
         ) : (
-          <motion.div key={`${tab}-${debouncedSearch}-${page}`}
-            variants={listContainer} initial="hidden" animate="show"
-            className="flex flex-col gap-3">
-            {rows.map(story => (
+          <motion.div
+            key={`${tab}-${debouncedSearch}-${page}`}
+            variants={listContainer}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col gap-3"
+          >
+            {rows.map((story) => (
               <StoryItem
                 key={story.id}
                 story={story}
@@ -490,13 +619,21 @@ export default function AdminContentPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-8">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all"
+          >
             <ChevronLeft size={14} />
           </button>
-          <span className="text-[12px] text-[#6b7280]">{page} / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all">
+          <span className="text-[12px] text-[#6b7280]">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all"
+          >
             <ChevronRight size={14} />
           </button>
         </div>

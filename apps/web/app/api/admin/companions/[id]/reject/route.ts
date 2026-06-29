@@ -5,26 +5,26 @@ import { db } from '@/db'
 import { companions, companionOnboardingProgress } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
   const { reason } = await req.json()
   const now = new Date()
 
-  await db.insert(companionOnboardingProgress).values({
-    companion_id: params.id,
-    stage:        7,
-    status:       'rejected',
-    completed_at: now,
-    notes:        reason ?? null,
-  }).onConflictDoUpdate({
-    target: [companionOnboardingProgress.companion_id, companionOnboardingProgress.stage],
-    set:    { status: 'rejected', completed_at: now, notes: reason ?? null },
-  })
+  await db
+    .insert(companionOnboardingProgress)
+    .values({
+      companion_id: params.id,
+      stage: 7,
+      status: 'rejected',
+      completed_at: now,
+      notes: reason ?? null,
+    })
+    .onConflictDoUpdate({
+      target: [companionOnboardingProgress.companion_id, companionOnboardingProgress.stage],
+      set: { status: 'rejected', completed_at: now, notes: reason ?? null },
+    })
 
   // Send rejection email
   try {
@@ -38,10 +38,10 @@ export async function POST(
       const firstName = (companion.name ?? 'there').split(' ')[0]
       const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
-        from:    `BlushBite <${process.env.FROM_EMAIL ?? 'admin@blushbite.co'}>`,
-        to:      companion.email,
+        from: `BlushBite <${process.env.FROM_EMAIL ?? 'admin@blushbite.co'}>`,
+        to: companion.email,
         subject: 'Your BlushBite application — an update',
-        html:    buildRejectionEmail(firstName, reason ?? null),
+        html: buildRejectionEmail(firstName, reason ?? null),
       })
     }
   } catch (err) {

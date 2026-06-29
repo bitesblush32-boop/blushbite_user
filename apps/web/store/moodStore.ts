@@ -20,7 +20,9 @@ export const useMoodStore = create<MoodStore>((set) => ({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mood_intensity: v }),
-      }).catch(() => {/* silent — mood sync is best-effort */})
+      }).catch(() => {
+        /* silent — mood sync is best-effort */
+      })
     }, 800)
   },
 }))

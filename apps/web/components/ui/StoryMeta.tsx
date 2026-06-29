@@ -1,13 +1,13 @@
 'use client'
 
 interface Props {
-  authorAlias:  string | null
-  isAnonymous:  boolean
-  moodTags:     string[]
+  authorAlias: string | null
+  isAnonymous: boolean
+  moodTags: string[]
   categoryName: string
-  body?:        string
-  rawBody?:     string
-  totalPages?:  number
+  body?: string
+  rawBody?: string
+  totalPages?: number
 }
 
 export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName }: Props) {
@@ -19,8 +19,8 @@ export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName }: 
       <div
         className="absolute bottom-0 left-0 right-0 pointer-events-none"
         style={{
-          height:     '40%',
-          zIndex:     15,
+          height: '40%',
+          zIndex: 15,
           background: 'linear-gradient(transparent, rgba(7,9,15,0.92))',
         }}
       />
@@ -36,9 +36,7 @@ export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName }: 
             Anonymous confession
           </span>
         ) : (
-          <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>
-            {authorAlias}
-          </span>
+          <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>{authorAlias}</span>
         )}
 
         {/* Tags */}
@@ -47,26 +45,26 @@ export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName }: 
             {categoryName && (
               <span
                 style={{
-                  fontSize:   11,
-                  color:      '#e8607a',
+                  fontSize: 11,
+                  color: '#e8607a',
                   background: 'rgba(232,96,122,0.1)',
-                  border:     '1px solid rgba(232,96,122,0.3)',
-                  padding:    '2px 8px',
+                  border: '1px solid rgba(232,96,122,0.3)',
+                  padding: '2px 8px',
                   borderRadius: 9999,
                 }}
               >
                 {categoryName}
               </span>
             )}
-            {displayTags.map(t => (
+            {displayTags.map((t) => (
               <span
                 key={t}
                 style={{
-                  fontSize:   11,
-                  color:      '#6b7280',
+                  fontSize: 11,
+                  color: '#6b7280',
                   background: 'rgba(255,255,255,0.03)',
-                  border:     '1px solid #1c2333',
-                  padding:    '2px 8px',
+                  border: '1px solid #1c2333',
+                  padding: '2px 8px',
                   borderRadius: 9999,
                 }}
               >
@@ -75,7 +73,6 @@ export function StoryMeta({ authorAlias, isAnonymous, moodTags, categoryName }: 
             ))}
           </div>
         )}
-
       </div>
     </>
   )

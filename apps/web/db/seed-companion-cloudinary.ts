@@ -25,9 +25,9 @@ import crypto from 'crypto'
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure:     true,
+  secure: true,
 })
 
 // ── DB ────────────────────────────────────────────────────────────────────────
@@ -39,8 +39,8 @@ const db = drizzle(pg)
 
 async function uploadLocalImage(
   localPath: string,
-  publicId:  string,
-  folder:    string
+  publicId: string,
+  folder: string
 ): Promise<{ url: string; publicId: string }> {
   const buffer = readFileSync(localPath)
 
@@ -48,9 +48,9 @@ async function uploadLocalImage(
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        public_id:     publicId,
+        public_id: publicId,
         resource_type: 'image',
-        overwrite:     true,
+        overwrite: true,
       },
       (err, result) => {
         if (err || !result) return reject(err ?? new Error('Upload failed'))
@@ -66,7 +66,7 @@ async function uploadLocalImage(
 async function main() {
   console.log('\n📸  BlushBite — Cloudinary companion photo seed\n')
 
-  const folder   = 'blushbite/companion_photos/seed'
+  const folder = 'blushbite/companion_photos/seed'
   const publicDir = join(process.cwd(), 'public')
 
   // ── Step 1: Upload 8 local companion images to Cloudinary ─────────────────
@@ -75,7 +75,7 @@ async function main() {
 
   for (let i = 1; i <= 8; i++) {
     const localPath = join(publicDir, `companion-${i}.jpg`)
-    const publicId  = `companion-${i}`
+    const publicId = `companion-${i}`
 
     process.stdout.write(`  companion-${i}.jpg… `)
     try {
@@ -100,7 +100,7 @@ async function main() {
   const profiles = await db
     .select({
       profileId: companionProfiles.id,
-      name:      companions.name,
+      name: companions.name,
     })
     .from(companionProfiles)
     .leftJoin(companions, eq(companions.id, companionProfiles.companion_id))
@@ -126,21 +126,20 @@ async function main() {
     await db
       .update(companionPhotos)
       .set({ deleted_at: sql`now()` })
-      .where(and(
-        eq(companionPhotos.companion_profile_id, profileId),
-        isNull(companionPhotos.deleted_at),
-      ))
+      .where(
+        and(eq(companionPhotos.companion_profile_id, profileId), isNull(companionPhotos.deleted_at))
+      )
 
     // Insert new primary photo
     await db.insert(companionPhotos).values({
-      id:                   crypto.randomUUID(),
+      id: crypto.randomUUID(),
       companion_profile_id: profileId,
-      url:                  photo.url,
-      storage_key:          photo.publicId,
-      alt_text:             name ?? 'Companion portrait',
-      sort_order:           0,
-      is_primary:           true,
-      is_approved:          true,
+      url: photo.url,
+      storage_key: photo.publicId,
+      alt_text: name ?? 'Companion portrait',
+      sort_order: 0,
+      is_primary: true,
+      is_approved: true,
     })
 
     const portraitNum = (i % uploaded.length) + 1
@@ -150,12 +149,14 @@ async function main() {
 
   console.log(`\n✅  Done — ${updated} companion(s) updated with Cloudinary portraits.`)
   console.log('\nCloudinary URLs follow the pattern:')
-  console.log(`   https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${folder}/companion-{N}.jpg\n`)
+  console.log(
+    `   https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${folder}/companion-{N}.jpg\n`
+  )
 
   await pg.end()
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('\n❌ Seed failed:', err)
   process.exit(1)
 })

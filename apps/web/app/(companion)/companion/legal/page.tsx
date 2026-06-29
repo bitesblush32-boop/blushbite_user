@@ -11,31 +11,33 @@ const DOCS = [
   {
     key: 'tos',
     label: 'Terms of Service',
-    description: 'I have read and agree to the BlushBite Terms of Service, including platform conduct rules, content standards, and compensation terms.',
+    description:
+      'I have read and agree to the BlushBite Terms of Service, including platform conduct rules, content standards, and compensation terms.',
   },
   {
     key: 'model_release',
     label: 'Model Release Agreement',
-    description: 'I consent to the use of content I create on this platform in accordance with the Model Release Agreement, including distribution rights and licensing terms.',
+    description:
+      'I consent to the use of content I create on this platform in accordance with the Model Release Agreement, including distribution rights and licensing terms.',
   },
   {
     key: 'form_2257',
     label: '18 U.S.C. § 2257 Compliance',
-    description: 'I confirm that I am 18 years of age or older, and that all records required by 18 U.S.C. § 2257 are maintained and available for inspection.',
+    description:
+      'I confirm that I am 18 years of age or older, and that all records required by 18 U.S.C. § 2257 are maintained and available for inspection.',
   },
 ]
 
 export default function CompanionLegalPage() {
-  const router   = useRouter()
+  const router = useRouter()
   const { update } = useSession()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-  const allChecked = DOCS.every(d => checked[d.key])
+  const allChecked = DOCS.every((d) => checked[d.key])
 
-  const toggle = (key: string) =>
-    setChecked(prev => ({ ...prev, [key]: !prev[key] }))
+  const toggle = (key: string) => setChecked((prev) => ({ ...prev, [key]: !prev[key] }))
 
   const handleSign = async () => {
     if (!allChecked || saving) return
@@ -57,7 +59,6 @@ export default function CompanionLegalPage() {
 
   return (
     <div className="min-h-screen bg-[#07090f] flex flex-col items-center justify-center px-5 py-10 relative overflow-hidden">
-
       {/* Noise texture */}
       <div
         className="fixed inset-0 pointer-events-none z-[1000] opacity-60"
@@ -70,7 +71,8 @@ export default function CompanionLegalPage() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 70% 55% at 50% 30%, rgba(232,96,122,0.06) 0%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse 70% 55% at 50% 30%, rgba(232,96,122,0.06) 0%, transparent 70%)',
         }}
       />
 
@@ -104,7 +106,6 @@ export default function CompanionLegalPage() {
           />
 
           <div className="p-8">
-
             {/* Header */}
             <div className="mb-7">
               <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] mb-3">
@@ -118,8 +119,8 @@ export default function CompanionLegalPage() {
                 <em style={{ fontStyle: 'italic', color: '#e8607a' }}>the room.</em>
               </h2>
               <p className="text-[13px] text-[#6b7280] leading-[1.65]">
-                A few agreements keep this space safe for everyone in it — including you.
-                Read each one and confirm your understanding below.
+                A few agreements keep this space safe for everyone in it — including you. Read each
+                one and confirm your understanding below.
               </p>
             </div>
 
@@ -136,28 +137,38 @@ export default function CompanionLegalPage() {
                     transition={{ delay: 0.1 + i * 0.07, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                     className="text-left rounded-[12px] p-4 cursor-pointer transition-all duration-200 flex gap-4 items-start"
                     style={{
-                      background:   isChecked ? 'rgba(232,96,122,0.06)' : '#161d2a',
-                      border:       isChecked ? '1px solid rgba(232,96,122,0.35)' : '1px solid #1c2333',
+                      background: isChecked ? 'rgba(232,96,122,0.06)' : '#161d2a',
+                      border: isChecked ? '1px solid rgba(232,96,122,0.35)' : '1px solid #1c2333',
                     }}
                   >
                     {/* Checkbox indicator */}
                     <div
                       className="flex-shrink-0 w-5 h-5 rounded-[5px] border flex items-center justify-center mt-[1px] transition-all duration-150"
                       style={{
-                        background:   isChecked ? '#e8607a' : 'transparent',
-                        borderColor:  isChecked ? '#e8607a' : '#1c2333',
+                        background: isChecked ? '#e8607a' : 'transparent',
+                        borderColor: isChecked ? '#e8607a' : '#1c2333',
                       }}
                     >
                       {isChecked && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M1 4L3.5 6.5L9 1"
+                            stroke="white"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       )}
                     </div>
 
                     <div>
-                      <div className="text-[13.5px] font-medium text-[#eeeef0] mb-[5px]">{doc.label}</div>
-                      <div className="text-[12px] text-[#6b7280] leading-[1.55]">{doc.description}</div>
+                      <div className="text-[13.5px] font-medium text-[#eeeef0] mb-[5px]">
+                        {doc.label}
+                      </div>
+                      <div className="text-[12px] text-[#6b7280] leading-[1.55]">
+                        {doc.description}
+                      </div>
                     </div>
                   </motion.button>
                 )
@@ -171,22 +182,24 @@ export default function CompanionLegalPage() {
               className="w-full py-[13px] rounded-[10px] text-[14px] font-medium transition-all duration-200 flex items-center justify-center gap-2"
               style={{
                 background: allChecked && !saving ? '#e8607a' : '#161d2a',
-                color:      allChecked && !saving ? '#fff' : '#6b7280',
-                border:     allChecked && !saving ? 'none' : '1px solid #1c2333',
-                boxShadow:  allChecked && !saving ? '0 6px 20px rgba(232,96,122,0.22)' : 'none',
-                cursor:     !allChecked || saving ? 'not-allowed' : 'pointer',
+                color: allChecked && !saving ? '#fff' : '#6b7280',
+                border: allChecked && !saving ? 'none' : '1px solid #1c2333',
+                boxShadow: allChecked && !saving ? '0 6px 20px rgba(232,96,122,0.22)' : 'none',
+                cursor: !allChecked || saving ? 'not-allowed' : 'pointer',
               }}
-              onMouseEnter={e => {
+              onMouseEnter={(e) => {
                 if (allChecked && !saving) {
-                  (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
+                  ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
                 }
               }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = 'none'
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.transform = 'none'
               }}
             >
               {saving ? (
-                <><Loader2 size={16} className="animate-spin" /> Entering the room…</>
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Entering the room…
+                </>
               ) : (
                 'I agree — enter the room →'
               )}
@@ -207,10 +220,7 @@ export default function CompanionLegalPage() {
           </div>
         </div>
 
-        <p
-          className="text-center text-[11px] text-[#6b7280] mt-5"
-          style={{ opacity: 0.5 }}
-        >
+        <p className="text-center text-[11px] text-[#6b7280] mt-5" style={{ opacity: 0.5 }}>
           Your identity stays private — always. These agreements are stored securely.
         </p>
       </motion.div>

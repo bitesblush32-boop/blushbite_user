@@ -7,44 +7,42 @@ import { paginateText } from '@/lib/paginateText'
 // ─── Constants — keep in sync with create/page.tsx ───────────────────────────
 
 const GRADIENT_MAP: Record<string, string> = {
-  Romantic:     'linear-gradient(180deg, #1c0c1e 0%, #07090f 35%, #07090f 65%, #120818 100%)',
-  Intense:      'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #10091a 100%)',
-  Confessions:  'linear-gradient(180deg, #11101e 0%, #07090f 35%, #07090f 65%, #0d0a1a 100%)',
-  'Dark Romance':'linear-gradient(180deg, #1a0c1c 0%, #07090f 35%, #07090f 65%, #130818 100%)',
-  BDSM:         'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #100918 100%)',
-  default:      'linear-gradient(180deg, #10101e 0%, #07090f 35%, #07090f 65%, #0d0b1c 100%)',
+  Romantic: 'linear-gradient(180deg, #1c0c1e 0%, #07090f 35%, #07090f 65%, #120818 100%)',
+  Intense: 'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #10091a 100%)',
+  Confessions: 'linear-gradient(180deg, #11101e 0%, #07090f 35%, #07090f 65%, #0d0a1a 100%)',
+  'Dark Romance': 'linear-gradient(180deg, #1a0c1c 0%, #07090f 35%, #07090f 65%, #130818 100%)',
+  BDSM: 'linear-gradient(180deg, #0e0b1e 0%, #07090f 35%, #07090f 65%, #100918 100%)',
+  default: 'linear-gradient(180deg, #10101e 0%, #07090f 35%, #07090f 65%, #0d0b1c 100%)',
 }
 
 // story_category_id → category name for gradient lookup
 const CATEGORY_ID_MAP: Record<number, string> = {
   45: 'Confessions',
-  46: 'Intense',       // Erotica
-  47: 'Dark Romance',  // Cheating & Affairs
-  48: 'BDSM',          // Taboo & Forbidden
-  49: 'BDSM',          // BDSM & Kink
-  50: 'Dark Romance',  // Incest & Step-Family
-  51: 'Romantic',      // Workplace & Office
-  52: 'Romantic',      // College & Campus
-  53: 'Intense',       // One Night Stand
-  54: 'Intense',       // Group Sex
-  55: 'Dark Romance',  // Cuckolding & Hotwife
-  56: 'Intense',       // Public & Exhibitionism
-  57: 'Romantic',      // Friends & Neighbors
-  58: 'Dark Romance',  // Revenge & Power
-  59: 'Confessions',   // Audio Script
-  60: 'Romantic',      // Slow Burn
-  61: 'Intense',       // Roleplay
-  62: 'Romantic',      // First Time
+  46: 'Intense', // Erotica
+  47: 'Dark Romance', // Cheating & Affairs
+  48: 'BDSM', // Taboo & Forbidden
+  49: 'BDSM', // BDSM & Kink
+  50: 'Dark Romance', // Incest & Step-Family
+  51: 'Romantic', // Workplace & Office
+  52: 'Romantic', // College & Campus
+  53: 'Intense', // One Night Stand
+  54: 'Intense', // Group Sex
+  55: 'Dark Romance', // Cuckolding & Hotwife
+  56: 'Intense', // Public & Exhibitionism
+  57: 'Romantic', // Friends & Neighbors
+  58: 'Dark Romance', // Revenge & Power
+  59: 'Confessions', // Audio Script
+  60: 'Romantic', // Slow Burn
+  61: 'Intense', // Roleplay
+  62: 'Romantic', // First Time
 }
 
 // ─── Image helpers — exact copy from create/page.tsx ─────────────────────────
 
-async function generatePageImage(
-  pageText: string,
-  gradient: string,
-): Promise<string | null> {
+async function generatePageImage(pageText: string, gradient: string): Promise<string | null> {
   const container = document.createElement('div')
-  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:750px;height:1120px;overflow:hidden;'
+  container.style.cssText =
+    'position:fixed;left:-9999px;top:0;width:750px;height:1120px;overflow:hidden;'
   document.body.appendChild(container)
 
   const card = document.createElement('div')
@@ -70,12 +68,12 @@ async function generatePageImage(
 
   try {
     const dataUrl = await toJpeg(card, {
-      quality:         0.92,
-      width:           750,
-      height:          1120,
-      pixelRatio:      2,
+      quality: 0.92,
+      width: 750,
+      height: 1120,
+      pixelRatio: 2,
       backgroundColor: '#07090f',
-      fontEmbedCSS:    '',
+      fontEmbedCSS: '',
     })
     return dataUrl
   } catch {
@@ -87,12 +85,12 @@ async function generatePageImage(
 
 async function uploadImageDataUrl(dataUrl: string, n: number): Promise<string | null> {
   try {
-    const blob = await fetch(dataUrl).then(r => r.blob())
+    const blob = await fetch(dataUrl).then((r) => r.blob())
     const file = new File([blob], `confession-page-${n}.jpg`, { type: 'image/jpeg' })
-    const res  = await fetch('/api/upload/file', {
-      method:      'PUT',
-      headers:     { 'Content-Type': 'image/jpeg' },
-      body:        file,
+    const res = await fetch('/api/upload/file', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'image/jpeg' },
+      body: file,
       credentials: 'include',
     })
     if (!res.ok) return null
@@ -106,37 +104,37 @@ async function uploadImageDataUrl(dataUrl: string, n: number): Promise<string | 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface NdjsonRecord {
-  title:                  string
-  body:                   string
-  excerpt?:               string
-  story_category_ids?:    number[]
-  mood_tag_ids?:          number[]
-  orientation_tag_ids?:   number[]
-  fantasy_tag_ids?:       number[]
-  primary_category_id?:   number | null
-  created_at?:            string
+  title: string
+  body: string
+  excerpt?: string
+  story_category_ids?: number[]
+  mood_tag_ids?: number[]
+  orientation_tag_ids?: number[]
+  fantasy_tag_ids?: number[]
+  primary_category_id?: number | null
+  created_at?: string
 }
 
 export default function AdminGeneratePage() {
-  const [records, setRecords]           = useState<NdjsonRecord[]>([])
-  const [startFrom, setStartFrom]       = useState(0)
-  const [running, setRunning]           = useState(false)
-  const [paused, setPaused]             = useState(false)
-  const [processed, setProcessed]       = useState(0)
+  const [records, setRecords] = useState<NdjsonRecord[]>([])
+  const [startFrom, setStartFrom] = useState(0)
+  const [running, setRunning] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const [processed, setProcessed] = useState(0)
   const [currentTitle, setCurrentTitle] = useState('')
-  const [errors, setErrors]             = useState<string[]>([])
-  const pauseRef                        = useRef(false)
+  const [errors, setErrors] = useState<string[]>([])
+  const pauseRef = useRef(false)
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = ev => {
+    reader.onload = (ev) => {
       const text = ev.target?.result as string
       const parsed = text
         .split('\n')
-        .filter(l => l.trim())
-        .map(l => JSON.parse(l) as NdjsonRecord)
+        .filter((l) => l.trim())
+        .map((l) => JSON.parse(l) as NdjsonRecord)
       setRecords(parsed)
       setProcessed(0)
       setErrors([])
@@ -167,12 +165,12 @@ export default function AdminGeneratePage() {
       try {
         // Split body into pages, max 4
         const allPages = paginateText(record.body ?? '', 700)
-        const pages    = allPages.slice(0, 4)
+        const pages = allPages.slice(0, 4)
 
         // Gradient from first category id
         const firstCatId = record.story_category_ids?.[0]
-        const catName    = firstCatId != null ? (CATEGORY_ID_MAP[firstCatId] ?? 'default') : 'default'
-        const gradient   = GRADIENT_MAP[catName] ?? GRADIENT_MAP['default']
+        const catName = firstCatId != null ? (CATEGORY_ID_MAP[firstCatId] ?? 'default') : 'default'
+        const gradient = GRADIENT_MAP[catName] ?? GRADIENT_MAP['default']
 
         // Generate + upload each page image
         const pageImageUrls: string[] = []
@@ -186,28 +184,31 @@ export default function AdminGeneratePage() {
 
         // POST to single endpoint
         const res = await fetch('/api/admin/stories/single', {
-          method:  'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title:                record.title,
-            body:                 record.body,
-            excerpt:              record.excerpt ?? record.body?.slice(0, 280) ?? '',
+            title: record.title,
+            body: record.body,
+            excerpt: record.excerpt ?? record.body?.slice(0, 280) ?? '',
             pageImageUrls,
-            story_category_ids:   record.story_category_ids   ?? [],
-            mood_tag_ids:         record.mood_tag_ids          ?? [],
-            orientation_tag_ids:  record.orientation_tag_ids   ?? [],
-            fantasy_tag_ids:      record.fantasy_tag_ids       ?? [],
-            primary_category_id:  record.primary_category_id  ?? null,
-            created_at:           record.created_at            ?? new Date().toISOString(),
+            story_category_ids: record.story_category_ids ?? [],
+            mood_tag_ids: record.mood_tag_ids ?? [],
+            orientation_tag_ids: record.orientation_tag_ids ?? [],
+            fantasy_tag_ids: record.fantasy_tag_ids ?? [],
+            primary_category_id: record.primary_category_id ?? null,
+            created_at: record.created_at ?? new Date().toISOString(),
           }),
         })
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: res.statusText }))
-          setErrors(prev => [...prev, `#${absoluteIdx} "${record.title}": ${err.error ?? 'failed'}`])
+          setErrors((prev) => [
+            ...prev,
+            `#${absoluteIdx} "${record.title}": ${err.error ?? 'failed'}`,
+          ])
         }
       } catch (err) {
-        setErrors(prev => [
+        setErrors((prev) => [
           ...prev,
           `#${absoluteIdx} "${record.title}": ${err instanceof Error ? err.message : 'unknown error'}`,
         ])
@@ -216,7 +217,7 @@ export default function AdminGeneratePage() {
       setProcessed(absoluteIdx + 1)
 
       // 300ms cooldown between stories
-      await new Promise(res => setTimeout(res, 300))
+      await new Promise((res) => setTimeout(res, 300))
     }
 
     setRunning(false)
@@ -256,7 +257,16 @@ export default function AdminGeneratePage() {
 
       {/* File input */}
       <div style={{ marginBottom: 20 }}>
-        <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: 12,
+            color: '#6b7280',
+            marginBottom: 6,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}
+        >
           NDJSON file
         </label>
         <input
@@ -284,7 +294,16 @@ export default function AdminGeneratePage() {
 
       {/* Start from */}
       <div style={{ marginBottom: 24 }}>
-        <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: 12,
+            color: '#6b7280',
+            marginBottom: 6,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}
+        >
           Start from record #
         </label>
         <input
@@ -292,7 +311,7 @@ export default function AdminGeneratePage() {
           min={0}
           max={total > 0 ? total - 1 : 0}
           value={startFrom}
-          onChange={e => setStartFrom(Number(e.target.value))}
+          onChange={(e) => setStartFrom(Number(e.target.value))}
           placeholder="0"
           style={{
             background: '#111620',
@@ -349,8 +368,18 @@ export default function AdminGeneratePage() {
       {/* Progress */}
       {(running || processed > 0) && (
         <div style={{ marginBottom: 24, maxWidth: 560 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 12, color: '#6b7280' }}>
-            <span>{processed.toLocaleString()} / {total.toLocaleString()} stories processed</span>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: 8,
+              fontSize: 12,
+              color: '#6b7280',
+            }}
+          >
+            <span>
+              {processed.toLocaleString()} / {total.toLocaleString()} stories processed
+            </span>
             <span>{progressPct}%</span>
           </div>
           <div style={{ height: 6, background: '#1c2333', borderRadius: 99, overflow: 'hidden' }}>

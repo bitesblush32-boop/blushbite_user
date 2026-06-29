@@ -9,22 +9,22 @@ import { ArrowLeft, Search, Heart, Eye, Loader2, CheckCircle2 } from 'lucide-rea
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface BridgeStory {
-  id:            string
-  title:         string
-  excerpt:       string | null
-  author_type:   string
-  like_count:    number
-  view_count:    number
+  id: string
+  title: string
+  excerpt: string | null
+  author_type: string
+  like_count: number
+  view_count: number
   category_name: string | null
-  mood_tags:     string[]
+  mood_tags: string[]
 }
 
 interface MyLink {
-  bridge_id:     string
-  story_id:      string
-  status:        'pending' | 'approved' | 'rejected'
-  admin_note:    string | null
-  story_title:   string
+  bridge_id: string
+  story_id: string
+  status: 'pending' | 'approved' | 'rejected'
+  admin_note: string | null
+  story_title: string
   story_excerpt: string | null
   category_name: string | null
 }
@@ -32,15 +32,15 @@ interface MyLink {
 // ─── Inner page (uses useSearchParams — must be inside Suspense) ───────────────
 
 function BridgePageInner() {
-  const router       = useRouter()
+  const router = useRouter()
   const searchParams = useSearchParams()
-  const tab          = (searchParams.get('tab') ?? 'find') as 'find' | 'mine'
+  const tab = (searchParams.get('tab') ?? 'find') as 'find' | 'mine'
 
   // ── Find tab state ──
-  const [search,   setSearch]   = useState('')
+  const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
-  const [linking,  setLinking]  = useState<Record<string, boolean>>({})
-  const [linked,   setLinked]   = useState<Record<string, boolean>>({})
+  const [linking, setLinking] = useState<Record<string, boolean>>({})
+  const [linked, setLinked] = useState<Record<string, boolean>>({})
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── My links tab state ──
@@ -57,7 +57,7 @@ function BridgePageInner() {
   // ── Fetch categories (cached, rarely changes) ──────────────────────────────
   const { data: tagsData } = useQuery({
     queryKey: ['tags'],
-    queryFn:  () => fetch('/api/tags').then(r => r.json()),
+    queryFn: () => fetch('/api/tags').then((r) => r.json()),
     staleTime: 60 * 60 * 1000, // tags change very rarely
   })
   const categories: string[] = tagsData?.storyCategories?.map((c: { name: string }) => c.name) ?? []
@@ -65,49 +65,58 @@ function BridgePageInner() {
   // ── Fetch bridge stories (find tab) ───────────────────────────────────────
   const { data: bridgeStoriesData, isFetching: fetching } = useQuery({
     queryKey: ['companion', 'bridge', 'stories', debouncedSearch, category],
-    queryFn:  () => {
+    queryFn: () => {
       const params = new URLSearchParams()
-      if (debouncedSearch) params.set('search',   debouncedSearch)
-      if (category)        params.set('category', category)
-      return fetch(`/api/companion/bridge/stories?${params}`).then(r => r.json()).then(d => d.data ?? [])
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      if (category) params.set('category', category)
+      return fetch(`/api/companion/bridge/stories?${params}`)
+        .then((r) => r.json())
+        .then((d) => d.data ?? [])
     },
-    enabled:   tab === 'find',
+    enabled: tab === 'find',
     staleTime: 30 * 1000,
   })
   const stories: BridgeStory[] = bridgeStoriesData ?? []
 
   // ── Fetch my links (mine tab) ──────────────────────────────────────────────
-  const { data: myLinksData, isFetching: myFetching, refetch: refetchMyLinks } = useQuery({
+  const {
+    data: myLinksData,
+    isFetching: myFetching,
+    refetch: refetchMyLinks,
+  } = useQuery({
     queryKey: ['companion', 'bridge', 'my-links'],
-    queryFn:  () => fetch('/api/companion/bridge/my-links').then(r => r.json()).then(d => d.data ?? []),
-    enabled:   tab === 'mine',
+    queryFn: () =>
+      fetch('/api/companion/bridge/my-links')
+        .then((r) => r.json())
+        .then((d) => d.data ?? []),
+    enabled: tab === 'mine',
     staleTime: 30 * 1000,
   })
   const myLinks: MyLink[] = myLinksData ?? []
 
   // ── Link to story ──
   async function handleLink(storyId: string) {
-    setLinking(p => ({ ...p, [storyId]: true }))
+    setLinking((p) => ({ ...p, [storyId]: true }))
     try {
       const res = await fetch('/api/companion/bridge/link', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ story_id: storyId }),
+        body: JSON.stringify({ story_id: storyId }),
       })
-      if (res.ok) setLinked(p => ({ ...p, [storyId]: true }))
+      if (res.ok) setLinked((p) => ({ ...p, [storyId]: true }))
     } finally {
-      setLinking(p => ({ ...p, [storyId]: false }))
+      setLinking((p) => ({ ...p, [storyId]: false }))
     }
   }
 
   // ── Remove link ──
   async function handleRemove(storyId: string) {
-    setRemoving(p => ({ ...p, [storyId]: true }))
+    setRemoving((p) => ({ ...p, [storyId]: true }))
     try {
       const res = await fetch(`/api/companion/bridge/${storyId}`, { method: 'DELETE' })
       if (res.ok) refetchMyLinks()
     } finally {
-      setRemoving(p => ({ ...p, [storyId]: false }))
+      setRemoving((p) => ({ ...p, [storyId]: false }))
     }
   }
 
@@ -128,21 +137,28 @@ function BridgePageInner() {
         <button
           onClick={() => router.push('/companion/dashboard')}
           style={{
-            display:    'flex',
+            display: 'flex',
             alignItems: 'center',
-            gap:        6,
-            fontSize:   12.5,
-            color:      '#6b7280',
+            gap: 6,
+            fontSize: 12.5,
+            color: '#6b7280',
             background: 'none',
-            border:     'none',
-            cursor:     'pointer',
-            padding:    0,
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
             marginBottom: 14,
           }}
         >
           <ArrowLeft size={14} /> Back to dashboard
         </button>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, color: '#eeeef0', marginBottom: 6 }}>
+        <h1
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 24,
+            color: '#eeeef0',
+            marginBottom: 6,
+          }}
+        >
           Story Bridge
         </h1>
         <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
@@ -153,30 +169,30 @@ function BridgePageInner() {
       {/* ── Tab row ─────────────────────────────────────────────────────────── */}
       <div
         style={{
-          display:      'flex',
-          gap:          4,
-          background:   '#111620',
-          border:       '1px solid #1c2333',
+          display: 'flex',
+          gap: 4,
+          background: '#111620',
+          border: '1px solid #1c2333',
           borderRadius: 12,
-          padding:      4,
+          padding: 4,
           marginBottom: 20,
         }}
       >
-        {(['find', 'mine'] as const).map(t => (
+        {(['find', 'mine'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
-              flex:         1,
-              padding:      '9px 0',
+              flex: 1,
+              padding: '9px 0',
               borderRadius: 9,
-              fontSize:     13,
-              fontWeight:   500,
-              border:       'none',
-              cursor:       'pointer',
-              transition:   'all 0.15s',
-              background:   tab === t ? 'rgba(232,96,122,0.12)' : 'transparent',
-              color:        tab === t ? '#e8607a' : '#6b7280',
+              fontSize: 13,
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              background: tab === t ? 'rgba(232,96,122,0.12)' : 'transparent',
+              color: tab === t ? '#e8607a' : '#6b7280',
             }}
           >
             {t === 'find' ? 'Find Stories' : 'My Links'}
@@ -191,19 +207,19 @@ function BridgePageInner() {
             key="find"
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{    opacity: 0, x: -10 }}
+            exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.25 }}
           >
             {/* Search bar */}
             <div
               style={{
-                display:      'flex',
-                alignItems:   'center',
-                gap:          10,
-                background:   '#111620',
-                border:       '1px solid #1c2333',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                background: '#111620',
+                border: '1px solid #1c2333',
                 borderRadius: 12,
-                padding:      '10px 14px',
+                padding: '10px 14px',
                 marginBottom: 12,
               }}
             >
@@ -211,16 +227,16 @@ function BridgePageInner() {
               <input
                 type="text"
                 value={search}
-                onChange={e => handleSearchChange(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search by keyword or theme..."
                 style={{
-                  flex:       1,
+                  flex: 1,
                   background: 'transparent',
-                  border:     'none',
-                  outline:    'none',
-                  fontSize:   14,
-                  color:      '#eeeef0',
-                  minWidth:   0,
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: 14,
+                  color: '#eeeef0',
+                  minWidth: 0,
                 }}
               />
             </div>
@@ -229,25 +245,30 @@ function BridgePageInner() {
             {categories.length > 0 && (
               <div
                 className="flex gap-2 mb-4 overflow-x-auto pb-1"
-                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+                style={
+                  {
+                    scrollbarWidth: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                  } as React.CSSProperties
+                }
               >
-                {['All', ...categories].map(cat => {
+                {['All', ...categories].map((cat) => {
                   const active = cat === 'All' ? category === '' : category === cat
                   return (
                     <button
                       key={cat}
                       onClick={() => setCategory(cat === 'All' ? '' : cat)}
                       style={{
-                        flexShrink:   0,
-                        fontSize:     12,
-                        padding:      '6px 14px',
+                        flexShrink: 0,
+                        fontSize: 12,
+                        padding: '6px 14px',
                         borderRadius: 9999,
-                        border:       `1px solid ${active ? '#e8607a' : '#1c2333'}`,
-                        background:   active ? 'rgba(232,96,122,0.08)' : 'transparent',
-                        color:        active ? '#e8607a' : '#6b7280',
-                        cursor:       'pointer',
-                        transition:   'all 0.15s',
-                        whiteSpace:   'nowrap',
+                        border: `1px solid ${active ? '#e8607a' : '#1c2333'}`,
+                        background: active ? 'rgba(232,96,122,0.08)' : 'transparent',
+                        color: active ? '#e8607a' : '#6b7280',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {cat}
@@ -260,73 +281,128 @@ function BridgePageInner() {
             {/* Story list */}
             {fetching ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-                <Loader2 size={22} color="#e8607a" style={{ animation: 'spin 1s linear infinite' }} />
+                <Loader2
+                  size={22}
+                  color="#e8607a"
+                  style={{ animation: 'spin 1s linear infinite' }}
+                />
               </div>
             ) : stories.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280', fontSize: 13 }}>
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#6b7280',
+                  fontSize: 13,
+                }}
+              >
                 No stories found. Try a different search.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {stories.map(story => {
-                  const isLinking   = linking[story.id]
-                  const isLinked    = linked[story.id]
+                {stories.map((story) => {
+                  const isLinking = linking[story.id]
+                  const isLinked = linked[story.id]
                   return (
                     <div
                       key={story.id}
                       style={{
-                        background:   '#111620',
-                        border:       '1px solid #1c2333',
+                        background: '#111620',
+                        border: '1px solid #1c2333',
                         borderRadius: 16,
-                        padding:      16,
+                        padding: 16,
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                        }}
+                      >
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{
-                            fontFamily: "'Playfair Display', serif",
-                            fontSize:   15,
-                            color:      '#eeeef0',
-                            marginBottom: 6,
-                            lineHeight: 1.35,
-                          }}>
+                          <p
+                            style={{
+                              fontFamily: "'Playfair Display', serif",
+                              fontSize: 15,
+                              color: '#eeeef0',
+                              marginBottom: 6,
+                              lineHeight: 1.35,
+                            }}
+                          >
                             {story.title}
                           </p>
                           {story.excerpt && (
-                            <p style={{
-                              fontSize:   13,
-                              color:      '#6b7280',
-                              lineHeight: 1.5,
-                              marginBottom: 10,
-                              display:    '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow:   'hidden',
-                            }}>
+                            <p
+                              style={{
+                                fontSize: 13,
+                                color: '#6b7280',
+                                lineHeight: 1.5,
+                                marginBottom: 10,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
+                            >
                               {story.excerpt}
                             </p>
                           )}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              flexWrap: 'wrap',
+                            }}
+                          >
                             {story.category_name && (
-                              <span style={{
-                                fontSize: 10, padding: '3px 9px', borderRadius: 999,
-                                color: '#e8607a', background: 'rgba(232,96,122,0.1)',
-                                border: '1px solid rgba(232,96,122,0.25)',
-                              }}>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  padding: '3px 9px',
+                                  borderRadius: 999,
+                                  color: '#e8607a',
+                                  background: 'rgba(232,96,122,0.1)',
+                                  border: '1px solid rgba(232,96,122,0.25)',
+                                }}
+                              >
                                 {story.category_name}
                               </span>
                             )}
-                            <span style={{
-                              fontSize: 10, padding: '3px 9px', borderRadius: 999,
-                              color: '#6b7280', background: 'rgba(255,255,255,0.03)',
-                              border: '1px solid #1c2333',
-                            }}>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                padding: '3px 9px',
+                                borderRadius: 999,
+                                color: '#6b7280',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid #1c2333',
+                              }}
+                            >
                               {story.author_type}
                             </span>
-                            <span style={{ fontSize: 11, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: '#6b7280',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 3,
+                              }}
+                            >
                               <Heart size={11} /> {story.like_count}
                             </span>
-                            <span style={{ fontSize: 11, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: '#6b7280',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 3,
+                              }}
+                            >
                               <Eye size={11} /> {story.view_count}
                             </span>
                           </div>
@@ -337,31 +413,33 @@ function BridgePageInner() {
                           onClick={() => !isLinked && !isLinking && handleLink(story.id)}
                           disabled={isLinked || isLinking}
                           style={{
-                            flexShrink:   0,
-                            width:        110,
-                            padding:      '9px 12px',
+                            flexShrink: 0,
+                            width: 110,
+                            padding: '9px 12px',
                             borderRadius: 9999,
-                            fontSize:     12,
-                            fontWeight:   500,
-                            border:       isLinked
+                            fontSize: 12,
+                            fontWeight: 500,
+                            border: isLinked
                               ? '1px solid rgba(201,169,110,0.4)'
                               : '1px solid rgba(232,96,122,0.35)',
-                            background:   isLinked
+                            background: isLinked
                               ? 'rgba(201,169,110,0.08)'
                               : 'rgba(232,96,122,0.08)',
-                            color:        isLinked ? '#c9a96e' : '#e8607a',
-                            cursor:       isLinked || isLinking ? 'default' : 'pointer',
-                            display:      'flex',
-                            alignItems:   'center',
+                            color: isLinked ? '#c9a96e' : '#e8607a',
+                            cursor: isLinked || isLinking ? 'default' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
-                            gap:          5,
-                            transition:   'all 0.15s',
+                            gap: 5,
+                            transition: 'all 0.15s',
                           }}
                         >
                           {isLinking ? (
                             <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
                           ) : isLinked ? (
-                            <><CheckCircle2 size={13} /> Pending ✓</>
+                            <>
+                              <CheckCircle2 size={13} /> Pending ✓
+                            </>
                           ) : (
                             'This is me →'
                           )}
@@ -381,20 +459,24 @@ function BridgePageInner() {
             key="mine"
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{    opacity: 0, x: -10 }}
+            exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.25 }}
           >
             {myFetching ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-                <Loader2 size={22} color="#e8607a" style={{ animation: 'spin 1s linear infinite' }} />
+                <Loader2
+                  size={22}
+                  color="#e8607a"
+                  style={{ animation: 'spin 1s linear infinite' }}
+                />
               </div>
             ) : myLinks.length === 0 ? (
               <div
                 style={{
-                  textAlign:    'center',
-                  padding:      '48px 24px',
-                  background:   '#111620',
-                  border:       '1px solid #1c2333',
+                  textAlign: 'center',
+                  padding: '48px 24px',
+                  background: '#111620',
+                  border: '1px solid #1c2333',
                   borderRadius: 16,
                 }}
               >
@@ -408,49 +490,85 @@ function BridgePageInner() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {myLinks.map(link => (
+                {myLinks.map((link) => (
                   <div
                     key={link.bridge_id}
                     style={{
-                      background:   '#111620',
-                      border:       '1px solid #1c2333',
+                      background: '#111620',
+                      border: '1px solid #1c2333',
                       borderRadius: 16,
-                      padding:      16,
+                      padding: 16,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        marginBottom: 8,
+                      }}
+                    >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{
-                          fontFamily: "'Playfair Display', serif",
-                          fontSize: 15, color: '#eeeef0', marginBottom: 4, lineHeight: 1.35,
-                        }}>
+                        <p
+                          style={{
+                            fontFamily: "'Playfair Display', serif",
+                            fontSize: 15,
+                            color: '#eeeef0',
+                            marginBottom: 4,
+                            lineHeight: 1.35,
+                          }}
+                        >
                           {link.story_title}
                         </p>
                         {link.category_name && (
-                          <span style={{
-                            fontSize: 10, padding: '3px 9px', borderRadius: 999,
-                            color: '#6b7280', background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid #1c2333',
-                          }}>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              padding: '3px 9px',
+                              borderRadius: 999,
+                              color: '#6b7280',
+                              background: 'rgba(255,255,255,0.03)',
+                              border: '1px solid #1c2333',
+                            }}
+                          >
                             {link.category_name}
                           </span>
                         )}
                       </div>
 
                       {/* Status badge */}
-                      <span style={{
-                        flexShrink:   0,
-                        fontSize:     10,
-                        padding:      '4px 10px',
-                        borderRadius: 9999,
-                        fontWeight:   500,
-                        ...(link.status === 'approved'
-                          ? { color: '#34d399', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)' }
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          fontSize: 10,
+                          padding: '4px 10px',
+                          borderRadius: 9999,
+                          fontWeight: 500,
+                          ...(link.status === 'approved'
+                            ? {
+                                color: '#34d399',
+                                background: 'rgba(52,211,153,0.08)',
+                                border: '1px solid rgba(52,211,153,0.25)',
+                              }
+                            : link.status === 'rejected'
+                              ? {
+                                  color: '#e8607a',
+                                  background: 'rgba(232,96,122,0.08)',
+                                  border: '1px solid rgba(232,96,122,0.25)',
+                                }
+                              : {
+                                  color: '#c9a96e',
+                                  background: 'rgba(201,169,110,0.08)',
+                                  border: '1px solid rgba(201,169,110,0.3)',
+                                }),
+                        }}
+                      >
+                        {link.status === 'approved'
+                          ? 'Approved'
                           : link.status === 'rejected'
-                            ? { color: '#e8607a', background: 'rgba(232,96,122,0.08)', border: '1px solid rgba(232,96,122,0.25)' }
-                            : { color: '#c9a96e', background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.3)' }),
-                      }}>
-                        {link.status === 'approved' ? 'Approved' : link.status === 'rejected' ? 'Rejected' : 'Pending'}
+                            ? 'Rejected'
+                            : 'Pending'}
                       </span>
                     </div>
 
@@ -471,22 +589,27 @@ function BridgePageInner() {
                         onClick={() => handleRemove(link.story_id)}
                         disabled={removing[link.story_id]}
                         style={{
-                          marginTop:  8,
-                          fontSize:   12,
-                          color:      removing[link.story_id] ? '#4b5563' : '#6b7280',
+                          marginTop: 8,
+                          fontSize: 12,
+                          color: removing[link.story_id] ? '#4b5563' : '#6b7280',
                           background: 'none',
-                          border:     'none',
-                          cursor:     removing[link.story_id] ? 'default' : 'pointer',
-                          padding:    0,
+                          border: 'none',
+                          cursor: removing[link.story_id] ? 'default' : 'pointer',
+                          padding: 0,
                           textDecoration: 'underline',
-                          display:    'flex',
+                          display: 'flex',
                           alignItems: 'center',
-                          gap:        5,
+                          gap: 5,
                         }}
                       >
-                        {removing[link.story_id]
-                          ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Removing…</>
-                          : 'Remove'}
+                        {removing[link.story_id] ? (
+                          <>
+                            <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />{' '}
+                            Removing…
+                          </>
+                        ) : (
+                          'Remove'
+                        )}
                       </button>
                     )}
                   </div>

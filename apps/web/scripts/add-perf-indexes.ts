@@ -42,9 +42,15 @@ async function main() {
       AND indexname LIKE 'idx_%'
     ORDER BY indexname
   `
-  console.log('\nActive perf indexes:', indexes.map(r => r.indexname))
+  console.log(
+    '\nActive perf indexes:',
+    indexes.map((r) => r.indexname)
+  )
 
   await sql.end()
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

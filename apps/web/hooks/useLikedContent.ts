@@ -1,19 +1,19 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 
 export interface LikedItem {
-  id:         string
-  title:      string | null
-  excerpt:    string | null
+  id: string
+  title: string | null
+  excerpt: string | null
   firstImage: string | null
   categories: string[]
   authorType: string
-  likeCount:  number
-  saveCount:  number
-  likedAt:    string
+  likeCount: number
+  saveCount: number
+  likedAt: string
 }
 
 interface Page {
-  data:       LikedItem[]
+  data: LikedItem[]
   nextCursor: string | null
 }
 
@@ -29,21 +29,21 @@ async function fetchLiked(type: ContentType, cursor?: string): Promise<Page> {
 
 export function useLikedContent(type: ContentType) {
   const query = useInfiniteQuery<Page, Error>({
-    queryKey:         ['liked', type],
-    queryFn:          ({ pageParam }) => fetchLiked(type, pageParam as string | undefined),
+    queryKey: ['liked', type],
+    queryFn: ({ pageParam }) => fetchLiked(type, pageParam as string | undefined),
     initialPageParam: undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    staleTime:        5 * 60 * 1000,
-    gcTime:           10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 
-  const items = query.data?.pages.flatMap(p => p.data) ?? []
+  const items = query.data?.pages.flatMap((p) => p.data) ?? []
 
   return {
     items,
     fetchNextPage: query.fetchNextPage,
-    hasNextPage:   query.hasNextPage,
-    isLoading:     query.isLoading,
-    isFetching:    query.isFetching,
+    hasNextPage: query.hasNextPage,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
   }
 }

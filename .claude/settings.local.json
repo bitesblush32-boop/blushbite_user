@@ -304,7 +304,26 @@
       "Bash(find \"/c/Users/Ravi Desai/Downloads/blush/landingpagebb-\" -maxdepth 2 -type f \\\\\\( -name \"*.js\" -o -name \"*.json\" -o -name \"*.html\" -o -name \"*.env*\" -o -name \"*.toml\" -o -name \"*.md\" \\\\\\) 2>/dev/null | head -50)",
       "Bash(find '/c/Users/Ravi Desai/Downloads/BlushBite/apps/web' -name \"*email*\" -o -name \"*mail*\" 2>/dev/null | head -10)",
       "Bash(grep -r \"resend\\\\|Resend\\\\|FROM_EMAIL\\\\|sendEmail\" '/c/Users/Ravi Desai/Downloads/BlushBite/apps/web' --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -40)",
-      "Bash(find '/c/Users/Ravi Desai/Downloads/BlushBite' -name \"[...nextauth]*\" -o -name \"auth.ts\" 2>/dev/null | head -10)"
+      "Bash(find '/c/Users/Ravi Desai/Downloads/BlushBite' -name \"[...nextauth]*\" -o -name \"auth.ts\" 2>/dev/null | head -10)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps:p.dependencies,dev:p.devDependencies,scripts:p.scripts},null,2\\)\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint --dir . 2>&1 | head -60)",
+      "Bash(head -80 \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\page.tsx\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npm install --save-dev eslint eslint-plugin-n prettier 2>&1 | tail -5)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npx eslint server.js 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && node -e \"const p = require\\('eslint-plugin-n'\\); console.log\\(Object.keys\\(p.configs\\)\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npx prettier --write server.js signin.html portal.html index.html dashboard.html login.html 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && node --check server.js && echo \"syntax OK\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npm install --save-dev prettier 2>&1 | tail -5)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next lint --fix 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"const v = require\\('./node_modules/eslint/package.json'\\).version; console.log\\('eslint:', v\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node -e \"console.log\\(require\\('./node_modules/@typescript-eslint/eslint-plugin/package.json'\\).version\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next lint 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next lint 2>&1; echo \"Exit code: $?\")",
+      "Bash(grep -l \"from 'next/image'\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\settings\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\companions\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\home\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\notifications\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\layout\\\\Header.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\ui\\\\CompanionCard.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\ui\\\\LikedGrid.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\ui\\\\NotificationsPanel.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\ui\\\\ProfileDrawer.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\ui\\\\SavedConfessionsGrid.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\\\\ui\\\\StoryPageContent.tsx\" 2>/dev/null)",
+      "Bash(grep -n \"from 'next/image'\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\notifications\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\profile\\\\page.tsx\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next lint 2>&1; echo \"Exit: $?\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx prettier --write \"**/*.{ts,tsx}\" --ignore-path .gitignore 2>&1 | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node --version && npx next lint 2>&1; echo \"Exit: $?\")"
     ]
   }
 }

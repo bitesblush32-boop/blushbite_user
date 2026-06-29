@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback } from 'react'
+import Image from 'next/image'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Companion } from '@/lib/types'
 import { useUIStore } from '@/store/uiStore'
@@ -17,7 +18,7 @@ function CompanionCard({ companion, style }: Props) {
   const prefetchProfile = useCallback(() => {
     qc.prefetchQuery({
       queryKey: ['companion-profile', companion.id],
-      queryFn: () => fetch(`/api/companions/${companion.id}`).then(r => r.json()),
+      queryFn: () => fetch(`/api/companions/${companion.id}`).then((r) => r.json()),
       staleTime: 5 * 60 * 1000,
     })
   }, [companion.id, qc])
@@ -39,14 +40,18 @@ function CompanionCard({ companion, style }: Props) {
       }}
     >
       {/* Media */}
-      <div className="h-[200px] relative overflow-hidden" style={{ background: companion.gradient }}>
+      <div
+        className="h-[200px] relative overflow-hidden"
+        style={{ background: companion.gradient }}
+      >
         {/* Real photo — shown when available; silhouette shown as fallback */}
         {companion.photoUrl ? (
-          <img
+          <Image
             src={companion.photoUrl}
             alt={companion.name}
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            loading="lazy"
+            fill
+            className="object-cover object-top"
+            sizes="(max-width: 768px) 100vw, 33vw"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

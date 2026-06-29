@@ -56,10 +56,10 @@ interface DreamerDetail {
 }
 
 const TABS = [
-  { key: 'all',     label: 'All' },
-  { key: 'active',  label: 'Active' },
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
   { key: 'flagged', label: 'Flagged' },
-  { key: 'banned',  label: 'Banned' },
+  { key: 'banned', label: 'Banned' },
 ]
 
 function relativeTime(iso: string) {
@@ -78,12 +78,21 @@ function initials(alias: string | null, email: string) {
 
 // ── Avatar ─────────────────────────────────────────────────────────────────
 
-function Avatar({ alias, email, size = 32 }: { alias: string | null; email: string; size?: number }) {
+function Avatar({
+  alias,
+  email,
+  size = 32,
+}: {
+  alias: string | null
+  email: string
+  size?: number
+}) {
   return (
     <div
       className="rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0"
       style={{
-        width: size, height: size,
+        width: size,
+        height: size,
         background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
         fontSize: size * 0.34,
       }}
@@ -120,25 +129,56 @@ function KebabMenu({
       const rect = btnRef.current.getBoundingClientRect()
       setPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
     }
-    setOpen(o => !o)
+    setOpen((o) => !o)
   }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) setOpen(false)
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(e.target as Node)
+      )
+        setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   const items = [
-    { label: 'View details', action: () => { onView(); setOpen(false) }, danger: false },
-    { label: isFlagged ? 'Unflag user' : 'Flag user', action: () => { onFlag(); setOpen(false) }, danger: false },
-    { label: isBanned ? 'Unban account' : 'Ban account', action: () => { onBan(); setOpen(false) }, danger: !isBanned },
-    { label: 'Delete account', action: () => { onDelete(); setOpen(false) }, danger: true },
+    {
+      label: 'View details',
+      action: () => {
+        onView()
+        setOpen(false)
+      },
+      danger: false,
+    },
+    {
+      label: isFlagged ? 'Unflag user' : 'Flag user',
+      action: () => {
+        onFlag()
+        setOpen(false)
+      },
+      danger: false,
+    },
+    {
+      label: isBanned ? 'Unban account' : 'Ban account',
+      action: () => {
+        onBan()
+        setOpen(false)
+      },
+      danger: !isBanned,
+    },
+    {
+      label: 'Delete account',
+      action: () => {
+        onDelete()
+        setOpen(false)
+      },
+      danger: true,
+    },
   ]
 
   return (
@@ -171,10 +211,13 @@ function KebabMenu({
               boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             }}
           >
-            {items.map(item => (
-              <button key={item.label} onClick={item.action}
+            {items.map((item) => (
+              <button
+                key={item.label}
+                onClick={item.action}
                 className="w-full text-left px-4 py-2 text-[13px] transition-colors hover:bg-white/[0.04] flex items-center gap-2"
-                style={{ color: item.danger ? '#ef4444' : '#eeeef0' }}>
+                style={{ color: item.danger ? '#ef4444' : '#eeeef0' }}
+              >
                 {item.label === 'Delete account' && <Trash2 size={12} />}
                 {item.label}
               </button>
@@ -206,22 +249,33 @@ function BanModal({
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[420px] overflow-hidden"
       >
-        <div className="h-[2px]" style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }} />
+        <div
+          className="h-[2px]"
+          style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }}
+        />
         <div className="p-6">
-          <h3 style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] text-[#eeeef0] mb-2">
+          <h3
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-[20px] text-[#eeeef0] mb-2"
+          >
             Ban account
           </h3>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-5">
-            {alias ? `@${alias.replace('@', '')}` : 'This user'} will no longer be able to sign in. This action can be reversed by removing the ban in the database.
+            {alias ? `@${alias.replace('@', '')}` : 'This user'} will no longer be able to sign in.
+            This action can be reversed by removing the ban in the database.
           </p>
           <div className="flex gap-3">
-            <button onClick={onCancel}
-              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0]">
+            <button
+              onClick={onCancel}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0]"
+            >
               Cancel
             </button>
-            <button onClick={onConfirm}
+            <button
+              onClick={onConfirm}
               className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer"
-              style={{ background: '#ef4444' }}>
+              style={{ background: '#ef4444' }}
+            >
               Ban account
             </button>
           </div>
@@ -253,19 +307,34 @@ function DeleteModal({
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[440px] overflow-hidden"
       >
-        <div className="h-[2px]" style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }} />
+        <div
+          className="h-[2px]"
+          style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }}
+        />
         <div className="p-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'rgba(239,68,68,0.12)',
+                border: '1px solid rgba(239,68,68,0.3)',
+              }}
+            >
               <Trash2 size={16} color="#ef4444" />
             </div>
-            <h3 style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] text-[#eeeef0]">
+            <h3
+              style={{ fontFamily: "'Playfair Display', serif" }}
+              className="text-[20px] text-[#eeeef0]"
+            >
               Delete account
             </h3>
           </div>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-1">
-            This will permanently delete <span className="text-[#eeeef0]">{alias ? `@${alias.replace('@', '')}` : 'this account'}</span> and wipe all associated data:
+            This will permanently delete{' '}
+            <span className="text-[#eeeef0]">
+              {alias ? `@${alias.replace('@', '')}` : 'this account'}
+            </span>{' '}
+            and wipe all associated data:
           </p>
           <ul className="text-[12px] text-[#6b7280] leading-[1.7] mb-5 ml-2">
             <li>· Profile, preferences, and tags</li>
@@ -275,13 +344,19 @@ function DeleteModal({
           </ul>
           <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
           <div className="flex gap-3">
-            <button onClick={onCancel} disabled={isPending}
-              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50">
+            <button
+              onClick={onCancel}
+              disabled={isPending}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50"
+            >
               Cancel
             </button>
-            <button onClick={onConfirm} disabled={isPending}
+            <button
+              onClick={onConfirm}
+              disabled={isPending}
               className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
-              style={{ background: '#ef4444' }}>
+              style={{ background: '#ef4444' }}
+            >
               {isPending ? 'Deleting…' : 'Delete permanently'}
             </button>
           </div>
@@ -293,13 +368,7 @@ function DeleteModal({
 
 // ── User detail drawer ─────────────────────────────────────────────────────
 
-function UserDrawer({
-  userId,
-  onClose,
-}: {
-  userId: string
-  onClose: () => void
-}) {
+function UserDrawer({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { data, isLoading } = useQuery<DreamerDetail>({
     queryKey: ['admin', 'user', userId],
     queryFn: async () => {
@@ -333,14 +402,20 @@ function UserDrawer({
         style={{ background: '#0d1117', borderLeft: '1px solid #1c2333' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#1c2333] sticky top-0 z-10"
-          style={{ background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(10px)' }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif" }}
-            className="text-[18px] text-[#eeeef0]">
+        <div
+          className="flex items-center justify-between px-6 py-5 border-b border-[#1c2333] sticky top-0 z-10"
+          style={{ background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(10px)' }}
+        >
+          <h2
+            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-[18px] text-[#eeeef0]"
+          >
             Dreamer detail
           </h2>
-          <button onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all"
+          >
             <X size={16} />
           </button>
         </div>
@@ -355,26 +430,36 @@ function UserDrawer({
             <div className="flex items-center gap-3">
               <Avatar alias={data.user.alias} email={data.user.email} size={44} />
               <div>
-                <div className="text-[14px] text-[#eeeef0] font-medium">{data.user.alias ?? data.user.email}</div>
+                <div className="text-[14px] text-[#eeeef0] font-medium">
+                  {data.user.alias ?? data.user.email}
+                </div>
                 <div className="text-[12px] text-[#6b7280]">{data.user.email}</div>
-                <div className="text-[11px] text-[#6b7280]">Joined {relativeTime(data.user.created_at)}</div>
+                <div className="text-[11px] text-[#6b7280]">
+                  Joined {relativeTime(data.user.created_at)}
+                </div>
               </div>
             </div>
 
             {/* Profile */}
             {data.profile && (
               <div className="bg-[#111620] border border-[#1c2333] rounded-[12px] p-4 flex flex-col gap-2">
-                <div className="text-[11px] text-[#6b7280] uppercase tracking-[0.05em] mb-1">Profile</div>
+                <div className="text-[11px] text-[#6b7280] uppercase tracking-[0.05em] mb-1">
+                  Profile
+                </div>
                 {data.profile.gender && (
                   <div className="flex justify-between">
                     <span className="text-[12px] text-[#6b7280]">Gender</span>
-                    <span className="text-[12px] text-[#eeeef0] capitalize">{data.profile.gender}</span>
+                    <span className="text-[12px] text-[#eeeef0] capitalize">
+                      {data.profile.gender}
+                    </span>
                   </div>
                 )}
                 {data.profile.mood_intensity != null && (
                   <div className="flex justify-between">
                     <span className="text-[12px] text-[#6b7280]">Mood intensity</span>
-                    <span className="text-[12px] text-[#eeeef0]">{data.profile.mood_intensity} / 100</span>
+                    <span className="text-[12px] text-[#eeeef0]">
+                      {data.profile.mood_intensity} / 100
+                    </span>
                   </div>
                 )}
                 {vibes.length > 0 && (
@@ -382,8 +467,14 @@ function UserDrawer({
                     <div className="text-[11px] text-[#6b7280] mb-1">Vibes</div>
                     <div className="flex flex-wrap gap-2">
                       {vibes.map((v, i) => (
-                        <span key={i} className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-                          style={{ background: 'rgba(232,96,122,0.08)', border: '1px solid rgba(232,96,122,0.25)' }}>
+                        <span
+                          key={i}
+                          className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                          style={{
+                            background: 'rgba(232,96,122,0.08)',
+                            border: '1px solid rgba(232,96,122,0.25)',
+                          }}
+                        >
                           {v}
                         </span>
                       ))}
@@ -396,13 +487,15 @@ function UserDrawer({
             {/* Engagement counts */}
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Stories',  value: data.user.story_count   },
-                { label: 'Likes',    value: data.user.like_count     },
-                { label: 'Saves',    value: data.user.save_count     },
-                { label: 'Bookings', value: data.user.booking_count  },
-              ].map(stat => (
-                <div key={stat.label}
-                  className="bg-[#111620] border border-[#1c2333] rounded-[12px] p-3 text-center">
+                { label: 'Stories', value: data.user.story_count },
+                { label: 'Likes', value: data.user.like_count },
+                { label: 'Saves', value: data.user.save_count },
+                { label: 'Bookings', value: data.user.booking_count },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="bg-[#111620] border border-[#1c2333] rounded-[12px] p-3 text-center"
+                >
                   <div className="text-[18px] font-semibold text-[#eeeef0]">{stat.value}</div>
                   <div className="text-[11px] text-[#6b7280]">{stat.label}</div>
                 </div>
@@ -416,16 +509,32 @@ function UserDrawer({
                   Recent stories
                 </div>
                 <div className="flex flex-col gap-2">
-                  {data.recent_stories.map(s => (
-                    <div key={s.id}
-                      className="bg-[#111620] border border-[#1c2333] rounded-[10px] px-4 py-3 flex items-start justify-between gap-2">
-                      <div className="text-[13px] text-[#eeeef0] leading-[1.3] line-clamp-2">{s.title}</div>
-                      <span className="text-[10px] px-2 py-[2px] rounded-full flex-shrink-0 capitalize"
+                  {data.recent_stories.map((s) => (
+                    <div
+                      key={s.id}
+                      className="bg-[#111620] border border-[#1c2333] rounded-[10px] px-4 py-3 flex items-start justify-between gap-2"
+                    >
+                      <div className="text-[13px] text-[#eeeef0] leading-[1.3] line-clamp-2">
+                        {s.title}
+                      </div>
+                      <span
+                        className="text-[10px] px-2 py-[2px] rounded-full flex-shrink-0 capitalize"
                         style={{
-                          color: s.moderation_status === 'approved' ? '#4ade80' : s.moderation_status === 'rejected' ? '#ef4444' : '#c9a96e',
-                          background: s.moderation_status === 'approved' ? 'rgba(74,222,128,0.08)' : s.moderation_status === 'rejected' ? 'rgba(239,68,68,0.08)' : 'rgba(201,169,110,0.08)',
+                          color:
+                            s.moderation_status === 'approved'
+                              ? '#4ade80'
+                              : s.moderation_status === 'rejected'
+                                ? '#ef4444'
+                                : '#c9a96e',
+                          background:
+                            s.moderation_status === 'approved'
+                              ? 'rgba(74,222,128,0.08)'
+                              : s.moderation_status === 'rejected'
+                                ? 'rgba(239,68,68,0.08)'
+                                : 'rgba(201,169,110,0.08)',
                           border: `1px solid ${s.moderation_status === 'approved' ? 'rgba(74,222,128,0.25)' : s.moderation_status === 'rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(201,169,110,0.25)'}`,
-                        }}>
+                        }}
+                      >
                         {s.moderation_status}
                       </span>
                     </div>
@@ -438,14 +547,24 @@ function UserDrawer({
             {(data.user.is_flagged || data.user.deleted_at) && (
               <div className="flex flex-wrap gap-2">
                 {data.user.is_flagged && (
-                  <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-                    style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.25)' }}>
+                  <span
+                    className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                    style={{
+                      background: 'rgba(201,169,110,0.08)',
+                      border: '1px solid rgba(201,169,110,0.25)',
+                    }}
+                  >
                     ⚑ Flagged
                   </span>
                 )}
                 {data.user.deleted_at && (
-                  <span className="text-[11px] px-[10px] py-1 rounded-full text-[#ef4444]"
-                    style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                  <span
+                    className="text-[11px] px-[10px] py-1 rounded-full text-[#ef4444]"
+                    style={{
+                      background: 'rgba(239,68,68,0.08)',
+                      border: '1px solid rgba(239,68,68,0.25)',
+                    }}
+                  >
                     ✕ Banned
                   </span>
                 )}
@@ -456,13 +575,23 @@ function UserDrawer({
             <div className="flex items-center justify-between">
               <span className="text-[12px] text-[#6b7280]">Onboarding</span>
               {data.user.onboarding_complete ? (
-                <span className="text-[11px] px-[10px] py-1 rounded-full text-[#4ade80]"
-                  style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)' }}>
+                <span
+                  className="text-[11px] px-[10px] py-1 rounded-full text-[#4ade80]"
+                  style={{
+                    background: 'rgba(74,222,128,0.08)',
+                    border: '1px solid rgba(74,222,128,0.25)',
+                  }}
+                >
                   Complete
                 </span>
               ) : (
-                <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-                  style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.25)' }}>
+                <span
+                  className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                  style={{
+                    background: 'rgba(201,169,110,0.08)',
+                    border: '1px solid rgba(201,169,110,0.25)',
+                  }}
+                >
                   Incomplete
                 </span>
               )}
@@ -478,7 +607,7 @@ function UserDrawer({
 
 const cardItem = {
   hidden: { opacity: 0, y: 10 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
 }
 const tableContainer = {
   hidden: {},
@@ -486,23 +615,28 @@ const tableContainer = {
 }
 
 export default function AdminUsersPage() {
-  const [tab, setTab]     = useState('all')
-  const [search, setSearch]             = useState('')
+  const [tab, setTab] = useState('all')
+  const [search, setSearch] = useState('')
   const [debouncedSearch, setDebounced] = useState('')
-  const [page, setPage]   = useState(1)
-  const [drawerUserId, setDrawerUserId]   = useState<string | null>(null)
-  const [banUserId, setBanUserId]         = useState<string | null>(null)
-  const [deleteUserId, setDeleteUserId]   = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [drawerUserId, setDrawerUserId] = useState<string | null>(null)
+  const [banUserId, setBanUserId] = useState<string | null>(null)
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const queryClient = useQueryClient()
 
   const handleSearch = (val: string) => {
     setSearch(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => { setDebounced(val); setPage(1) }, 300)
+    debounceRef.current = setTimeout(() => {
+      setDebounced(val)
+      setPage(1)
+    }, 300)
   }
 
-  useEffect(() => { setPage(1) }, [tab])
+  useEffect(() => {
+    setPage(1)
+  }, [tab])
 
   const queryKey = ['admin', 'users', tab, debouncedSearch, page]
 
@@ -551,12 +685,12 @@ export default function AdminUsersPage() {
     },
   })
 
-  const rows       = data?.data ?? []
-  const meta       = data?.meta
+  const rows = data?.data ?? []
+  const meta = data?.meta
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1
 
-  const banTarget    = rows.find(r => r.id === banUserId)
-  const deleteTarget = rows.find(r => r.id === deleteUserId)
+  const banTarget = rows.find((r) => r.id === banUserId)
+  const deleteTarget = rows.find((r) => r.id === deleteUserId)
 
   return (
     <motion.div
@@ -572,18 +706,20 @@ export default function AdminUsersPage() {
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: '#eeeef0' }}>
             Dreamers
           </h1>
-          {meta && (
-            <span className="text-[12px] text-[#6b7280]">{meta.total} total</span>
-          )}
+          {meta && <span className="text-[12px] text-[#6b7280]">{meta.total} total</span>}
         </div>
       </div>
 
       {/* Search */}
       <div className="relative max-w-[400px] mb-6">
-        <Search size={14} color="#6b7280" className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search
+          size={14}
+          color="#6b7280"
+          className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none"
+        />
         <input
           value={search}
-          onChange={e => handleSearch(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search by alias, email, or name…"
           className="w-full bg-[#111620] border border-[#1c2333] rounded-[10px] pl-[38px] pr-4 py-[10px] text-[13px] text-[#eeeef0] placeholder-[#6b7280] outline-none transition-colors focus:border-[rgba(232,96,122,0.5)]"
         />
@@ -591,14 +727,17 @@ export default function AdminUsersPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
             className="text-[12px] px-[14px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
             style={{
               borderColor: tab === t.key ? '#e8607a' : '#1c2333',
-              color:       tab === t.key ? '#e8607a' : '#6b7280',
-              background:  tab === t.key ? 'rgba(232,96,122,0.08)' : 'transparent',
-            }}>
+              color: tab === t.key ? '#e8607a' : '#6b7280',
+              background: tab === t.key ? 'rgba(232,96,122,0.08)' : 'transparent',
+            }}
+          >
             {t.label}
           </button>
         ))}
@@ -609,8 +748,11 @@ export default function AdminUsersPage() {
         <table className="w-full">
           <thead>
             <tr style={{ background: '#111620', borderBottom: '1px solid #1c2333' }}>
-              {['User', 'Joined', 'Onboarding', 'Activity', 'Bookings', ''].map(h => (
-                <th key={h} className="text-left text-[11px] text-[#6b7280] font-medium px-4 py-3 tracking-[0.04em] uppercase">
+              {['User', 'Joined', 'Onboarding', 'Activity', 'Bookings', ''].map((h) => (
+                <th
+                  key={h}
+                  className="text-left text-[11px] text-[#6b7280] font-medium px-4 py-3 tracking-[0.04em] uppercase"
+                >
                   {h}
                 </th>
               ))}
@@ -620,95 +762,158 @@ export default function AdminUsersPage() {
             {isLoading ? (
               <tbody key="loading">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #1c2333', background: i % 2 === 0 ? '#0d1117' : '#07090f' }}>
+                  <tr
+                    key={i}
+                    style={{
+                      borderBottom: '1px solid #1c2333',
+                      background: i % 2 === 0 ? '#0d1117' : '#07090f',
+                    }}
+                  >
                     {Array.from({ length: 6 }).map((_, j) => (
                       <td key={j} className="px-4 py-4">
-                        <div className="h-[14px] rounded-full bg-[#1c2333] animate-pulse" style={{ width: j === 0 ? 160 : 80 }} />
+                        <div
+                          className="h-[14px] rounded-full bg-[#1c2333] animate-pulse"
+                          style={{ width: j === 0 ? 160 : 80 }}
+                        />
                       </td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             ) : (
-              <motion.tbody key={`${tab}-${debouncedSearch}-${page}`} variants={tableContainer} initial="hidden" animate="show">
+              <motion.tbody
+                key={`${tab}-${debouncedSearch}-${page}`}
+                variants={tableContainer}
+                initial="hidden"
+                animate="show"
+              >
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-[#6b7280] text-[13px] py-16">Nothing here yet.</td>
+                    <td colSpan={6} className="text-center text-[#6b7280] text-[13px] py-16">
+                      Nothing here yet.
+                    </td>
                   </tr>
-                ) : rows.map((row, idx) => {
-                  const isBanned = !!row.deleted_at
-                  const isFlagged = row.is_flagged
-                  return (
-                    <motion.tr key={row.id} variants={cardItem}
-                      style={{
-                        borderBottom: '1px solid #1c2333',
-                        background: isBanned ? 'rgba(239,68,68,0.04)' : isFlagged ? 'rgba(201,169,110,0.03)' : idx % 2 === 0 ? '#0d1117' : '#07090f',
-                        opacity: isBanned ? 0.5 : 1,
-                      }}
-                      className="hover:bg-[#111620] transition-colors group">
-                      {/* User */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar alias={row.alias} email={row.email} size={32} />
-                          <div>
-                            <div className="text-[13px] text-[#eeeef0] font-medium">{row.alias ?? '—'}</div>
-                            <div className="text-[11px] text-[#6b7280]">{row.email}</div>
+                ) : (
+                  rows.map((row, idx) => {
+                    const isBanned = !!row.deleted_at
+                    const isFlagged = row.is_flagged
+                    return (
+                      <motion.tr
+                        key={row.id}
+                        variants={cardItem}
+                        style={{
+                          borderBottom: '1px solid #1c2333',
+                          background: isBanned
+                            ? 'rgba(239,68,68,0.04)'
+                            : isFlagged
+                              ? 'rgba(201,169,110,0.03)'
+                              : idx % 2 === 0
+                                ? '#0d1117'
+                                : '#07090f',
+                          opacity: isBanned ? 0.5 : 1,
+                        }}
+                        className="hover:bg-[#111620] transition-colors group"
+                      >
+                        {/* User */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar alias={row.alias} email={row.email} size={32} />
+                            <div>
+                              <div className="text-[13px] text-[#eeeef0] font-medium">
+                                {row.alias ?? '—'}
+                              </div>
+                              <div className="text-[11px] text-[#6b7280]">{row.email}</div>
+                            </div>
+                            {isBanned && (
+                              <span
+                                className="text-[10px] px-2 py-[2px] rounded-full text-[#ef4444]"
+                                style={{
+                                  background: 'rgba(239,68,68,0.08)',
+                                  border: '1px solid rgba(239,68,68,0.25)',
+                                }}
+                              >
+                                Banned
+                              </span>
+                            )}
+                            {isFlagged && !isBanned && (
+                              <span
+                                className="text-[10px] px-2 py-[2px] rounded-full text-[#c9a96e]"
+                                style={{
+                                  background: 'rgba(201,169,110,0.08)',
+                                  border: '1px solid rgba(201,169,110,0.25)',
+                                }}
+                              >
+                                Flagged
+                              </span>
+                            )}
                           </div>
-                          {isBanned && (
-                            <span className="text-[10px] px-2 py-[2px] rounded-full text-[#ef4444]"
-                              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                              Banned
+                        </td>
+                        {/* Joined */}
+                        <td className="px-4 py-3 text-[12px] text-[#6b7280]">
+                          {relativeTime(row.created_at)}
+                        </td>
+                        {/* Onboarding */}
+                        <td className="px-4 py-3">
+                          {row.onboarding_complete ? (
+                            <span
+                              className="text-[11px] px-[10px] py-1 rounded-full text-[#4ade80]"
+                              style={{
+                                background: 'rgba(74,222,128,0.08)',
+                                border: '1px solid rgba(74,222,128,0.25)',
+                              }}
+                            >
+                              Complete
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                              style={{
+                                background: 'rgba(201,169,110,0.08)',
+                                border: '1px solid rgba(201,169,110,0.25)',
+                              }}
+                            >
+                              Incomplete
                             </span>
                           )}
-                          {isFlagged && !isBanned && (
-                            <span className="text-[10px] px-2 py-[2px] rounded-full text-[#c9a96e]"
-                              style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.25)' }}>
-                              Flagged
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      {/* Joined */}
-                      <td className="px-4 py-3 text-[12px] text-[#6b7280]">{relativeTime(row.created_at)}</td>
-                      {/* Onboarding */}
-                      <td className="px-4 py-3">
-                        {row.onboarding_complete ? (
-                          <span className="text-[11px] px-[10px] py-1 rounded-full text-[#4ade80]"
-                            style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)' }}>
-                            Complete
+                        </td>
+                        {/* Activity */}
+                        <td className="px-4 py-3 text-[11px] text-[#6b7280]">
+                          {row.story_count} stories · {row.like_count} likes · {row.save_count}{' '}
+                          saves
+                        </td>
+                        {/* Bookings */}
+                        <td className="px-4 py-3">
+                          <span
+                            style={{ color: row.booking_count > 0 ? '#e8607a' : '#6b7280' }}
+                            className="text-[13px] font-medium"
+                          >
+                            {row.booking_count}
                           </span>
-                        ) : (
-                          <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-                            style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.25)' }}>
-                            Incomplete
-                          </span>
-                        )}
-                      </td>
-                      {/* Activity */}
-                      <td className="px-4 py-3 text-[11px] text-[#6b7280]">
-                        {row.story_count} stories · {row.like_count} likes · {row.save_count} saves
-                      </td>
-                      {/* Bookings */}
-                      <td className="px-4 py-3">
-                        <span style={{ color: row.booking_count > 0 ? '#e8607a' : '#6b7280' }}
-                          className="text-[13px] font-medium">
-                          {row.booking_count}
-                        </span>
-                      </td>
-                      {/* Action */}
-                      <td className="px-4 py-3">
-                        <KebabMenu
-                          onView={() => setDrawerUserId(row.id)}
-                          onFlag={() => flagMutation.mutate({ id: row.id, action: isFlagged ? 'unflag' : 'flag' })}
-                          onBan={() => isBanned ? banMutation.mutate({ id: row.id, action: 'unban' }) : setBanUserId(row.id)}
-                          onDelete={() => setDeleteUserId(row.id)}
-                          isFlagged={isFlagged}
-                          isBanned={isBanned}
-                        />
-                      </td>
-                    </motion.tr>
-                  )
-                })}
+                        </td>
+                        {/* Action */}
+                        <td className="px-4 py-3">
+                          <KebabMenu
+                            onView={() => setDrawerUserId(row.id)}
+                            onFlag={() =>
+                              flagMutation.mutate({
+                                id: row.id,
+                                action: isFlagged ? 'unflag' : 'flag',
+                              })
+                            }
+                            onBan={() =>
+                              isBanned
+                                ? banMutation.mutate({ id: row.id, action: 'unban' })
+                                : setBanUserId(row.id)
+                            }
+                            onDelete={() => setDeleteUserId(row.id)}
+                            isFlagged={isFlagged}
+                            isBanned={isBanned}
+                          />
+                        </td>
+                      </motion.tr>
+                    )
+                  })
+                )}
               </motion.tbody>
             )}
           </AnimatePresence>
@@ -718,53 +923,82 @@ export default function AdminUsersPage() {
       {/* Mobile cards */}
       <div className="md:hidden flex flex-col gap-3">
         <AnimatePresence mode="wait">
-          <motion.div key={`mob-${tab}-${debouncedSearch}-${page}`}
-            variants={tableContainer} initial="hidden" animate="show"
-            className="flex flex-col gap-3">
+          <motion.div
+            key={`mob-${tab}-${debouncedSearch}-${page}`}
+            variants={tableContainer}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col gap-3"
+          >
             {isLoading
               ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 animate-pulse h-[90px]" />
-              ))
-              : rows.map(row => {
-                const isBanned = !!row.deleted_at
-                const isFlagged = row.is_flagged
-                return (
-                  <motion.div key={row.id} variants={cardItem}
-                    className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 relative"
-                    style={{ opacity: isBanned ? 0.5 : 1 }}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar alias={row.alias} email={row.email} size={36} />
-                        <div>
-                          <div className="text-[13px] text-[#eeeef0] font-medium">{row.alias ?? '—'}</div>
-                          <div className="text-[11px] text-[#6b7280]">{relativeTime(row.created_at)}</div>
+                  <div
+                    key={i}
+                    className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 animate-pulse h-[90px]"
+                  />
+                ))
+              : rows.map((row) => {
+                  const isBanned = !!row.deleted_at
+                  const isFlagged = row.is_flagged
+                  return (
+                    <motion.div
+                      key={row.id}
+                      variants={cardItem}
+                      className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 relative"
+                      style={{ opacity: isBanned ? 0.5 : 1 }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar alias={row.alias} email={row.email} size={36} />
+                          <div>
+                            <div className="text-[13px] text-[#eeeef0] font-medium">
+                              {row.alias ?? '—'}
+                            </div>
+                            <div className="text-[11px] text-[#6b7280]">
+                              {relativeTime(row.created_at)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {row.onboarding_complete ? (
+                            <span
+                              className="text-[10px] px-2 py-[2px] rounded-full text-[#4ade80]"
+                              style={{
+                                background: 'rgba(74,222,128,0.08)',
+                                border: '1px solid rgba(74,222,128,0.25)',
+                              }}
+                            >
+                              ✓
+                            </span>
+                          ) : null}
+                          <KebabMenu
+                            onView={() => setDrawerUserId(row.id)}
+                            onFlag={() =>
+                              flagMutation.mutate({
+                                id: row.id,
+                                action: isFlagged ? 'unflag' : 'flag',
+                              })
+                            }
+                            onBan={() =>
+                              isBanned
+                                ? banMutation.mutate({ id: row.id, action: 'unban' })
+                                : setBanUserId(row.id)
+                            }
+                            onDelete={() => setDeleteUserId(row.id)}
+                            isFlagged={isFlagged}
+                            isBanned={isBanned}
+                          />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {row.onboarding_complete ? (
-                          <span className="text-[10px] px-2 py-[2px] rounded-full text-[#4ade80]"
-                            style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)' }}>
-                            ✓
-                          </span>
-                        ) : null}
-                        <KebabMenu
-                          onView={() => setDrawerUserId(row.id)}
-                          onFlag={() => flagMutation.mutate({ id: row.id, action: isFlagged ? 'unflag' : 'flag' })}
-                          onBan={() => isBanned ? banMutation.mutate({ id: row.id, action: 'unban' }) : setBanUserId(row.id)}
-                          onDelete={() => setDeleteUserId(row.id)}
-                          isFlagged={isFlagged}
-                          isBanned={isBanned}
-                        />
+                      <div className="text-[11px] text-[#6b7280] mt-2">
+                        {row.story_count} stories · {row.like_count} likes · {row.save_count} saves
+                        {row.booking_count > 0 && (
+                          <span style={{ color: '#e8607a' }}> · {row.booking_count} bookings</span>
+                        )}
                       </div>
-                    </div>
-                    <div className="text-[11px] text-[#6b7280] mt-2">
-                      {row.story_count} stories · {row.like_count} likes · {row.save_count} saves
-                      {row.booking_count > 0 && <span style={{ color: '#e8607a' }}> · {row.booking_count} bookings</span>}
-                    </div>
-                  </motion.div>
-                )
-              })
-            }
+                    </motion.div>
+                  )
+                })}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -772,13 +1006,21 @@ export default function AdminUsersPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-8">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all"
+          >
             <ChevronLeft size={14} />
           </button>
-          <span className="text-[12px] text-[#6b7280]">{page} / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all">
+          <span className="text-[12px] text-[#6b7280]">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all"
+          >
             <ChevronRight size={14} />
           </button>
         </div>

@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { MapPin, Search, X } from 'lucide-react'
 
 declare global {
-  interface Window { google: any }
+  interface Window {
+    google: any
+  }
 }
 
 interface Prediction {
@@ -14,40 +16,46 @@ interface Prediction {
 }
 
 interface Props {
-  onSaved:   (city: string) => void
-  onCancel:  () => void
+  onSaved: (city: string) => void
+  onCancel: () => void
   /** Override the default save behaviour. If omitted, PATCHes /api/users/profile. */
   saveCity?: (city: string) => Promise<void>
 }
 
 export default function LocationPicker({ onSaved, onCancel, saveCity }: Props) {
-  const [query,       setQuery]       = useState('')
+  const [query, setQuery] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
-  const [mapsLoaded,  setMapsLoaded]  = useState(false)
-  const [saving,      setSaving]      = useState(false)
-  const [open,        setOpen]        = useState(false)
+  const [mapsLoaded, setMapsLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [open, setOpen] = useState(false)
 
-  const svcRef      = useRef<any>(null)
-  const tokenRef    = useRef<any>(null)
+  const svcRef = useRef<any>(null)
+  const tokenRef = useRef<any>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const inputRef    = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   // track whether the last action was picking from the list (prevents blur-reset)
-  const pickingRef  = useRef(false)
+  const pickingRef = useRef(false)
 
   // ── Load Google Maps Places SDK ────────────────────────────────────────────
   useEffect(() => {
-    if (window.google?.maps?.places) { setMapsLoaded(true); return }
+    if (window.google?.maps?.places) {
+      setMapsLoaded(true)
+      return
+    }
 
     const SCRIPT_ID = 'gm-places-sdk'
     if (document.getElementById(SCRIPT_ID)) {
       const id = setInterval(() => {
-        if (window.google?.maps?.places) { setMapsLoaded(true); clearInterval(id) }
+        if (window.google?.maps?.places) {
+          setMapsLoaded(true)
+          clearInterval(id)
+        }
       }, 100)
       return () => clearInterval(id)
     }
 
     const script = document.createElement('script')
-    script.id  = SCRIPT_ID
+    script.id = SCRIPT_ID
     script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`
     script.async = true
     script.onload = () => setMapsLoaded(true)
@@ -57,19 +65,22 @@ export default function LocationPicker({ onSaved, onCancel, saveCity }: Props) {
   // ── Init service + session token once maps ready ───────────────────────────
   useEffect(() => {
     if (!mapsLoaded) return
-    svcRef.current   = new window.google.maps.places.AutocompleteService()
+    svcRef.current = new window.google.maps.places.AutocompleteService()
     tokenRef.current = new window.google.maps.places.AutocompleteSessionToken()
     setTimeout(() => inputRef.current?.focus(), 80)
   }, [mapsLoaded])
 
   // ── Fetch predictions ──────────────────────────────────────────────────────
   const fetchPredictions = useCallback((value: string) => {
-    if (!svcRef.current || value.length < 2) { setPredictions([]); return }
+    if (!svcRef.current || value.length < 2) {
+      setPredictions([])
+      return
+    }
     svcRef.current.getPlacePredictions(
       { input: value, types: ['(cities)'], sessionToken: tokenRef.current },
       (results: Prediction[] | null, status: string) => {
         setPredictions(status === 'OK' && results ? results.slice(0, 6) : [])
-      },
+      }
     )
   }, [])
 
@@ -109,9 +120,9 @@ export default function LocationPicker({ onSaved, onCancel, saveCity }: Props) {
         await saveCity(city)
       } else {
         const res = await fetch('/api/users/profile', {
-          method:  'PATCH',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ city }),
+          body: JSON.stringify({ city }),
         })
         if (!res.ok) throw new Error()
       }
@@ -140,21 +151,43 @@ export default function LocationPicker({ onSaved, onCancel, saveCity }: Props) {
           disabled={!mapsLoaded || saving}
           autoComplete="off"
           style={{
-            flex: 1, background: 'transparent', border: 'none',
-            outline: 'none', fontSize: 13, color: '#eeeef0',
+            flex: 1,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            fontSize: 13,
+            color: '#eeeef0',
           }}
           className="placeholder-[#4b5563]"
         />
         {saving ? (
-          <div style={{
-            width: 14, height: 14, flexShrink: 0, borderRadius: '50%',
-            border: '2px solid rgba(255,255,255,0.12)', borderTopColor: '#e8607a',
-            animation: 'spin 0.7s linear infinite',
-          }} />
+          <div
+            style={{
+              width: 14,
+              height: 14,
+              flexShrink: 0,
+              borderRadius: '50%',
+              border: '2px solid rgba(255,255,255,0.12)',
+              borderTopColor: '#e8607a',
+              animation: 'spin 0.7s linear infinite',
+            }}
+          />
         ) : query ? (
           <button
-            onMouseDown={e => { e.preventDefault(); setQuery(''); setPredictions([]); setOpen(false) }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setQuery('')
+              setPredictions([])
+              setOpen(false)
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              flexShrink: 0,
+            }}
           >
             <X size={13} color="#6b7280" />
           </button>
@@ -180,8 +213,8 @@ export default function LocationPicker({ onSaved, onCancel, saveCity }: Props) {
                 background: 'transparent',
                 borderBottom: i < predictions.length - 1 ? '1px solid #1c2333' : 'none',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(232,96,122,0.07)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(232,96,122,0.07)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <MapPin size={12} color="#e8607a" style={{ flexShrink: 0 }} />
               <div>
@@ -201,10 +234,18 @@ export default function LocationPicker({ onSaved, onCancel, saveCity }: Props) {
 
       {/* Cancel */}
       <button
-        onMouseDown={e => { e.preventDefault(); onCancel() }}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          onCancel()
+        }}
         style={{
-          marginTop: 8, fontSize: 11, color: '#4b5563',
-          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          marginTop: 8,
+          fontSize: 11,
+          color: '#4b5563',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
         }}
       >
         cancel

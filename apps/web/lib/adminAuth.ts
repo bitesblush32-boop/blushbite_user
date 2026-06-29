@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-type AdminGuardOk  = { ok: true;  userId: string }
+type AdminGuardOk = { ok: true; userId: string }
 type AdminGuardErr = { ok: false; response: NextResponse }
 
 /**
@@ -14,7 +14,7 @@ type AdminGuardErr = { ok: false; response: NextResponse }
  */
 export async function requireAdmin(req: NextRequest): Promise<AdminGuardOk | AdminGuardErr> {
   const session = req.cookies.get('admin_session')?.value
-  const secret  = process.env.ADMIN_SESSION_SECRET
+  const secret = process.env.ADMIN_SESSION_SECRET
 
   if (!secret || !session || session !== secret) {
     return {

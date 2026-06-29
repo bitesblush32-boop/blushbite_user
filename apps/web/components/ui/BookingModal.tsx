@@ -114,10 +114,7 @@ export default function BookingModal() {
               </div>
 
               {/* Dates field */}
-              <label
-                className="text-[11.5px] text-[#6b7280] mb-2 block"
-                htmlFor="booking-dates"
-              >
+              <label className="text-[11.5px] text-[#6b7280] mb-2 block" htmlFor="booking-dates">
                 Preferred dates or window
               </label>
               <input
@@ -128,19 +125,18 @@ export default function BookingModal() {
                 onChange={(e) => setForm((f) => ({ ...f, dates: e.target.value }))}
                 onFocus={() => setDatesFocused(true)}
                 onBlur={() => setDatesFocused(false)}
-                style={{
-                  ...inputBase,
-                  borderColor: datesFocused ? 'rgba(232,96,122,0.4)' : '#1c2333',
-                  // placeholder color via CSS below
-                } as React.CSSProperties}
+                style={
+                  {
+                    ...inputBase,
+                    borderColor: datesFocused ? 'rgba(232,96,122,0.4)' : '#1c2333',
+                    // placeholder color via CSS below
+                  } as React.CSSProperties
+                }
                 className="placeholder-[#6b7280]"
               />
 
               {/* Notes field */}
-              <label
-                className="text-[11.5px] text-[#6b7280] mb-2 block"
-                htmlFor="booking-notes"
-              >
+              <label className="text-[11.5px] text-[#6b7280] mb-2 block" htmlFor="booking-notes">
                 Anything you&apos;d like her to know
               </label>
               <textarea
@@ -151,11 +147,13 @@ export default function BookingModal() {
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 onFocus={() => setNotesFocused(true)}
                 onBlur={() => setNotesFocused(false)}
-                style={{
-                  ...inputBase,
-                  borderColor: notesFocused ? 'rgba(232,96,122,0.4)' : '#1c2333',
-                  resize: 'none',
-                } as React.CSSProperties}
+                style={
+                  {
+                    ...inputBase,
+                    borderColor: notesFocused ? 'rgba(232,96,122,0.4)' : '#1c2333',
+                    resize: 'none',
+                  } as React.CSSProperties
+                }
                 className="placeholder-[#6b7280]"
               />
 
@@ -164,10 +162,7 @@ export default function BookingModal() {
                 Send request — we&apos;ll be in touch
               </button>
 
-              <p
-                className="text-center text-[11px] text-[#6b7280] mt-3"
-                style={{ opacity: 0.7 }}
-              >
+              <p className="text-center text-[11px] text-[#6b7280] mt-3" style={{ opacity: 0.7 }}>
                 No payment taken now · Full Stripe integration in Phase 2
               </p>
             </div>

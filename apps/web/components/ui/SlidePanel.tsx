@@ -116,7 +116,11 @@ export default function SlidePanel({
               <div className="min-w-0">
                 <span
                   className="block truncate"
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: '#eeeef0' }}
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 20,
+                    color: '#eeeef0',
+                  }}
                 >
                   {title}
                 </span>
@@ -138,8 +142,7 @@ export default function SlidePanel({
           </motion.aside>
         </>
       )}
-    </AnimatePresence>
-    ,
+    </AnimatePresence>,
     document.body
   )
 }

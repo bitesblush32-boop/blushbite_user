@@ -32,22 +32,22 @@ export interface Audio {
 }
 
 export interface CompanionFeedItem {
-  id:              string
-  companionId:     string
-  name:            string | null
-  age:             number | null
-  city:            string | null
-  minPrice:        string | null
-  currency:        string
-  vibe:            string | null
-  tags:            string[]
+  id: string
+  companionId: string
+  name: string | null
+  age: number | null
+  city: string | null
+  minPrice: string | null
+  currency: string
+  vibe: string | null
+  tags: string[]
   primaryPhotoUrl: string | null
-  gradient:        string
-  isVerified:      boolean
+  gradient: string
+  isVerified: boolean
   sessionModality: string
-  overlapScore:    number
-  distance_km?:    number | null
-  gender?:         string | null
-  height_cm?:      number | null
-  body_type?:      string | null
+  overlapScore: number
+  distance_km?: number | null
+  gender?: string | null
+  height_cm?: number | null
+  body_type?: string | null
 }

@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 import { checkRateLimit, storeOtp } from '@/lib/otpStore'
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
@@ -125,13 +125,16 @@ export async function POST(req: NextRequest) {
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400, headers: CORS_HEADERS })
+    return NextResponse.json(
+      { error: 'Enter a valid email address.' },
+      { status: 400, headers: CORS_HEADERS }
+    )
   }
 
   if (!checkRateLimit(email)) {
     return NextResponse.json(
       { error: 'Too many code requests. Please wait 10 minutes before trying again.' },
-      { status: 429, headers: CORS_HEADERS },
+      { status: 429, headers: CORS_HEADERS }
     )
   }
 
@@ -141,16 +144,16 @@ export async function POST(req: NextRequest) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
-      from:    `BlushBite <${FROM}>`,
-      to:      email,
+      from: `BlushBite <${FROM}>`,
+      to: email,
       subject: `${otp} — your BlushBite verification code`,
-      html:    buildOtpEmail(otp),
+      html: buildOtpEmail(otp),
     })
   } catch (err) {
     console.error('[send-otp] Resend error:', err)
     return NextResponse.json(
       { error: 'Could not send the code. Please try again.' },
-      { status: 500, headers: CORS_HEADERS },
+      { status: 500, headers: CORS_HEADERS }
     )
   }
 

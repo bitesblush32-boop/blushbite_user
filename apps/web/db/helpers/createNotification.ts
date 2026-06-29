@@ -9,28 +9,48 @@ type LegacyType = 'story_like' | 'story_save' | 'story_comment' | 'comment_reply
 // and generate the human-readable title + body.
 function buildNotifContent(
   type: LegacyType,
-  alias: string,
+  alias: string
 ): { notification_type: string; title: string; body: string } {
   switch (type) {
     case 'story_like':
-      return { notification_type: 'profile_viewed', title: 'New like',    body: `${alias} liked your confession` }
+      return {
+        notification_type: 'profile_viewed',
+        title: 'New like',
+        body: `${alias} liked your confession`,
+      }
     case 'story_save':
-      return { notification_type: 'profile_viewed', title: 'New save',    body: `${alias} saved your confession` }
+      return {
+        notification_type: 'profile_viewed',
+        title: 'New save',
+        body: `${alias} saved your confession`,
+      }
     case 'story_comment':
-      return { notification_type: 'booking_request', title: 'New comment', body: `${alias} commented on your confession` }
+      return {
+        notification_type: 'booking_request',
+        title: 'New comment',
+        body: `${alias} commented on your confession`,
+      }
     case 'comment_reply':
-      return { notification_type: 'booking_request', title: 'New reply',   body: `${alias} replied to your comment` }
+      return {
+        notification_type: 'booking_request',
+        title: 'New reply',
+        body: `${alias} replied to your comment`,
+      }
     case 'comment_like':
-      return { notification_type: 'profile_viewed', title: 'New like',    body: `${alias} liked your comment` }
+      return {
+        notification_type: 'profile_viewed',
+        title: 'New like',
+        body: `${alias} liked your comment`,
+      }
   }
 }
 
 interface NotifArgs {
   recipientId: string
-  actorId:     string
-  type:        LegacyType
+  actorId: string
+  type: LegacyType
   contentType: string
-  contentId:   string
+  contentId: string
 }
 
 export async function createNotification(args: NotifArgs): Promise<void> {
@@ -53,15 +73,15 @@ export async function createNotification(args: NotifArgs): Promise<void> {
   await db
     .insert(notifications)
     .values({
-      recipient_type:    'user',
-      recipient_id:      args.recipientId,
+      recipient_type: 'user',
+      recipient_id: args.recipientId,
       notification_type,
       title,
       body,
       metadata: {
-        actor_id:     args.actorId,
+        actor_id: args.actorId,
         content_type: args.contentType,
-        content_id:   args.contentId,
+        content_id: args.contentId,
       },
     })
     .onConflictDoNothing()

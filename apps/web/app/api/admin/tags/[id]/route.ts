@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
-  fantasyCategories, fantasyTags, vibeTags, moodTags, orientationTags, storyCategories,
-  companionFantasyTags, companionVibeTags, storyFantasyTags, storyMoodTags, storyOrientationTags,
+  fantasyCategories,
+  fantasyTags,
+  vibeTags,
+  moodTags,
+  orientationTags,
+  storyCategories,
+  companionFantasyTags,
+  companionVibeTags,
+  storyFantasyTags,
+  storyMoodTags,
+  storyOrientationTags,
   stories,
 } from '@/db/schema'
 import { eq, sql } from 'drizzle-orm'
@@ -27,21 +36,36 @@ async function getUsageCount(table: TableKey, id: number): Promise<number> {
     }
     case 'fantasy_tag': {
       const [[a], [b]] = await Promise.all([
-        db.select({ c: sql<number>`COUNT(*)::int` }).from(companionFantasyTags).where(eq(companionFantasyTags.fantasy_tag_id, id)),
-        db.select({ c: sql<number>`COUNT(*)::int` }).from(storyFantasyTags).where(eq(storyFantasyTags.fantasy_tag_id, id)),
+        db
+          .select({ c: sql<number>`COUNT(*)::int` })
+          .from(companionFantasyTags)
+          .where(eq(companionFantasyTags.fantasy_tag_id, id)),
+        db
+          .select({ c: sql<number>`COUNT(*)::int` })
+          .from(storyFantasyTags)
+          .where(eq(storyFantasyTags.fantasy_tag_id, id)),
       ])
       return (a?.c ?? 0) + (b?.c ?? 0)
     }
     case 'vibe_tag': {
-      const [r] = await db.select({ c: sql<number>`COUNT(*)::int` }).from(companionVibeTags).where(eq(companionVibeTags.vibe_tag_id, id))
+      const [r] = await db
+        .select({ c: sql<number>`COUNT(*)::int` })
+        .from(companionVibeTags)
+        .where(eq(companionVibeTags.vibe_tag_id, id))
       return r?.c ?? 0
     }
     case 'mood_tag': {
-      const [r] = await db.select({ c: sql<number>`COUNT(*)::int` }).from(storyMoodTags).where(eq(storyMoodTags.mood_tag_id, id))
+      const [r] = await db
+        .select({ c: sql<number>`COUNT(*)::int` })
+        .from(storyMoodTags)
+        .where(eq(storyMoodTags.mood_tag_id, id))
       return r?.c ?? 0
     }
     case 'orientation_tag': {
-      const [r] = await db.select({ c: sql<number>`COUNT(*)::int` }).from(storyOrientationTags).where(eq(storyOrientationTags.orientation_tag_id, id))
+      const [r] = await db
+        .select({ c: sql<number>`COUNT(*)::int` })
+        .from(storyOrientationTags)
+        .where(eq(storyOrientationTags.orientation_tag_id, id))
       return r?.c ?? 0
     }
     case 'story_category': {
@@ -56,10 +80,7 @@ async function getUsageCount(table: TableKey, id: number): Promise<number> {
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -83,32 +104,38 @@ export async function PATCH(
   if (action === 'toggle_active') {
     switch (table) {
       case 'fantasy_category':
-        await db.update(fantasyCategories)
+        await db
+          .update(fantasyCategories)
           .set({ is_active: sql`NOT ${fantasyCategories.is_active}` })
           .where(eq(fantasyCategories.id, id))
         break
       case 'fantasy_tag':
-        await db.update(fantasyTags)
+        await db
+          .update(fantasyTags)
           .set({ is_active: sql`NOT ${fantasyTags.is_active}` })
           .where(eq(fantasyTags.id, id))
         break
       case 'vibe_tag':
-        await db.update(vibeTags)
+        await db
+          .update(vibeTags)
           .set({ is_active: sql`NOT ${vibeTags.is_active}` })
           .where(eq(vibeTags.id, id))
         break
       case 'mood_tag':
-        await db.update(moodTags)
+        await db
+          .update(moodTags)
           .set({ is_active: sql`NOT ${moodTags.is_active}` })
           .where(eq(moodTags.id, id))
         break
       case 'orientation_tag':
-        await db.update(orientationTags)
+        await db
+          .update(orientationTags)
           .set({ is_active: sql`NOT ${orientationTags.is_active}` })
           .where(eq(orientationTags.id, id))
         break
       case 'story_category':
-        await db.update(storyCategories)
+        await db
+          .update(storyCategories)
           .set({ is_active: sql`NOT ${storyCategories.is_active}` })
           .where(eq(storyCategories.id, id))
         break
@@ -122,29 +149,29 @@ export async function PATCH(
     switch (table) {
       case 'fantasy_category': {
         const updates: Record<string, unknown> = {}
-        if (name !== undefined)        updates.name        = name.trim()
+        if (name !== undefined) updates.name = name.trim()
         if (description !== undefined) updates.description = description
-        if (sort_order !== undefined)  updates.sort_order  = sort_order
+        if (sort_order !== undefined) updates.sort_order = sort_order
         await db.update(fantasyCategories).set(updates).where(eq(fantasyCategories.id, id))
         break
       }
       case 'fantasy_tag': {
         const updates: Record<string, unknown> = {}
-        if (name !== undefined)        updates.name        = name.trim()
+        if (name !== undefined) updates.name = name.trim()
         if (description !== undefined) updates.description = description
         await db.update(fantasyTags).set(updates).where(eq(fantasyTags.id, id))
         break
       }
       case 'vibe_tag': {
         const updates: Record<string, unknown> = {}
-        if (name !== undefined)  updates.name  = name.trim()
+        if (name !== undefined) updates.name = name.trim()
         if (emoji !== undefined) updates.emoji = emoji
         await db.update(vibeTags).set(updates).where(eq(vibeTags.id, id))
         break
       }
       case 'mood_tag': {
         const updates: Record<string, unknown> = {}
-        if (name !== undefined)  updates.name  = name.trim()
+        if (name !== undefined) updates.name = name.trim()
         if (emoji !== undefined) updates.emoji = emoji
         await db.update(moodTags).set(updates).where(eq(moodTags.id, id))
         break
@@ -157,9 +184,9 @@ export async function PATCH(
       }
       case 'story_category': {
         const updates: Record<string, unknown> = {}
-        if (name !== undefined)        updates.name        = name.trim()
+        if (name !== undefined) updates.name = name.trim()
         if (description !== undefined) updates.description = description
-        if (sort_order !== undefined)  updates.sort_order  = sort_order
+        if (sort_order !== undefined) updates.sort_order = sort_order
         await db.update(storyCategories).set(updates).where(eq(storyCategories.id, id))
         break
       }
@@ -172,10 +199,7 @@ export async function PATCH(
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 

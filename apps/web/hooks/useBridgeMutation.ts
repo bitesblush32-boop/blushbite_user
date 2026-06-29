@@ -12,14 +12,14 @@ export function useBridgeMutation(storyId: string) {
     (session?.user as any)?.platform_role === 'dream'
 
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus>('idle')
-  const [loading, setLoading]           = useState(false)
+  const [loading, setLoading] = useState(false)
 
   // Check existing bridge status on mount (companions only)
   useEffect(() => {
     if (!isCompanion || !storyId) return
     fetch(`/api/companion/bridge?story_id=${storyId}`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data.bridged && data.status) {
           setBridgeStatus(data.status as BridgeStatus)
         }
@@ -33,9 +33,9 @@ export function useBridgeMutation(storyId: string) {
     setBridgeStatus('approved') // optimistic — auto-approved
     try {
       const res = await fetch('/api/companion/bridge', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ story_id: storyId }),
+        body: JSON.stringify({ story_id: storyId }),
         credentials: 'include',
       })
       const data = await res.json()

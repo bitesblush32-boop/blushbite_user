@@ -43,27 +43,33 @@ function MultiChips<T extends { id: number; name: string; emoji?: string | null 
 }) {
   const toggle = (id: number) => {
     if (selected.includes(id)) {
-      onChange(selected.filter(x => x !== id))
+      onChange(selected.filter((x) => x !== id))
     } else if (selected.length < max) {
       onChange([...selected, id])
     }
   }
   return (
     <div className="mb-4">
-      <div className="text-[11px] text-[#6b7280] uppercase tracking-[0.05em] mb-2">{label} (max {max})</div>
+      <div className="text-[11px] text-[#6b7280] uppercase tracking-[0.05em] mb-2">
+        {label} (max {max})
+      </div>
       <div className="flex flex-wrap gap-2">
-        {items.map(t => {
+        {items.map((t) => {
           const active = selected.includes(t.id)
           return (
-            <button key={t.id} onClick={() => toggle(t.id)}
+            <button
+              key={t.id}
+              onClick={() => toggle(t.id)}
               className="text-[11px] px-[10px] py-1 rounded-full cursor-pointer transition-all duration-150"
               style={{
                 borderColor: active ? '#e8607a' : '#1c2333',
-                color:       active ? '#e8607a' : '#6b7280',
-                background:  active ? 'rgba(232,96,122,0.08)' : 'transparent',
-                border:      `1px solid ${active ? '#e8607a' : '#1c2333'}`,
-              }}>
-              {t.emoji ? `${t.emoji} ` : ''}{t.name}
+                color: active ? '#e8607a' : '#6b7280',
+                background: active ? 'rgba(232,96,122,0.08)' : 'transparent',
+                border: `1px solid ${active ? '#e8607a' : '#1c2333'}`,
+              }}
+            >
+              {t.emoji ? `${t.emoji} ` : ''}
+              {t.name}
             </button>
           )
         })}
@@ -74,17 +80,31 @@ function MultiChips<T extends { id: number; name: string; emoji?: string | null 
 
 // ── Toggle switch ──────────────────────────────────────────────────────────
 
-function Toggle({ value, onChange, label, color = '#e8607a' }: {
-  value: boolean; onChange: (v: boolean) => void; label: string; color?: string
+function Toggle({
+  value,
+  onChange,
+  label,
+  color = '#e8607a',
+}: {
+  value: boolean
+  onChange: (v: boolean) => void
+  label: string
+  color?: string
 }) {
   return (
-    <button onClick={() => onChange(!value)}
-      className="flex items-center justify-between w-full py-3 border-b border-[#1c2333] last:border-0">
+    <button
+      onClick={() => onChange(!value)}
+      className="flex items-center justify-between w-full py-3 border-b border-[#1c2333] last:border-0"
+    >
       <span className="text-[13px] text-[#eeeef0]">{label}</span>
-      <div className="relative w-10 h-5 rounded-full transition-all"
-        style={{ background: value ? color : '#1c2333' }}>
-        <div className="absolute top-[3px] w-[14px] h-[14px] rounded-full bg-white transition-all"
-          style={{ left: value ? '22px' : '3px' }} />
+      <div
+        className="relative w-10 h-5 rounded-full transition-all"
+        style={{ background: value ? color : '#1c2333' }}
+      >
+        <div
+          className="absolute top-[3px] w-[14px] h-[14px] rounded-full bg-white transition-all"
+          style={{ left: value ? '22px' : '3px' }}
+        />
       </div>
     </button>
   )
@@ -144,7 +164,7 @@ function WriteMode({ tagsData }: { tagsData: TagsData | undefined }) {
       <div>
         <input
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="Give your story a title..."
           className="w-full bg-transparent border-0 border-b border-[#1c2333] focus:border-[#e8607a] outline-none pb-3 mb-6 text-[28px] text-[#eeeef0] placeholder-[#6b7280] transition-colors"
           style={{ fontFamily: "'Playfair Display', serif" }}
@@ -152,18 +172,16 @@ function WriteMode({ tagsData }: { tagsData: TagsData | undefined }) {
 
         <textarea
           value={body}
-          onChange={e => setBody(e.target.value)}
+          onChange={(e) => setBody(e.target.value)}
           placeholder="Write your story here. Use the full emotional range of the genre."
           className="w-full bg-[#0d1117] border border-[#1c2333] rounded-[16px] p-6 text-[16px] text-[#eeeef0] placeholder-[#6b7280] outline-none resize-none focus:border-[rgba(232,96,122,0.5)] transition-colors leading-[1.8]"
           style={{ fontFamily: "'Playfair Display', serif", minHeight: 480 }}
         />
-        <div className="text-right text-[11px] text-[#6b7280] mt-2">
-          {wordCount} / 2000 words
-        </div>
+        <div className="text-right text-[11px] text-[#6b7280] mt-2">{wordCount} / 2000 words</div>
 
         <textarea
           value={excerpt}
-          onChange={e => setExcerpt(e.target.value)}
+          onChange={(e) => setExcerpt(e.target.value)}
           placeholder="Short excerpt (optional — used in feeds & cards)..."
           rows={3}
           className="w-full bg-[#0d1117] border border-[#1c2333] rounded-[12px] px-4 py-3 mt-4 text-[13px] text-[#eeeef0] placeholder-[#6b7280] outline-none resize-none focus:border-[rgba(232,96,122,0.5)] transition-colors"
@@ -174,15 +192,19 @@ function WriteMode({ tagsData }: { tagsData: TagsData | undefined }) {
       <div className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5 h-fit">
         {/* Category */}
         <div className="mb-4">
-          <div className="text-[11px] text-[#6b7280] uppercase tracking-[0.05em] mb-2">Category</div>
+          <div className="text-[11px] text-[#6b7280] uppercase tracking-[0.05em] mb-2">
+            Category
+          </div>
           <select
             value={categoryId ?? ''}
-            onChange={e => setCategoryId(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
             className="w-full bg-[#161d2a] border border-[#1c2333] rounded-[8px] px-3 py-2 text-[13px] text-[#eeeef0] outline-none focus:border-[rgba(232,96,122,0.5)] transition-colors"
           >
             <option value="">— No category —</option>
-            {tagsData?.storyCategories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+            {tagsData?.storyCategories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </select>
         </div>
@@ -215,15 +237,32 @@ function WriteMode({ tagsData }: { tagsData: TagsData | undefined }) {
 
         {/* Toggles */}
         <div className="border-t border-[#1c2333] pt-4 mt-2">
-          <Toggle value={autoPublish} onChange={setAutoPublish} label="Auto-publish" color="#4ade80" />
-          <Toggle value={isFeatured}  onChange={setIsFeatured}  label="Feature this story" color="#c9a96e" />
-          <Toggle value={isAnonymous} onChange={setIsAnonymous} label="Mark as anonymous" color="#6b7280" />
+          <Toggle
+            value={autoPublish}
+            onChange={setAutoPublish}
+            label="Auto-publish"
+            color="#4ade80"
+          />
+          <Toggle
+            value={isFeatured}
+            onChange={setIsFeatured}
+            label="Feature this story"
+            color="#c9a96e"
+          />
+          <Toggle
+            value={isAnonymous}
+            onChange={setIsAnonymous}
+            label="Mark as anonymous"
+            color="#6b7280"
+          />
         </div>
       </div>
 
       {/* Sticky submit bar */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-[240px] z-[600] border-t border-[#1c2333] px-6 py-4 flex items-center justify-between gap-4"
-        style={{ background: 'rgba(13,17,23,0.96)', backdropFilter: 'blur(20px)' }}>
+      <div
+        className="fixed bottom-0 left-0 right-0 md:left-[240px] z-[600] border-t border-[#1c2333] px-6 py-4 flex items-center justify-between gap-4"
+        style={{ background: 'rgba(13,17,23,0.96)', backdropFilter: 'blur(20px)' }}
+      >
         <div className="text-[12px] text-[#6b7280] hidden sm:block">
           {!title.trim() && <span className="mr-3">Title required</span>}
           {wordCount < 50 && <span>Min 50 words ({wordCount} so far)</span>}
@@ -242,7 +281,11 @@ function WriteMode({ tagsData }: { tagsData: TagsData | undefined }) {
             disabled={!isValid || submitting}
             className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-5 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer transition-all hover:-translate-y-px disabled:opacity-40 inline-flex items-center gap-2"
           >
-            {submitting ? <Loader2 size={14} className="animate-spin" /> : success ? <Check size={14} /> : null}
+            {submitting ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : success ? (
+              <Check size={14} />
+            ) : null}
             {success ? 'Published ✓' : 'Publish now'}
           </button>
         </div>
@@ -272,7 +315,7 @@ function ImportMode() {
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = e.target?.result as string
-      const lines = text.split('\n').filter(l => l.trim())
+      const lines = text.split('\n').filter((l) => l.trim())
       const items: ImportItem[] = []
       const errors: string[] = []
       lines.forEach((line, i) => {
@@ -320,12 +363,12 @@ function ImportMode() {
         if (res.ok) {
           const data = await res.json()
           totalImported += data.imported ?? 0
-          totalSkipped  += data.skipped  ?? 0
+          totalSkipped += data.skipped ?? 0
         }
       } catch {
         // continue on batch error
       }
-      setProgress(p => ({ ...p, current: Math.min(p.total, p.current + batch.length) }))
+      setProgress((p) => ({ ...p, current: Math.min(p.total, p.current + batch.length) }))
     }
 
     setResult({ imported: totalImported, skipped: totalSkipped })
@@ -337,36 +380,61 @@ function ImportMode() {
   return (
     <div className="max-w-[720px]">
       {/* Instruction box */}
-      <div className="rounded-[14px] px-5 py-4 mb-6 text-[13px] text-[#c9a96e] leading-[1.6]"
-        style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.25)' }}>
-        Upload your <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">scraped_stories_enriched.ndjson</code> file.
-        Each line must be a valid JSON object with <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">title</code>, <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">body</code>, and <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">categories</code> fields.
+      <div
+        className="rounded-[14px] px-5 py-4 mb-6 text-[13px] text-[#c9a96e] leading-[1.6]"
+        style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.25)' }}
+      >
+        Upload your{' '}
+        <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">
+          scraped_stories_enriched.ndjson
+        </code>{' '}
+        file. Each line must be a valid JSON object with{' '}
+        <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">title</code>,{' '}
+        <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">body</code>, and{' '}
+        <code className="text-[12px] bg-white/[0.06] px-1 py-[2px] rounded">categories</code>{' '}
+        fields.
       </div>
 
       {/* Drop zone */}
       <div
         onDrop={handleDrop}
-        onDragOver={e => e.preventDefault()}
+        onDragOver={(e) => e.preventDefault()}
         onClick={() => fileRef.current?.click()}
         className="rounded-[20px] p-12 text-center cursor-pointer transition-all mb-6"
-        style={{ border: '2px dashed #1c2333', background: parsedItems.length ? 'rgba(74,222,128,0.04)' : 'transparent' }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(232,96,122,0.4)' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = parsedItems.length ? 'rgba(74,222,128,0.3)' : '#1c2333' }}
+        style={{
+          border: '2px dashed #1c2333',
+          background: parsedItems.length ? 'rgba(74,222,128,0.04)' : 'transparent',
+        }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(232,96,122,0.4)'
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLDivElement).style.borderColor = parsedItems.length
+            ? 'rgba(74,222,128,0.3)'
+            : '#1c2333'
+        }}
       >
         <input
           ref={fileRef}
           type="file"
           accept=".ndjson,.json,.txt"
           className="hidden"
-          onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) handleFile(f)
+          }}
         />
         {parsedItems.length > 0 ? (
           <>
-            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ background: 'rgba(74,222,128,0.12)' }}>
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'rgba(74,222,128,0.12)' }}
+            >
               <Check size={22} color="#4ade80" />
             </div>
-            <div className="text-[15px] text-[#eeeef0] font-medium mb-1">{parsedItems.length} stories ready to import</div>
+            <div className="text-[15px] text-[#eeeef0] font-medium mb-1">
+              {parsedItems.length} stories ready to import
+            </div>
             <div className="text-[12px] text-[#6b7280]">{fileName} · Click to change file</div>
           </>
         ) : (
@@ -374,7 +442,9 @@ function ImportMode() {
             <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-[#111620]">
               <Upload size={22} color="#6b7280" />
             </div>
-            <div className="text-[15px] text-[#eeeef0] mb-1">Drop your NDJSON file here or click to browse</div>
+            <div className="text-[15px] text-[#eeeef0] mb-1">
+              Drop your NDJSON file here or click to browse
+            </div>
             <div className="text-[12px] text-[#6b7280]">Accepts .ndjson · .json · .txt</div>
           </>
         )}
@@ -385,19 +455,25 @@ function ImportMode() {
       {parsedItems.length > 0 && (
         <div className="bg-[#111620] border border-[#1c2333] rounded-[14px] overflow-hidden mb-6">
           <div className="px-5 py-3 border-b border-[#1c2333]">
-            <span className="text-[12px] text-[#6b7280] uppercase tracking-[0.05em]">Preview (first 5)</span>
+            <span className="text-[12px] text-[#6b7280] uppercase tracking-[0.05em]">
+              Preview (first 5)
+            </span>
           </div>
           {parsedItems.slice(0, 5).map((item, i) => {
             const bodyText = item.body ?? item.raw_text ?? ''
             const words = bodyText.trim().split(/\s+/).filter(Boolean).length
             return (
-              <div key={i} className="px-5 py-3 border-b border-[#1c2333] last:border-0 flex items-center gap-4">
+              <div
+                key={i}
+                className="px-5 py-3 border-b border-[#1c2333] last:border-0 flex items-center gap-4"
+              >
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] text-[#eeeef0] overflow-hidden text-ellipsis whitespace-nowrap">
                     {item.title ?? '(no title)'}
                   </div>
                   <div className="text-[11px] text-[#6b7280] mt-[2px]">
-                    {item.categories?.join(', ') || 'No category'} · {(item.mood_tags?.length ?? 0)} mood tags
+                    {item.categories?.join(', ') || 'No category'} · {item.mood_tags?.length ?? 0}{' '}
+                    mood tags
                   </div>
                 </div>
                 <span className="text-[11px] text-[#6b7280] flex-shrink-0">{words} words</span>
@@ -405,7 +481,9 @@ function ImportMode() {
             )
           })}
           {parsedItems.length > 5 && (
-            <div className="px-5 py-3 text-[12px] text-[#6b7280]">…and {parsedItems.length - 5} more</div>
+            <div className="px-5 py-3 text-[12px] text-[#6b7280]">
+              …and {parsedItems.length - 5} more
+            </div>
           )}
         </div>
       )}
@@ -419,7 +497,7 @@ function ImportMode() {
               <span className="text-[13px] text-[#eeeef0]">Batch size</span>
               <select
                 value={batchSize}
-                onChange={e => setBatchSize(Number(e.target.value))}
+                onChange={(e) => setBatchSize(Number(e.target.value))}
                 className="bg-[#161d2a] border border-[#1c2333] rounded-[8px] px-3 py-2 text-[13px] text-[#eeeef0] outline-none"
               >
                 <option value={50}>50</option>
@@ -436,7 +514,9 @@ function ImportMode() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[12px] text-[#6b7280]">Importing…</span>
-            <span className="text-[12px] text-[#eeeef0]">{progress.current} / {progress.total}</span>
+            <span className="text-[12px] text-[#eeeef0]">
+              {progress.current} / {progress.total}
+            </span>
           </div>
           <div className="h-[6px] bg-[#1c2333] rounded-full overflow-hidden">
             <motion.div
@@ -456,9 +536,13 @@ function ImportMode() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-[14px] px-5 py-4 mb-6 text-[13px] text-[#4ade80]"
-            style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)' }}
+            style={{
+              background: 'rgba(74,222,128,0.06)',
+              border: '1px solid rgba(74,222,128,0.25)',
+            }}
           >
-            ✓ {result.imported} stories imported.{result.skipped > 0 ? ` ${result.skipped} skipped (unmapped categories).` : ''}
+            ✓ {result.imported} stories imported.
+            {result.skipped > 0 ? ` ${result.skipped} skipped (unmapped categories).` : ''}
           </motion.div>
         )}
       </AnimatePresence>
@@ -511,23 +595,29 @@ function CreatePageInner() {
     >
       {/* Header */}
       <div className="mb-8">
-        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: '#eeeef0' }} className="mb-5">
+        <h1
+          style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: '#eeeef0' }}
+          className="mb-5"
+        >
           {mode === 'import' ? 'Bulk Import' : 'Write a Story'}
         </h1>
 
         {/* Mode toggle */}
         <div className="flex gap-2">
           {[
-            { key: 'write',  label: 'Write a Story' },
+            { key: 'write', label: 'Write a Story' },
             { key: 'import', label: 'Bulk Import' },
-          ].map(m => (
-            <button key={m.key} onClick={() => setMode(m.key)}
+          ].map((m) => (
+            <button
+              key={m.key}
+              onClick={() => setMode(m.key)}
               className="text-[13px] px-[18px] py-[8px] rounded-[10px] border cursor-pointer transition-all duration-150"
               style={{
                 borderColor: mode === m.key ? '#e8607a' : '#1c2333',
-                color:       mode === m.key ? '#e8607a' : '#6b7280',
-                background:  mode === m.key ? 'rgba(232,96,122,0.08)' : 'transparent',
-              }}>
+                color: mode === m.key ? '#e8607a' : '#6b7280',
+                background: mode === m.key ? 'rgba(232,96,122,0.08)' : 'transparent',
+              }}
+            >
               {m.label}
             </button>
           ))}
@@ -537,19 +627,23 @@ function CreatePageInner() {
       {/* Mode content */}
       <AnimatePresence mode="wait">
         {mode === 'write' ? (
-          <motion.div key="write"
+          <motion.div
+            key="write"
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.25 }}>
+            transition={{ duration: 0.25 }}
+          >
             <WriteMode tagsData={tagsData} />
           </motion.div>
         ) : (
-          <motion.div key="import"
+          <motion.div
+            key="import"
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.25 }}>
+            transition={{ duration: 0.25 }}
+          >
             <ImportMode />
           </motion.div>
         )}
@@ -562,11 +656,16 @@ function CreatePageInner() {
 
 export default function AdminContentCreatePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#07090f' }}>
-        <Loader2 size={24} color="#6b7280" className="animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div
+          className="min-h-screen flex items-center justify-center"
+          style={{ background: '#07090f' }}
+        >
+          <Loader2 size={24} color="#6b7280" className="animate-spin" />
+        </div>
+      }
+    >
       <CreatePageInner />
     </Suspense>
   )

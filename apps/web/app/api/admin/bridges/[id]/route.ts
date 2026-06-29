@@ -2,22 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
-import { companionStoryBridges, companionProfiles, companions, stories, notifications } from '@/db/schema'
+import {
+  companionStoryBridges,
+  companionProfiles,
+  companions,
+  stories,
+  notifications,
+} from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 const schema = z.object({
-  action:     z.enum(['approve', 'reject']),
+  action: z.enum(['approve', 'reject']),
   admin_note: z.string().max(500).optional(),
 })
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
-  const body   = await req.json().catch(() => null)
+  const body = await req.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 
@@ -27,15 +30,18 @@ export async function PATCH(
   // Fetch bridge + story title + companion_id for notification
   const bridgeRows = await db
     .select({
-      id:                   companionStoryBridges.id,
-      status:               companionStoryBridges.status,
+      id: companionStoryBridges.id,
+      status: companionStoryBridges.status,
       companion_profile_id: companionStoryBridges.companion_profile_id,
-      story_id:             companionStoryBridges.story_id,
-      story_title:          stories.title,
-      companion_id:         companions.id,
+      story_id: companionStoryBridges.story_id,
+      story_title: stories.title,
+      companion_id: companions.id,
     })
     .from(companionStoryBridges)
-    .innerJoin(companionProfiles, eq(companionStoryBridges.companion_profile_id, companionProfiles.id))
+    .innerJoin(
+      companionProfiles,
+      eq(companionStoryBridges.companion_profile_id, companionProfiles.id)
+    )
     .innerJoin(companions, eq(companionProfiles.companion_id, companions.id))
     .innerJoin(stories, eq(companionStoryBridges.story_id, stories.id))
     .where(eq(companionStoryBridges.id, params.id))
@@ -55,12 +61,12 @@ export async function PATCH(
 
     // Notify companion
     await db.insert(notifications).values({
-      recipient_type:    'companion',
-      recipient_id:      bridge.companion_id,
+      recipient_type: 'companion',
+      recipient_id: bridge.companion_id,
       notification_type: 'bridge_approved',
-      title:             'Bridge link approved',
-      body:              `Your link to "${bridge.story_title}" is now live.`,
-      action_url:        '/companion/bridge',
+      title: 'Bridge link approved',
+      body: `Your link to "${bridge.story_title}" is now live.`,
+      action_url: '/companion/bridge',
     })
   } else {
     await db

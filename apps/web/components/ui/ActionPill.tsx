@@ -8,22 +8,22 @@ import { useLikeMutation } from '@/hooks/useLikeMutation'
 import { useSaveMutation } from '@/hooks/useSaveMutation'
 
 interface Props {
-  storyId:      string
-  likeCount:    number
-  saveCount:    number
+  storyId: string
+  likeCount: number
+  saveCount: number
   commentCount: number
   userHasLiked: boolean
   userHasSaved: boolean
-  layout?:      'vertical' | 'horizontal'
+  layout?: 'vertical' | 'horizontal'
   // Optional overrides — pass these when the feed uses a different mutation cache
   // (e.g. StoryFeedCard uses useStoryLikeMutation / useStorySaveMutation)
-  onLike?:      () => void
-  onSave?:      () => void
+  onLike?: () => void
+  onSave?: () => void
 }
 
 function fmt(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return String(n)
 }
 
@@ -33,9 +33,9 @@ function ActionBtn({
   label,
   horizontal,
 }: {
-  children:    React.ReactNode
-  onTap:       () => void
-  label:       string
+  children: React.ReactNode
+  onTap: () => void
+  label: string
   horizontal?: boolean
 }) {
   return (
@@ -45,13 +45,13 @@ function ActionBtn({
       onClick={onTap}
       className="flex flex-col items-center"
       style={{
-        gap:        horizontal ? 4 : 6,
-        minWidth:   horizontal ? 44 : 48,
-        minHeight:  horizontal ? 44 : 48,
+        gap: horizontal ? 4 : 6,
+        minWidth: horizontal ? 44 : 48,
+        minHeight: horizontal ? 44 : 48,
         background: 'transparent',
-        border:     'none',
-        cursor:     'pointer',
-        padding:    '2px 0',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '2px 0',
         justifyContent: 'center',
       }}
     >
@@ -61,13 +61,20 @@ function ActionBtn({
 }
 
 export function ActionPill({
-  storyId, likeCount, saveCount, commentCount, userHasLiked, userHasSaved,
-  layout = 'vertical', onLike, onSave,
+  storyId,
+  likeCount,
+  saveCount,
+  commentCount,
+  userHasLiked,
+  userHasSaved,
+  layout = 'vertical',
+  onLike,
+  onSave,
 }: Props) {
   const { openComments, toggleMute, isMuted } = useUIStore()
-  const muted        = isMuted(storyId)
-  const likeAnim     = useAnimation()
-  const saveAnim     = useAnimation()
+  const muted = isMuted(storyId)
+  const likeAnim = useAnimation()
+  const saveAnim = useAnimation()
   // Fallback mutations — used when no override is passed (confessions feed)
   const likeMutation = useLikeMutation()
   const saveMutation = useSaveMutation()
@@ -75,7 +82,10 @@ export function ActionPill({
   // Phase 2 audio stub — local state for horizontal layout
   const [audioOn, setAudioOn] = useState(true)
 
-  const springTap = { scale: [1, 1.35, 0.9, 1] as number[], transition: { type: 'spring' as const, stiffness: 400, damping: 12 } }
+  const springTap = {
+    scale: [1, 1.35, 0.9, 1] as number[],
+    transition: { type: 'spring' as const, stiffness: 400, damping: 12 },
+  }
 
   const handleLike = () => {
     likeAnim.start(springTap)
@@ -102,10 +112,11 @@ export function ActionPill({
     openComments(storyId)
   }
 
-  const iconSize  = layout === 'horizontal' ? 22 : 26
-  const countStyle: React.CSSProperties = layout === 'horizontal'
-    ? { fontSize: 11, color: '#9ca3af' }
-    : { fontSize: 12, color: '#eeeef0' }
+  const iconSize = layout === 'horizontal' ? 22 : 26
+  const countStyle: React.CSSProperties =
+    layout === 'horizontal'
+      ? { fontSize: 11, color: '#9ca3af' }
+      : { fontSize: 12, color: '#eeeef0' }
 
   const isHorizontal = layout === 'horizontal'
 
@@ -119,7 +130,7 @@ export function ActionPill({
             strokeWidth={1.8}
             style={{
               color: userHasLiked ? '#e8607a' : '#eeeef0',
-              fill:  userHasLiked ? '#e8607a' : 'none',
+              fill: userHasLiked ? '#e8607a' : 'none',
             }}
           />
         </motion.div>
@@ -144,7 +155,7 @@ export function ActionPill({
             strokeWidth={1.8}
             style={{
               color: userHasSaved ? '#c9a96e' : '#eeeef0',
-              fill:  userHasSaved ? '#c9a96e' : 'none',
+              fill: userHasSaved ? '#c9a96e' : 'none',
             }}
           />
         </motion.div>
@@ -155,18 +166,24 @@ export function ActionPill({
 
       {/* Mute / audio toggle */}
       {isHorizontal ? (
-        <ActionBtn onTap={() => setAudioOn(v => !v)} label={audioOn ? 'Mute' : 'Unmute'} horizontal>
-          {audioOn
-            ? <Volume2 size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-            : <VolumeX size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-          }
+        <ActionBtn
+          onTap={() => setAudioOn((v) => !v)}
+          label={audioOn ? 'Mute' : 'Unmute'}
+          horizontal
+        >
+          {audioOn ? (
+            <Volume2 size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+          ) : (
+            <VolumeX size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+          )}
         </ActionBtn>
       ) : (
         <ActionBtn onTap={() => toggleMute(storyId)} label={muted ? 'Unmute' : 'Mute'}>
-          {muted
-            ? <VolumeX size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-            : <Volume2 size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
-          }
+          {muted ? (
+            <VolumeX size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+          ) : (
+            <Volume2 size={iconSize} strokeWidth={1.8} style={{ color: '#eeeef0' }} />
+          )}
         </ActionBtn>
       )}
     </>
@@ -176,10 +193,10 @@ export function ActionPill({
     return (
       <div
         style={{
-          display:        'flex',
-          flexDirection:  'row',
+          display: 'flex',
+          flexDirection: 'row',
           justifyContent: 'space-around',
-          width:          '100%',
+          width: '100%',
         }}
       >
         {buttons}

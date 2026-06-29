@@ -65,10 +65,7 @@ export function FileUpload({
 
       {/* Idle state */}
       {!uploading && !error && (
-        <button
-          onClick={() => inputRef.current?.click()}
-          className="w-full"
-        >
+        <button onClick={() => inputRef.current?.click()} className="w-full">
           <div className="text-[14px] text-[#eeeef0] font-medium mb-1">{label}</div>
           <div className="text-[12px] text-[#6b7280]">Max {maxSize}MB</div>
         </button>

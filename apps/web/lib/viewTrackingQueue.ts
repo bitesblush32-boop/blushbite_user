@@ -31,10 +31,7 @@ export function startTracking() {
   setInterval(flush, 10_000)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && queue.length > 0) {
-      const blob = new Blob(
-        [JSON.stringify({ views: queue })],
-        { type: 'application/json' }
-      )
+      const blob = new Blob([JSON.stringify({ views: queue })], { type: 'application/json' })
       navigator.sendBeacon('/api/stories/views', blob)
       queue = []
     }

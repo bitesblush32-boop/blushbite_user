@@ -41,7 +41,7 @@ export default function DiditVerify({ verificationUrl, onComplete }: Props) {
       await DiditSdk.shared.startVerification({ url: verificationUrl })
     }
 
-    start().catch(err => {
+    start().catch((err) => {
       console.error('[DiditVerify] start error:', err)
       if (alive) {
         onComplete({ type: 'failed', error: { type: 'unknown', message: String(err) } })

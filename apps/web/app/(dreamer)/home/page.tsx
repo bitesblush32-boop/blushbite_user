@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { stories, audios } from '@/lib/data'
@@ -32,7 +33,11 @@ export default function HomePage() {
   const { intensity, setIntensity } = useMoodStore()
   const openModal = useUIStore((s) => s.openModal)
   const play = usePlayerStore((s) => s.play)
-  const { companionCards, companions: realCompanions, isLoading: companionsLoading } = useRecommendedCompanions()
+  const {
+    companionCards,
+    companions: realCompanions,
+    isLoading: companionsLoading,
+  } = useRecommendedCompanions()
   const router = useRouter()
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
@@ -61,7 +66,6 @@ export default function HomePage() {
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-10 pt-[95px] pb-20"
     >
-
       {/* ── BLOCK 1: Mood Slider + Desires button ─────────────────────────────── */}
       <div className="flex items-center gap-3 mb-8 flex-wrap">
         <div
@@ -103,8 +107,8 @@ export default function HomePage() {
           className="text-[12.5px] font-medium px-[16px] py-[10px] rounded-full border cursor-pointer transition-all duration-200 whitespace-nowrap flex-shrink-0"
           style={{
             borderColor: 'rgba(232,96,122,0.35)',
-            background:  'rgba(232,96,122,0.06)',
-            color:        '#e8607a',
+            background: 'rgba(232,96,122,0.06)',
+            color: '#e8607a',
           }}
         >
           ✦ Tune your desires
@@ -115,145 +119,151 @@ export default function HomePage() {
 
       {/* ── BLOCK 2: Hero ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 mb-14">
-
         {/* Featured companion card — unique large layout, built inline */}
-        {featured && <div
-          className="bg-[#111620] border border-[#1c2333] rounded-[20px] overflow-hidden flex flex-col md:flex-row relative min-h-[360px] cursor-pointer transition-shadow duration-300"
-          style={{ boxShadow: heroShadow ? '0 0 40px rgba(232,96,122,0.18)' : 'none' }}
-          onMouseEnter={() => setHeroShadow(true)}
-          onMouseLeave={() => setHeroShadow(false)}
-          onClick={() => openModal(featured.id)}
-        >
-          {/* Image strip */}
+        {featured && (
           <div
-            className="w-full h-[180px] md:w-[260px] md:h-auto flex-shrink-0 relative overflow-hidden"
-            style={{ background: featured.gradient }}
+            className="bg-[#111620] border border-[#1c2333] rounded-[20px] overflow-hidden flex flex-col md:flex-row relative min-h-[360px] cursor-pointer transition-shadow duration-300"
+            style={{ boxShadow: heroShadow ? '0 0 40px rgba(232,96,122,0.18)' : 'none' }}
+            onMouseEnter={() => setHeroShadow(true)}
+            onMouseLeave={() => setHeroShadow(false)}
+            onClick={() => openModal(featured.id)}
           >
-            {/* Real photo if available, silhouette fallback */}
-            {'photoUrl' in featured && featured.photoUrl ? (
-              <img
-                src={featured.photoUrl}
-                alt={featured.name}
-                className="absolute inset-0 w-full h-full object-cover object-top"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  width="120" height="240" viewBox="0 0 80 160"
-                  fill="white" style={{ opacity: 0.2, filter: 'blur(0.5px)' }}
-                >
-                  <ellipse cx="40" cy="26" rx="20" ry="24" />
-                  <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q56 182 40 184 Q24 182 12 170Z" />
-                </svg>
-              </div>
-            )}
-
-            {/* Fade to card body — right on desktop, bottom on mobile */}
+            {/* Image strip */}
             <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(90deg, transparent 60%, #111620 100%), linear-gradient(180deg, transparent 60%, #111620 100%)',
-              }}
-            />
-          </div>
+              className="w-full h-[180px] md:w-[260px] md:h-auto flex-shrink-0 relative overflow-hidden"
+              style={{ background: featured.gradient }}
+            >
+              {/* Real photo if available, silhouette fallback */}
+              {'photoUrl' in featured && featured.photoUrl ? (
+                <Image
+                  src={featured.photoUrl}
+                  alt={featured.name}
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 768px) 100vw, 260px"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg
+                    width="120"
+                    height="240"
+                    viewBox="0 0 80 160"
+                    fill="white"
+                    style={{ opacity: 0.2, filter: 'blur(0.5px)' }}
+                  >
+                    <ellipse cx="40" cy="26" rx="20" ry="24" />
+                    <path d="M16 90 Q24 55 40 52 Q56 55 64 90 L68 170 Q56 182 40 184 Q24 182 12 170Z" />
+                  </svg>
+                </div>
+              )}
 
-          {/* Content */}
-          <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
-            <div>
-              {/* Hero chip */}
+              {/* Fade to card body — right on desktop, bottom on mobile */}
               <div
-                className="inline-flex items-center gap-[6px] text-[11px] font-medium text-[#e8607a] px-[10px] py-1 rounded-full mb-[14px] tracking-[0.04em]"
+                className="absolute inset-0"
                 style={{
-                  background: 'rgba(232,96,122,0.12)',
-                  border: '1px solid rgba(232,96,122,0.25)',
+                  background:
+                    'linear-gradient(90deg, transparent 60%, #111620 100%), linear-gradient(180deg, transparent 60%, #111620 100%)',
                 }}
-              >
-                <span className="w-[6px] h-[6px] rounded-full bg-current inline-block" />
-                For you · Verified companion
-              </div>
-
-              {/* Headline */}
-              <h1
-                className="text-[32px] text-[#eeeef0] leading-tight mb-[10px]"
-                style={{ fontFamily: "'Playfair Display', serif" }}
-              >
-                An intimate evening
-                <br />
-                <em style={{ fontStyle: 'italic', color: '#e8607a' }}>with {featured.name}</em>
-              </h1>
-
-              {/* Subtitle */}
-              <p className="text-[13px] text-[#6b7280] leading-[1.7] mb-5 max-w-[360px]">
-                Curated for you based on your preferences.{' '}
-                {featured.name} specialises in genuine connection.
-              </p>
-
-              {/* Chips */}
-              <div className="flex flex-wrap gap-2 mb-7">
-                <span
-                  className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-                  style={{
-                    border: '1px solid rgba(232,96,122,0.3)',
-                    background: 'rgba(232,96,122,0.08)',
-                  }}
-                >
-                  ✦ Matches your taste
-                </span>
-                <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
-                  {featured.city} · In-person
-                </span>
-                <span
-                  className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-                  style={{
-                    border: '1px solid rgba(201,169,110,0.35)',
-                    background: 'rgba(201,169,110,0.08)',
-                  }}
-                >
-                  Sessions from {featured.price}
-                </span>
-                <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
-                  {featured.tags[0]}
-                </span>
-              </div>
+              />
             </div>
 
-            {/* Bottom group */}
-            <div>
-              <div className="flex flex-wrap gap-3 mb-0">
-                <button
-                  className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-[22px] py-[12px] rounded-[10px] text-[13.5px] font-medium cursor-pointer transition-all duration-200 hover:-translate-y-px"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    openModal(featured.id)
+            {/* Content */}
+            <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
+              <div>
+                {/* Hero chip */}
+                <div
+                  className="inline-flex items-center gap-[6px] text-[11px] font-medium text-[#e8607a] px-[10px] py-1 rounded-full mb-[14px] tracking-[0.04em]"
+                  style={{
+                    background: 'rgba(232,96,122,0.12)',
+                    border: '1px solid rgba(232,96,122,0.25)',
                   }}
-                  onMouseEnter={(e) =>
-                    ((e.currentTarget as HTMLButtonElement).style.boxShadow =
-                      '0 8px 24px rgba(232,96,122,0.3)')
-                  }
-                  onMouseLeave={(e) =>
-                    ((e.currentTarget as HTMLButtonElement).style.boxShadow = 'none')
-                  }
                 >
-                  View {featured.name}&apos;s profile &amp; sessions →
-                </button>
-                <button className="bg-transparent text-[#6b7280] border border-[#1c2333] px-[20px] py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all duration-200 hover:border-white/20 hover:text-[#eeeef0]">
-                  See more companions like this
-                </button>
+                  <span className="w-[6px] h-[6px] rounded-full bg-current inline-block" />
+                  For you · Verified companion
+                </div>
+
+                {/* Headline */}
+                <h1
+                  className="text-[32px] text-[#eeeef0] leading-tight mb-[10px]"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  An intimate evening
+                  <br />
+                  <em style={{ fontStyle: 'italic', color: '#e8607a' }}>with {featured.name}</em>
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-[13px] text-[#6b7280] leading-[1.7] mb-5 max-w-[360px]">
+                  Curated for you based on your preferences. {featured.name} specialises in genuine
+                  connection.
+                </p>
+
+                {/* Chips */}
+                <div className="flex flex-wrap gap-2 mb-7">
+                  <span
+                    className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                    style={{
+                      border: '1px solid rgba(232,96,122,0.3)',
+                      background: 'rgba(232,96,122,0.08)',
+                    }}
+                  >
+                    ✦ Matches your taste
+                  </span>
+                  <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                    {featured.city} · In-person
+                  </span>
+                  <span
+                    className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                    style={{
+                      border: '1px solid rgba(201,169,110,0.35)',
+                      background: 'rgba(201,169,110,0.08)',
+                    }}
+                  >
+                    Sessions from {featured.price}
+                  </span>
+                  <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                    {featured.tags[0]}
+                  </span>
+                </div>
               </div>
 
-              {/* Trust line */}
-              <div className="flex gap-4 mt-4 flex-wrap">
-                <span className="flex items-center gap-[6px] text-[11.5px] text-[#6b7280]">
-                  <span style={{ color: '#c9a96e' }}>🔒</span>Anonymous booking
-                </span>
-                <span className="flex items-center gap-[6px] text-[11.5px] text-[#6b7280]">
-                  <span style={{ color: '#c9a96e' }}>✦</span>Verified &amp; licensed
-                </span>
+              {/* Bottom group */}
+              <div>
+                <div className="flex flex-wrap gap-3 mb-0">
+                  <button
+                    className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-[22px] py-[12px] rounded-[10px] text-[13.5px] font-medium cursor-pointer transition-all duration-200 hover:-translate-y-px"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openModal(featured.id)
+                    }}
+                    onMouseEnter={(e) =>
+                      ((e.currentTarget as HTMLButtonElement).style.boxShadow =
+                        '0 8px 24px rgba(232,96,122,0.3)')
+                    }
+                    onMouseLeave={(e) =>
+                      ((e.currentTarget as HTMLButtonElement).style.boxShadow = 'none')
+                    }
+                  >
+                    View {featured.name}&apos;s profile &amp; sessions →
+                  </button>
+                  <button className="bg-transparent text-[#6b7280] border border-[#1c2333] px-[20px] py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all duration-200 hover:border-white/20 hover:text-[#eeeef0]">
+                    See more companions like this
+                  </button>
+                </div>
+
+                {/* Trust line */}
+                <div className="flex gap-4 mt-4 flex-wrap">
+                  <span className="flex items-center gap-[6px] text-[11.5px] text-[#6b7280]">
+                    <span style={{ color: '#c9a96e' }}>🔒</span>Anonymous booking
+                  </span>
+                  <span className="flex items-center gap-[6px] text-[11.5px] text-[#6b7280]">
+                    <span style={{ color: '#c9a96e' }}>✦</span>Verified &amp; licensed
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>}
+        )}
 
         {/* Mood panel */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[20px] p-7 flex flex-col">
@@ -346,17 +356,27 @@ export default function HomePage() {
           initial="hidden"
           animate="show"
           className="flex gap-4 overflow-x-auto pb-3"
-          style={{
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          } as React.CSSProperties}
+          style={
+            {
+              scrollSnapType: 'x mandatory',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch',
+            } as React.CSSProperties
+          }
         >
           {companionsLoading
             ? [...Array(4)].map((_, i) => (
                 <div
                   key={i}
-                  style={{ width: 220, height: 280, flexShrink: 0, scrollSnapAlign: 'start', borderRadius: 14, background: '#111620', animation: 'pulse 1.5s ease-in-out infinite' }}
+                  style={{
+                    width: 220,
+                    height: 280,
+                    flexShrink: 0,
+                    scrollSnapAlign: 'start',
+                    borderRadius: 14,
+                    background: '#111620',
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                  }}
                 />
               ))
             : companionCards.map((c) => (
@@ -367,8 +387,7 @@ export default function HomePage() {
                 >
                   <CompanionCard companion={c} />
                 </motion.div>
-              ))
-          }
+              ))}
         </motion.div>
       </div>
 
@@ -418,11 +437,13 @@ export default function HomePage() {
           initial="hidden"
           animate="show"
           className="flex gap-4 overflow-x-auto pb-3"
-          style={{
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          } as React.CSSProperties}
+          style={
+            {
+              scrollSnapType: 'x mandatory',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch',
+            } as React.CSSProperties
+          }
         >
           {filteredStories.map((s) => (
             <motion.div
@@ -463,11 +484,13 @@ export default function HomePage() {
           initial="hidden"
           animate="show"
           className="flex gap-4 overflow-x-auto pb-3"
-          style={{
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          } as React.CSSProperties}
+          style={
+            {
+              scrollSnapType: 'x mandatory',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch',
+            } as React.CSSProperties
+          }
         >
           {audios.map((a) => (
             <motion.div
@@ -502,11 +525,13 @@ export default function HomePage() {
           initial="hidden"
           animate="show"
           className="flex gap-4 overflow-x-auto pb-3"
-          style={{
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          } as React.CSSProperties}
+          style={
+            {
+              scrollSnapType: 'x mandatory',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch',
+            } as React.CSSProperties
+          }
         >
           {bridgeItems.map((entry, idx) => (
             <motion.div
@@ -515,7 +540,7 @@ export default function HomePage() {
               style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
             >
               {entry.kind === 'story' ? (
-                <StoryCard story={entry.item as typeof stories[0]} />
+                <StoryCard story={entry.item as (typeof stories)[0]} />
               ) : (
                 <div
                   className="rounded-[14px]"
@@ -533,16 +558,19 @@ export default function HomePage() {
       <footer className="mt-20 pt-10 border-t border-[#1c2333]">
         <div className="flex items-center justify-between flex-wrap gap-5">
           <div className="flex gap-5 flex-wrap">
-            {['Safety & Consent', 'Privacy & Anonymity', 'Legal information', 'Report an issue'].map(
-              (label) => (
-                <span
-                  key={label}
-                  className="text-[12px] text-[#6b7280] cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
-                >
-                  {label}
-                </span>
-              ),
-            )}
+            {[
+              'Safety & Consent',
+              'Privacy & Anonymity',
+              'Legal information',
+              'Report an issue',
+            ].map((label) => (
+              <span
+                key={label}
+                className="text-[12px] text-[#6b7280] cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
+              >
+                {label}
+              </span>
+            ))}
           </div>
           <div className="flex gap-4 flex-wrap text-[12px] text-[#6b7280]">
             <span>🔒 Anonymous IDs</span>

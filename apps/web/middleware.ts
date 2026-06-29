@@ -9,7 +9,7 @@ export function middleware(req: NextRequest) {
 
   if (pathname.startsWith('/admin') && pathname !== '/admin-login') {
     const session = req.cookies.get('admin_session')?.value
-    const secret  = process.env.ADMIN_SESSION_SECRET
+    const secret = process.env.ADMIN_SESSION_SECRET
 
     if (!secret || !session || session !== secret) {
       const loginUrl = new URL('/admin-login', req.url)

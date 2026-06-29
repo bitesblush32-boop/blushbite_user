@@ -41,12 +41,16 @@ export function CompanionModeToggle() {
       {isCreator ? (
         <>
           <LayoutDashboard size={14} color="#e8607a" />
-          <span style={{ fontSize: 12, color: '#e8607a', fontWeight: 500, whiteSpace: 'nowrap' }}>Creator</span>
+          <span style={{ fontSize: 12, color: '#e8607a', fontWeight: 500, whiteSpace: 'nowrap' }}>
+            Creator
+          </span>
         </>
       ) : (
         <>
           <Eye size={14} color="#6b7280" />
-          <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, whiteSpace: 'nowrap' }}>Browsing</span>
+          <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, whiteSpace: 'nowrap' }}>
+            Browsing
+          </span>
         </>
       )}
     </motion.button>

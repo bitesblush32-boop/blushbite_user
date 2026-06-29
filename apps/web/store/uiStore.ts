@@ -4,22 +4,22 @@ import type { FontSize } from '@/lib/paginateText'
 // ── ProfileViewerStory ─────────────────────────────────────────────────────
 
 export interface ProfileViewerStory {
-  id:            string
-  title:         string | null
-  body:          string          // raw JSON body string — same format as Story.body
-  rawBody:       string | null   // plain text extracted for paginateText
+  id: string
+  title: string | null
+  body: string // raw JSON body string — same format as Story.body
+  rawBody: string | null // plain text extracted for paginateText
   pageImageUrls: string[]
-  categoryName:  string
-  categories:    string[]
-  moodTags:      string[]
-  likeCount:     number
-  saveCount:     number
-  commentCount:  number
-  userHasLiked:  boolean
-  userHasSaved:  boolean
-  authorAlias:   string | null
-  isAnonymous:   boolean
-  createdAt:     string
+  categoryName: string
+  categories: string[]
+  moodTags: string[]
+  likeCount: number
+  saveCount: number
+  commentCount: number
+  userHasLiked: boolean
+  userHasSaved: boolean
+  authorAlias: string | null
+  isAnonymous: boolean
+  createdAt: string
 }
 
 // ── UIStore ────────────────────────────────────────────────────────────────
@@ -50,12 +50,12 @@ interface UIStore {
 
   // Profile viewer
   profileViewerStories: ProfileViewerStory[]
-  profileViewerIndex:   number
-  profileViewerMode:    'own' | 'liked' | 'saved' | null
+  profileViewerIndex: number
+  profileViewerMode: 'own' | 'liked' | 'saved' | null
   openProfileViewer: (
     stories: ProfileViewerStory[],
-    index:   number,
-    mode:    'own' | 'liked' | 'saved'
+    index: number,
+    mode: 'own' | 'liked' | 'saved'
   ) => void
   closeProfileViewer: () => void
 
@@ -88,18 +88,19 @@ export const useUIStore = create<UIStore>((set, get) => ({
   closeComments: () => set({ activeStoryId: null }),
 
   unmutedStoryIds: new Set<string>(),
-  toggleMute: (storyId) => set((s) => {
-    const next = new Set(s.unmutedStoryIds)
-    if (next.has(storyId)) next.delete(storyId)
-    else next.add(storyId)
-    return { unmutedStoryIds: next }
-  }),
+  toggleMute: (storyId) =>
+    set((s) => {
+      const next = new Set(s.unmutedStoryIds)
+      if (next.has(storyId)) next.delete(storyId)
+      else next.add(storyId)
+      return { unmutedStoryIds: next }
+    }),
   isMuted: (storyId) => !get().unmutedStoryIds.has(storyId),
 
   // Profile viewer
   profileViewerStories: [],
-  profileViewerIndex:   0,
-  profileViewerMode:    null,
+  profileViewerIndex: 0,
+  profileViewerMode: null,
   openProfileViewer: (stories, index, mode) =>
     set({ profileViewerStories: stories, profileViewerIndex: index, profileViewerMode: mode }),
   closeProfileViewer: () =>

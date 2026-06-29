@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import {
-  companions, companionProfiles, companionPhotos,
-  sessionCards, companionVibeTags, vibeTags,
+  companions,
+  companionProfiles,
+  companionPhotos,
+  sessionCards,
+  companionVibeTags,
+  vibeTags,
 } from '@/db/schema'
 import { eq, and, isNull, asc, desc, inArray, sql, or } from 'drizzle-orm'
 
@@ -33,18 +37,22 @@ function encodeCursor(score: number, id: string): string {
   return Buffer.from(JSON.stringify({ score, id })).toString('base64')
 }
 function decodeCursor(cursor: string): { score: number; id: string } | null {
-  try { return JSON.parse(Buffer.from(cursor, 'base64').toString('utf8')) } catch { return null }
+  try {
+    return JSON.parse(Buffer.from(cursor, 'base64').toString('utf8'))
+  } catch {
+    return null
+  }
 }
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const latParam    = searchParams.get('lat')
-  const lngParam    = searchParams.get('lng')
+  const latParam = searchParams.get('lat')
+  const lngParam = searchParams.get('lng')
   const radiusParam = searchParams.get('radius')
   const cursorParam = searchParams.get('cursor')
 
-  const lat    = latParam    ? parseFloat(latParam)    : null
-  const lng    = lngParam    ? parseFloat(lngParam)    : null
+  const lat = latParam ? parseFloat(latParam) : null
+  const lng = lngParam ? parseFloat(lngParam) : null
   const radius = radiusParam ? parseFloat(radiusParam) : 100
 
   const cursor = cursorParam ? decodeCursor(cursorParam) : null
@@ -54,8 +62,8 @@ export async function GET(req: NextRequest) {
         sql`${companionProfiles.profile_completeness} < ${cursorCompleteness}`,
         and(
           sql`${companionProfiles.profile_completeness} = ${cursorCompleteness}`,
-          sql`${companionProfiles.id} > ${cursor.id}`,
-        ),
+          sql`${companionProfiles.id} > ${cursor.id}`
+        )
       )
     : undefined
 
@@ -65,13 +73,13 @@ export async function GET(req: NextRequest) {
 
   const rows = await db
     .select({
-      profileId:        companionProfiles.id,
-      companionId:      companionProfiles.companion_id,
-      score:            sql<number>`${companionProfiles.profile_completeness} / 100.0`,
-      tagline:          companionProfiles.tagline,
-      city:             companionProfiles.city,
-      currency:         companionProfiles.currency,
-      is_verified:      companionProfiles.is_verified,
+      profileId: companionProfiles.id,
+      companionId: companionProfiles.companion_id,
+      score: sql<number>`${companionProfiles.profile_completeness} / 100.0`,
+      tagline: companionProfiles.tagline,
+      city: companionProfiles.city,
+      currency: companionProfiles.currency,
+      is_verified: companionProfiles.is_verified,
       session_modality: companionProfiles.session_modality,
       // Haversine distance in km (null when companion has no location)
       distance_km: useLocation
@@ -88,12 +96,13 @@ export async function GET(req: NextRequest) {
         : sql<null>`NULL`,
     })
     .from(companionProfiles)
-    .where(and(
-      eq(companionProfiles.is_visible_to_users, true),
-      // Location filter: when using location, only exclude companions that HAVE a location but are outside radius.
-      // Companions with no location (latitude IS NULL) always pass through.
-      useLocation
-        ? sql`(
+    .where(
+      and(
+        eq(companionProfiles.is_visible_to_users, true),
+        // Location filter: when using location, only exclude companions that HAVE a location but are outside radius.
+        // Companions with no location (latitude IS NULL) always pass through.
+        useLocation
+          ? sql`(
             ${companionProfiles.latitude} IS NULL OR
             6371 * 2 * ASIN(SQRT(
               POWER(SIN(RADIANS(${companionProfiles.latitude}::numeric - ${lat}) / 2), 2) +
@@ -101,46 +110,64 @@ export async function GET(req: NextRequest) {
               POWER(SIN(RADIANS(${companionProfiles.longitude}::numeric - ${lng}) / 2), 2)
             )) <= ${radius}
           )`
-        : undefined,
-      cursorWhere,
-    ))
+          : undefined,
+        cursorWhere
+      )
+    )
     .orderBy(desc(companionProfiles.profile_completeness), asc(companionProfiles.id))
     .limit(LIMIT + 1)
 
   const pageRows = rows.slice(0, LIMIT)
   const hasNextPage = rows.length > LIMIT
-  const profileIds  = pageRows.map(r => r.profileId)
-  const companionIds = pageRows.map(r => r.companionId)
+  const profileIds = pageRows.map((r) => r.profileId)
+  const companionIds = pageRows.map((r) => r.companionId)
 
   if (profileIds.length === 0) {
     return NextResponse.json({ items: [], nextCursor: null })
   }
 
   const [companionRows, photoRows, sessionCardRows, vibeTagRows] = await Promise.all([
-    db.select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
-      .from(companions).where(inArray(companions.id, companionIds)),
+    db
+      .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
+      .from(companions)
+      .where(inArray(companions.id, companionIds)),
 
-    db.select({
-      companion_profile_id: companionPhotos.companion_profile_id,
-      url: companionPhotos.url, is_primary: companionPhotos.is_primary,
-    }).from(companionPhotos)
-      .where(and(inArray(companionPhotos.companion_profile_id, profileIds), isNull(companionPhotos.deleted_at))),
+    db
+      .select({
+        companion_profile_id: companionPhotos.companion_profile_id,
+        url: companionPhotos.url,
+        is_primary: companionPhotos.is_primary,
+      })
+      .from(companionPhotos)
+      .where(
+        and(
+          inArray(companionPhotos.companion_profile_id, profileIds),
+          isNull(companionPhotos.deleted_at)
+        )
+      ),
 
-    db.select({
-      companion_profile_id: sessionCards.companion_profile_id,
-      price: sessionCards.price, currency: sessionCards.currency,
-    }).from(sessionCards)
-      .where(and(inArray(sessionCards.companion_profile_id, profileIds), isNull(sessionCards.deleted_at))),
+    db
+      .select({
+        companion_profile_id: sessionCards.companion_profile_id,
+        price: sessionCards.price,
+        currency: sessionCards.currency,
+      })
+      .from(sessionCards)
+      .where(
+        and(inArray(sessionCards.companion_profile_id, profileIds), isNull(sessionCards.deleted_at))
+      ),
 
-    db.select({
-      companion_profile_id: companionVibeTags.companion_profile_id,
-      name: vibeTags.name,
-    }).from(companionVibeTags)
+    db
+      .select({
+        companion_profile_id: companionVibeTags.companion_profile_id,
+        name: vibeTags.name,
+      })
+      .from(companionVibeTags)
       .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
       .where(inArray(companionVibeTags.companion_profile_id, profileIds)),
   ])
 
-  const companionMap = new Map(companionRows.map(c => [c.id, c]))
+  const companionMap = new Map(companionRows.map((c) => [c.id, c]))
   const photoMap = new Map<string, string | null>()
   for (const p of photoRows) {
     if (p.is_primary || !photoMap.has(p.companion_profile_id)) {
@@ -157,41 +184,41 @@ export async function GET(req: NextRequest) {
   }
   const vibeTagMapByProfile = new Map<string, string[]>()
   for (const vt of vibeTagRows) {
-    if (!vibeTagMapByProfile.has(vt.companion_profile_id)) vibeTagMapByProfile.set(vt.companion_profile_id, [])
+    if (!vibeTagMapByProfile.has(vt.companion_profile_id))
+      vibeTagMapByProfile.set(vt.companion_profile_id, [])
     const arr = vibeTagMapByProfile.get(vt.companion_profile_id)!
     if (arr.length < 3) arr.push(vt.name)
   }
 
-  const items = pageRows.map(row => {
-    const comp      = companionMap.get(row.companionId)
+  const items = pageRows.map((row) => {
+    const comp = companionMap.get(row.companionId)
     const priceInfo = minPriceMap.get(row.profileId)
-    const tags      = vibeTagMapByProfile.get(row.profileId) ?? []
-    const minPrice  = priceInfo
+    const tags = vibeTagMapByProfile.get(row.profileId) ?? []
+    const minPrice = priceInfo
       ? `${currencySymbol(priceInfo.currency)}${Math.round(parseFloat(priceInfo.price))}`
       : null
 
     return {
-      id:              row.profileId,
-      companionId:     row.companionId,
-      name:            comp?.name ?? null,
-      age:             ageFromDob(comp?.date_of_birth ?? null),
-      city:            row.city ?? null,
-      distance_km:     row.distance_km ?? null,
+      id: row.profileId,
+      companionId: row.companionId,
+      name: comp?.name ?? null,
+      age: ageFromDob(comp?.date_of_birth ?? null),
+      city: row.city ?? null,
+      distance_km: row.distance_km ?? null,
       minPrice,
-      currency:        row.currency ?? 'EUR',
-      vibe:            row.tagline ?? null,
+      currency: row.currency ?? 'EUR',
+      vibe: row.tagline ?? null,
       tags,
       primaryPhotoUrl: photoMap.get(row.profileId) ?? null,
-      gradient:        gradientFromId(row.profileId),
-      isVerified:      row.is_verified ?? false,
+      gradient: gradientFromId(row.profileId),
+      isVerified: row.is_verified ?? false,
       sessionModality: row.session_modality ?? 'in_person',
     }
   })
 
-  const lastItem  = pageRows[pageRows.length - 1]
-  const nextCursor = hasNextPage && lastItem
-    ? encodeCursor(lastItem.score, lastItem.profileId)
-    : null
+  const lastItem = pageRows[pageRows.length - 1]
+  const nextCursor =
+    hasNextPage && lastItem ? encodeCursor(lastItem.score, lastItem.profileId) : null
 
   return NextResponse.json({ items, nextCursor })
 }

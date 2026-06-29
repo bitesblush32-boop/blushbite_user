@@ -1,6 +1,8 @@
 import postgres from 'postgres'
 
-const sql = postgres('postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway')
+const sql = postgres(
+  'postgresql://postgres:IEyufsebjCWfstCHSjJtpvuAXgInSxED@mainline.proxy.rlwy.net:55141/railway'
+)
 
 async function main() {
   console.log('Dropping old auth tables...')
@@ -11,4 +13,7 @@ async function main() {
   await sql.end()
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

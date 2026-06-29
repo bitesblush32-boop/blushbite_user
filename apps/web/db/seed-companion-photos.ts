@@ -27,25 +27,25 @@ const CANVA_EXPORTS = [
   'https://export-download.canva.com/vfbn4/DAHLvavfbn4/-1/0/0001-9050489133790156944.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQYCGKMUH5AO7UJ26%2F20260607%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260607T082606Z&X-Amz-Expires=41276&X-Amz-Signature=9a18f9afa1f7d0fcd25c593d36c12ff36f5750fd78bc1e4db69448b8f6724e8f&X-Amz-SignedHeaders=host%3Bx-amz-expected-bucket-owner&response-expires=Sun%2C%2007%20Jun%202026%2019%3A54%3A02%20GMT',
 ]
 
-const R2_BUCKET   = process.env.R2_BUCKET_NAME!
-const R2_CDN      = (process.env.NEXT_PUBLIC_R2_CDN_URL ?? '').replace(/\/$/, '')
-const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID!
+const R2_BUCKET = process.env.R2_BUCKET_NAME!
+const R2_CDN = (process.env.NEXT_PUBLIC_R2_CDN_URL ?? '').replace(/\/$/, '')
+const R2_ACCOUNT = process.env.R2_ACCOUNT_ID!
 
 // ── R2 client ─────────────────────────────────────────────────────────────────
 
 const r2 = new S3Client({
-  region:   'weur',
+  region: 'weur',
   endpoint: `https://${R2_ACCOUNT}.eu.r2.cloudflarestorage.com`,
   credentials: {
-    accessKeyId:     process.env.R2_ACCESS_KEY_ID!,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
 })
 
 // ── DB ────────────────────────────────────────────────────────────────────────
 
-const pg  = postgres(process.env.DATABASE_URL!, { ssl: 'prefer' })
-const db  = drizzle(pg)
+const pg = postgres(process.env.DATABASE_URL!, { ssl: 'prefer' })
+const db = drizzle(pg)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -55,14 +55,19 @@ async function downloadBuffer(url: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer())
 }
 
-async function uploadToR2(buf: Buffer, slug: string): Promise<{ storageKey: string; cdnUrl: string }> {
+async function uploadToR2(
+  buf: Buffer,
+  slug: string
+): Promise<{ storageKey: string; cdnUrl: string }> {
   const storageKey = `companion_photo/seed/${slug}.jpg`
-  await r2.send(new PutObjectCommand({
-    Bucket:      R2_BUCKET,
-    Key:         storageKey,
-    Body:        buf,
-    ContentType: 'image/jpeg',
-  }))
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: storageKey,
+      Body: buf,
+      ContentType: 'image/jpeg',
+    })
+  )
   return { storageKey, cdnUrl: `${R2_CDN}/${storageKey}` }
 }
 
@@ -75,7 +80,7 @@ async function main() {
   const profiles = await db
     .select({
       profileId: companionProfiles.id,
-      name:      companions.name,
+      name: companions.name,
     })
     .from(companionProfiles)
     .leftJoin(companions, eq(companions.id, companionProfiles.companion_id))
@@ -96,7 +101,7 @@ async function main() {
   for (let i = 0; i < CANVA_EXPORTS.length; i++) {
     process.stdout.write(`  portrait-${i + 1}… `)
     try {
-      const buf    = await downloadBuffer(CANVA_EXPORTS[i])
+      const buf = await downloadBuffer(CANVA_EXPORTS[i])
       const result = await uploadToR2(buf, `portrait-${i + 1}`)
       uploaded.push(result)
       console.log(`✓  ${result.cdnUrl}`)
@@ -127,21 +132,20 @@ async function main() {
     await db
       .update(companionPhotos)
       .set({ deleted_at: sql`now()` })
-      .where(and(
-        eq(companionPhotos.companion_profile_id, profileId),
-        isNull(companionPhotos.deleted_at),
-      ))
+      .where(
+        and(eq(companionPhotos.companion_profile_id, profileId), isNull(companionPhotos.deleted_at))
+      )
 
     // Insert new primary photo
     await db.insert(companionPhotos).values({
-      id:                   crypto.randomUUID(),
+      id: crypto.randomUUID(),
       companion_profile_id: profileId,
-      url:                  photo.cdnUrl,
-      storage_key:          photo.storageKey,
-      alt_text:             name ?? 'Companion portrait',
-      sort_order:           0,
-      is_primary:           true,
-      is_approved:          true,
+      url: photo.cdnUrl,
+      storage_key: photo.storageKey,
+      alt_text: name ?? 'Companion portrait',
+      sort_order: 0,
+      is_primary: true,
+      is_approved: true,
     })
 
     console.log(`  ✓  ${name ?? profileId.slice(0, 8)} → portrait-${(i % uploaded.length) + 1}`)
@@ -152,7 +156,7 @@ async function main() {
   await pg.end()
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('\n❌ Seed failed:', err)
   process.exit(1)
 })

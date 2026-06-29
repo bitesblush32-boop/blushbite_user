@@ -22,39 +22,51 @@ import {
 
 interface AnalyticsData {
   content_by_author: { admin: number; companion: number; user: number }
-  booking_funnel:    { pending: number; accepted: number; completed: number; declined: number; cancelled: number; total: number }
-  top_fantasy_tags:  { id: number; name: string; category_name: string | null; usage_count: number }[]
+  booking_funnel: {
+    pending: number
+    accepted: number
+    completed: number
+    declined: number
+    cancelled: number
+    total: number
+  }
+  top_fantasy_tags: {
+    id: number
+    name: string
+    category_name: string | null
+    usage_count: number
+  }[]
 }
 
 interface OverviewData {
-  total_dreamers:           number
-  total_companions_live:    number
+  total_dreamers: number
+  total_companions_live: number
   total_companions_pending: number
-  total_companions_all:     number
-  stories_pending:          number
-  stories_approved:         number
-  stories_total:            number
-  audio_pending:            number
-  bookings_open:            number
-  bookings_total:           number
-  bookings_completed:       number
-  new_dreamers_today:       number
-  new_companions_today:     number
-  new_stories_today:        number
-  total_likes:              number
-  total_saves:              number
-  total_comments:           number
+  total_companions_all: number
+  stories_pending: number
+  stories_approved: number
+  stories_total: number
+  audio_pending: number
+  bookings_open: number
+  bookings_total: number
+  bookings_completed: number
+  new_dreamers_today: number
+  new_companions_today: number
+  new_stories_today: number
+  total_likes: number
+  total_saves: number
+  total_comments: number
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const tileVariants = {
   hidden: {},
-  show:   { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.05 } },
 }
 const tileItem = {
   hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as any } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as any } },
 }
 
 function PulseBorder({ color }: { color: 'gold' | 'rose' }) {
@@ -80,14 +92,14 @@ function StatTile({
   pulse,
   onClick,
 }: {
-  icon:           React.ElementType
-  iconColor:      string
-  label:          string
-  value:          number
-  delta?:         string
+  icon: React.ElementType
+  iconColor: string
+  label: string
+  value: number
+  delta?: string
   deltaPositive?: boolean
-  pulse?:         'gold' | 'rose'
-  onClick?:       () => void
+  pulse?: 'gold' | 'rose'
+  onClick?: () => void
 }) {
   return (
     <motion.div
@@ -104,11 +116,20 @@ function StatTile({
         >
           <Icon size={16} color={iconColor} />
         </div>
-        <span style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#6b7280' }}>
+        <span
+          style={{
+            fontSize: 11,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: '#6b7280',
+          }}
+        >
           {label}
         </span>
       </div>
-      <div style={{ fontSize: 32, fontWeight: 600, color: '#eeeef0', lineHeight: 1, marginBottom: 8 }}>
+      <div
+        style={{ fontSize: 32, fontWeight: 600, color: '#eeeef0', lineHeight: 1, marginBottom: 8 }}
+      >
         {value.toLocaleString()}
       </div>
       {delta && (
@@ -126,7 +147,9 @@ function EngagementBar({ label, value, max }: { label: string; value: number; ma
     <div className="mb-4 last:mb-0">
       <div className="flex items-center justify-between mb-[6px]">
         <span style={{ fontSize: 13, color: '#6b7280' }}>{label}</span>
-        <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>{value.toLocaleString()}</span>
+        <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>
+          {value.toLocaleString()}
+        </span>
       </div>
       <div className="h-[4px] rounded-full overflow-hidden" style={{ background: '#1c2333' }}>
         <motion.div
@@ -154,14 +177,14 @@ export default function AdminDashboardPage() {
 
   const { data: overviewRes, isLoading } = useQuery<{ data: OverviewData }>({
     queryKey: ['admin', 'overview'],
-    queryFn:  () => fetch('/api/admin/stats/overview').then(r => r.json()),
+    queryFn: () => fetch('/api/admin/stats/overview').then((r) => r.json()),
     refetchInterval: 60_000,
     refetchOnWindowFocus: false,
   })
 
   const { data: analyticsRes } = useQuery<{ data: AnalyticsData }>({
     queryKey: ['admin', 'analytics'],
-    queryFn:  () => fetch('/api/admin/stats/analytics').then(r => r.json()),
+    queryFn: () => fetch('/api/admin/stats/analytics').then((r) => r.json()),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   })
@@ -169,18 +192,24 @@ export default function AdminDashboardPage() {
   // Pre-fetch activity into cache
   useQuery({
     queryKey: ['admin', 'activity'],
-    queryFn:  () => fetch('/api/admin/activity').then(r => r.json()),
+    queryFn: () => fetch('/api/admin/activity').then((r) => r.json()),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
   })
 
-  const d  = overviewRes?.data
+  const d = overviewRes?.data
   const an = analyticsRes?.data
   const pending_combined = (d?.stories_pending ?? 0) + (d?.audio_pending ?? 0)
-  const showBanner = (d?.total_companions_pending ?? 0) > 0 || pending_combined > 0 || (d?.bookings_open ?? 0) > 0
+  const showBanner =
+    (d?.total_companions_pending ?? 0) > 0 || pending_combined > 0 || (d?.bookings_open ?? 0) > 0
   const engMax = Math.max(d?.total_likes ?? 0, d?.total_saves ?? 0, d?.total_comments ?? 0, 1)
 
-  const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const dateStr = now.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
   const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
   return (
@@ -194,13 +223,22 @@ export default function AdminDashboardPage() {
       {/* Noise */}
       <div
         className="fixed inset-0 pointer-events-none z-[1000] opacity-60"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")` }}
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
+        }}
       />
 
       {/* Page header */}
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
         <div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: '#eeeef0', marginBottom: 4 }}>
+          <h1
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 28,
+              color: '#eeeef0',
+              marginBottom: 4,
+            }}
+          >
             Dashboard
           </h1>
           <p style={{ fontSize: 13, color: '#6b7280' }}>BlushBite platform overview</p>
@@ -218,7 +256,10 @@ export default function AdminDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-[16px] p-5 mb-6 flex flex-wrap items-center gap-4"
-          style={{ background: 'rgba(201,169,110,0.08)', border: '1px solid rgba(201,169,110,0.25)' }}
+          style={{
+            background: 'rgba(201,169,110,0.08)',
+            border: '1px solid rgba(201,169,110,0.25)',
+          }}
         >
           <div className="flex items-center gap-2 flex-shrink-0">
             <AlertTriangle size={16} color="#c9a96e" />
@@ -238,10 +279,15 @@ export default function AdminDashboardPage() {
                   color: '#c9a96e',
                   cursor: 'pointer',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.18)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.1)' }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.18)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.1)'
+                }}
               >
-                {d?.total_companions_pending} companion{d?.total_companions_pending !== 1 ? 's' : ''} waiting for approval →
+                {d?.total_companions_pending} companion
+                {d?.total_companions_pending !== 1 ? 's' : ''} waiting for approval →
               </button>
             )}
             {pending_combined > 0 && (
@@ -257,8 +303,12 @@ export default function AdminDashboardPage() {
                   color: '#c9a96e',
                   cursor: 'pointer',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.18)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.1)' }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.18)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.1)'
+                }}
               >
                 {pending_combined} {pending_combined === 1 ? 'story' : 'stories'} in moderation →
               </button>
@@ -276,8 +326,12 @@ export default function AdminDashboardPage() {
                   color: '#c9a96e',
                   cursor: 'pointer',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.18)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.1)' }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.18)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(201,169,110,0.1)'
+                }}
               >
                 {d?.bookings_open} open booking{d?.bookings_open !== 1 ? 's' : ''} →
               </button>
@@ -289,8 +343,11 @@ export default function AdminDashboardPage() {
       {/* Row 1 — Platform Health */}
       {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {[0,1,2,3].map(i => (
-            <div key={i} className="bg-[#111620] border border-[#1c2333] rounded-[16px] h-[120px] animate-pulse" />
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-[#111620] border border-[#1c2333] rounded-[16px] h-[120px] animate-pulse"
+            />
           ))}
         </div>
       ) : (
@@ -301,25 +358,33 @@ export default function AdminDashboardPage() {
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
         >
           <StatTile
-            icon={Users2} iconColor="#e8607a" label="Dreamers"
+            icon={Users2}
+            iconColor="#e8607a"
+            label="Dreamers"
             value={d?.total_dreamers ?? 0}
             delta={`+${d?.new_dreamers_today ?? 0} today`}
             deltaPositive={(d?.new_dreamers_today ?? 0) > 0}
           />
           <StatTile
-            icon={Star} iconColor="#c9a96e" label="Live Companions"
+            icon={Star}
+            iconColor="#c9a96e"
+            label="Live Companions"
             value={d?.total_companions_live ?? 0}
             delta={`+${d?.new_companions_today ?? 0} today`}
             deltaPositive={(d?.new_companions_today ?? 0) > 0}
           />
           <StatTile
-            icon={Clock} iconColor="#c9a96e" label="Awaiting Approval"
+            icon={Clock}
+            iconColor="#c9a96e"
+            label="Awaiting Approval"
             value={d?.total_companions_pending ?? 0}
             pulse="gold"
             onClick={() => router.push('/admin/companions?filter=pending')}
           />
           <StatTile
-            icon={CalendarDays} iconColor="#4ade80" label="Open Bookings"
+            icon={CalendarDays}
+            iconColor="#4ade80"
+            label="Open Bookings"
             value={d?.bookings_open ?? 0}
             pulse="rose"
             onClick={() => router.push('/admin/bookings')}
@@ -330,8 +395,11 @@ export default function AdminDashboardPage() {
       {/* Row 2 — Content & Engagement */}
       {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[0,1,2,3].map(i => (
-            <div key={i} className="bg-[#111620] border border-[#1c2333] rounded-[16px] h-[120px] animate-pulse" />
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-[#111620] border border-[#1c2333] rounded-[16px] h-[120px] animate-pulse"
+            />
           ))}
         </div>
       ) : (
@@ -342,23 +410,31 @@ export default function AdminDashboardPage() {
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         >
           <StatTile
-            icon={FileText} iconColor="#e8607a" label="Stories Live"
+            icon={FileText}
+            iconColor="#e8607a"
+            label="Stories Live"
             value={d?.stories_approved ?? 0}
             delta={`+${d?.new_stories_today ?? 0} today`}
             deltaPositive={(d?.new_stories_today ?? 0) > 0}
           />
           <StatTile
-            icon={AlertCircle} iconColor="#c9a96e" label="Pending Review"
+            icon={AlertCircle}
+            iconColor="#c9a96e"
+            label="Pending Review"
             value={pending_combined}
             pulse="gold"
             onClick={() => router.push('/admin/content?filter=pending')}
           />
           <StatTile
-            icon={Heart} iconColor="#e8607a" label="Total Likes"
+            icon={Heart}
+            iconColor="#e8607a"
+            label="Total Likes"
             value={d?.total_likes ?? 0}
           />
           <StatTile
-            icon={Bookmark} iconColor="#6b7280" label="Total Saves"
+            icon={Bookmark}
+            iconColor="#6b7280"
+            label="Total Saves"
             value={d?.total_saves ?? 0}
           />
         </motion.div>
@@ -366,18 +442,25 @@ export default function AdminDashboardPage() {
 
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* Engagement mini chart */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5">
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 20 }}>Engagement Totals</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 20 }}>
+            Engagement Totals
+          </p>
           {isLoading ? (
             <div className="flex flex-col gap-4">
-              {[0,1,2].map(i => <div key={i} className="h-[42px] rounded-[8px] animate-pulse" style={{ background: '#1c2333' }} />)}
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-[42px] rounded-[8px] animate-pulse"
+                  style={{ background: '#1c2333' }}
+                />
+              ))}
             </div>
           ) : (
             <>
-              <EngagementBar label="Likes"    value={d?.total_likes ?? 0}    max={engMax} />
-              <EngagementBar label="Saves"    value={d?.total_saves ?? 0}    max={engMax} />
+              <EngagementBar label="Likes" value={d?.total_likes ?? 0} max={engMax} />
+              <EngagementBar label="Saves" value={d?.total_saves ?? 0} max={engMax} />
               <EngagementBar label="Comments" value={d?.total_comments ?? 0} max={engMax} />
             </>
           )}
@@ -385,14 +468,26 @@ export default function AdminDashboardPage() {
 
         {/* Quick actions */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5">
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 16 }}>Quick Actions</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 16 }}>
+            Quick Actions
+          </p>
           <div className="flex flex-col gap-2">
-            {([
-              { icon: PenLine,    label: 'Write & publish a story',      href: '/admin/content/create' },
-              { icon: UserCheck,  label: 'Review pending companions',     href: '/admin/companions?filter=pending' },
-              { icon: Upload,     label: 'Import scraped stories',        href: '/admin/content/create?mode=import' },
-              { icon: Tags,       label: 'Manage tag library',            href: '/admin/tags' },
-            ] as const).map(({ icon: Icon, label, href }) => (
+            {(
+              [
+                { icon: PenLine, label: 'Write & publish a story', href: '/admin/content/create' },
+                {
+                  icon: UserCheck,
+                  label: 'Review pending companions',
+                  href: '/admin/companions?filter=pending',
+                },
+                {
+                  icon: Upload,
+                  label: 'Import scraped stories',
+                  href: '/admin/content/create?mode=import',
+                },
+                { icon: Tags, label: 'Manage tag library', href: '/admin/tags' },
+              ] as const
+            ).map(({ icon: Icon, label, href }) => (
               <button
                 key={href}
                 onClick={() => router.push(href)}
@@ -404,13 +499,13 @@ export default function AdminDashboardPage() {
                   color: '#6b7280',
                   cursor: 'pointer',
                 }}
-                onMouseEnter={e => {
+                onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLElement
                   el.style.borderColor = 'rgba(232,96,122,0.3)'
                   el.style.background = 'rgba(232,96,122,0.05)'
                   el.style.color = '#eeeef0'
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={(e) => {
                   const el = e.currentTarget as HTMLElement
                   el.style.borderColor = '#1c2333'
                   el.style.background = '#0d1117'
@@ -427,103 +522,177 @@ export default function AdminDashboardPage() {
 
       {/* Analytics section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-
         {/* Content Performance */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5">
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 18 }}>Content by Author</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 18 }}>
+            Content by Author
+          </p>
           {!an ? (
             <div className="flex flex-col gap-3">
-              {[0,1,2].map(i => <div key={i} className="h-[38px] rounded-[8px] animate-pulse" style={{ background: '#1c2333' }} />)}
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-[38px] rounded-[8px] animate-pulse"
+                  style={{ background: '#1c2333' }}
+                />
+              ))}
             </div>
-          ) : (() => {
-            const total = (an.content_by_author.admin + an.content_by_author.companion + an.content_by_author.user) || 1
-            return (
-              <>
-                {([
-                  { label: 'Admin-seeded', value: an.content_by_author.admin,     color: '#c9a96e' },
-                  { label: 'By companions', value: an.content_by_author.companion, color: '#e8607a' },
-                  { label: 'By dreamers',   value: an.content_by_author.user,      color: '#6b7280' },
-                ] as const).map(({ label, value, color }) => (
-                  <div key={label} className="mb-4 last:mb-0">
-                    <div className="flex items-center justify-between mb-[6px]">
-                      <span style={{ fontSize: 13, color: '#6b7280' }}>{label}</span>
-                      <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>{value.toLocaleString()}</span>
+          ) : (
+            (() => {
+              const total =
+                an.content_by_author.admin +
+                  an.content_by_author.companion +
+                  an.content_by_author.user || 1
+              return (
+                <>
+                  {(
+                    [
+                      {
+                        label: 'Admin-seeded',
+                        value: an.content_by_author.admin,
+                        color: '#c9a96e',
+                      },
+                      {
+                        label: 'By companions',
+                        value: an.content_by_author.companion,
+                        color: '#e8607a',
+                      },
+                      { label: 'By dreamers', value: an.content_by_author.user, color: '#6b7280' },
+                    ] as const
+                  ).map(({ label, value, color }) => (
+                    <div key={label} className="mb-4 last:mb-0">
+                      <div className="flex items-center justify-between mb-[6px]">
+                        <span style={{ fontSize: 13, color: '#6b7280' }}>{label}</span>
+                        <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>
+                          {value.toLocaleString()}
+                        </span>
+                      </div>
+                      <div
+                        className="h-[4px] rounded-full overflow-hidden"
+                        style={{ background: '#1c2333' }}
+                      >
+                        <motion.div
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: value / total }}
+                          transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                          className="h-full rounded-full"
+                          style={{ transformOrigin: 'left', background: color }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-[4px] rounded-full overflow-hidden" style={{ background: '#1c2333' }}>
-                      <motion.div
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: value / total }}
-                        transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                        className="h-full rounded-full"
-                        style={{ transformOrigin: 'left', background: color }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </>
-            )
-          })()}
+                  ))}
+                </>
+              )
+            })()
+          )}
         </div>
 
         {/* Booking Funnel */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5">
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 18 }}>Booking Funnel</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 18 }}>
+            Booking Funnel
+          </p>
           {!an ? (
             <div className="flex flex-col gap-3">
-              {[0,1,2,3].map(i => <div key={i} className="h-[38px] rounded-[8px] animate-pulse" style={{ background: '#1c2333' }} />)}
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-[38px] rounded-[8px] animate-pulse"
+                  style={{ background: '#1c2333' }}
+                />
+              ))}
             </div>
-          ) : (() => {
-            const f = an.booking_funnel
-            const total = f.total || 1
-            const steps = [
-              { label: 'Pending',   value: f.pending,   color: '#c9a96e' },
-              { label: 'Accepted',  value: f.accepted,  color: '#4ade80' },
-              { label: 'Completed', value: f.completed, color: '#e8607a' },
-              { label: 'Declined',  value: f.declined,  color: '#f87171' },
-            ]
-            return (
-              <>
-                {steps.map(({ label, value, color }) => (
-                  <div key={label} className="mb-4 last:mb-0">
-                    <div className="flex items-center justify-between mb-[6px]">
-                      <span style={{ fontSize: 13, color: '#6b7280' }}>{label}</span>
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontSize: 11, color: '#6b7280' }}>{Math.round(value / total * 100)}%</span>
-                        <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500, minWidth: 24, textAlign: 'right' }}>{value}</span>
+          ) : (
+            (() => {
+              const f = an.booking_funnel
+              const total = f.total || 1
+              const steps = [
+                { label: 'Pending', value: f.pending, color: '#c9a96e' },
+                { label: 'Accepted', value: f.accepted, color: '#4ade80' },
+                { label: 'Completed', value: f.completed, color: '#e8607a' },
+                { label: 'Declined', value: f.declined, color: '#f87171' },
+              ]
+              return (
+                <>
+                  {steps.map(({ label, value, color }) => (
+                    <div key={label} className="mb-4 last:mb-0">
+                      <div className="flex items-center justify-between mb-[6px]">
+                        <span style={{ fontSize: 13, color: '#6b7280' }}>{label}</span>
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontSize: 11, color: '#6b7280' }}>
+                            {Math.round((value / total) * 100)}%
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 13,
+                              color: '#eeeef0',
+                              fontWeight: 500,
+                              minWidth: 24,
+                              textAlign: 'right',
+                            }}
+                          >
+                            {value}
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        className="h-[4px] rounded-full overflow-hidden"
+                        style={{ background: '#1c2333' }}
+                      >
+                        <motion.div
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: value / total }}
+                          transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                          className="h-full rounded-full"
+                          style={{ transformOrigin: 'left', background: color }}
+                        />
                       </div>
                     </div>
-                    <div className="h-[4px] rounded-full overflow-hidden" style={{ background: '#1c2333' }}>
-                      <motion.div
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: value / total }}
-                        transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                        className="h-full rounded-full"
-                        style={{ transformOrigin: 'left', background: color }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </>
-            )
-          })()}
+                  ))}
+                </>
+              )
+            })()
+          )}
         </div>
 
         {/* Top Fantasy Tags */}
         <div className="bg-[#111620] border border-[#1c2333] rounded-[16px] p-5">
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 18 }}>Top Fantasy Tags</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', marginBottom: 18 }}>
+            Top Fantasy Tags
+          </p>
           {!an ? (
             <div className="flex flex-col gap-2">
-              {[0,1,2,3,4].map(i => <div key={i} className="h-[32px] rounded-[8px] animate-pulse" style={{ background: '#1c2333' }} />)}
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="h-[32px] rounded-[8px] animate-pulse"
+                  style={{ background: '#1c2333' }}
+                />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col gap-[6px]">
               {an.top_fantasy_tags.slice(0, 8).map((tag, i) => (
                 <div key={tag.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span style={{ fontSize: 11, color: '#6b7280', width: 14, flexShrink: 0 }}>{i + 1}</span>
-                    <span style={{ fontSize: 13, color: '#eeeef0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tag.name}</span>
+                    <span style={{ fontSize: 11, color: '#6b7280', width: 14, flexShrink: 0 }}>
+                      {i + 1}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        color: '#eeeef0',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {tag.name}
+                    </span>
                     {tag.category_name && (
-                      <span style={{ fontSize: 10, color: '#6b7280', whiteSpace: 'nowrap' }}>{tag.category_name}</span>
+                      <span style={{ fontSize: 10, color: '#6b7280', whiteSpace: 'nowrap' }}>
+                        {tag.category_name}
+                      </span>
                     )}
                   </div>
                   <span
@@ -548,7 +717,6 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </div>
-
       </div>
     </motion.div>
   )

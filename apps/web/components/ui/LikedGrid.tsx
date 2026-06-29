@@ -1,18 +1,19 @@
 'use client'
 
 import { memo } from 'react'
+import Image from 'next/image'
 import { Heart } from 'lucide-react'
 import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 import type { LikedItem } from '@/hooks/useLikedContent'
 
 interface Props {
-  items:     LikedItem[]
+  items: LikedItem[]
   isLoading: boolean
 }
 
 const LikedGrid = memo(function LikedGrid({ items, isLoading }: Props) {
-  const openProfileViewer = useUIStore(s => s.openProfileViewer)
-  const openModal         = useUIStore(s => s.openModal)
+  const openProfileViewer = useUIStore((s) => s.openProfileViewer)
+  const openModal = useUIStore((s) => s.openModal)
 
   function handleItemTap(idx: number) {
     const item = items[idx]
@@ -25,30 +26,30 @@ const LikedGrid = memo(function LikedGrid({ items, isLoading }: Props) {
     }
 
     const storiesArray: ProfileViewerStory[] = items
-      .filter(i => i.authorType !== 'companion')
-      .map(i => ({
-        id:            i.id,
-        title:         i.title,
-        body:          '',
-        rawBody:       i.excerpt ?? '',
+      .filter((i) => i.authorType !== 'companion')
+      .map((i) => ({
+        id: i.id,
+        title: i.title,
+        body: '',
+        rawBody: i.excerpt ?? '',
         pageImageUrls: [],
-        categoryName:  i.categories[0] ?? '',
-        categories:    i.categories,
-        moodTags:      [],
-        likeCount:     i.likeCount,
-        saveCount:     i.saveCount,
-        commentCount:  0,
-        userHasLiked:  true,
-        userHasSaved:  false,
-        authorAlias:   null,
-        isAnonymous:   false,
-        createdAt:     i.likedAt,
+        categoryName: i.categories[0] ?? '',
+        categories: i.categories,
+        moodTags: [],
+        likeCount: i.likeCount,
+        saveCount: i.saveCount,
+        commentCount: 0,
+        userHasLiked: true,
+        userHasSaved: false,
+        authorAlias: null,
+        isAnonymous: false,
+        createdAt: i.likedAt,
       }))
 
     // Find the index within story-only items
-    const storyItems = items.filter(i => i.authorType !== 'companion')
-    const storyIdx   = storyItems.findIndex(i => i.id === item.id)
-    const openIdx    = storyIdx >= 0 ? storyIdx : 0
+    const storyItems = items.filter((i) => i.authorType !== 'companion')
+    const storyIdx = storyItems.findIndex((i) => i.id === item.id)
+    const openIdx = storyIdx >= 0 ? storyIdx : 0
 
     openProfileViewer(storiesArray, openIdx, 'liked')
   }
@@ -85,47 +86,55 @@ const LikedGrid = memo(function LikedGrid({ items, isLoading }: Props) {
           key={item.id}
           onClick={() => handleItemTap(idx)}
           style={{
-            aspectRatio:  '3/4',
-            position:     'relative',
-            overflow:     'hidden',
+            aspectRatio: '3/4',
+            position: 'relative',
+            overflow: 'hidden',
             borderRadius: 4,
-            cursor:       'pointer',
+            cursor: 'pointer',
           }}
         >
           {item.firstImage ? (
-            <img
+            <Image
               src={item.firstImage}
               alt={item.title ?? ''}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              fill
+              style={{ objectFit: 'cover' }}
+              sizes="33vw"
             />
           ) : (
-            <div style={{
-              width:      '100%',
-              height:     '100%',
-              background: 'linear-gradient(135deg, #111620, #1c2333)',
-            }} />
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(135deg, #111620, #1c2333)',
+              }}
+            />
           )}
 
           {/* Bottom overlay with excerpt */}
-          <div style={{
-            position:   'absolute',
-            bottom:     0,
-            left:       0,
-            right:      0,
-            background: 'linear-gradient(transparent 50%, rgba(7,9,15,0.9) 100%)',
-            padding:    '20px 8px 8px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(transparent 50%, rgba(7,9,15,0.9) 100%)',
+              padding: '20px 8px 8px',
+            }}
+          >
             {item.excerpt && (
-              <p style={{
-                fontSize:        10,
-                color:           '#eeeef0',
-                lineHeight:      1.35,
-                margin:          0,
-                overflow:        'hidden',
-                display:         '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}>
+              <p
+                style={{
+                  fontSize: 10,
+                  color: '#eeeef0',
+                  lineHeight: 1.35,
+                  margin: 0,
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
                 {item.excerpt}
               </p>
             )}

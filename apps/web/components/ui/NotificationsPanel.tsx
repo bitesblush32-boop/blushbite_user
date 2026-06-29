@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,12 +15,18 @@ interface Props {
 function getNotifCopy(n: Notification): string {
   const who = `@${n.actor.alias}`
   switch (n.type) {
-    case 'story_like':    return `${who} liked your confession`
-    case 'story_save':    return `${who} saved your confession`
-    case 'story_comment': return `${who} commented on your confession`
-    case 'comment_reply': return `${who} replied to your comment`
-    case 'comment_like':  return `${who} liked your comment`
-    default:              return `${who} interacted with your content`
+    case 'story_like':
+      return `${who} liked your confession`
+    case 'story_save':
+      return `${who} saved your confession`
+    case 'story_comment':
+      return `${who} commented on your confession`
+    case 'comment_reply':
+      return `${who} replied to your comment`
+    case 'comment_like':
+      return `${who} liked your comment`
+    default:
+      return `${who} interacted with your content`
   }
 }
 
@@ -33,7 +40,7 @@ function getDestination(n: Notification): string {
 function formatRelative(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff / 60_000)
-  if (m < 1)  return 'just now'
+  if (m < 1) return 'just now'
   if (m < 60) return `${m}m ago`
   const h = Math.floor(m / 60)
   if (h < 24) return `${h}h ago`
@@ -45,12 +52,12 @@ function AvatarCell({ alias, image }: { alias: string; image: string | null }) {
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
   if (image) {
     return (
-      <img
+      <Image
         src={image}
         alt={alias}
+        width={36}
+        height={36}
         style={{
-          width: 36,
-          height: 36,
           borderRadius: '50%',
           objectFit: 'cover',
           flexShrink: 0,
@@ -105,7 +112,11 @@ function SkeletonRow() {
 
 const rowVariants = {
   hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
 }
 
 export default function NotificationsPanel({ open: _open, onClose }: Props) {
@@ -203,7 +214,7 @@ export default function NotificationsPanel({ open: _open, onClose }: Props) {
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         <AnimatePresence>
-          {notifications.map(n => (
+          {notifications.map((n) => (
             <motion.button
               key={n.id}
               type="button"
@@ -224,11 +235,11 @@ export default function NotificationsPanel({ open: _open, onClose }: Props) {
                 borderLeft: n.is_read ? '2px solid transparent' : '2px solid #e8607a',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'
               }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.background = n.is_read
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLButtonElement).style.background = n.is_read
                   ? 'transparent'
                   : 'rgba(232,96,122,0.06)'
               }}

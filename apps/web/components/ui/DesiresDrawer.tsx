@@ -5,19 +5,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 
 interface FantasyTag {
-  id:          number
-  name:        string
-  slug:        string
-  category:    string
+  id: number
+  name: string
+  slug: string
+  category: string
 }
 
 interface UserTag {
   fantasy_tag_id: number
-  intensity:      'curious' | 'into_it' | 'love_it'
+  intensity: 'curious' | 'into_it' | 'love_it'
 }
 
 interface DesiresDrawerProps {
-  open:    boolean
+  open: boolean
   onClose: () => void
 }
 
@@ -30,28 +30,28 @@ const INTENSITY_LABELS: Record<string, string> = {
 const INTENSITY_COLORS: Record<string, { border: string; bg: string; text: string }> = {
   curious: {
     border: 'rgba(201,169,110,0.35)',
-    bg:     'rgba(201,169,110,0.08)',
-    text:   '#c9a96e',
+    bg: 'rgba(201,169,110,0.08)',
+    text: '#c9a96e',
   },
   into_it: {
     border: 'rgba(232,96,122,0.35)',
-    bg:     'rgba(232,96,122,0.10)',
-    text:   '#e8607a',
+    bg: 'rgba(232,96,122,0.10)',
+    text: '#e8607a',
   },
   love_it: {
     border: 'rgba(232,96,122,0.60)',
-    bg:     'rgba(232,96,122,0.18)',
-    text:   '#e8607a',
+    bg: 'rgba(232,96,122,0.18)',
+    text: '#e8607a',
   },
 }
 
 export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
   const queryClient = useQueryClient()
 
-  const [allTags, setAllTags]       = useState<FantasyTag[]>([])
-  const [selected, setSelected]     = useState<Map<number, UserTag['intensity']>>(new Map())
-  const [saving, setSaving]         = useState(false)
-  const [loading, setLoading]       = useState(false)
+  const [allTags, setAllTags] = useState<FantasyTag[]>([])
+  const [selected, setSelected] = useState<Map<number, UserTag['intensity']>>(new Map())
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   // Load tags + current user selection on open
@@ -60,42 +60,45 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
     setLoading(true)
 
     Promise.all([
-      fetch('/api/tags').then(r => r.json()),
-      fetch('/api/users/profile').then(r => r.json()),
-    ]).then(([tagsRes, profileRes]) => {
-      if (tagsRes.data) {
-        setAllTags(tagsRes.data)
-        if (!activeCategory && tagsRes.data.length > 0) {
-          setActiveCategory(tagsRes.data[0].category ?? null)
+      fetch('/api/tags').then((r) => r.json()),
+      fetch('/api/users/profile').then((r) => r.json()),
+    ])
+      .then(([tagsRes, profileRes]) => {
+        if (tagsRes.data) {
+          setAllTags(tagsRes.data)
+          if (!activeCategory && tagsRes.data.length > 0) {
+            setActiveCategory(tagsRes.data[0].category ?? null)
+          }
         }
-      }
-      if (profileRes.data?.fantasy_tags) {
-        const map = new Map<number, UserTag['intensity']>()
-        for (const t of profileRes.data.fantasy_tags as UserTag[]) {
-          map.set(t.fantasy_tag_id, t.intensity)
+        if (profileRes.data?.fantasy_tags) {
+          const map = new Map<number, UserTag['intensity']>()
+          for (const t of profileRes.data.fantasy_tags as UserTag[]) {
+            map.set(t.fantasy_tag_id, t.intensity)
+          }
+          setSelected(map)
         }
-        setSelected(map)
-      }
-    }).catch(() => {}).finally(() => setLoading(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   // Group tags by category
-  const categories = Array.from(new Set(allTags.map(t => t.category))).filter(Boolean)
+  const categories = Array.from(new Set(allTags.map((t) => t.category))).filter(Boolean)
   const tagsByCategory = categories.reduce<Record<string, FantasyTag[]>>((acc, cat) => {
-    acc[cat] = allTags.filter(t => t.category === cat)
+    acc[cat] = allTags.filter((t) => t.category === cat)
     return acc
   }, {})
 
   const displayCategory = activeCategory ?? categories[0]
 
   function toggleTag(tagId: number) {
-    setSelected(prev => {
+    setSelected((prev) => {
       const next = new Map(prev)
       if (next.has(tagId)) {
         // Cycle: curious → into_it → love_it → remove
         const cur = next.get(tagId)!
-        if (cur === 'curious')  next.set(tagId, 'into_it')
+        if (cur === 'curious') next.set(tagId, 'into_it')
         else if (cur === 'into_it') next.set(tagId, 'love_it')
         else next.delete(tagId)
       } else {
@@ -113,15 +116,18 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
         intensity,
       }))
       await fetch('/api/users/profile', {
-        method:  'PATCH',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ section: 'fantasy_tags', fantasy_tags }),
+        body: JSON.stringify({ section: 'fantasy_tags', fantasy_tags }),
       })
       // Invalidate feed so it re-ranks with new tags
       queryClient.invalidateQueries({ queryKey: ['companions', 'feed'] })
       onClose()
-    } catch { /* silent */ }
-    finally { setSaving(false) }
+    } catch {
+      /* silent */
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -147,14 +153,17 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="fixed bottom-0 left-0 right-0 z-[760] rounded-t-[20px] flex flex-col"
             style={{
-              background:  '#0d1117',
-              border:      '1px solid #1c2333',
+              background: '#0d1117',
+              border: '1px solid #1c2333',
               borderBottom: 'none',
-              maxHeight:   '85vh',
+              maxHeight: '85vh',
             }}
           >
             {/* Top accent line */}
-            <div className="h-[2px] rounded-t-[20px]" style={{ background: 'linear-gradient(90deg,transparent,#e8607a,transparent)' }} />
+            <div
+              className="h-[2px] rounded-t-[20px]"
+              style={{ background: 'linear-gradient(90deg,transparent,#e8607a,transparent)' }}
+            />
 
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
@@ -164,7 +173,10 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
             {/* Header */}
             <div className="flex items-start justify-between px-6 pt-2 pb-4">
               <div>
-                <div style={{ fontFamily: "'Playfair Display', serif" }} className="text-[22px] text-[#eeeef0] mb-1">
+                <div
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  className="text-[22px] text-[#eeeef0] mb-1"
+                >
                   Your desires
                 </div>
                 <p className="text-[12px] text-[#6b7280] leading-[1.5]">
@@ -182,16 +194,19 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
 
             {/* Category tabs */}
             {categories.length > 0 && (
-              <div className="flex gap-2 px-6 pb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                {categories.map(cat => (
+              <div
+                className="flex gap-2 px-6 pb-4 overflow-x-auto"
+                style={{ scrollbarWidth: 'none' }}
+              >
+                {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
                     className="text-[11px] px-[12px] py-[5px] rounded-full border cursor-pointer whitespace-nowrap flex-shrink-0 transition-all duration-150"
                     style={{
                       borderColor: displayCategory === cat ? '#e8607a' : '#1c2333',
-                      color:       displayCategory === cat ? '#e8607a' : '#6b7280',
-                      background:  displayCategory === cat ? 'rgba(232,96,122,0.08)' : 'transparent',
+                      color: displayCategory === cat ? '#e8607a' : '#6b7280',
+                      background: displayCategory === cat ? 'rgba(232,96,122,0.08)' : 'transparent',
                     }}
                   >
                     {cat}
@@ -205,12 +220,20 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
               {loading ? (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {[...Array(12)].map((_, i) => (
-                    <div key={i} className="h-[32px] rounded-full" style={{ width: `${60 + (i % 4) * 20}px`, background: '#111620', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    <div
+                      key={i}
+                      className="h-[32px] rounded-full"
+                      style={{
+                        width: `${60 + (i % 4) * 20}px`,
+                        background: '#111620',
+                        animation: 'pulse 1.5s ease-in-out infinite',
+                      }}
+                    />
                   ))}
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2 pt-2">
-                  {(tagsByCategory[displayCategory] ?? []).map(tag => {
+                  {(tagsByCategory[displayCategory] ?? []).map((tag) => {
                     const intensity = selected.get(tag.id)
                     const colors = intensity ? INTENSITY_COLORS[intensity] : null
 
@@ -221,8 +244,8 @@ export default function DesiresDrawer({ open, onClose }: DesiresDrawerProps) {
                         className="text-[12px] px-[12px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
                         style={{
                           borderColor: colors?.border ?? '#1c2333',
-                          background:  colors?.bg ?? 'transparent',
-                          color:       colors?.text ?? '#6b7280',
+                          background: colors?.bg ?? 'transparent',
+                          color: colors?.text ?? '#6b7280',
                         }}
                       >
                         {tag.name}

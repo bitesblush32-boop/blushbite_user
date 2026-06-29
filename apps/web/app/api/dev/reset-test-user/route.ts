@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json(
       { error: 'This endpoint is not available in production.' },
-      { status: 403 },
+      { status: 403 }
     )
   }
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     .where(eq(companions.email, email))
     .limit(1)
 
-  const userId      = userRow?.id      ?? null
+  const userId = userRow?.id ?? null
   const companionId = companionRow?.id ?? null
 
   // companion_profile_id is required to clear booking_requests and
@@ -71,9 +71,7 @@ export async function POST(req: NextRequest) {
 
   // ── Step 1 — fantasy_tag_overlap_scores (FKs: users.id, companion_profiles.id — no cascade) ─
   if (userId) {
-    await db
-      .delete(fantasyTagOverlapScores)
-      .where(eq(fantasyTagOverlapScores.user_id, userId))
+    await db.delete(fantasyTagOverlapScores).where(eq(fantasyTagOverlapScores.user_id, userId))
   }
   if (companionProfileId) {
     await db
@@ -83,9 +81,7 @@ export async function POST(req: NextRequest) {
 
   // ── Step 2 — booking_requests (FKs: users.id, companion_profiles.id — no cascade) ──────────
   if (userId) {
-    await db
-      .delete(bookingRequests)
-      .where(eq(bookingRequests.user_id, userId))
+    await db.delete(bookingRequests).where(eq(bookingRequests.user_id, userId))
   }
   if (companionProfileId) {
     await db
@@ -97,14 +93,10 @@ export async function POST(req: NextRequest) {
   // audio_recordings.story_id → stories.id (no cascade), so audio must go first.
   // Also FKs to users.id, companions.id, companion_profiles.id — all no cascade.
   if (userId) {
-    await db
-      .delete(audioRecordings)
-      .where(eq(audioRecordings.author_user_id, userId))
+    await db.delete(audioRecordings).where(eq(audioRecordings.author_user_id, userId))
   }
   if (companionId) {
-    await db
-      .delete(audioRecordings)
-      .where(eq(audioRecordings.author_companion_id, companionId))
+    await db.delete(audioRecordings).where(eq(audioRecordings.author_companion_id, companionId))
   }
   if (companionProfileId) {
     await db
@@ -115,14 +107,10 @@ export async function POST(req: NextRequest) {
   // ── Step 4 — stories (FKs: users.id, companions.id — no cascade) ────────────
   // story_mood_tags, story_orientation_tags, story_fantasy_tags cascade from story_id.
   if (userId) {
-    await db
-      .delete(stories)
-      .where(eq(stories.author_user_id, userId))
+    await db.delete(stories).where(eq(stories.author_user_id, userId))
   }
   if (companionId) {
-    await db
-      .delete(stories)
-      .where(eq(stories.author_companion_id, companionId))
+    await db.delete(stories).where(eq(stories.author_companion_id, companionId))
   }
 
   // ── Step 5 — user-side rows (explicit order before deleting users row) ───────
@@ -142,9 +130,7 @@ export async function POST(req: NextRequest) {
       .delete(companionVerifications)
       .where(eq(companionVerifications.companion_id, companionId))
 
-    await db
-      .delete(companionLegalDocs)
-      .where(eq(companionLegalDocs.companion_id, companionId))
+    await db.delete(companionLegalDocs).where(eq(companionLegalDocs.companion_id, companionId))
 
     await db
       .delete(companionPaymentSetup)
@@ -152,9 +138,7 @@ export async function POST(req: NextRequest) {
 
     // CASCADE on companion_profiles handles: companion_photos, companion_videos,
     // companion_languages, companion_vibe_tags, companion_fantasy_tags, session_cards
-    await db
-      .delete(companionProfiles)
-      .where(eq(companionProfiles.companion_id, companionId))
+    await db.delete(companionProfiles).where(eq(companionProfiles.companion_id, companionId))
 
     await db.delete(companions).where(eq(companions.email, email))
   }
@@ -166,10 +150,10 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({
-    success:  true,
+    success: true,
     email,
     deleted: {
-      user:      userId      !== null,
+      user: userId !== null,
       companion: companionId !== null,
     },
   })

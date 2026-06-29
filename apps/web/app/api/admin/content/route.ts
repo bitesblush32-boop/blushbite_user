@@ -27,37 +27,35 @@ export async function GET(req: NextRequest) {
 
   if (search) {
     conditions.push(
-      or(
-        ilike(stories.title, `%${search}%`),
-        ilike(stories.excerpt, `%${search}%`),
-      ) as any
+      or(ilike(stories.title, `%${search}%`), ilike(stories.excerpt, `%${search}%`)) as any
     )
   }
 
   const where = and(...conditions)
 
   const [rows, countRows, pendingRows] = await Promise.all([
-    db.select({
-      id: stories.id,
-      title: stories.title,
-      excerpt: stories.excerpt,
-      author_type: stories.author_type,
-      is_anonymous: stories.is_anonymous,
-      is_published: stories.is_published,
-      is_featured: stories.is_featured,
-      moderation_status: stories.moderation_status,
-      moderated_at: stories.moderated_at,
-      view_count: stories.view_count,
-      like_count: stories.like_count,
-      save_count: stories.save_count,
-      comment_count: stories.comment_count,
-      created_at: stories.created_at,
-      published_at: stories.published_at,
-      user_alias: users.alias,
-      companion_alias: companions.alias,
-      companion_name: companions.name,
-      category_name: storyCategories.name,
-    })
+    db
+      .select({
+        id: stories.id,
+        title: stories.title,
+        excerpt: stories.excerpt,
+        author_type: stories.author_type,
+        is_anonymous: stories.is_anonymous,
+        is_published: stories.is_published,
+        is_featured: stories.is_featured,
+        moderation_status: stories.moderation_status,
+        moderated_at: stories.moderated_at,
+        view_count: stories.view_count,
+        like_count: stories.like_count,
+        save_count: stories.save_count,
+        comment_count: stories.comment_count,
+        created_at: stories.created_at,
+        published_at: stories.published_at,
+        user_alias: users.alias,
+        companion_alias: companions.alias,
+        companion_name: companions.name,
+        category_name: storyCategories.name,
+      })
       .from(stories)
       .leftJoin(users, eq(users.id, stories.author_user_id))
       .leftJoin(companions, eq(companions.id, stories.author_companion_id))
@@ -67,13 +65,15 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .offset(offset),
 
-    db.select({ n: sql<number>`count(*)::int` })
+    db
+      .select({ n: sql<number>`count(*)::int` })
       .from(stories)
       .leftJoin(users, eq(users.id, stories.author_user_id))
       .leftJoin(companions, eq(companions.id, stories.author_companion_id))
       .where(where),
 
-    db.select({ n: sql<number>`count(*)::int` })
+    db
+      .select({ n: sql<number>`count(*)::int` })
       .from(stories)
       .where(and(isNull(stories.deleted_at), eq(stories.moderation_status, 'pending'))),
   ])

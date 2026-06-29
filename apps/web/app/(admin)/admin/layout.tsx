@@ -25,16 +25,24 @@ import {
 
 interface BadgeCounts {
   pending_companions: number
-  pending_stories:    number
-  pending_audio:      number
-  open_bookings:      number
-  pending_bridges:    number
+  pending_stories: number
+  pending_audio: number
+  open_bookings: number
+  pending_bridges: number
 }
 
 function NavGroup({ label }: { label: string }) {
   return (
-    <p className="px-3 pt-4 pb-1"
-      style={{ fontSize: 9, letterSpacing: '0.1em', color: '#6b7280', textTransform: 'uppercase', fontWeight: 500 }}>
+    <p
+      className="px-3 pt-4 pb-1"
+      style={{
+        fontSize: 9,
+        letterSpacing: '0.1em',
+        color: '#6b7280',
+        textTransform: 'uppercase',
+        fontWeight: 500,
+      }}
+    >
       {label}
     </p>
   )
@@ -45,7 +53,11 @@ function Badge({ count }: { count: number }) {
   return (
     <span
       className="ml-auto text-[10px] px-2 py-px rounded-full"
-      style={{ background: 'rgba(232,96,122,0.15)', color: '#e8607a', border: '1px solid rgba(232,96,122,0.25)' }}
+      style={{
+        background: 'rgba(232,96,122,0.15)',
+        color: '#e8607a',
+        border: '1px solid rgba(232,96,122,0.25)',
+      }}
     >
       {count}
     </span>
@@ -60,11 +72,11 @@ function NavItem({
   exact,
   onClick,
 }: {
-  href:    string
-  icon:    React.ElementType
-  label:   string
-  badge?:  number
-  exact?:  boolean
+  href: string
+  icon: React.ElementType
+  label: string
+  badge?: number
+  exact?: boolean
   onClick?: () => void
 }) {
   const pathname = usePathname()
@@ -75,18 +87,23 @@ function NavItem({
       href={href}
       onClick={onClick}
       className="flex items-center gap-3 px-4 py-[9px] text-[13px] transition-all duration-150 w-full rounded-[10px]"
-      style={isActive
-        ? { background: 'rgba(232,96,122,0.10)', color: '#eeeef0', border: '1px solid rgba(232,96,122,0.20)' }
-        : { color: '#6b7280', border: '1px solid transparent' }
+      style={
+        isActive
+          ? {
+              background: 'rgba(232,96,122,0.10)',
+              color: '#eeeef0',
+              border: '1px solid rgba(232,96,122,0.20)',
+            }
+          : { color: '#6b7280', border: '1px solid transparent' }
       }
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         if (!isActive) {
           const el = e.currentTarget as HTMLElement
           el.style.color = '#eeeef0'
           el.style.background = 'rgba(255,255,255,0.04)'
         }
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         if (!isActive) {
           const el = e.currentTarget as HTMLElement
           el.style.color = '#6b7280'
@@ -105,9 +122,15 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
   const router = useRouter()
   const { data: counts } = useQuery<BadgeCounts>({
     queryKey: ['admin', 'counts'],
-    queryFn:  () => fetch('/api/admin/stats/counts').then(r => r.json()),
+    queryFn: () => fetch('/api/admin/stats/counts').then((r) => r.json()),
     refetchInterval: 30_000,
-    initialData: { pending_companions: 0, pending_stories: 0, pending_audio: 0, open_bookings: 0, pending_bridges: 0 },
+    initialData: {
+      pending_companions: 0,
+      pending_stories: 0,
+      pending_audio: 0,
+      open_bookings: 0,
+      pending_bridges: 0,
+    },
   })
 
   return (
@@ -118,7 +141,11 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
         <div className="mt-3">
           <span
             className="text-[10px] tracking-[0.08em] uppercase px-3 py-1 rounded-full"
-            style={{ color: '#c9a96e', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}
+            style={{
+              color: '#c9a96e',
+              background: 'rgba(201,169,110,0.1)',
+              border: '1px solid rgba(201,169,110,0.2)',
+            }}
           >
             Admin Panel
           </span>
@@ -128,25 +155,55 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
       {/* Nav */}
       <nav className="flex flex-col gap-[2px] p-3 flex-1">
         {/* Overview */}
-        <NavItem href="/admin"          icon={LayoutDashboard} label="Dashboard"    exact onClick={onNav} />
-        <NavItem href="/admin/activity" icon={Activity}        label="Activity Feed"       onClick={onNav} />
+        <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" exact onClick={onNav} />
+        <NavItem href="/admin/activity" icon={Activity} label="Activity Feed" onClick={onNav} />
 
         {/* People */}
         <NavGroup label="People" />
-        <NavItem href="/admin/companions" icon={Users2} label="Companions" badge={counts?.pending_companions} onClick={onNav} />
-        <NavItem href="/admin/users"      icon={User}   label="Dreamers"                                      onClick={onNav} />
+        <NavItem
+          href="/admin/companions"
+          icon={Users2}
+          label="Companions"
+          badge={counts?.pending_companions}
+          onClick={onNav}
+        />
+        <NavItem href="/admin/users" icon={User} label="Dreamers" onClick={onNav} />
 
         {/* Content */}
         <NavGroup label="Content" />
-        <NavItem href="/admin/content"        icon={FileText}   label="Stories"    badge={counts?.pending_stories} onClick={onNav} />
-        <NavItem href="/admin/audio"          icon={Headphones} label="Audio"      badge={counts?.pending_audio}   onClick={onNav} />
-        <NavItem href="/admin/content/create" icon={PenLine}    label="Write Story"                                onClick={onNav} />
+        <NavItem
+          href="/admin/content"
+          icon={FileText}
+          label="Stories"
+          badge={counts?.pending_stories}
+          onClick={onNav}
+        />
+        <NavItem
+          href="/admin/audio"
+          icon={Headphones}
+          label="Audio"
+          badge={counts?.pending_audio}
+          onClick={onNav}
+        />
+        <NavItem href="/admin/content/create" icon={PenLine} label="Write Story" onClick={onNav} />
 
         {/* Operations */}
         <NavGroup label="Operations" />
-        <NavItem href="/admin/bookings" icon={CalendarDays} label="Bookings"       badge={counts?.open_bookings}   onClick={onNav} />
-        <NavItem href="/admin/bridges"  icon={Link2}        label="Story Bridges"  badge={counts?.pending_bridges} onClick={onNav} />
-        <NavItem href="/admin/tags"     icon={Tags}         label="Tag Library"                                    onClick={onNav} />
+        <NavItem
+          href="/admin/bookings"
+          icon={CalendarDays}
+          label="Bookings"
+          badge={counts?.open_bookings}
+          onClick={onNav}
+        />
+        <NavItem
+          href="/admin/bridges"
+          icon={Link2}
+          label="Story Bridges"
+          badge={counts?.pending_bridges}
+          onClick={onNav}
+        />
+        <NavItem href="/admin/tags" icon={Tags} label="Tag Library" onClick={onNav} />
       </nav>
 
       {/* Separator */}
@@ -158,8 +215,12 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
           href="/"
           className="flex items-center gap-2 px-4 py-[9px] rounded-[10px] transition-all duration-150"
           style={{ fontSize: 12, color: '#6b7280' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#eeeef0' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#6b7280' }}
+          onMouseEnter={(e) => {
+            ;(e.currentTarget as HTMLElement).style.color = '#eeeef0'
+          }}
+          onMouseLeave={(e) => {
+            ;(e.currentTarget as HTMLElement).style.color = '#6b7280'
+          }}
         >
           <ExternalLink size={13} />
           Back to platform
@@ -171,8 +232,12 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
           }}
           className="flex items-center gap-2 px-4 py-[9px] rounded-[10px] transition-all duration-150 w-full text-left"
           style={{ fontSize: 12, color: '#6b7280' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#f87171' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#6b7280' }}
+          onMouseEnter={(e) => {
+            ;(e.currentTarget as HTMLElement).style.color = '#f87171'
+          }}
+          onMouseLeave={(e) => {
+            ;(e.currentTarget as HTMLElement).style.color = '#6b7280'
+          }}
         >
           <LogOut size={13} />
           Sign out
@@ -187,7 +252,6 @@ export default function AdminShellLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="min-h-screen" style={{ background: '#07090f' }}>
-
       {/* Desktop sidebar */}
       <aside
         className="hidden md:flex flex-col fixed left-0 top-0 h-screen w-[240px] border-r border-[#1c2333] z-[100]"
@@ -211,7 +275,11 @@ export default function AdminShellLayout({ children }: { children: React.ReactNo
         <Image src="/logo_light.png" alt="BlushBite" width={60} height={18} />
         <span
           className="text-[10px] tracking-[0.08em] uppercase px-3 py-1 rounded-full"
-          style={{ color: '#c9a96e', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)' }}
+          style={{
+            color: '#c9a96e',
+            background: 'rgba(201,169,110,0.1)',
+            border: '1px solid rgba(201,169,110,0.2)',
+          }}
         >
           Admin
         </span>

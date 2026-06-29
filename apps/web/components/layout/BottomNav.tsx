@@ -7,18 +7,18 @@ import { usePlayerStore } from '@/store/playerStore'
 import { useNotificationCountQ } from '@/hooks/useNotifications'
 
 const NAV_ITEMS = [
-  { label: 'Home',        href: '/home',         icon: Home },
-  { label: 'Stories',     href: '/stories',     icon: BookOpen },
-  { label: 'Companions',  href: '/companions',  icon: Users },
+  { label: 'Home', href: '/home', icon: Home },
+  { label: 'Stories', href: '/stories', icon: BookOpen },
+  { label: 'Companions', href: '/companions', icon: Users },
   { label: 'Confessions', href: '/confessions', icon: BookHeart },
-  { label: 'Me',          href: '/profile',     icon: User },
+  { label: 'Me', href: '/profile', icon: User },
 ]
 
 export default function BottomNav() {
-  const pathname      = usePathname()
-  const router        = useRouter()
+  const pathname = usePathname()
+  const router = useRouter()
   const playerVisible = !!usePlayerStore((s) => s.audioId)
-  const unreadCount   = useNotificationCountQ()
+  const unreadCount = useNotificationCountQ()
 
   return (
     <motion.div
@@ -60,7 +60,7 @@ export default function BottomNav() {
           return (
             <motion.button
               key={href}
-              whileTap={{ scale: 0.80 }}
+              whileTap={{ scale: 0.8 }}
               onClick={() => router.push(href)}
               style={{
                 display: 'flex',
@@ -79,24 +79,26 @@ export default function BottomNav() {
               <div style={{ position: 'relative', display: 'inline-flex' }}>
                 <Icon size={22} strokeWidth={1.5} color={color} />
                 {href === '/profile' && unreadCount > 0 && (
-                  <span style={{
-                    position:       'absolute',
-                    top:            -4,
-                    right:          -4,
-                    background:     '#e8607a',
-                    color:          '#fff',
-                    fontSize:       9,
-                    fontWeight:     700,
-                    borderRadius:   9999,
-                    minWidth:       16,
-                    height:         16,
-                    display:        'flex',
-                    alignItems:     'center',
-                    justifyContent: 'center',
-                    padding:        '0 4px',
-                    lineHeight:     1,
-                    pointerEvents:  'none',
-                  }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -4,
+                      background: '#e8607a',
+                      color: '#fff',
+                      fontSize: 9,
+                      fontWeight: 700,
+                      borderRadius: 9999,
+                      minWidth: 16,
+                      height: 16,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 4px',
+                      lineHeight: 1,
+                      pointerEvents: 'none',
+                    }}
+                  >
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}

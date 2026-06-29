@@ -4,10 +4,7 @@ import { db } from '@/db'
 import { bookingRequests } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -19,7 +16,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
-  await db.update(bookingRequests)
+  await db
+    .update(bookingRequests)
     .set({
       status,
       companion_notes: admin_note ?? undefined,

@@ -7,7 +7,7 @@ let vapidInitialized = false
 
 function initVapid() {
   if (vapidInitialized) return
-  const subject   = process.env.VAPID_SUBJECT
+  const subject = process.env.VAPID_SUBJECT
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   const privateKey = process.env.VAPID_PRIVATE_KEY
   // Skip silently if VAPID env vars not yet configured
@@ -18,7 +18,7 @@ function initVapid() {
 
 export async function sendPushToUser(
   userId: string,
-  payload: { title: string; body: string; url?: string },
+  payload: { title: string; body: string; url?: string }
 ): Promise<void> {
   try {
     initVapid()
@@ -26,18 +26,18 @@ export async function sendPushToUser(
     const subs = await db
       .select({
         endpoint: pushSubscriptions.endpoint,
-        p256dh:   pushSubscriptions.p256dh,
-        auth:     pushSubscriptions.auth,
+        p256dh: pushSubscriptions.p256dh,
+        auth: pushSubscriptions.auth,
       })
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.user_id, userId))
 
     await Promise.allSettled(
-      subs.map(sub =>
+      subs.map((sub) =>
         webpush
           .sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify(payload),
+            JSON.stringify(payload)
           )
           .catch(async (err: any) => {
             // 410 Gone = subscription expired — clean it up silently
@@ -47,8 +47,8 @@ export async function sendPushToUser(
                 .where(eq(pushSubscriptions.endpoint, sub.endpoint))
                 .catch(() => {})
             }
-          }),
-      ),
+          })
+      )
     )
   } catch {
     // Push failures must never propagate to callers

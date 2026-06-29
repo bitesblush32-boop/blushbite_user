@@ -7,20 +7,22 @@ import Image from 'next/image'
 import { Eye, EyeOff, Lock } from 'lucide-react'
 
 function AdminLoginForm() {
-  const router       = useRouter()
+  const router = useRouter()
   const searchParams = useSearchParams()
-  const from         = searchParams.get('from') ?? '/admin'
+  const from = searchParams.get('from') ?? '/admin'
 
-  const [email,     setEmail]     = useState('')
-  const [password,  setPassword]  = useState('')
-  const [showPass,  setShowPass]  = useState(false)
-  const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   // If already logged in, go straight to admin
   useEffect(() => {
     fetch('/api/admin/stats/counts', { method: 'GET' })
-      .then(r => { if (r.ok) router.replace(from) })
+      .then((r) => {
+        if (r.ok) router.replace(from)
+      })
       .catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -31,9 +33,9 @@ function AdminLoginForm() {
 
     try {
       const res = await fetch('/api/admin/auth/login', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }),
       })
 
       if (res.ok) {
@@ -66,7 +68,8 @@ function AdminLoginForm() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 30%, rgba(232,96,122,0.05) 0%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse 60% 50% at 50% 30%, rgba(232,96,122,0.05) 0%, transparent 70%)',
         }}
       />
 
@@ -97,17 +100,27 @@ function AdminLoginForm() {
             <div className="flex items-center gap-3 mb-6">
               <div
                 className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(232,96,122,0.1)', border: '1px solid rgba(232,96,122,0.2)' }}
+                style={{
+                  background: 'rgba(232,96,122,0.1)',
+                  border: '1px solid rgba(232,96,122,0.2)',
+                }}
               >
                 <Lock size={16} color="#e8607a" />
               </div>
               <div>
                 <h1
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#eeeef0', lineHeight: 1.2 }}
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 22,
+                    color: '#eeeef0',
+                    lineHeight: 1.2,
+                  }}
                 >
                   Admin access
                 </h1>
-                <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>BlushBite control panel</p>
+                <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                  BlushBite control panel
+                </p>
               </div>
             </div>
 
@@ -115,55 +128,81 @@ function AdminLoginForm() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {/* Email */}
               <div>
-                <label style={{ fontSize: 11, color: '#6b7280', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                <label
+                  style={{
+                    fontSize: 11,
+                    color: '#6b7280',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 6,
+                  }}
+                >
                   Email
                 </label>
                 <input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@blushbite.co"
                   required
                   inputMode="email"
                   autoComplete="email"
                   className="w-full rounded-[10px] px-4 py-[12px] text-[13px] outline-none transition-colors"
                   style={{
-                    background:  '#111620',
-                    border:      '1px solid #1c2333',
-                    color:       '#eeeef0',
-                    fontSize:    14,
+                    background: '#111620',
+                    border: '1px solid #1c2333',
+                    color: '#eeeef0',
+                    fontSize: 14,
                   }}
-                  onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(232,96,122,0.5)' }}
-                  onBlur={e   => { e.currentTarget.style.borderColor = '#1c2333' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(232,96,122,0.5)'
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#1c2333'
+                  }}
                 />
               </div>
 
               {/* Password */}
               <div>
-                <label style={{ fontSize: 11, color: '#6b7280', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                <label
+                  style={{
+                    fontSize: 11,
+                    color: '#6b7280',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: 6,
+                  }}
+                >
                   Password
                 </label>
                 <div className="relative">
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     autoComplete="current-password"
                     className="w-full rounded-[10px] pl-4 pr-[44px] py-[12px] text-[13px] outline-none transition-colors"
                     style={{
                       background: '#111620',
-                      border:     '1px solid #1c2333',
-                      color:      '#eeeef0',
-                      fontSize:   14,
+                      border: '1px solid #1c2333',
+                      color: '#eeeef0',
+                      fontSize: 14,
                     }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,96,122,0.5)' }}
-                    onBlur={e  => { e.currentTarget.style.borderColor = '#1c2333' }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(232,96,122,0.5)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '#1c2333'
+                    }}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPass(v => !v)}
+                    onClick={() => setShowPass((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-[30px] h-[30px] flex items-center justify-center rounded-full transition-colors"
                     style={{ color: '#6b7280' }}
                   >

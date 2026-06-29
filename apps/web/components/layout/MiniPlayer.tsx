@@ -30,7 +30,9 @@ export default function MiniPlayer() {
             <button
               className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-[#6b7280] text-[12px] border-none cursor-pointer transition-colors duration-150"
               style={{ background: 'rgba(255,255,255,0.07)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#e8607a')}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLButtonElement).style.background = '#e8607a')
+              }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)')
               }
@@ -43,8 +45,12 @@ export default function MiniPlayer() {
             <button
               className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-white text-[14px] border-none cursor-pointer transition-colors duration-150"
               style={{ background: '#e8607a' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#c4485e')}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#e8607a')}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLButtonElement).style.background = '#c4485e')
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLButtonElement).style.background = '#e8607a')
+              }
               onClick={() => (playing ? pause() : resume())}
               aria-label={playing ? 'Pause' : 'Play'}
             >
@@ -55,7 +61,9 @@ export default function MiniPlayer() {
             <button
               className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-[#6b7280] text-[12px] border-none cursor-pointer transition-colors duration-150"
               style={{ background: 'rgba(255,255,255,0.07)' }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#e8607a')}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLButtonElement).style.background = '#e8607a')
+              }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)')
               }

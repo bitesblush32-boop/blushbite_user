@@ -3,8 +3,8 @@
 
 interface OtpEntry {
   otp: string
-  expiry: number      // Unix ms
-  attempts: number    // verify attempts, max 5
+  expiry: number // Unix ms
+  attempts: number // verify attempts, max 5
 }
 
 interface RateEntry {
@@ -12,13 +12,13 @@ interface RateEntry {
   windowStart: number // Unix ms
 }
 
-const otpStore   = new Map<string, OtpEntry>()
-const rateStore  = new Map<string, RateEntry>()
+const otpStore = new Map<string, OtpEntry>()
+const rateStore = new Map<string, RateEntry>()
 
-const OTP_TTL_MS      = 10 * 60 * 1000  // 10 minutes
-const RATE_WINDOW_MS  = 10 * 60 * 1000  // 10-minute window
-const MAX_SENDS       = 3                // max OTP sends per window
-const MAX_ATTEMPTS    = 5               // max verify attempts per OTP
+const OTP_TTL_MS = 10 * 60 * 1000 // 10 minutes
+const RATE_WINDOW_MS = 10 * 60 * 1000 // 10-minute window
+const MAX_SENDS = 3 // max OTP sends per window
+const MAX_ATTEMPTS = 5 // max verify attempts per OTP
 
 export function checkRateLimit(email: string): boolean {
   const now = Date.now()
@@ -36,9 +36,7 @@ export function storeOtp(email: string, otp: string): void {
   otpStore.set(email, { otp, expiry: Date.now() + OTP_TTL_MS, attempts: 0 })
 }
 
-export type VerifyResult =
-  | { ok: true }
-  | { ok: false; error: string }
+export type VerifyResult = { ok: true } | { ok: false; error: string }
 
 export function verifyOtp(email: string, otp: string): VerifyResult {
   const entry = otpStore.get(email)

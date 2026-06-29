@@ -12,7 +12,8 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'BlushBite · Private Fantasy & Companions',
-  description: 'Verified companions, literary confessions, and intimate audio — curated for you alone.',
+  description:
+    'Verified companions, literary confessions, and intimate audio — curated for you alone.',
   metadataBase: new URL('https://blushbite.co'),
   robots: {
     index: true,
@@ -24,13 +25,15 @@ export const metadata: Metadata = {
     url: 'https://blushbite.co',
     siteName: 'BlushBite',
     title: 'BlushBite · Private Fantasy & Companions',
-    description: 'Verified companions, literary confessions, and intimate audio — curated for you alone.',
+    description:
+      'Verified companions, literary confessions, and intimate audio — curated for you alone.',
     images: [{ url: '/bb.png', width: 1200, height: 630, alt: 'BlushBite' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'BlushBite · Private Fantasy & Companions',
-    description: 'Verified companions, literary confessions, and intimate audio — curated for you alone.',
+    description:
+      'Verified companions, literary confessions, and intimate audio — curated for you alone.',
     images: ['/bb.png'],
   },
 }
@@ -39,9 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <body className={dmSans.className}>
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

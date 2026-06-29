@@ -3,14 +3,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, ChevronLeft, ChevronRight, ExternalLink, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react'
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  X,
+} from 'lucide-react'
 import Link from 'next/link'
 
 const TABS = [
-  { key: 'all',        label: 'All' },
-  { key: 'pending',    label: 'Pending Review' },
-  { key: 'live',       label: 'Live' },
-  { key: 'rejected',   label: 'Rejected' },
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending Review' },
+  { key: 'live', label: 'Live' },
+  { key: 'rejected', label: 'Rejected' },
   { key: 'incomplete', label: 'Incomplete' },
 ]
 
@@ -51,32 +60,52 @@ const stageLabel: Record<number, string> = {
   7: 'Complete',
 }
 
-function VerificationBadge({ liveness, providerStatus }: { liveness: boolean | null; providerStatus: string | null }) {
+function VerificationBadge({
+  liveness,
+  providerStatus,
+}: {
+  liveness: boolean | null
+  providerStatus: string | null
+}) {
   if (liveness === true) {
     return (
-      <span className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-        style={{ background: 'rgba(201,169,110,0.12)', border: '1px solid rgba(201,169,110,0.3)' }}>
+      <span
+        className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+        style={{ background: 'rgba(201,169,110,0.12)', border: '1px solid rgba(201,169,110,0.3)' }}
+      >
         ✦ Verified
       </span>
     )
   }
   if (providerStatus === 'pending') {
     return (
-      <span className="text-[11px] px-[10px] py-1 rounded-full text-[#6b7280]"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1c2333' }}>
+      <span
+        className="text-[11px] px-[10px] py-1 rounded-full text-[#6b7280]"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1c2333' }}
+      >
         Pending
       </span>
     )
   }
   return (
-    <span className="text-[11px] px-[10px] py-1 rounded-full text-[#6b7280]"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1c2333' }}>
+    <span
+      className="text-[11px] px-[10px] py-1 rounded-full text-[#6b7280]"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1c2333' }}
+    >
       —
     </span>
   )
 }
 
-function LiveToggle({ companionId, isLive, onToggle }: { companionId: string; isLive: boolean | null; onToggle: (id: string, val: boolean) => void }) {
+function LiveToggle({
+  companionId,
+  isLive,
+  onToggle,
+}: {
+  companionId: string
+  isLive: boolean | null
+  onToggle: (id: string, val: boolean) => void
+}) {
   const live = isLive === true
   return (
     <button
@@ -84,10 +113,7 @@ function LiveToggle({ companionId, isLive, onToggle }: { companionId: string; is
       className="flex items-center gap-[6px] transition-all duration-150"
       title={live ? 'Set offline' : 'Set live'}
     >
-      {live
-        ? <ToggleRight size={20} color="#e8607a" />
-        : <ToggleLeft size={20} color="#6b7280" />
-      }
+      {live ? <ToggleRight size={20} color="#e8607a" /> : <ToggleLeft size={20} color="#6b7280" />}
       <span className="text-[12px]" style={{ color: live ? '#e8607a' : '#6b7280' }}>
         {live ? 'Live' : 'Off'}
       </span>
@@ -117,24 +143,40 @@ function DeleteCompanionModal({
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[440px] overflow-hidden"
       >
-        <div className="h-[2px]" style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }} />
+        <div
+          className="h-[2px]"
+          style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }}
+        />
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{
+                  background: 'rgba(239,68,68,0.12)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                }}
+              >
                 <Trash2 size={16} color="#ef4444" />
               </div>
-              <h3 style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] text-[#eeeef0]">
+              <h3
+                style={{ fontFamily: "'Playfair Display', serif" }}
+                className="text-[20px] text-[#eeeef0]"
+              >
                 Delete companion
               </h3>
             </div>
-            <button onClick={onCancel} className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all">
+            <button
+              onClick={onCancel}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all"
+            >
               <X size={16} />
             </button>
           </div>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-1">
-            This will permanently delete <span className="text-[#eeeef0]">{name ?? 'this companion'}</span> and wipe all associated data:
+            This will permanently delete{' '}
+            <span className="text-[#eeeef0]">{name ?? 'this companion'}</span> and wipe all
+            associated data:
           </p>
           <ul className="text-[12px] text-[#6b7280] leading-[1.7] mb-5 ml-2">
             <li>· Profile, photos, videos, and session cards</li>
@@ -144,13 +186,19 @@ function DeleteCompanionModal({
           </ul>
           <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
           <div className="flex gap-3">
-            <button onClick={onCancel} disabled={isPending}
-              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50">
+            <button
+              onClick={onCancel}
+              disabled={isPending}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50"
+            >
               Cancel
             </button>
-            <button onClick={onConfirm} disabled={isPending}
+            <button
+              onClick={onConfirm}
+              disabled={isPending}
               className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
-              style={{ background: '#ef4444' }}>
+              style={{ background: '#ef4444' }}
+            >
               {isPending ? 'Deleting…' : 'Delete permanently'}
             </button>
           </div>
@@ -222,7 +270,9 @@ export default function AdminCompanionsPage() {
         return {
           ...old,
           data: old.data.map((c: CompanionRow) =>
-            c.id === id ? { ...c, is_live, ...(is_live ? { approved_at: new Date().toISOString() } : {}) } : c
+            c.id === id
+              ? { ...c, is_live, ...(is_live ? { approved_at: new Date().toISOString() } : {}) }
+              : c
           ),
         }
       })
@@ -250,7 +300,7 @@ export default function AdminCompanionsPage() {
   const rows = data?.data ?? []
   const meta = data?.meta
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1
-  const deleteTarget = rows.find(r => r.id === deleteCompanionId)
+  const deleteTarget = rows.find((r) => r.id === deleteCompanionId)
 
   return (
     <motion.div
@@ -263,22 +313,27 @@ export default function AdminCompanionsPage() {
       {/* Header */}
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: '#eeeef0' }} className="mb-1">
+          <h1
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: '#eeeef0' }}
+            className="mb-1"
+          >
             Companions
           </h1>
-          <p className="text-[12px] text-[#6b7280]">
-            {meta ? `${meta.total} total` : 'Loading…'}
-          </p>
+          <p className="text-[12px] text-[#6b7280]">{meta ? `${meta.total} total` : 'Loading…'}</p>
         </div>
       </div>
 
       {/* Search + filter bar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1 max-w-[400px]">
-          <Search size={14} color="#6b7280" className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search
+            size={14}
+            color="#6b7280"
+            className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none"
+          />
           <input
             value={search}
-            onChange={e => handleSearchChange(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search by name, email, alias…"
             className="w-full bg-[#111620] border border-[#1c2333] rounded-[10px] pl-[38px] pr-4 py-[10px] text-[13px] text-[#eeeef0] placeholder-[#6b7280] outline-none transition-colors focus:border-[rgba(232,96,122,0.5)]"
           />
@@ -287,7 +342,7 @@ export default function AdminCompanionsPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap mb-6">
-        {TABS.map(t => (
+        {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
@@ -308,8 +363,20 @@ export default function AdminCompanionsPage() {
         <table className="w-full">
           <thead>
             <tr style={{ background: '#111620', borderBottom: '1px solid #1c2333' }}>
-              {['Companion', 'Country', 'Stage', 'Verification', 'Photos', 'Joined', 'Status', ''].map(h => (
-                <th key={h} className="text-left text-[11px] text-[#6b7280] font-medium px-4 py-3 tracking-[0.04em] uppercase">
+              {[
+                'Companion',
+                'Country',
+                'Stage',
+                'Verification',
+                'Photos',
+                'Joined',
+                'Status',
+                '',
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="text-left text-[11px] text-[#6b7280] font-medium px-4 py-3 tracking-[0.04em] uppercase"
+                >
                   {h}
                 </th>
               ))}
@@ -319,85 +386,114 @@ export default function AdminCompanionsPage() {
             {isLoading ? (
               <tbody key="loading">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #1c2333', background: i % 2 === 0 ? '#0d1117' : '#07090f' }}>
+                  <tr
+                    key={i}
+                    style={{
+                      borderBottom: '1px solid #1c2333',
+                      background: i % 2 === 0 ? '#0d1117' : '#07090f',
+                    }}
+                  >
                     {Array.from({ length: 8 }).map((_, j) => (
                       <td key={j} className="px-4 py-4">
-                        <div className="h-[14px] rounded-full bg-[#1c2333] animate-pulse" style={{ width: j === 0 ? 120 : j === 7 ? 60 : 70 }} />
+                        <div
+                          className="h-[14px] rounded-full bg-[#1c2333] animate-pulse"
+                          style={{ width: j === 0 ? 120 : j === 7 ? 60 : 70 }}
+                        />
                       </td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             ) : (
-              <motion.tbody key={`${tab}-${debouncedSearch}-${page}`} variants={container} initial="hidden" animate="show">
+              <motion.tbody
+                key={`${tab}-${debouncedSearch}-${page}`}
+                variants={container}
+                initial="hidden"
+                animate="show"
+              >
                 {rows.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="text-center text-[#6b7280] text-[13px] py-16">
                       Nothing here yet.
                     </td>
                   </tr>
-                ) : rows.map((c, idx) => (
-                  <motion.tr
-                    key={c.id}
-                    variants={cardItem}
-                    style={{
-                      borderBottom: '1px solid #1c2333',
-                      background: idx % 2 === 0 ? '#0d1117' : '#07090f',
-                    }}
-                    className="hover:bg-[#111620] transition-colors group"
-                  >
-                    {/* Companion */}
-                    <td className="px-4 py-4">
-                      <div className="text-[13px] text-[#eeeef0] font-medium">{c.full_name ?? c.alias ?? '—'}</div>
-                      <div className="text-[11px] text-[#6b7280] mt-[2px]">{c.email}</div>
-                      {c.alias && <div className="text-[10px] text-[#6b7280] mt-[2px]">{c.alias}</div>}
-                    </td>
-                    {/* Country */}
-                    <td className="px-4 py-4 text-[12px] text-[#6b7280]">{c.country ?? '—'}</td>
-                    {/* Stage */}
-                    <td className="px-4 py-4">
-                      <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
-                        {c.companion_stage != null ? `${c.companion_stage} — ${stageLabel[c.companion_stage] ?? ''}` : '—'}
-                      </span>
-                    </td>
-                    {/* Verification */}
-                    <td className="px-4 py-4">
-                      <VerificationBadge liveness={c.liveness_check_passed} providerStatus={c.provider_status} />
-                    </td>
-                    {/* Photos */}
-                    <td className="px-4 py-4 text-[12px] text-[#6b7280]">{c.photo_count}</td>
-                    {/* Joined */}
-                    <td className="px-4 py-4 text-[12px] text-[#6b7280]">
-                      {new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
-                    </td>
-                    {/* Status toggle */}
-                    <td className="px-4 py-4">
-                      <LiveToggle
-                        companionId={c.id}
-                        isLive={c.is_live}
-                        onToggle={(id, val) => toggleMutation.mutate({ id, is_live: val })}
-                      />
-                    </td>
-                    {/* Actions */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link
-                          href={`/admin/companions/${c.id}`}
-                          className="flex items-center gap-1 text-[12px] text-[#e8607a]"
-                        >
-                          Review <ExternalLink size={11} />
-                        </Link>
-                        <button
-                          onClick={() => setDeleteCompanionId(c.id)}
-                          className="w-7 h-7 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] hover:text-[#ef4444] hover:border-[rgba(239,68,68,0.4)] transition-all"
-                          title="Delete companion"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
+                ) : (
+                  rows.map((c, idx) => (
+                    <motion.tr
+                      key={c.id}
+                      variants={cardItem}
+                      style={{
+                        borderBottom: '1px solid #1c2333',
+                        background: idx % 2 === 0 ? '#0d1117' : '#07090f',
+                      }}
+                      className="hover:bg-[#111620] transition-colors group"
+                    >
+                      {/* Companion */}
+                      <td className="px-4 py-4">
+                        <div className="text-[13px] text-[#eeeef0] font-medium">
+                          {c.full_name ?? c.alias ?? '—'}
+                        </div>
+                        <div className="text-[11px] text-[#6b7280] mt-[2px]">{c.email}</div>
+                        {c.alias && (
+                          <div className="text-[10px] text-[#6b7280] mt-[2px]">{c.alias}</div>
+                        )}
+                      </td>
+                      {/* Country */}
+                      <td className="px-4 py-4 text-[12px] text-[#6b7280]">{c.country ?? '—'}</td>
+                      {/* Stage */}
+                      <td className="px-4 py-4">
+                        <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                          {c.companion_stage != null
+                            ? `${c.companion_stage} — ${stageLabel[c.companion_stage] ?? ''}`
+                            : '—'}
+                        </span>
+                      </td>
+                      {/* Verification */}
+                      <td className="px-4 py-4">
+                        <VerificationBadge
+                          liveness={c.liveness_check_passed}
+                          providerStatus={c.provider_status}
+                        />
+                      </td>
+                      {/* Photos */}
+                      <td className="px-4 py-4 text-[12px] text-[#6b7280]">{c.photo_count}</td>
+                      {/* Joined */}
+                      <td className="px-4 py-4 text-[12px] text-[#6b7280]">
+                        {new Date(c.created_at).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: '2-digit',
+                        })}
+                      </td>
+                      {/* Status toggle */}
+                      <td className="px-4 py-4">
+                        <LiveToggle
+                          companionId={c.id}
+                          isLive={c.is_live}
+                          onToggle={(id, val) => toggleMutation.mutate({ id, is_live: val })}
+                        />
+                      </td>
+                      {/* Actions */}
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Link
+                            href={`/admin/companions/${c.id}`}
+                            className="flex items-center gap-1 text-[12px] text-[#e8607a]"
+                          >
+                            Review <ExternalLink size={11} />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteCompanionId(c.id)}
+                            className="w-7 h-7 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] hover:text-[#ef4444] hover:border-[rgba(239,68,68,0.4)] transition-all"
+                            title="Delete companion"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
               </motion.tbody>
             )}
           </AnimatePresence>
@@ -407,44 +503,74 @@ export default function AdminCompanionsPage() {
       {/* Mobile cards */}
       <div className="md:hidden flex flex-col gap-3">
         <AnimatePresence mode="wait">
-          <motion.div key={`mob-${tab}-${debouncedSearch}-${page}`} variants={container} initial="hidden" animate="show" className="flex flex-col gap-3">
+          <motion.div
+            key={`mob-${tab}-${debouncedSearch}-${page}`}
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col gap-3"
+          >
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 animate-pulse h-[100px]" />
-              ))
-              : rows.map(c => (
-                <motion.div key={c.id} variants={cardItem}>
-                  <Link href={`/admin/companions/${c.id}`} className="block bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 transition-all hover:border-[rgba(232,96,122,0.3)]">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="text-[13px] text-[#eeeef0] font-medium">{c.full_name ?? c.alias ?? '—'}</div>
-                        <div className="text-[11px] text-[#6b7280]">{c.email}</div>
+                  <div
+                    key={i}
+                    className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 animate-pulse h-[100px]"
+                  />
+                ))
+              : rows.map((c) => (
+                  <motion.div key={c.id} variants={cardItem}>
+                    <Link
+                      href={`/admin/companions/${c.id}`}
+                      className="block bg-[#111620] border border-[#1c2333] rounded-[14px] p-4 transition-all hover:border-[rgba(232,96,122,0.3)]"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="text-[13px] text-[#eeeef0] font-medium">
+                            {c.full_name ?? c.alias ?? '—'}
+                          </div>
+                          <div className="text-[11px] text-[#6b7280]">{c.email}</div>
+                        </div>
+                        <VerificationBadge
+                          liveness={c.liveness_check_passed}
+                          providerStatus={c.provider_status}
+                        />
                       </div>
-                      <VerificationBadge liveness={c.liveness_check_passed} providerStatus={c.provider_status} />
-                    </div>
-                    <div className="flex gap-2 flex-wrap mt-2">
-                      {c.country && <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">{c.country}</span>}
-                      {c.companion_stage != null && (
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        {c.country && (
+                          <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                            {c.country}
+                          </span>
+                        )}
+                        {c.companion_stage != null && (
+                          <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
+                            Stage {c.companion_stage}
+                          </span>
+                        )}
                         <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
-                          Stage {c.companion_stage}
+                          {c.photo_count} photos
                         </span>
-                      )}
-                      <span className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">
-                        {c.photo_count} photos
-                      </span>
-                      <span
-                        className="text-[11px] px-[10px] py-1 rounded-full"
-                        style={c.is_live
-                          ? { color: '#e8607a', background: 'rgba(232,96,122,0.08)', border: '1px solid rgba(232,96,122,0.3)' }
-                          : { color: '#6b7280', background: 'rgba(255,255,255,0.04)', border: '1px solid #1c2333' }}
-                      >
-                        {c.is_live ? 'Live' : 'Off'}
-                      </span>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))
-            }
+                        <span
+                          className="text-[11px] px-[10px] py-1 rounded-full"
+                          style={
+                            c.is_live
+                              ? {
+                                  color: '#e8607a',
+                                  background: 'rgba(232,96,122,0.08)',
+                                  border: '1px solid rgba(232,96,122,0.3)',
+                                }
+                              : {
+                                  color: '#6b7280',
+                                  background: 'rgba(255,255,255,0.04)',
+                                  border: '1px solid #1c2333',
+                                }
+                          }
+                        >
+                          {c.is_live ? 'Live' : 'Off'}
+                        </span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -453,7 +579,7 @@ export default function AdminCompanionsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-8">
           <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
             className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all"
           >
@@ -463,7 +589,7 @@ export default function AdminCompanionsPage() {
             {page} / {totalPages}
           </span>
           <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             className="w-8 h-8 flex items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] disabled:opacity-30 hover:border-[rgba(232,96,122,0.5)] hover:text-[#e8607a] transition-all"
           >

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
 const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false })
@@ -8,10 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import {
-  Camera,
-  LayoutGrid, Heart, Bookmark, BookMarked, Pencil, MapPin,
-} from 'lucide-react'
+import { Camera, LayoutGrid, Heart, Bookmark, BookMarked, Pencil, MapPin } from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
@@ -24,40 +22,40 @@ import { useUIStore, type ProfileViewerStory } from '@/store/uiStore'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface UserProfile {
-  id:              string
-  email:           string
-  name:            string | null
-  image:           string | null
-  alias:           string | null
-  created_at:      string
-  display_name:    string | null
-  avatar_url:      string | null
-  bio:             string | null
-  date_of_birth:   string | null
-  country:         string | null
-  city:            string | null
-  gender:          string | null
+  id: string
+  email: string
+  name: string | null
+  image: string | null
+  alias: string | null
+  created_at: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  date_of_birth: string | null
+  country: string | null
+  city: string | null
+  gender: string | null
   desired_genders: string[] | null
-  vibes:           string[] | null
-  platform_role:   string | null
+  vibes: string[] | null
+  platform_role: string | null
 }
 
 interface UserPost {
-  id:               string
-  title:            string | null
-  excerpt:          string | null
-  firstImage:       string | null
-  pageImageUrls:    string[]
-  categories:       string[]
-  likeCount:        number
-  saveCount:        number
-  viewCount:        number
-  commentCount:     number
+  id: string
+  title: string | null
+  excerpt: string | null
+  firstImage: string | null
+  pageImageUrls: string[]
+  categories: string[]
+  likeCount: number
+  saveCount: number
+  viewCount: number
+  commentCount: number
   moderationStatus: string
-  createdAt:        string
+  createdAt: string
 }
 
-type MainTab    = 'posts' | 'likes' | 'saved'
+type MainTab = 'posts' | 'likes' | 'saved'
 type LikedSubTab = 'all' | 'confessions' | 'stories'
 type SavedSubTab = 'all' | 'collections' | 'companions'
 
@@ -78,54 +76,88 @@ function Skeleton() {
 function PostCell({ post, onTap }: { post: UserPost; onTap: () => void }) {
   return (
     <div
-      style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden',
-               background: '#111620', cursor: 'pointer' }}
+      style={{
+        aspectRatio: '3/4',
+        position: 'relative',
+        overflow: 'hidden',
+        background: '#111620',
+        cursor: 'pointer',
+      }}
       onClick={onTap}
     >
       {post.firstImage ? (
-        <img
+        <Image
           src={post.firstImage}
           alt={post.title ?? 'Confession'}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          fill
+          style={{ objectFit: 'cover' }}
+          sizes="33vw"
         />
       ) : (
-        <div style={{
-          width: '100%', height: '100%',
-          background: 'linear-gradient(160deg, #0d1117 0%, #07090f 60%, #0d0a12 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '12px',
-        }}>
-          <p style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 11, color: '#6b7280', lineHeight: 1.6,
-            textAlign: 'center', overflow: 'hidden',
-            display: '-webkit-box', WebkitLineClamp: 4,
-            WebkitBoxOrient: 'vertical',
-          }}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(160deg, #0d1117 0%, #07090f 60%, #0d0a12 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '12px',
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 11,
+              color: '#6b7280',
+              lineHeight: 1.6,
+              textAlign: 'center',
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
             {post.excerpt ?? ''}
           </p>
         </div>
       )}
 
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        background: 'linear-gradient(transparent, rgba(7,9,15,0.85))',
-        padding: '16px 8px 8px',
-        display: 'flex', gap: 10, alignItems: 'center',
-      }}>
-        <span style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(transparent, rgba(7,9,15,0.85))',
+          padding: '16px 8px 8px',
+          display: 'flex',
+          gap: 10,
+          alignItems: 'center',
+        }}
+      >
+        <span
+          style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}
+        >
           ♥ {post.likeCount}
         </span>
-        <span style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}>
+        <span
+          style={{ fontSize: 10, color: '#eeeef0', display: 'flex', alignItems: 'center', gap: 3 }}
+        >
           💬 {post.commentCount}
         </span>
         {post.moderationStatus === 'pending' && (
-          <span style={{
-            fontSize: 9, color: '#c9a96e', marginLeft: 'auto',
-            background: 'rgba(201,169,110,0.12)',
-            border: '1px solid rgba(201,169,110,0.25)',
-            borderRadius: 20, padding: '1px 6px',
-          }}>
+          <span
+            style={{
+              fontSize: 9,
+              color: '#c9a96e',
+              marginLeft: 'auto',
+              background: 'rgba(201,169,110,0.12)',
+              border: '1px solid rgba(201,169,110,0.25)',
+              borderRadius: 20,
+              padding: '1px 6px',
+            }}
+          >
             pending
           </span>
         )}
@@ -142,8 +174,10 @@ function StoryCell({ title, gradient }: { title: string; gradient: string }) {
       className="rounded-[12px] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
       style={{ background: gradient, aspectRatio: '3/4', position: 'relative' }}
     >
-      <div className="absolute inset-0 flex items-end p-3"
-        style={{ background: 'linear-gradient(transparent 40%, rgba(7,9,15,0.9) 100%)' }}>
+      <div
+        className="absolute inset-0 flex items-end p-3"
+        style={{ background: 'linear-gradient(transparent 40%, rgba(7,9,15,0.9) 100%)' }}
+      >
         <span style={{ fontSize: 12, color: '#eeeef0', lineHeight: 1.35 }}>{title}</span>
       </div>
     </div>
@@ -159,16 +193,23 @@ function AudioCell({ title, voice, gradient }: { title: string; voice: string; g
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="flex items-center gap-[3px] h-[32px]">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} style={{
-              width: 3, borderRadius: 2, background: 'rgba(232,96,122,0.6)',
-              height: `${10 + (i % 4) * 5}px`,
-              animation: `wave 1.2s ease-in-out ${(i * 0.1).toFixed(1)}s infinite`,
-            }} />
+            <div
+              key={i}
+              style={{
+                width: 3,
+                borderRadius: 2,
+                background: 'rgba(232,96,122,0.6)',
+                height: `${10 + (i % 4) * 5}px`,
+                animation: `wave 1.2s ease-in-out ${(i * 0.1).toFixed(1)}s infinite`,
+              }}
+            />
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 flex items-end p-3"
-        style={{ background: 'linear-gradient(transparent 50%, rgba(7,9,15,0.9) 100%)' }}>
+      <div
+        className="absolute inset-0 flex items-end p-3"
+        style={{ background: 'linear-gradient(transparent 50%, rgba(7,9,15,0.9) 100%)' }}
+      >
         <div>
           <div style={{ fontSize: 12, color: '#eeeef0' }}>{title}</div>
           <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{voice}</div>
@@ -181,9 +222,9 @@ function AudioCell({ title, voice, gradient }: { title: string; voice: string; g
 // ─── LikedTabContent ──────────────────────────────────────────────────────────
 
 const LIKED_SUB_TABS: { id: LikedSubTab; label: string }[] = [
-  { id: 'all',         label: 'All' },
+  { id: 'all', label: 'All' },
   { id: 'confessions', label: 'Confessions' },
-  { id: 'stories',     label: 'Stories' },
+  { id: 'stories', label: 'Stories' },
 ]
 
 // Inner component so the hook is never called conditionally
@@ -196,7 +237,7 @@ function LikesTabContent({
   likedSubTab,
   setLikedSubTab,
 }: {
-  likedSubTab:    LikedSubTab
+  likedSubTab: LikedSubTab
   setLikedSubTab: (t: LikedSubTab) => void
 }) {
   return (
@@ -208,15 +249,15 @@ function LikesTabContent({
             key={id}
             onClick={() => setLikedSubTab(id)}
             style={{
-              flexShrink:   0,
-              fontSize:     12,
-              padding:      '5px 14px',
+              flexShrink: 0,
+              fontSize: 12,
+              padding: '5px 14px',
               borderRadius: 999,
-              border:       `1px solid ${likedSubTab === id ? '#e8607a' : '#1c2333'}`,
-              color:        likedSubTab === id ? '#e8607a' : '#6b7280',
-              background:   likedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
-              cursor:       'pointer',
-              transition:   'all 0.15s',
+              border: `1px solid ${likedSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color: likedSubTab === id ? '#e8607a' : '#6b7280',
+              background: likedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
           >
             {label}
@@ -232,33 +273,41 @@ function LikesTabContent({
 // ─── SavedTabContent ──────────────────────────────────────────────────────────
 
 const SAVED_SUB_TABS: { id: SavedSubTab; label: string }[] = [
-  { id: 'all',         label: 'All' },
+  { id: 'all', label: 'All' },
   { id: 'collections', label: 'Collections' },
-  { id: 'companions',  label: 'Companions' },
+  { id: 'companions', label: 'Companions' },
 ]
 
 function SavedTabContent({
   savedSubTab,
   setSavedSubTab,
 }: {
-  savedSubTab:    SavedSubTab
+  savedSubTab: SavedSubTab
   setSavedSubTab: (t: SavedSubTab) => void
 }) {
   const { items, total, isLoading } = useSavedConfessions()
 
   // Split saved items by content type for separate collection cards
-  const confessionItems = items.filter(i => i.authorType === 'user')
-  const storyItems      = items.filter(i => i.authorType !== 'user')
+  const confessionItems = items.filter((i) => i.authorType === 'user')
+  const storyItems = items.filter((i) => i.authorType !== 'user')
 
   const confessionCovers = confessionItems
-    .slice(0, 4).map(i => i.firstImage).filter((v): v is string => Boolean(v))
+    .slice(0, 4)
+    .map((i) => i.firstImage)
+    .filter((v): v is string => Boolean(v))
   const storyCovers = storyItems
-    .slice(0, 4).map(i => i.firstImage).filter((v): v is string => Boolean(v))
+    .slice(0, 4)
+    .map((i) => i.firstImage)
+    .filter((v): v is string => Boolean(v))
 
   const skeletonGrid = (
     <div className="grid grid-cols-3 gap-[2px]">
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ aspectRatio: '3/4', background: '#111620' }} className="animate-pulse" />
+        <div
+          key={i}
+          style={{ aspectRatio: '3/4', background: '#111620' }}
+          className="animate-pulse"
+        />
       ))}
     </div>
   )
@@ -272,15 +321,15 @@ function SavedTabContent({
             key={id}
             onClick={() => setSavedSubTab(id)}
             style={{
-              flexShrink:   0,
-              fontSize:     12,
-              padding:      '5px 14px',
+              flexShrink: 0,
+              fontSize: 12,
+              padding: '5px 14px',
               borderRadius: 999,
-              border:       `1px solid ${savedSubTab === id ? '#e8607a' : '#1c2333'}`,
-              color:        savedSubTab === id ? '#e8607a' : '#6b7280',
-              background:   savedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
-              cursor:       'pointer',
-              transition:   'all 0.15s',
+              border: `1px solid ${savedSubTab === id ? '#e8607a' : '#1c2333'}`,
+              color: savedSubTab === id ? '#e8607a' : '#6b7280',
+              background: savedSubTab === id ? 'rgba(232,96,122,0.08)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
           >
             {label}
@@ -289,16 +338,22 @@ function SavedTabContent({
       </div>
 
       {/* Sub-tab content */}
-      {savedSubTab === 'all' && (
-        isLoading ? skeletonGrid : <SavedConfessionsGrid items={items} />
-      )}
+      {savedSubTab === 'all' && (isLoading ? skeletonGrid : <SavedConfessionsGrid items={items} />)}
 
-      {savedSubTab === 'collections' && (
-        isLoading ? (
+      {savedSubTab === 'collections' &&
+        (isLoading ? (
           <div className="flex flex-col gap-3">
-            {[0, 1].map(i => (
-              <div key={i} style={{ height: 140, borderRadius: 14, background: '#0d1117', border: '1px solid #1c2333' }}
-                className="animate-pulse" />
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                style={{
+                  height: 140,
+                  borderRadius: 14,
+                  background: '#0d1117',
+                  border: '1px solid #1c2333',
+                }}
+                className="animate-pulse"
+              />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -325,8 +380,7 @@ function SavedTabContent({
               />
             )}
           </div>
-        )
-      )}
+        ))}
 
       {savedSubTab === 'companions' && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -346,33 +400,33 @@ export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const setAvatarUrl       = useUIStore(s => s.setAvatarUrl)
-  const openProfileViewer  = useUIStore(s => s.openProfileViewer)
+  const setAvatarUrl = useUIStore((s) => s.setAvatarUrl)
+  const openProfileViewer = useUIStore((s) => s.openProfileViewer)
 
   // Companions have their own full-featured profile page
   const platformRole = (session?.user as any)?.platform_role
-  const isCompanion  = platformRole === 'companion' || platformRole === 'dream'
+  const isCompanion = platformRole === 'companion' || platformRole === 'dream'
   useEffect(() => {
     if (isCompanion) router.replace('/companion/profile')
   }, [isCompanion, router])
 
-  const [tasteOpen, setTasteOpen]           = useState(false)
-  const [activeTab, setActiveTab]           = useState<MainTab>('posts')
-  const [likedSubTab, setLikedSubTab]       = useState<LikedSubTab>('all')
-  const [savedSubTab, setSavedSubTab]       = useState<SavedSubTab>('all')
+  const [tasteOpen, setTasteOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<MainTab>('posts')
+  const [likedSubTab, setLikedSubTab] = useState<LikedSubTab>('all')
+  const [savedSubTab, setSavedSubTab] = useState<SavedSubTab>('all')
   const [avatarUploading, setAvatarUploading] = useState(false)
-  const [avatarError, setAvatarError]       = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const [profileOverride, setProfileOverride] = useState<Partial<UserProfile> | null>(null)
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   const { data: profileData, isLoading: loading } = useQuery<{ data: UserProfile | null }>({
-    queryKey:  ['user', 'profile'],
-    queryFn:   () => fetch('/api/users/profile', { credentials: 'include' }).then(r => r.json()),
+    queryKey: ['user', 'profile'],
+    queryFn: () => fetch('/api/users/profile', { credentials: 'include' }).then((r) => r.json()),
     staleTime: 60_000,
   })
   const profile: UserProfile | null = profileOverride
-    ? { ...(profileData?.data ?? null as any), ...profileOverride } as UserProfile
-    : profileData?.data ?? null
+    ? ({ ...(profileData?.data ?? (null as any)), ...profileOverride } as UserProfile)
+    : (profileData?.data ?? null)
 
   useEffect(() => {
     if (profileData?.data?.avatar_url) setAvatarUrl(profileData.data.avatar_url)
@@ -380,8 +434,8 @@ export default function ProfilePage() {
 
   // ── Fetch posts ────────────────────────────────────────────────────────────
   const { data: postsData, isLoading: postsLoading } = useQuery<{ data: UserPost[] }>({
-    queryKey:  ['user', 'posts'],
-    queryFn:   () => fetch('/api/users/posts', { credentials: 'include' }).then(r => r.json()),
+    queryKey: ['user', 'posts'],
+    queryFn: () => fetch('/api/users/posts', { credentials: 'include' }).then((r) => r.json()),
     staleTime: 60_000,
   })
   const posts = postsData?.data ?? []
@@ -392,32 +446,35 @@ export default function ProfilePage() {
   const geoAttemptedRef = useRef(false)
 
   const attemptGeolocation = useCallback(async () => {
-    if (!navigator.geolocation) { setLocationStatus('failed'); return }
+    if (!navigator.geolocation) {
+      setLocationStatus('failed')
+      return
+    }
     setLocationStatus('detecting')
     navigator.geolocation.getCurrentPosition(
-      async pos => {
+      async (pos) => {
         try {
-          const res  = await fetch('/api/users/location', {
-            method:  'POST',
+          const res = await fetch('/api/users/location', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
           })
           const json = await res.json()
           if (!res.ok || !json.data?.city) throw new Error()
           const { city, country } = json.data
           await fetch('/api/users/profile', {
-            method:  'PATCH',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ city, ...(country ? { country } : {}) }),
+            body: JSON.stringify({ city, ...(country ? { country } : {}) }),
           })
-          setProfileOverride(o => ({ ...(o ?? {}), city, ...(country ? { country } : {}) }))
+          setProfileOverride((o) => ({ ...(o ?? {}), city, ...(country ? { country } : {}) }))
           setLocationStatus('idle')
         } catch {
           setLocationStatus('failed')
         }
       },
       () => setLocationStatus('failed'),
-      { timeout: 8000, maximumAge: 300_000 },
+      { timeout: 8000, maximumAge: 300_000 }
     )
   }, [])
 
@@ -444,10 +501,10 @@ export default function ProfilePage() {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      const res  = await fetch('/api/users/avatar', { method: 'POST', body: formData })
+      const res = await fetch('/api/users/avatar', { method: 'POST', body: formData })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
-      setProfileOverride(o => ({ ...(o ?? {}), avatar_url: json.data.avatarUrl }))
+      setProfileOverride((o) => ({ ...(o ?? {}), avatar_url: json.data.avatarUrl }))
       setAvatarUrl(json.data.avatarUrl)
     } catch (err: unknown) {
       setAvatarError(err instanceof Error ? err.message : 'Upload failed.')
@@ -457,10 +514,10 @@ export default function ProfilePage() {
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
-  const alias    = profile?.alias ?? session?.user?.alias ?? '@you'
+  const alias = profile?.alias ?? session?.user?.alias ?? '@you'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
-  const vibes    = profile?.vibes?.length           ? profile.vibes           : []
-  const desires  = profile?.desired_genders?.length ? profile.desired_genders : []
+  const vibes = profile?.vibes?.length ? profile.vibes : []
+  const desires = profile?.desired_genders?.length ? profile.desired_genders : []
 
   const TABS: { id: MainTab; icon: React.ReactNode }[] = [
     { id: 'posts', icon: <LayoutGrid size={20} /> },
@@ -470,7 +527,9 @@ export default function ProfilePage() {
 
   return (
     <>
-      {loading ? <Skeleton /> : (
+      {loading ? (
+        <Skeleton />
+      ) : (
         <motion.main
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -478,10 +537,8 @@ export default function ProfilePage() {
           className="relative z-10 mx-auto px-5 pt-[95px] pb-[120px]"
           style={{ maxWidth: 640 }}
         >
-
           {/* ── Section 1: Hero identity ─────────────────────── */}
           <div className="flex flex-col items-center gap-3 mb-6">
-
             {/* Avatar */}
             <div
               className="relative group cursor-pointer"
@@ -489,35 +546,57 @@ export default function ProfilePage() {
               onClick={() => !avatarUploading && fileInputRef.current?.click()}
             >
               {profile?.avatar_url ? (
-                <div style={{
-                  width: 96, height: 96, borderRadius: '50%',
-                  backgroundImage: `url(${profile.avatar_url})`,
-                  backgroundSize: 'cover', backgroundPosition: 'center',
-                  border: '2px solid #1c2333',
-                }} />
+                <div
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: '50%',
+                    backgroundImage: `url(${profile.avatar_url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    border: '2px solid #1c2333',
+                  }}
+                />
               ) : (
-                <div style={{
-                  width: 96, height: 96, borderRadius: '50%',
-                  background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 28, fontWeight: 600, color: '#fff',
-                  border: '2px solid #1c2333',
-                }}>
+                <div
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 28,
+                    fontWeight: 600,
+                    color: '#fff',
+                    border: '2px solid #1c2333',
+                  }}
+                >
                   {initials}
                 </div>
               )}
               {avatarUploading ? (
-                <div className="absolute inset-0 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(0,0,0,0.55)' }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: '50%',
-                    border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff',
-                    animation: 'spin 0.7s linear infinite',
-                  }} />
+                <div
+                  className="absolute inset-0 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.55)' }}
+                >
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      borderTopColor: '#fff',
+                      animation: 'spin 0.7s linear infinite',
+                    }}
+                  />
                 </div>
               ) : (
-                <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  style={{ background: 'rgba(7,9,15,0.65)' }}>
+                <div
+                  className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  style={{ background: 'rgba(7,9,15,0.65)' }}
+                >
                   <Camera size={20} color="#eeeef0" />
                 </div>
               )}
@@ -527,14 +606,23 @@ export default function ProfilePage() {
               <p style={{ fontSize: 11, color: '#e87070', textAlign: 'center' }}>{avatarError}</p>
             )}
 
-            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }} onChange={handleAvatarChange} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={handleAvatarChange}
+            />
 
             {/* Alias */}
-            <div style={{
-              fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#e8607a',
-              letterSpacing: '-0.01em',
-            }}>
+            <div
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 22,
+                color: '#e8607a',
+                letterSpacing: '-0.01em',
+              }}
+            >
               {alias}
             </div>
 
@@ -545,10 +633,16 @@ export default function ProfilePage() {
             )} */}
 
             {profile?.bio && (
-              <p style={{
-                fontSize: 13, color: '#9ca3af', textAlign: 'center', lineHeight: 1.6,
-                maxWidth: 320, fontStyle: 'italic',
-              }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: '#9ca3af',
+                  textAlign: 'center',
+                  lineHeight: 1.6,
+                  maxWidth: 320,
+                  fontStyle: 'italic',
+                }}
+              >
                 {profile.bio}
               </p>
             )}
@@ -564,33 +658,49 @@ export default function ProfilePage() {
                 {[profile.city, profile.country].filter(Boolean).join(', ')}
               </button>
             ) : locationStatus === 'detecting' ? (
-              <div className="flex items-center gap-[5px]" style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic' }}>
+              <div
+                className="flex items-center gap-[5px]"
+                style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic' }}
+              >
                 <MapPin size={11} color="#4b5563" />
                 Locating…
               </div>
             ) : locationStatus === 'picking' ? (
               <LocationPicker
-                onSaved={city => {
-                  setProfileOverride(o => ({ ...(o ?? {}), city }))
+                onSaved={(city) => {
+                  setProfileOverride((o) => ({ ...(o ?? {}), city }))
                   setLocationStatus('idle')
                 }}
                 onCancel={() => setLocationStatus(profile?.city ? 'idle' : 'failed')}
               />
             ) : locationStatus === 'failed' ? (
               <div className="flex flex-col items-center gap-[10px]">
-                <span style={{ fontSize: 11, color: '#4b5563' }}>We couldn't find your location</span>
+                <span style={{ fontSize: 11, color: '#4b5563' }}>
+                  We couldn't find your location
+                </span>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { geoAttemptedRef.current = false; attemptGeolocation() }}
+                    onClick={() => {
+                      geoAttemptedRef.current = false
+                      attemptGeolocation()
+                    }}
                     className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
-                    style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280', border: '1px solid #1c2333' }}
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      color: '#6b7280',
+                      border: '1px solid #1c2333',
+                    }}
                   >
                     Try again
                   </button>
                   <button
                     onClick={() => setLocationStatus('picking')}
                     className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
-                    style={{ background: 'rgba(232,96,122,0.08)', color: '#e8607a', border: '1px solid rgba(232,96,122,0.3)' }}
+                    style={{
+                      background: 'rgba(232,96,122,0.08)',
+                      color: '#e8607a',
+                      border: '1px solid rgba(232,96,122,0.3)',
+                    }}
                   >
                     Add manually
                   </button>
@@ -598,24 +708,35 @@ export default function ProfilePage() {
               </div>
             ) : null}
 
-            <span className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-              style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>
+            <span
+              className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+              style={{
+                border: '1px solid rgba(232,96,122,0.3)',
+                background: 'rgba(232,96,122,0.08)',
+              }}
+            >
               The Dreamer
             </span>
-
-
           </div>
 
           {/* ── Section 2: Stats ─────────────────────────────── */}
           <div className="flex items-center justify-center gap-0 mb-7">
             {[
-              { n: posts.length.toString(),                                label: 'confessions' },
+              { n: posts.length.toString(), label: 'confessions' },
               { n: posts.reduce((a, p) => a + p.likeCount, 0).toString(), label: 'likes' },
               { n: posts.reduce((a, p) => a + p.saveCount, 0).toString(), label: 'saved' },
             ].map(({ n, label }, i) => (
               <div key={label} className="flex items-center">
                 <div className="flex flex-col items-center px-6 py-2">
-                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: '#eeeef0' }}>{n}</span>
+                  <span
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 22,
+                      color: '#eeeef0',
+                    }}
+                  >
+                    {n}
+                  </span>
                   <span style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{label}</span>
                 </div>
                 {i < 2 && <div style={{ width: 1, height: 32, background: '#1c2333' }} />}
@@ -628,7 +749,14 @@ export default function ProfilePage() {
           {/* ── Section 3: Your taste ────────────────────────── */}
           <div className="mb-7">
             <div className="flex items-center justify-between mb-4">
-              <span style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
                 your taste
               </span>
               <button
@@ -642,41 +770,72 @@ export default function ProfilePage() {
             </div>
 
             <div className="mb-4">
-              <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: '#4b5563',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginBottom: 8,
+                }}
+              >
                 vibes
               </div>
               {vibes.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {vibes.map(t => (
-                    <span key={t} className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]">{t}</span>
+                  {vibes.map((t) => (
+                    <span
+                      key={t}
+                      className="text-[11px] px-[10px] py-1 rounded-full border border-[#1c2333] text-[#6b7280] bg-white/[0.03]"
+                    >
+                      {t}
+                    </span>
                   ))}
                 </div>
               ) : (
-                <button onClick={() => setTasteOpen(true)}
+                <button
+                  onClick={() => setTasteOpen(true)}
                   className="text-[12px] bg-transparent border-none cursor-pointer p-0 transition-colors hover:text-[#eeeef0]"
-                  style={{ color: '#4b5563', fontStyle: 'italic' }}>
+                  style={{ color: '#4b5563', fontStyle: 'italic' }}
+                >
                   Nothing yet — tap Edit to add your vibes.
                 </button>
               )}
             </div>
 
             <div>
-              <div style={{ fontSize: 10, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: '#4b5563',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginBottom: 8,
+                }}
+              >
                 Gender Preference
               </div>
               {desires.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {desires.map(t => (
-                    <span key={t} className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-                      style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}>
+                  {desires.map((t) => (
+                    <span
+                      key={t}
+                      className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                      style={{
+                        border: '1px solid rgba(232,96,122,0.3)',
+                        background: 'rgba(232,96,122,0.08)',
+                      }}
+                    >
                       {t}
                     </span>
                   ))}
                 </div>
               ) : (
-                <button onClick={() => setTasteOpen(true)}
+                <button
+                  onClick={() => setTasteOpen(true)}
                   className="text-[12px] bg-transparent border-none cursor-pointer p-0 transition-colors hover:text-[#eeeef0]"
-                  style={{ color: '#4b5563', fontStyle: 'italic' }}>
+                  style={{ color: '#4b5563', fontStyle: 'italic' }}
+                >
                   Nothing yet — tap Edit to shape your desires.
                 </button>
               )}
@@ -694,7 +853,7 @@ export default function ProfilePage() {
                 className="flex-1 flex items-center justify-center py-3 transition-all duration-150 border-b-[2px] bg-transparent cursor-pointer"
                 style={{
                   borderColor: activeTab === id ? '#e8607a' : 'transparent',
-                  color:       activeTab === id ? '#e8607a' : '#4b5563',
+                  color: activeTab === id ? '#e8607a' : '#4b5563',
                 }}
               >
                 {icon}
@@ -703,24 +862,37 @@ export default function ProfilePage() {
           </div>
 
           <div className="pt-4 mb-8">
-            {activeTab === 'posts' && (
-              postsLoading ? (
+            {activeTab === 'posts' &&
+              (postsLoading ? (
                 <div className="grid grid-cols-3 gap-[2px]">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} style={{ aspectRatio: '3/4', background: '#111620', borderRadius: 4 }}
-                      className="animate-pulse" />
+                    <div
+                      key={i}
+                      style={{ aspectRatio: '3/4', background: '#111620', borderRadius: 4 }}
+                      className="animate-pulse"
+                    />
                   ))}
                 </div>
               ) : posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                   <LayoutGrid size={32} color="#1c2333" />
-                  <p style={{ fontSize: 13, color: '#4b5563', fontStyle: 'italic', textAlign: 'center' }}>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: '#4b5563',
+                      fontStyle: 'italic',
+                      textAlign: 'center',
+                    }}
+                  >
                     Your confessions will appear here.
                   </p>
                   <button
                     onClick={() => router.push('/create')}
                     className="text-[12px] text-[#e8607a] px-4 py-2 rounded-full mt-1 cursor-pointer"
-                    style={{ border: '1px solid rgba(232,96,122,0.3)', background: 'rgba(232,96,122,0.08)' }}
+                    style={{
+                      border: '1px solid rgba(232,96,122,0.3)',
+                      background: 'rgba(232,96,122,0.08)',
+                    }}
                   >
                     Write your first confession →
                   </button>
@@ -732,47 +904,39 @@ export default function ProfilePage() {
                       key={post.id}
                       post={post}
                       onTap={() => {
-                        const storiesArray: ProfileViewerStory[] = posts.map(p => ({
-                          id:            p.id,
-                          title:         p.title,
-                          body:          '',
-                          rawBody:       p.excerpt ?? '',
+                        const storiesArray: ProfileViewerStory[] = posts.map((p) => ({
+                          id: p.id,
+                          title: p.title,
+                          body: '',
+                          rawBody: p.excerpt ?? '',
                           pageImageUrls: p.pageImageUrls,
-                          categoryName:  p.categories[0] ?? '',
-                          categories:    p.categories,
-                          moodTags:      [],
-                          likeCount:     p.likeCount,
-                          saveCount:     p.saveCount,
-                          commentCount:  p.commentCount,
-                          userHasLiked:  false,
-                          userHasSaved:  false,
-                          authorAlias:   session?.user?.alias ?? null,
-                          isAnonymous:   false,
-                          createdAt:     p.createdAt,
+                          categoryName: p.categories[0] ?? '',
+                          categories: p.categories,
+                          moodTags: [],
+                          likeCount: p.likeCount,
+                          saveCount: p.saveCount,
+                          commentCount: p.commentCount,
+                          userHasLiked: false,
+                          userHasSaved: false,
+                          authorAlias: session?.user?.alias ?? null,
+                          isAnonymous: false,
+                          createdAt: p.createdAt,
                         }))
                         openProfileViewer(storiesArray, idx, 'own')
                       }}
                     />
                   ))}
                 </div>
-              )
-            )}
+              ))}
 
             {activeTab === 'likes' && (
-              <LikesTabContent
-                likedSubTab={likedSubTab}
-                setLikedSubTab={setLikedSubTab}
-              />
+              <LikesTabContent likedSubTab={likedSubTab} setLikedSubTab={setLikedSubTab} />
             )}
 
             {activeTab === 'saved' && (
-              <SavedTabContent
-                savedSubTab={savedSubTab}
-                setSavedSubTab={setSavedSubTab}
-              />
+              <SavedTabContent savedSubTab={savedSubTab} setSavedSubTab={setSavedSubTab} />
             )}
           </div>
-
         </motion.main>
       )}
 
@@ -780,15 +944,17 @@ export default function ProfilePage() {
       <TasteDrawer
         open={tasteOpen}
         onClose={() => setTasteOpen(false)}
-        onSaved={(d: TasteData) => setProfileOverride(o => ({
-          ...(o ?? {}),
-          vibes:           d.vibes,
-          gender:          d.gender,
-          desired_genders: d.desiredGenders,
-        }))}
+        onSaved={(d: TasteData) =>
+          setProfileOverride((o) => ({
+            ...(o ?? {}),
+            vibes: d.vibes,
+            gender: d.gender,
+            desired_genders: d.desiredGenders,
+          }))
+        }
         defaults={{
-          vibes:          profile?.vibes          ?? [],
-          gender:         profile?.gender         ?? '',
+          vibes: profile?.vibes ?? [],
+          gender: profile?.gender ?? '',
           desiredGenders: profile?.desired_genders ?? [],
         }}
       />

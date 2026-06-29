@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import {
-  companions, companionProfiles, companionPhotos,
-  sessionCards, companionVibeTags, vibeTags,
+  companions,
+  companionProfiles,
+  companionPhotos,
+  sessionCards,
+  companionVibeTags,
+  vibeTags,
 } from '@/db/schema'
 import { eq, and, isNull, asc } from 'drizzle-orm'
 
@@ -31,22 +35,19 @@ function ageFromDob(dob: string | null): number | null {
   return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000))
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { profileId: string } }
-) {
+export async function GET(_req: NextRequest, { params }: { params: { profileId: string } }) {
   const { profileId } = params
 
   const [profile] = await db
     .select({
-      id:                  companionProfiles.id,
-      companion_id:        companionProfiles.companion_id,
-      bio:                 companionProfiles.bio,
-      tagline:             companionProfiles.tagline,
-      city:                companionProfiles.city,
-      currency:            companionProfiles.currency,
-      is_verified:         companionProfiles.is_verified,
-      session_modality:    companionProfiles.session_modality,
+      id: companionProfiles.id,
+      companion_id: companionProfiles.companion_id,
+      bio: companionProfiles.bio,
+      tagline: companionProfiles.tagline,
+      city: companionProfiles.city,
+      currency: companionProfiles.currency,
+      is_verified: companionProfiles.is_verified,
+      session_modality: companionProfiles.session_modality,
       is_visible_to_users: companionProfiles.is_visible_to_users,
     })
     .from(companionProfiles)
@@ -58,80 +59,91 @@ export async function GET(
   }
 
   const [companionRow, photoRows, sessionCardRows, vibeTagRows] = await Promise.all([
-    db.select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
+    db
+      .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
       .from(companions)
       .where(eq(companions.id, profile.companion_id))
       .limit(1)
-      .then(r => r[0] ?? null),
+      .then((r) => r[0] ?? null),
 
-    db.select({
-      url:        companionPhotos.url,
-      is_primary: companionPhotos.is_primary,
-      sort_order: companionPhotos.sort_order,
-    })
-    .from(companionPhotos)
-    .where(and(
-      eq(companionPhotos.companion_profile_id, profileId),
-      isNull(companionPhotos.deleted_at),
-    ))
-    .orderBy(asc(companionPhotos.sort_order)),
+    db
+      .select({
+        url: companionPhotos.url,
+        is_primary: companionPhotos.is_primary,
+        sort_order: companionPhotos.sort_order,
+      })
+      .from(companionPhotos)
+      .where(
+        and(eq(companionPhotos.companion_profile_id, profileId), isNull(companionPhotos.deleted_at))
+      )
+      .orderBy(asc(companionPhotos.sort_order)),
 
-    db.select({
-      id:               sessionCards.id,
-      title:            sessionCards.title,
-      description:      sessionCards.description,
-      price:            sessionCards.price,
-      currency:         sessionCards.currency,
-      session_type:     sessionCards.session_type,
-      duration_minutes: sessionCards.duration_minutes,
-    })
-    .from(sessionCards)
-    .where(and(
-      eq(sessionCards.companion_profile_id, profileId),
-      eq(sessionCards.is_active, true),
-      isNull(sessionCards.deleted_at),
-    ))
-    .orderBy(asc(sessionCards.sort_order)),
+    db
+      .select({
+        id: sessionCards.id,
+        title: sessionCards.title,
+        description: sessionCards.description,
+        price: sessionCards.price,
+        currency: sessionCards.currency,
+        session_type: sessionCards.session_type,
+        duration_minutes: sessionCards.duration_minutes,
+      })
+      .from(sessionCards)
+      .where(
+        and(
+          eq(sessionCards.companion_profile_id, profileId),
+          eq(sessionCards.is_active, true),
+          isNull(sessionCards.deleted_at)
+        )
+      )
+      .orderBy(asc(sessionCards.sort_order)),
 
-    db.select({ name: vibeTags.name })
+    db
+      .select({ name: vibeTags.name })
       .from(companionVibeTags)
       .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
       .where(eq(companionVibeTags.companion_profile_id, profileId)),
   ])
 
-  const primaryPhoto = photoRows.find(p => p.is_primary)?.url ?? photoRows[0]?.url ?? null
+  const primaryPhoto = photoRows.find((p) => p.is_primary)?.url ?? photoRows[0]?.url ?? null
   const currency = profile.currency ?? 'EUR'
   const currSym = sym(currency)
 
-  const minPrice = sessionCardRows.length > 0
-    ? `${currSym}${Math.round(parseFloat(sessionCardRows.reduce((min, sc) =>
-        sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
-        sessionCardRows[0]
-      ).price ?? '0'))}`
-    : null
+  const minPrice =
+    sessionCardRows.length > 0
+      ? `${currSym}${Math.round(
+          parseFloat(
+            sessionCardRows.reduce(
+              (min, sc) =>
+                sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
+              sessionCardRows[0]
+            ).price ?? '0'
+          )
+        )}`
+      : null
 
   return NextResponse.json({
-    id:              profile.id,
-    companionId:     profile.companion_id,
-    name:            companionRow?.name ?? null,
-    age:             ageFromDob(companionRow?.date_of_birth ?? null),
-    city:            profile.city,
-    bio:             profile.bio,
-    tagline:         profile.tagline,
+    id: profile.id,
+    companionId: profile.companion_id,
+    name: companionRow?.name ?? null,
+    age: ageFromDob(companionRow?.date_of_birth ?? null),
+    city: profile.city,
+    bio: profile.bio,
+    tagline: profile.tagline,
     minPrice,
     currency,
-    isVerified:      profile.is_verified,
+    isVerified: profile.is_verified,
     sessionModality: profile.session_modality,
-    gradient:        gradientFromId(profile.id),
+    gradient: gradientFromId(profile.id),
     primaryPhotoUrl: primaryPhoto,
-    photoUrls:       photoRows.map(p => p.url),
-    tags:            vibeTagRows.map(v => v.name),
-    sessionCards:    sessionCardRows.map(sc => ({
-      id:              sc.id,
-      title:           sc.title,
-      description:     sc.description,
-      price:           sc.price ? `${currSym}${Math.round(parseFloat(sc.price))}` : null,
-      sessionType:     sc.session_type,
+    photoUrls: photoRows.map((p) => p.url),
+    tags: vibeTagRows.map((v) => v.name),
+    sessionCards: sessionCardRows.map((sc) => ({
+      id: sc.id,
+      title: sc.title,
+      description: sc.description,
+      price: sc.price ? `${currSym}${Math.round(parseFloat(sc.price))}` : null,
+      sessionType: sc.session_type,
       durationMinutes: sc.duration_minutes,
     })),
   })

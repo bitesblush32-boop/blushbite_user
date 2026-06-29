@@ -5,11 +5,11 @@
 import postgres from 'postgres'
 
 const PROFILES = [
-  { email: 'priya.seed@blushbite.internal',  price: '24000', hourlyRate: '24000' },
-  { email: 'anika.seed@blushbite.internal',  price: '20000', hourlyRate: '20000' },
-  { email: 'meera.seed@blushbite.internal',  price: '18000', hourlyRate: '18000' },
-  { email: 'kavya.seed@blushbite.internal',  price: '32000', hourlyRate: '32000' },
-  { email: 'zara.seed@blushbite.internal',   price: '25000', hourlyRate: '25000' },
+  { email: 'priya.seed@blushbite.internal', price: '24000', hourlyRate: '24000' },
+  { email: 'anika.seed@blushbite.internal', price: '20000', hourlyRate: '20000' },
+  { email: 'meera.seed@blushbite.internal', price: '18000', hourlyRate: '18000' },
+  { email: 'kavya.seed@blushbite.internal', price: '32000', hourlyRate: '32000' },
+  { email: 'zara.seed@blushbite.internal', price: '25000', hourlyRate: '25000' },
 ]
 
 async function main() {
@@ -20,7 +20,10 @@ async function main() {
     const [comp] = await sql`
       SELECT id FROM companions WHERE email = ${p.email} LIMIT 1
     `
-    if (!comp) { console.log(`  Skipping ${p.email} — not found`); continue }
+    if (!comp) {
+      console.log(`  Skipping ${p.email} — not found`)
+      continue
+    }
 
     // Update companion_profiles: currency + hourly_rate
     await sql`
@@ -45,4 +48,7 @@ async function main() {
   await sql.end()
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

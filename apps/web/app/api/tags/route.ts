@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { moodTags, orientationTags, fantasyCategories, fantasyTags, storyCategories } from '@/db/schema'
+import {
+  moodTags,
+  orientationTags,
+  fantasyCategories,
+  fantasyTags,
+  storyCategories,
+} from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 
 export const revalidate = 3600
@@ -9,7 +15,12 @@ export async function GET() {
   try {
     const [moods, orientations, fantasyCats, fantTags, storyCats] = await Promise.all([
       db
-        .select({ id: moodTags.id, name: moodTags.name, slug: moodTags.slug, emoji: moodTags.emoji })
+        .select({
+          id: moodTags.id,
+          name: moodTags.name,
+          slug: moodTags.slug,
+          emoji: moodTags.emoji,
+        })
         .from(moodTags)
         .where(eq(moodTags.is_active, true)),
 
@@ -19,26 +30,47 @@ export async function GET() {
         .where(eq(orientationTags.is_active, true)),
 
       db
-        .select({ id: fantasyCategories.id, name: fantasyCategories.name, slug: fantasyCategories.slug, description: fantasyCategories.description })
+        .select({
+          id: fantasyCategories.id,
+          name: fantasyCategories.name,
+          slug: fantasyCategories.slug,
+          description: fantasyCategories.description,
+        })
         .from(fantasyCategories)
         .where(eq(fantasyCategories.is_active, true))
         .orderBy(asc(fantasyCategories.sort_order)),
 
       db
-        .select({ id: fantasyTags.id, name: fantasyTags.name, slug: fantasyTags.slug, category_id: fantasyTags.category_id })
+        .select({
+          id: fantasyTags.id,
+          name: fantasyTags.name,
+          slug: fantasyTags.slug,
+          category_id: fantasyTags.category_id,
+        })
         .from(fantasyTags)
         .where(eq(fantasyTags.is_active, true))
         .orderBy(asc(fantasyTags.id)),
 
       db
-        .select({ id: storyCategories.id, name: storyCategories.name, slug: storyCategories.slug, description: storyCategories.description })
+        .select({
+          id: storyCategories.id,
+          name: storyCategories.name,
+          slug: storyCategories.slug,
+          description: storyCategories.description,
+        })
         .from(storyCategories)
         .where(eq(storyCategories.is_active, true))
         .orderBy(asc(storyCategories.sort_order)),
     ])
 
     return NextResponse.json(
-      { moodTags: moods, orientationTags: orientations, fantasyCategories: fantasyCats, fantasyTags: fantTags, storyCategories: storyCats },
+      {
+        moodTags: moods,
+        orientationTags: orientations,
+        fantasyCategories: fantasyCats,
+        fantasyTags: fantTags,
+        storyCategories: storyCats,
+      },
       { headers: { 'Cache-Control': 'public, max-age=3600' } }
     )
   } catch (err) {

@@ -11,13 +11,13 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const search = searchParams.get('search') ?? ''
   const filter = searchParams.get('filter') ?? 'all'
-  const page   = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-  const limit  = 25
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
+  const limit = 25
   const offset = (page - 1) * limit
 
   // Never expose admin accounts in the dreamer list
   const conditions: any[] = [
-    or(isNull(userProfiles.platform_role), ne(userProfiles.platform_role, 'admin'))
+    or(isNull(userProfiles.platform_role), ne(userProfiles.platform_role, 'admin')),
   ]
 
   if (search) {
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       or(
         ilike(users.alias, `%${search}%`),
         ilike(users.email, `%${search}%`),
-        ilike(users.name,  `%${search}%`),
+        ilike(users.name, `%${search}%`)
       )
     )
   }
@@ -41,24 +41,25 @@ export async function GET(req: NextRequest) {
   const where = conditions.length ? and(...conditions) : undefined
 
   const [rows, countRows] = await Promise.all([
-    db.select({
-      id:                  users.id,
-      email:               users.email,
-      alias:               users.alias,
-      name:                users.name,
-      image:               users.image,
-      onboarding_complete: users.onboarding_complete,
-      is_flagged:          users.is_flagged,
-      deleted_at:          users.deleted_at,
-      created_at:          users.created_at,
-      gender:              userProfiles.gender,
-      vibes:               userProfiles.vibes,
-      mood_intensity:      userProfiles.mood_intensity,
-      story_count:   sql<number>`(SELECT COUNT(*)::int FROM stories WHERE author_user_id = ${users.id})`,
-      like_count:    sql<number>`(SELECT COUNT(*)::int FROM likes WHERE user_id = ${users.id})`,
-      save_count:    sql<number>`(SELECT COUNT(*)::int FROM saves WHERE user_id = ${users.id})`,
-      booking_count: sql<number>`(SELECT COUNT(*)::int FROM booking_requests WHERE user_id = ${users.id})`,
-    })
+    db
+      .select({
+        id: users.id,
+        email: users.email,
+        alias: users.alias,
+        name: users.name,
+        image: users.image,
+        onboarding_complete: users.onboarding_complete,
+        is_flagged: users.is_flagged,
+        deleted_at: users.deleted_at,
+        created_at: users.created_at,
+        gender: userProfiles.gender,
+        vibes: userProfiles.vibes,
+        mood_intensity: userProfiles.mood_intensity,
+        story_count: sql<number>`(SELECT COUNT(*)::int FROM stories WHERE author_user_id = ${users.id})`,
+        like_count: sql<number>`(SELECT COUNT(*)::int FROM likes WHERE user_id = ${users.id})`,
+        save_count: sql<number>`(SELECT COUNT(*)::int FROM saves WHERE user_id = ${users.id})`,
+        booking_count: sql<number>`(SELECT COUNT(*)::int FROM booking_requests WHERE user_id = ${users.id})`,
+      })
       .from(users)
       .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
       .where(where)
@@ -66,7 +67,8 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .offset(offset),
 
-    db.select({ n: sql<number>`count(*)::int` })
+    db
+      .select({ n: sql<number>`count(*)::int` })
       .from(users)
       .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
       .where(where),

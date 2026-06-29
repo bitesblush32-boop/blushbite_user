@@ -10,16 +10,18 @@ import Header from '@/components/layout/Header'
 import MiniPlayer from '@/components/layout/MiniPlayer'
 import BottomNav from '@/components/layout/BottomNav'
 
-const ProfileDrawer     = dynamic(() => import('@/components/ui/ProfileDrawer'),     { ssr: false })
-const BookingModal      = dynamic(() => import('@/components/ui/BookingModal'),      { ssr: false })
+const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { ssr: false })
+const BookingModal = dynamic(() => import('@/components/ui/BookingModal'), { ssr: false })
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
-const LocationBanner    = dynamic(() => import('@/components/ui/LocationBanner'),    { ssr: false })
-const TourOverlay       = dynamic(() => import('@/components/ui/TourOverlay').then(m => ({ default: m.TourOverlay })), { ssr: false })
+const LocationBanner = dynamic(() => import('@/components/ui/LocationBanner'), { ssr: false })
+const TourOverlay = dynamic(
+  () => import('@/components/ui/TourOverlay').then((m) => ({ default: m.TourOverlay })),
+  { ssr: false }
+)
 
 export default function DreamerLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#07090f] relative overflow-x-hidden">
-
       {/* ── Noise texture — fixed, always on top, zero interaction cost ────── */}
       <div
         className="fixed inset-0 pointer-events-none z-[1000] opacity-60"
