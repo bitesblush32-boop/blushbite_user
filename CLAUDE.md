@@ -1353,6 +1353,193 @@ Examples:
 
 ---
 
+## 21. COMPANION FLOW — TWO-APP ARCHITECTURE
+
+BlushBite runs as **two separate deployed apps** sharing one PostgreSQL database.
+
+### App 1 — `blushbite.live` (landing page, `landingpagebb-/`)
+Companion application entry point. Express.js + vanilla HTML. Standalone — no Next.js.
+
+**Stack:** Express.js · PostgreSQL (`pg`) · Cloudinary (photo upload) · Resend (OTP email) · Multer (in-memory file upload)
+
+**Endpoints:**
+| Route | Purpose |
+|-------|---------|
+| `GET /` | Serves `index.html` with Google Maps key injected |
+| `POST /api/companions/send-otp` | Rate-limited (3/10min) OTP email via Resend |
+| `POST /api/companions/verify-otp` | In-memory OTP store (10min TTL, max 5 attempts) |
+| `POST /api/companions/upload-photo` | Upload to Cloudinary → returns `secure_url` |
+| `POST /api/companions/apply` | Full application submit (see below) |
+
+**Application wizard (4 steps in `index.html`):**
+1. Email entry + OTP send
+2. OTP verification
+3. Identity: fullName, dateOfBirth (must be 18+), country, city, whatsappNumber (E.164), gender, sessionModality
+4. Profile: displayName, tagline, bio + optional photo upload
+
+**What `POST /api/companions/apply` writes to DB:**
+```
+companions         → id, email, name (displayName), alias (@adj-noun), full_name,
+                     date_of_birth, country, whatsapp_number, companion_stage=3,
+                     onboarding_complete=false
+companion_profiles → companion_id, bio, tagline, city, gender, availability_status='offline',
+                     is_verified=false, is_live=false, is_visible_to_users=false,
+                     profile_completeness=0
+companion_photos   → (if photo uploaded) url=cloudinary_url, is_primary=true, is_approved=false
+companion_onboarding_progress → stage 1 (completed, 'Applied via landing page')
+                              → stage 2 (completed)
+```
+Response: `{ success: true, message: '...within 48 hours.' }`. Companion gets no login — admin reviews first.
+
+---
+
+### App 2 — `blushbite.co` (`apps/web/` — Next.js 14 App Router)
+
+The main platform. Handles admin review, companion onboarding continuation, and all dreamer-facing features.
+
+#### COMPANION JOURNEY through `blushbite.co`
+
+**Stage gate:** `companion_stage` in DB controls where a companion is in the pipeline.
+
+```
+Stage 1–2  → Completed via landing page application
+Stage 3    → "Pending Review" — awaiting admin approval
+Stage 4+   → Companion logged in and completing onboarding on blushbite.co
+```
+
+**Companion onboarding routes (`/companion/...`):**
+```
+/companion/profile          → Profile dashboard (photos, videos, bio, vibe/fantasy tags, session cards)
+/companion/profile/builder  → Step-by-step profile builder
+/companion/profile/edit     → Edit existing profile fields
+/companion/profile/settings → Account settings, deactivation
+/companion/bridge           → Link profile to platform stories (bridge feature)
+/companion/legal            → Sign legal docs (ToS, model release, 2257)
+/companion/notifications    → Notification preferences
+/companion/analytics        → View own profile analytics
+```
+
+**Companion onboarding API (`/api/companions/onboarding/...`):**
+```
+identity/        → POST: save full name, DOB, country (stage 1)
+verify/start     → POST: start Didit liveness check (stage 2)
+verify/status    → GET: poll Didit webhook result
+legal/           → POST: record legal doc signatures
+profile/         → POST: save profile fields (bio, tagline, city, hourly_rate, etc.)
+submit/          → POST: mark onboarding complete (sets onboarding_complete=true)
+submit/status    → GET: check current onboarding status
+```
+
+**Companion self-service API (`/api/companions/...`):**
+```
+profile/         → GET/PATCH: fetch or update own profile
+profile/full     → GET: full profile with all relations
+media/photo      → POST: upload photo to Cloudinary → companion_photos
+media/video      → POST: upload video to Cloudinary → companion_videos
+settings/        → GET/PATCH: availability status, notifications
+settings/deactivate → POST: soft deactivate profile
+bookings/[id]    → PATCH: accept/decline booking request
+analytics/summary → GET: view/like/save counts
+send-otp / verify-otp → POST: email OTP for blushbite.co login flow
+[profileId]/     → GET: public-facing profile (used by dreamer)
+```
+
+---
+
+#### ADMIN REVIEW — the gating step
+
+**Route:** `/admin/companions` → `app/(admin)/admin/companions/page.tsx`
+
+**Tabs:** All | Pending Review (stage=3, is_live=false) | Live | Rejected | Incomplete
+
+**Admin detail page:** `/admin/companions/[id]`
+Shows: companion info, profile, verification status (Didit liveness), legal docs signed, photos, videos, session cards, onboarding progress per stage.
+
+**Admin actions via `PATCH /api/admin/companions/[id]`:**
+```typescript
+{ is_live: true }      → sets is_live=true, is_visible_to_users=true, approved_at=now()
+                         companion NOW APPEARS on dreamer feed
+{ is_live: false }     → sets is_live=false, is_visible_to_users=false (hidden from feed)
+{ force_verify: true } → sets is_verified=true, verified_at=now()
+```
+
+**DELETE `/api/admin/companions/[id]`** → cascades: profile, photos, videos, verification, legal docs, payment setup, bookings, stories, audio, analytics events.
+
+**Filter logic in `GET /api/admin/companions`:**
+```
+pending    → companion_stage=3 AND is_live=false
+live       → is_live=true
+rejected   → onboarding_progress stage 3 status='rejected'
+incomplete → companion_stage < 3
+```
+
+---
+
+#### HOW COMPANIONS APPEAR TO USERS (dreamer-facing)
+
+**Gate:** `companion_profiles.is_visible_to_users = true` — set ONLY when admin flips `is_live=true`.
+
+**Discovery APIs:**
+```
+GET /api/companions/feed     → personalized feed, sorted by fantasy_tag_overlap_scores
+                               + mood intensity filter (intense/gentle vibe tags)
+GET /api/companions/discover → cursor-paginated, sorted by profile_completeness DESC
+                               optional lat/lng/radius for Haversine distance filter
+GET /api/companions/nearby   → location-based companions (requires user coords)
+GET /api/companions/[profileId] → individual public profile (dreamer opens companion card)
+```
+
+**Companion card data served to dreamer:**
+- name (display name, not full_name), age (from DOB), city, tagline as vibe, hourly_rate
+- Primary photo URL (Cloudinary), placeholder gradient (deterministic from profile ID)
+- Vibe tags (up to 3), isVerified badge, sessionModality (in_person/online/both)
+- overlap_score (0–1, from fantasy_tag_overlap_scores — computed server-side)
+
+---
+
+#### COMPLETE FLOW SUMMARY
+
+```
+blushbite.live (landingpagebb-)
+  ↓  Companion fills 4-step wizard
+  ↓  POST /api/companions/apply
+  ↓  DB: companions(stage=3) + companion_profiles(is_live=false, is_visible=false)
+  ↓
+blushbite.co /admin/companions  (Pending Review tab)
+  ↓  Admin reviews photos, bio, verification, legal docs
+  ↓  PATCH /api/admin/companions/[id] { is_live: true }
+  ↓  DB: is_live=true, is_visible_to_users=true, approved_at=now()
+  ↓
+blushbite.co /companion/*  (companion logs in via NextAuth credentials)
+  ↓  Completes onboarding: identity → verify (Didit) → legal → profile → submit
+  ↓  Uploads photos/videos via Cloudinary
+  ↓  Manages bridge links to platform stories
+  ↓
+blushbite.co / (dreamer home feed)
+  ↓  GET /api/companions/feed → returns companions where is_visible_to_users=true
+  ↓  Companion card shown, dreamer opens ProfileDrawer
+  ↓  Dreamer books via POST /api/companions/bookings (creates booking_requests row)
+```
+
+---
+
+### Shared database (Railway PostgreSQL)
+Both `blushbite.live` and `blushbite.co` connect to the **same** `DATABASE_URL`.
+- `blushbite.live` uses raw `pg` Pool — writes directly to `companions`, `companion_profiles`, `companion_photos`, `companion_onboarding_progress`
+- `blushbite.co` uses Drizzle ORM — reads/writes all 35 tables
+- No cross-DB sync needed — single source of truth
+
+### Key flags that control companion visibility
+```
+companions.companion_stage        int      1–7 onboarding stage
+companion_profiles.is_live        boolean  admin-controlled: show/hide toggle
+companion_profiles.is_visible_to_users boolean  mirrors is_live, gates all dreamer queries
+companion_profiles.is_verified    boolean  set by Didit webhook OR admin force_verify
+companion_photos.is_approved      boolean  photo approved (admin can reject individual photos)
+```
+
+---
+
 ## graphify
 
 This project has a graphify knowledge graph at graphify-out/.
