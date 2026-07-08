@@ -1646,6 +1646,81 @@ POST /api/companions/bookings
 
 ---
 
+### Device Binding on blushbite.co (IMPLEMENTED — 2026-07)
+
+Three new files enable gender-personalized home feeds and geo SEO pages:
+
+**`lib/fingerprint.ts`** — SHA-256 hash of `[language, screenDims, timezone, platform, hardwareConcurrency, deviceMemory]`
+
+**`app/api/device/community-lookup/route.ts`** — POST `{ fingerprint_hash }` → queries `device_community_bindings` → returns `{ found, community }`
+
+**`hooks/useDeviceCommunity.ts`** — 3-layer lookup (browser-only, runs on client):
+```
+1. localStorage["bb_community"] → return immediately if found
+2. getFingerprint() → POST /api/device/community-lookup → if found: cache to localStorage
+3. return null (show all genders, no redirect)
+```
+
+**`hooks/useRecommendedCompanions(gender?)`** — now accepts optional `gender` param, adds `?gender=` to feed URL, scopes TanStack Query cache key per community.
+
+**`app/(dreamer)/home/page.tsx`** — calls `useDeviceCommunity()`, passes `community` to `useRecommendedCompanions(community)`. A companion bound to `shemale` on blushbite.live will see shemale companions on the blushbite.co home feed.
+
+---
+
+### Gender-Specific Geo SEO Pages (IMPLEMENTED — 2026-07)
+
+Static segment folders avoid conflict with `app/[country]/` dynamic segment:
+
+```
+app/female/
+  layout.tsx               → imports GeoPageLayout (shared)
+  page.tsx                 → noindex, lists countries with female companions
+  [country]/page.tsx       → female country city listing
+  [country]/[city]/page.tsx → ← MAIN SEO TARGET
+
+app/male/ (same structure)
+app/shemale/ (same structure — primary SEO target for "ts escort in pune" etc.)
+
+app/[country]/layout.tsx   → now imports GeoPageLayout (DRY)
+```
+
+**Shared components (all server-rendered):**
+- `components/geo/GeoPageLayout.tsx` — header + footer + noise texture (extracted from `[country]/layout.tsx`)
+- `components/geo/GenderIndexPage.tsx` — country listing for a gender
+- `components/geo/GenderCountryPage.tsx` — city listing for gender+country
+- `components/geo/GenderCityPage.tsx` — companion grid + JSON-LD for gender+country+city
+
+**SQL pattern in GenderCityPage:**
+```sql
+WHERE cp.country_slug = $country AND cp.city_slug = $city
+  AND c.gender_community = $gender   ← key filter
+  AND cp.is_live = true AND cp.is_visible_to_users = true
+```
+
+**SEO titles:**
+- `/female/netherlands/amsterdam` → `Female Companions in Amsterdam — Time & Companionship | BlushBite`
+- `/shemale/india/pune` → `Trans Companions · TS Escorts in Pune — Time & Companionship | BlushBite`
+
+**robots:** Index+follow on city/country pages. `noindex` on gender index pages (`/female`, `/male`, `/shemale`).
+
+**JSON-LD:** BreadcrumbList (4 levels: BlushBite → Gender → Country → City) + ItemList.
+
+---
+
+### Location Detection (companions page)
+
+`hooks/useGeolocation.ts` — browser Geolocation API wrapper. Auto-requests if permission already granted on mount.
+
+Location banner on `app/(dreamer)/companions/page.tsx` — **persists until coords arrive**:
+- permission=`prompt`/`unknown`: "Share your location to find companions near you" + "Allow →" button
+- permission=`granted` (loading): "Detecting your city…" + pulsing dot
+- permission=`denied`: "Enable location in browser settings to see nearby companions" (no button)
+- Banner disappears once `latitude !== null && longitude !== null`
+
+Location feeds directly into `/api/companions/discover?lat=...&lng=...&radius=...` for Haversine distance sorting.
+
+---
+
 ### Cross-Codebase Schema Compatibility Map
 
 | Column / Table | Written by | Read by | Notes |
@@ -1654,16 +1729,19 @@ POST /api/companions/bookings
 | `companion_profiles.is_live` | blushbite.live (apply route, TRUE) | blushbite.co (admin) | Mirrors is_visible_to_users |
 | `companion_profiles.hourly_rate` | blushbite.live (profile PATCH) | blushbite.co (discover + profileId — fallback) | Fallback when no session_cards |
 | `companion_profiles.currency` | blushbite.live (profile PATCH) | blushbite.co (discover + profileId) | Used with hourly_rate fallback |
-| `companion_profiles.city_slug` | blushbite.live (profile PATCH via lib/slug.ts) | blushbite.co (geo landing pages — future) | URL-safe city slug |
-| `companion_profiles.country_slug` | blushbite.live (profile PATCH via lib/slug.ts) | blushbite.co (geo landing pages — future) | URL-safe country slug |
-| `companion_profiles.gender_community` | blushbite.live (apply route) | blushbite.co (not yet read — future filter) | 'female'\|'male'\|'shemale' |
-| `companion_photos.is_approved` | blushbite.live (upload-photo — always TRUE) | blushbite.co (NOT filtered — only deleted_at IS NULL) | Auto-approved, admin deletes violations |
+| `companion_profiles.city_slug` | blushbite.live (profile PATCH via lib/slug.ts) | blushbite.co (geo landing pages `app/female/[country]/[city]` etc.) | URL-safe city slug |
+| `companion_profiles.country_slug` | blushbite.live (profile PATCH via lib/slug.ts) | blushbite.co (geo landing pages) | URL-safe country slug |
+| `companion_profiles.gender_community` | blushbite.live (apply route) | blushbite.co (discover `?gender=` filter, feed `?gender=`, geo pages SQL WHERE) | 'female'\|'male'\|'shemale' — IMPLEMENTED |
+| `companion_photos.is_approved` | blushbite.live (upload-photo — always TRUE) | blushbite.co (`app/[country]/[city]` page: `AND ph.is_approved = true`) | Auto-approved instant-live |
 | `companion_photos.is_primary` | blushbite.live (auto-set on first upload) | blushbite.co (discover + profileId primaryPhotoUrl) | Auto-set when existingCount=0 |
 | `companion_photos.photo_verification_status` | blushbite.live (upload-photo — 'pending') | blushbite.co (not yet read) | For gold badge workflow |
+| `stories.author_type` | blushbite.live (stories POST — 'companion') | blushbite.co (`/api/platform-stories` WHERE author_type IN ('companion','admin')) | FIXED: was missing, now set |
+| `stories.is_published` | blushbite.live (stories POST — TRUE) | blushbite.co (`/api/platform-stories` WHERE is_published=TRUE) | FIXED: was missing, now set |
+| `stories.published_at` | blushbite.live (stories POST — NOW()) | blushbite.co (recency ranking score) | FIXED: was missing, now set |
 | `session_cards` | blushbite.co only (companion profile builder) | blushbite.co (discover + profileId minPrice) | Never created by blushbite.live |
 | `companion_vibe_tags` (junction) | blushbite.co only (profile builder) | blushbite.co (discover tags) | blushbite.live uses JSON column instead |
 | `companion_profiles.vibe_tags` (JSON) | blushbite.live (dashboard settings — if implemented) | Neither app reads this for discover | KNOWN GAP |
-| `device_community_bindings` | blushbite.live (fingerprint.ts) | blushbite.live only | Not relevant to blushbite.co |
+| `device_community_bindings` | blushbite.live (fingerprint.ts → `/api/device/bind`) | blushbite.co (`/api/device/community-lookup` POST + `hooks/useDeviceCommunity`) | Cross-app device binding IMPLEMENTED |
 | `companion_nudges` | blushbite.live (cron/drip) | blushbite.live only | Drip email state |
 | `companion_subscriptions` | NEITHER (Sprint 6 deferred) | NEITHER | Table exists, no data |
 
@@ -1691,10 +1769,29 @@ Do not fix these unless explicitly asked.
 - blushbite.co's `discover` and `[profileId]` routes now fall back to `hourly_rate` when no session_cards exist
 - This fallback is already implemented in both routes
 
-**GAP 4 — gender_community not used for filtering on blushbite.co (FUTURE)**
-- blushbite.live writes `gender_community` to `companion_profiles`
-- blushbite.co's discover route does not yet filter by gender_community
-- This will be needed when blushbite.co builds community-specific feeds
+**GAP 4 — gender_community filtering — IMPLEMENTED (Sprint 5 complete)**
+- `/api/companions/discover?gender=female|male|shemale` — SQL subquery filter on companions.gender_community
+- `/api/companions/feed?gender=` — same filter, used by home feed
+- `hooks/useDeviceCommunity` → reads device binding → passes gender to `useRecommendedCompanions`
+- Gender-specific geo pages: `app/female/[country]/[city]`, `app/male/...`, `app/shemale/...`
+- Home page: `useDeviceCommunity()` → community passed to `useRecommendedCompanions(community)`
+
+**GAP 5 — companion stories visibility — FIXED**
+- blushbite.live was not setting `author_type`, `is_published`, or `published_at` on story INSERT
+- blushbite.co's `/api/platform-stories` requires all three (author_type='companion', is_published=true, moderation_status='approved')
+- FIXED: blushbite.live stories POST now writes `author_type='companion'`, `is_published=true`, `moderation_status='approved'`, `published_at=NOW()`
+- Stories written by companions on blushbite.live now appear in `/api/platform-stories` feed on blushbite.co
+
+**GAP 6 — home page uses hardcoded stories (KNOWN — NOT FIXED)**
+- `app/(dreamer)/home/page.tsx` imports `stories` from `lib/data.ts` (hardcoded mock data)
+- Real companion stories are available via `/api/platform-stories` but the home page doesn't call it
+- Real user confessions are available via `/api/confessions` but the home page doesn't call it
+- Fix when home page real-data wiring is a priority
+
+**GAP 7 — vibe_tags (LOW PRIORITY)**
+- blushbite.live stores vibe tags as a JSON array in `companion_profiles.vibe_tags` (if collected)
+- blushbite.co reads vibe tags from `companion_vibe_tags` junction table → `vibe_tags` lookup table
+- Result: companions registered via blushbite.live show NO vibe tags on discover cards
 
 ---
 

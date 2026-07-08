@@ -519,8 +519,8 @@ export default function CompanionsPage() {
 
       {/* ── Status bar ────────────────────────────────────────────────────────── */}
       <div style={{ padding: '12px 20px 0', flexShrink: 0, zIndex: 2 }}>
-        {/* Location banner — only when distance filter is active and location not granted */}
-        {radiusKm !== null && !hasLocation && isSupported && permission !== 'granted' && (
+        {/* Location banner — persists until coords are fetched */}
+        {radiusKm !== null && !hasLocation && isSupported && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -538,27 +538,36 @@ export default function CompanionsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <MapPin size={13} color="#e8607a" />
               <span style={{ fontSize: 12, color: '#6b7280' }}>
-                Allow location for companions near you
+                {permission === 'denied'
+                  ? 'Enable location in browser settings to see nearby companions'
+                  : permission === 'granted' || geoLoading
+                    ? 'Detecting your city…'
+                    : 'Share your location to find companions near you'}
               </span>
             </div>
-            <button
-              onClick={requestLocation}
-              disabled={geoLoading}
-              style={{
-                fontSize: 12,
-                padding: '10px 16px',
-                borderRadius: 999,
-                minHeight: 44,
-                background: 'rgba(232,96,122,0.12)',
-                border: '1px solid rgba(232,96,122,0.35)',
-                color: '#e8607a',
-                cursor: geoLoading ? 'default' : 'pointer',
-                flexShrink: 0,
-                opacity: geoLoading ? 0.6 : 1,
-              }}
-            >
-              {geoLoading ? 'Locating…' : 'Allow →'}
-            </button>
+            {permission !== 'denied' && permission !== 'granted' && (
+              <button
+                onClick={requestLocation}
+                disabled={geoLoading}
+                style={{
+                  fontSize: 12,
+                  padding: '10px 16px',
+                  borderRadius: 999,
+                  minHeight: 44,
+                  background: 'rgba(232,96,122,0.12)',
+                  border: '1px solid rgba(232,96,122,0.35)',
+                  color: '#e8607a',
+                  cursor: geoLoading ? 'default' : 'pointer',
+                  flexShrink: 0,
+                  opacity: geoLoading ? 0.6 : 1,
+                }}
+              >
+                {geoLoading ? 'Locating…' : 'Allow →'}
+              </button>
+            )}
+            {(permission === 'granted' || geoLoading) && (
+              <span style={{ fontSize: 12, color: '#e8607a', flexShrink: 0 }}>●</span>
+            )}
           </motion.div>
         )}
 
