@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { db } from '@/db'
 import { sql } from 'drizzle-orm'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 interface CityRow {
   city_slug: string
@@ -14,17 +14,6 @@ interface CityRow {
 
 interface PageParams {
   params: Promise<{ country: string }>
-}
-
-export async function generateStaticParams() {
-  const rows = await db.execute(sql`
-    SELECT DISTINCT cp.country_slug AS country
-    FROM companion_profiles cp
-    WHERE cp.is_live = true
-      AND cp.is_visible_to_users = true
-      AND cp.country_slug IS NOT NULL
-  `)
-  return (rows as unknown as { country: string }[]).map((r) => ({ country: r.country }))
 }
 
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
