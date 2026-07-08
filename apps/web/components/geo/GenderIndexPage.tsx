@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { db } from '@/db'
 import { sql } from 'drizzle-orm'
+import GeoPageBinder from './GeoPageBinder'
 
 interface CountryRow {
   country_slug: string
@@ -42,6 +43,8 @@ export default async function GenderIndexPage({ gender }: { gender: string }) {
   const g = GENDER_LABELS[gender] ?? GENDER_LABELS.female
 
   return (
+    <>
+    <GeoPageBinder gender={gender} />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
       <p className="text-[10px] text-[#374151] mb-8 leading-relaxed max-w-2xl">
         This website only allows adult individuals to advertise their time and companionship to other
@@ -84,5 +87,6 @@ export default async function GenderIndexPage({ gender }: { gender: string }) {
         </div>
       )}
     </main>
+    </>
   )
 }

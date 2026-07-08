@@ -36,6 +36,13 @@ export const metadata: Metadata = {
       'Verified companions, literary confessions, and intimate audio — curated for you alone.',
     images: ['/bb.png'],
   },
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/favicon.png', sizes: '180x180', type: 'image/png' }],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

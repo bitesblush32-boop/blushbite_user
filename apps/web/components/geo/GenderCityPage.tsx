@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { db } from '@/db'
 import { sql } from 'drizzle-orm'
+import GeoPageBinder from './GeoPageBinder'
 
 interface CompanionRow {
   id: string
@@ -120,6 +121,7 @@ export default async function GenderCityPage({
 
   return (
     <>
+      <GeoPageBinder gender={gender} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}

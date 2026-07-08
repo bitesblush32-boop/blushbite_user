@@ -16,6 +16,7 @@ import CompanionCard from '@/components/ui/CompanionCard'
 import StoryCard from '@/components/ui/StoryCard'
 import AudioCard from '@/components/ui/AudioCard'
 import DesiresDrawer from '@/components/ui/DesiresDrawer'
+import GenderPickerOverlay from '@/components/GenderPickerOverlay'
 
 // ─── Framer Motion stagger variants ───────────────────────────────────────────
 
@@ -34,7 +35,7 @@ export default function HomePage() {
   const { intensity, setIntensity } = useMoodStore()
   const openModal = useUIStore((s) => s.openModal)
   const play = usePlayerStore((s) => s.play)
-  const { community } = useDeviceCommunity()
+  const { community, needsPicker, bindCommunity } = useDeviceCommunity()
   const {
     companionCards,
     companions: realCompanions,
@@ -62,6 +63,8 @@ export default function HomePage() {
   const featured = topReal
 
   return (
+    <>
+    {needsPicker && <GenderPickerOverlay onSelect={bindCommunity} />}
     <motion.main
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -585,6 +588,7 @@ export default function HomePage() {
         </p>
       </footer>
     </motion.main>
+    </>
   )
 }
 
