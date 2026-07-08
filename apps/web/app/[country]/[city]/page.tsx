@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { db } from '@/db'
 import { sql } from 'drizzle-orm'
 
-export const revalidate = 3600 // ISR — refresh hourly
+export const dynamic = 'force-dynamic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,23 +24,6 @@ interface CompanionRow {
 
 interface PageParams {
   params: Promise<{ country: string; city: string }>
-}
-
-// ─── Static params — builds known city pages at deploy time ───────────────────
-
-export async function generateStaticParams() {
-  const rows = await db.execute(sql`
-    SELECT DISTINCT cp.country_slug AS country, cp.city_slug AS city
-    FROM companion_profiles cp
-    WHERE cp.is_live = true
-      AND cp.is_visible_to_users = true
-      AND cp.country_slug IS NOT NULL
-      AND cp.city_slug IS NOT NULL
-  `)
-  return (rows as unknown as { country: string; city: string }[]).map((r) => ({
-    country: r.country,
-    city: r.city,
-  }))
 }
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
