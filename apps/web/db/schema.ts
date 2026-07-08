@@ -853,6 +853,16 @@ export const analyticsEvents = pgTable(
   })
 )
 
+// ─── DEVICE COMMUNITY BINDINGS ────────────────────────────────────────────────
+
+export const deviceCommunityBindings = pgTable('device_community_bindings', {
+  fingerprint_hash: varchar('fingerprint_hash', { length: 64 }).primaryKey().notNull(),
+  community:        varchar('community', { length: 20 }).notNull(),
+  companion_id:     uuid('companion_id').references(() => companions.id, { onDelete: 'set null' }),
+  created_at:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  last_seen:        timestamp('last_seen', { withTimezone: true }).defaultNow().notNull(),
+})
+
 // ─── DIDIT EXTRACTED DATA ─────────────────────────────────────────────────────
 
 export const diditExtractedData = pgTable('didit_extracted_data', {

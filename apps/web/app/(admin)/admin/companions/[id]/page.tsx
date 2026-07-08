@@ -322,7 +322,7 @@ export default function AdminCompanionDetailPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  const [modal, setModal] = useState<'approve' | 'reject' | 'changes' | 'force_verify' | null>(null)
+  const [modal, setModal] = useState<'takedown' | 'restore' | 'changes' | 'force_verify' | null>(null)
 
   const { data, isLoading, error } = useQuery<CompanionDossier>({
     queryKey: ['admin', 'companion', id],
@@ -358,9 +358,13 @@ export default function AdminCompanionDetailPage() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'companion', id] })
 
-  const approveMutation = useMutation({
+  const takeDownMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/admin/companions/${id}/approve`, { method: 'POST' })
+      const res = await fetch(`/api/admin/companions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_live: false }),
+      })
       if (!res.ok) throw new Error('Failed')
     },
     onSuccess: () => {
@@ -369,12 +373,12 @@ export default function AdminCompanionDetailPage() {
     },
   })
 
-  const rejectMutation = useMutation({
-    mutationFn: async (reason?: string) => {
-      const res = await fetch(`/api/admin/companions/${id}/reject`, {
-        method: 'POST',
+  const restoreMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/companions/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ is_live: true }),
       })
       if (!res.ok) throw new Error('Failed')
     },
@@ -1192,34 +1196,30 @@ export default function AdminCompanionDetailPage() {
           {isPending && <span className="ml-2 text-[#eeeef0]">— Awaiting review</span>}
         </div>
         <div className="flex gap-3 ml-auto">
-          <button
-            onClick={() => setModal('reject')}
-            className="text-[13px] px-5 py-[10px] rounded-[10px] cursor-pointer transition-all"
-            style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              color: '#ef4444',
-            }}
-          >
-            Reject
-          </button>
-          {!isLive && (
-            <button
-              onClick={() => setModal('approve')}
-              className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-5 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer transition-all hover:-translate-y-px"
-            >
-              Approve & Go Live
-            </button>
-          )}
           {isLive && (
             <button
-              onClick={
-                () => photoMutation.mutate({ photo_id: '', action: '' }) /* no-op placeholder */
-              }
-              className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-5 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer transition-all opacity-50 cursor-not-allowed"
-              disabled
+              onClick={() => setModal('takedown')}
+              className="text-[13px] px-5 py-[10px] rounded-[10px] cursor-pointer transition-all"
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                color: '#ef4444',
+              }}
             >
-              Already Live
+              Take Down
+            </button>
+          )}
+          {!isLive && (
+            <button
+              onClick={() => setModal('restore')}
+              className="text-[13px] px-5 py-[10px] rounded-[10px] font-medium cursor-pointer transition-all hover:-translate-y-px"
+              style={{
+                background: 'rgba(34,197,94,0.12)',
+                border: '1px solid rgba(34,197,94,0.35)',
+                color: '#22c55e',
+              }}
+            >
+              Restore
             </button>
           )}
         </div>
@@ -1227,26 +1227,25 @@ export default function AdminCompanionDetailPage() {
 
       {/* Modals */}
       <AnimatePresence>
-        {modal === 'approve' && (
+        {modal === 'takedown' && (
           <ConfirmModal
-            key="approve"
-            title="Approve companion"
-            body="This will set the companion as live and verified. They will appear in the discovery feed immediately."
-            confirmLabel="Approve & Go Live"
-            confirmColor="#e8607a"
-            onConfirm={() => approveMutation.mutate()}
+            key="takedown"
+            title="Take down companion"
+            body="This will remove the companion from the discovery feed immediately. They will still be able to log in and see their profile is paused."
+            confirmLabel="Take Down"
+            confirmColor="#ef4444"
+            onConfirm={() => takeDownMutation.mutate()}
             onCancel={() => setModal(null)}
           />
         )}
-        {modal === 'reject' && (
+        {modal === 'restore' && (
           <ConfirmModal
-            key="reject"
-            title="Reject application"
-            body="The companion will be marked as rejected. You can provide an optional reason."
-            confirmLabel="Reject"
-            confirmColor="#ef4444"
-            showReason
-            onConfirm={(reason) => rejectMutation.mutate(reason)}
+            key="restore"
+            title="Restore companion"
+            body="This will make the companion visible in the discovery feed again."
+            confirmLabel="Restore"
+            confirmColor="#22c55e"
+            onConfirm={() => restoreMutation.mutate()}
             onCancel={() => setModal(null)}
           />
         )}

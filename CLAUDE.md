@@ -1353,257 +1353,432 @@ Examples:
 
 ---
 
-## 21. COMPANION FLOW — TWO-APP ARCHITECTURE
+## 21. COMPANION FLOW — TWO-APP ARCHITECTURE (CURRENT — 2026-07)
 
-BlushBite runs as **two separate deployed apps** sharing one PostgreSQL database.
+BlushBite runs as **two separate deployed apps** sharing one Railway PostgreSQL database.
 
-### App 1 — `blushbite.live` (landing page, `landingpagebb-/`)
-Companion application entry point. Express.js + vanilla HTML. Standalone — no Next.js.
+> **IMPORTANT:** The architecture below reflects the current state as of Sprint 5 completion.
+> The old CLAUDE.md described blushbite.live as Express.js — that is OUTDATED. It is now **Next.js 15 App Router**.
+> Admin approval is no longer required on registration — companions are **instant-live**.
 
-**Stack:** Express.js · PostgreSQL (`pg`) · Cloudinary (photo upload) · Resend (OTP email) · Multer (in-memory file upload)
+---
 
-**Endpoints:**
-| Route | Purpose |
-|-------|---------|
-| `GET /` | Serves `index.html` with Google Maps key injected |
-| `POST /api/companions/send-otp` | Rate-limited (3/10min) OTP email via Resend |
-| `POST /api/companions/verify-otp` | In-memory OTP store (10min TTL, max 5 attempts) |
-| `POST /api/companions/upload-photo` | Upload to Cloudinary → returns `secure_url` |
-| `POST /api/companions/apply` | Full application submit (see below) |
+### App 1 — `blushbite.live` (`landingpagebb-/`) — Companion Portal
 
-**Application wizard (4 steps in `index.html`):**
-1. Email entry + OTP send
-2. OTP verification
-3. Identity: fullName, dateOfBirth (must be 18+), country, city, whatsappNumber (E.164), gender, sessionModality
-4. Profile: displayName, tagline, bio + optional photo upload
+**Stack:** Next.js 15 App Router · TypeScript · raw `pg` Pool (no Drizzle) · Cloudinary · Resend email · Custom JWT auth (HS256, cookie `bb_session` / `__Host-bb_session`)
 
-**What `POST /api/companions/apply` writes to DB:**
+**Deployed on:** Railway (nixpacks.toml — `npm run build` / `npm start`)
+
+**Path on disk:** `C:\Users\Ravi Desai\Downloads\blush\landingpagebb-`
+
+#### Gender Community System
+
+blushbite.live has **three gender communities**, each with a dedicated landing page:
+
+| Route | Community | Config |
+|-------|-----------|--------|
+| `/female` | Female companions | Rose accent `#e8607a`, "Begin your journey" copy |
+| `/male` | Male companions | Blue accent `#607ae8`, "Enter the stage" copy |
+| `/shemale` | Trans/non-binary companions | Purple accent `#9b5fe0`, community-specific copy |
+
+Each landing page is a server component (`GenderLanding.tsx`) that renders a 2-step apply form:
+1. Step 1: displayName + email + agree to terms → triggers OTP send
+2. Step 2: OTP verification → companion created in DB + session cookie set → redirect to `/dashboard`
+
+#### 3-Layer Device Binding
+
+When a visitor hits `/` (the root), `middleware.ts` applies 3-layer routing:
+
 ```
-companions         → id, email, name (displayName), alias (@adj-noun), full_name,
-                     date_of_birth, country, whatsapp_number, companion_stage=3,
-                     onboarding_complete=false
-companion_profiles → companion_id, bio, tagline, city, gender, availability_status='offline',
-                     is_verified=false, is_live=false, is_visible_to_users=false,
-                     profile_completeness=0
-companion_photos   → (if photo uploaded) url=cloudinary_url, is_primary=true, is_approved=false
-companion_onboarding_progress → stage 1 (completed, 'Applied via landing page')
-                              → stage 2 (completed)
+Layer 1: Check bb_session JWT cookie → if valid → redirect /dashboard
+Layer 2: Check bb_community cookie   → if set   → redirect /[community]
+Layer 3: No signal                   →           → show gender picker /
 ```
-Response: `{ success: true, message: '...within 48 hours.' }`. Companion gets no login — admin reviews first.
+
+The gender picker (`GenderPickerClient.tsx`) uses `lib/fingerprint.ts` for 3-layer device memory:
+```
+1. localStorage key "bb_community" — fastest, survives reload
+2. SHA-256 device fingerprint → POST /api/companions/device/bind → DB lookup (device_community_bindings)
+3. Falls back to manual pick — user selects community card
+```
+
+When a community is selected: localStorage + `device_community_bindings` row + `bb_community` cookie are all set simultaneously.
+
+The `bb_community` cookie is also set on every apply submit and OTP login, scoped to the companion's community.
+
+#### New Tables (blushbite.live writes these — blushbite.co does NOT currently read them)
+
+```
+device_community_bindings
+  id, fingerprint_hash VARCHAR UNIQUE, community VARCHAR, ip_address, user_agent,
+  first_seen_at, last_seen_at
+
+companion_nudges       (drip email state)
+  id, companion_id FK→companions, nudge_type VARCHAR, sent_at, opened_at, clicked_at
+
+companion_subscriptions  (exists, NOT populated — Sprint 6 deferred: free for 6 months)
+  id, companion_id FK→companions, plan_tier VARCHAR, status VARCHAR,
+  ccbill_subscription_id, starts_at, ends_at, cancelled_at, created_at
+```
+
+#### New Columns Added to Existing Tables
+
+```
+companion_profiles:
+  gender_community  VARCHAR  — 'female' | 'male' | 'shemale' (set on apply, drives routing)
+  city_slug         VARCHAR  — URL-safe slug of city  (written on profile PATCH via lib/slug.ts)
+  country_slug      VARCHAR  — URL-safe slug of country
+
+companion_photos:
+  photo_verification_status  VARCHAR  — 'pending' | 'verified' | 'failed'
+                                        separate from is_approved — used for gold "Verified Photos" badge
+                                        always starts as 'pending' on upload
+```
+
+#### Instant-Live Registration (CHANGED from 48-hr admin wait)
+
+**Current flow — NO admin approval required:**
+
+```
+POST /api/companions/apply
+  → DB transaction (pg Pool, raw SQL):
+      companions row           — companion_stage=7, onboarding_complete=true
+      companion_profiles row   — is_live=TRUE, is_visible_to_users=TRUE,
+                                  gender_community=<community>, profile_completeness=25
+      companion_photos row     — is_approved=TRUE, is_primary=(count=0), sort_order auto
+                                  photo_verification_status='pending'
+      companion_onboarding_progress — stages 1–7 all auto-completed
+  → JWT session cookie set immediately (sub=companionId, email, name, community)
+  → Redirect to /dashboard (no waiting, no admin review)
+```
+
+**Admin role change:** Admin no longer approves/rejects companions on registration.
+Admin only **takes down** companions who violate guidelines (set `is_visible_to_users=FALSE`).
+The admin filter "Pending Review" tab is obsolete — all new companions are immediately live.
+
+#### blushbite.live API Routes
+
+| Route | Method | Auth | Purpose |
+|-------|--------|------|---------|
+| `/api/companions/send-otp` | POST | Public | Send 6-digit OTP via Resend |
+| `/api/companions/verify-otp` | POST | Public | Validate OTP → issue session cookie |
+| `/api/companions/apply` | POST | Public | Instant-live registration (creates all rows) |
+| `/api/companions/logout` | POST | Auth | Clear session cookie |
+| `/api/companions/me` | GET | Auth | Current companion data + approval status |
+| `/api/companions/application` | PATCH | Auth | Update personal details |
+| `/api/companions/profile` | GET/PATCH | Auth | Bio, tagline, city, hourly_rate, city_slug, etc. |
+| `/api/companions/photos` | GET | Auth | List photos |
+| `/api/companions/upload-photo` | POST | Auth | Upload to Cloudinary → DB (is_approved=TRUE, auto-primary) |
+| `/api/companions/photos/[id]` | DELETE | Auth | Soft-delete photo |
+| `/api/companions/photos/set-primary` | POST | Auth | Set primary photo |
+| `/api/companions/videos` | GET/DELETE | Auth | List / soft-delete videos |
+| `/api/companions/videos/upload` | POST | Auth | Upload video to Cloudinary |
+| `/api/companions/stories` | GET/POST | Auth | List / create stories |
+| `/api/companions/stories/[id]` | GET/PATCH/DELETE | Auth | Story CRUD |
+| `/api/companions/bookings` | GET | Auth | List booking requests |
+| `/api/companions/bookings/[id]` | PATCH | Auth | Accept / decline booking |
+| `/api/companions/settings` | GET/PATCH/POST/DELETE | Auth | Contact info / live toggle / password / deactivate |
+| `/api/companions/analytics` | GET | Auth | 30-day profile view stats |
+| `/api/companions/device/bind` | POST | Public | Store device fingerprint → community binding |
+| `/api/companions/device/lookup` | POST | Public | Lookup community for device fingerprint |
+| `/api/cron/drip` | GET | CRON_SECRET Bearer | Drip email trigger (Railway cron job) |
+
+#### blushbite.live Pages
+
+| Page | Auth | Purpose |
+|------|------|---------|
+| `/` | Public | Gender picker (3-layer device binding) |
+| `/female` | Public | Female community landing + 2-step OTP apply |
+| `/male` | Public | Male community landing + 2-step OTP apply |
+| `/shemale` | Public | Trans/NB community landing + 2-step OTP apply |
+| `/login` | Public | OTP login (existing companions) |
+| `/status` | Auth | Application / onboarding status |
+| `/reapply` | Auth | Re-submit after violations |
+| `/dashboard` | Auth | Overview |
+| `/dashboard/profile` | Auth (any status) | Profile builder (unlocked pre-approval) |
+| `/dashboard/photos` | Auth + visible | Photo management |
+| `/dashboard/videos` | Auth + visible | Video management |
+| `/dashboard/stories` | Auth + visible | Story management |
+| `/dashboard/bookings` | Auth + visible | Booking requests |
+| `/dashboard/analytics` | Auth + visible | Analytics |
+| `/dashboard/settings` | Auth + visible | Account settings |
+| `/dashboard/upgrade` | Auth | Subscription upgrade (UI only — Sprint 6 deferred) |
+| `/terms` | Public | Terms of Service |
+| `/privacy` | Public | Privacy Policy |
+| `/companion-guidelines` | Public | Companion content guidelines |
+
+#### Auth (blushbite.live)
+
+- **Cookie:** `bb_session` (dev) / `__Host-bb_session` (prod)
+- **Algorithm:** HS256 HMAC via Web Crypto (middleware) + Node `crypto` (routes)
+- **Payload:** `{ sub: companionId, email, name, community, exp }`
+- **Env var:** `COMPANION_JWT_SECRET`
+- **Expiry:** 7 days
+
+#### Drip Email Cron (`/api/cron/drip`)
+
+Secured by `Authorization: Bearer <CRON_SECRET>`. Triggered by Railway cron.
+Checks `companion_nudges` table for companions who haven't completed profile.
+Uses Resend to send reminder emails at configured intervals.
+Tracks nudge state in `companion_nudges.sent_at`, `.opened_at`, `.clicked_at`.
+
+#### Subscription Status (Sprint 6 — DEFERRED)
+
+`companion_subscriptions` table exists and migration ran. However:
+- `lib/subscription.ts` — NOT built
+- `/api/companions/subscription` — NOT built
+- `/api/webhooks/ccbill` — NOT built
+- Platform is **free for 6 months** — all companions get full access regardless of subscription
+
+The `/dashboard/upgrade` page exists as a UI stub. Do NOT build CCBill integration until explicitly requested.
 
 ---
 
 ### App 2 — `blushbite.co` (`apps/web/` — Next.js 14 App Router)
 
-The main platform. Handles admin review, companion onboarding continuation, and all dreamer-facing features.
+The main dreamer-facing platform. Handles dreamer auth, discovery, stories, audio, and bookings.
 
-#### COMPANION JOURNEY through `blushbite.co`
+**Path on disk:** `C:\Users\Ravi Desai\Downloads\BlushBite\apps\web`
 
-**Stage gate:** `companion_stage` in DB controls where a companion is in the pipeline.
+**Auth:** NextAuth v5 (Google + Twitter + Credentials) → `users` table (dreamer side)
 
-```
-Stage 1–2  → Completed via landing page application
-Stage 3    → "Pending Review" — awaiting admin approval
-Stage 4+   → Companion logged in and completing onboarding on blushbite.co
-```
+**ORM:** Drizzle ORM (unlike blushbite.live which uses raw `pg`)
 
-**Companion onboarding routes (`/companion/...`):**
-```
-/companion/profile          → Profile dashboard (photos, videos, bio, vibe/fantasy tags, session cards)
-/companion/profile/builder  → Step-by-step profile builder
-/companion/profile/edit     → Edit existing profile fields
-/companion/profile/settings → Account settings, deactivation
-/companion/bridge           → Link profile to platform stories (bridge feature)
-/companion/legal            → Sign legal docs (ToS, model release, 2257)
-/companion/notifications    → Notification preferences
-/companion/analytics        → View own profile analytics
-```
+#### ADMIN ROLE — CHANGED
 
-**Companion onboarding API (`/api/companions/onboarding/...`):**
-```
-identity/        → POST: save full name, DOB, country (stage 1)
-verify/start     → POST: start Didit liveness check (stage 2)
-verify/status    → GET: poll Didit webhook result
-legal/           → POST: record legal doc signatures
-profile/         → POST: save profile fields (bio, tagline, city, hourly_rate, etc.)
-submit/          → POST: mark onboarding complete (sets onboarding_complete=true)
-submit/status    → GET: check current onboarding status
-```
+Admin no longer approves companions on registration (they are instant-live).
+Admin only takes down violators:
 
-**Companion self-service API (`/api/companions/...`):**
-```
-profile/         → GET/PATCH: fetch or update own profile
-profile/full     → GET: full profile with all relations
-media/photo      → POST: upload photo to Cloudinary → companion_photos
-media/video      → POST: upload video to Cloudinary → companion_videos
-settings/        → GET/PATCH: availability status, notifications
-settings/deactivate → POST: soft deactivate profile
-bookings/[id]    → PATCH: accept/decline booking request
-analytics/summary → GET: view/like/save counts
-send-otp / verify-otp → POST: email OTP for blushbite.co login flow
-[profileId]/     → GET: public-facing profile (used by dreamer)
-```
-
----
-
-#### ADMIN REVIEW — the gating step
-
-**Route:** `/admin/companions` → `app/(admin)/admin/companions/page.tsx`
-
-**Tabs:** All | Pending Review (stage=3, is_live=false) | Live | Rejected | Incomplete
-
-**Admin detail page:** `/admin/companions/[id]`
-Shows: companion info, profile, verification status (Didit liveness), legal docs signed, photos, videos, session cards, onboarding progress per stage.
-
-**Admin actions via `PATCH /api/admin/companions/[id]`:**
 ```typescript
-{ is_live: true }      → sets is_live=true, is_visible_to_users=true, approved_at=now()
-                         companion NOW APPEARS on dreamer feed
-{ is_live: false }     → sets is_live=false, is_visible_to_users=false (hidden from feed)
-{ force_verify: true } → sets is_verified=true, verified_at=now()
+// Current intent (update admin UI if building it):
+{ is_visible_to_users: false }  → TakeDown: hide from dreamer feed immediately
+{ is_visible_to_users: true }   → Restore: make visible again
+{ force_verify: true }          → is_verified=true, verified_at=now()
+
+// OBSOLETE (do not build):
+{ is_live: true }  with "Pending Review" tab  ← no longer needed, companions are instant-live
 ```
 
-**DELETE `/api/admin/companions/[id]`** → cascades: profile, photos, videos, verification, legal docs, payment setup, bookings, stories, audio, analytics events.
+Admin filter tabs should be: **All | Live | Taken Down | New Today** (not "Pending Review").
 
-**Filter logic in `GET /api/admin/companions`:**
-```
-pending    → companion_stage=3 AND is_live=false
-live       → is_live=true
-rejected   → onboarding_progress stage 3 status='rejected'
-incomplete → companion_stage < 3
-```
+#### HOW COMPANIONS APPEAR TO DREAMERS
 
----
-
-#### HOW COMPANIONS APPEAR TO USERS (dreamer-facing)
-
-**Gate:** `companion_profiles.is_visible_to_users = true` — set ONLY when admin flips `is_live=true`.
+**Gate:** `companion_profiles.is_visible_to_users = TRUE`
+Set on registration (instant-live). Admin can set to FALSE to take down.
 
 **Discovery APIs:**
 ```
-GET /api/companions/feed     → personalized feed, sorted by fantasy_tag_overlap_scores
-                               + mood intensity filter (intense/gentle vibe tags)
 GET /api/companions/discover → cursor-paginated, sorted by profile_completeness DESC
                                optional lat/lng/radius for Haversine distance filter
-GET /api/companions/nearby   → location-based companions (requires user coords)
-GET /api/companions/[profileId] → individual public profile (dreamer opens companion card)
+                               returns: name, age, city, minPrice, primaryPhotoUrl,
+                                        gradient, tags (vibe), isVerified, sessionModality
+
+GET /api/companions/[profileId] → full public profile for ProfileDrawer
+                                   returns: all photos, session cards, bio, tagline, tags
 ```
 
-**Companion card data served to dreamer:**
-- name (display name, not full_name), age (from DOB), city, tagline as vibe, hourly_rate
-- Primary photo URL (Cloudinary), placeholder gradient (deterministic from profile ID)
-- Vibe tags (up to 3), isVerified badge, sessionModality (in_person/online/both)
-- overlap_score (0–1, from fantasy_tag_overlap_scores — computed server-side)
+**Photo query:** `WHERE deleted_at IS NULL` (no `is_approved` filter — photos are auto-approved on upload)
 
----
+**minPrice computation (updated):**
+- Primary source: `session_cards` table (blushbite.co-native companions who create session cards)
+- Fallback: `companion_profiles.hourly_rate` (companions registered via blushbite.live who never create session_cards)
+- Both `discover` and `[profileId]` routes implement this fallback
 
-#### COMPLETE FLOW SUMMARY
+#### COMPLETE CROSS-CODEBASE FLOW (CURRENT)
 
 ```
-─── STEP 1: APPLICATION (blushbite.live — Express server, landingpagebb-) ───────
+─── STEP 1: COMPANION REGISTERS (blushbite.live — Next.js 15) ──────────────────
 
-Companion lands on blushbite.live (index.html, served by server.js)
+Companion lands on blushbite.live/ → sees gender picker → picks community
 
-1a. Email OTP verification
-    POST /api/companions/send-otp  { email }
-      → 6-digit OTP stored in-memory (Map), Resend email sent, TTL 10 min
-      → Rate-limited: max 3 requests per email per 10-min window
-    POST /api/companions/verify-otp  { email, otp }
-      → validates and clears OTP from store
+1a. Visits /female, /male, or /shemale → GenderLanding renders 2-step form
+    Step 1: displayName + email + agree checkbox → POST /api/companions/send-otp
+            OTP stored in-memory (lib/otp.ts Map), Resend email sent, TTL 10min
+    Step 2: OTP entry → POST /api/companions/verify-otp
+            → DB transaction (raw pg Pool):
+                companions row           — companion_stage=7, onboarding_complete=true
+                companion_profiles row   — is_live=TRUE, is_visible_to_users=TRUE,
+                                           gender_community='female'/'male'/'shemale'
+                companion_onboarding_progress — stages 1–7 auto-completed
+            → JWT cookie set immediately (bb_session)
+            → Redirect to /dashboard/profile
+            → Device binding: fingerprint stored in device_community_bindings
 
-1b. Profile photo upload (optional)
-    POST /api/companions/upload-photo  (multipart, 5MB limit)
-      → uploads to Cloudinary folder: "companion-applications"
-      → returns { url: secure_url }
+1b. Companion uploads photo at /dashboard/photos
+    POST /api/companions/upload-photo
+      → Cloudinary upload (folder: 'companion-applications', resource_type: 'image')
+      → companion_photos INSERT:
+          is_approved = TRUE           (instant-live: admin takes down violations, not pre-approves)
+          is_primary = (existingCount === 0)  (auto-primary on first upload)
+          photo_verification_status = 'pending'  (for gold badge workflow)
+      → Companion's photo immediately visible on blushbite.co discover
 
-1c. Full application submission
-    POST /api/companions/apply  {
-      fullName, email, dateOfBirth, country, city, whatsappNumber,
-      displayName, gender, tagline, bio, sessionModality, profilePhotoUrl
-    }
-    Validation: must be 18+, E.164 whatsapp, valid gender enum
-    DB writes (raw pg Pool, same Railway DATABASE_URL):
-      • companions row           — companion_stage=3, onboarding_complete=false
-      • companion_profiles row   — is_verified=false, is_live=false, is_visible_to_users=false
-      • companion_photos row     — is_approved=false (if photo uploaded)
-      • companion_onboarding_progress — stage 1 ("Applied via landing page") + stage 2
-    Response: "Application received. We will be in touch within 48 hours."
+1c. Companion sets hourly rate at /dashboard/profile
+    PATCH /api/companions/profile
+      → companion_profiles UPDATE: hourly_rate, currency, city, city_slug, country_slug, bio, tagline, etc.
+      → profile_completeness recalculated
+      → city_slug / country_slug written from lib/slug.ts toSlug()
 
-─── STEP 2: ADMIN REVIEW (blushbite.co/admin — Next.js, cookie-auth) ────────────
+─── STEP 2: DREAMER DISCOVERS (blushbite.co — Next.js 14) ──────────────────────
 
-2a. Admin logs in at /admin-login → ADMIN_SESSION_SECRET cookie set
-    middleware.ts: all /admin/* routes check cookie === ADMIN_SESSION_SECRET
+GET /api/companions/discover?lat=...&lng=...&radius=...&cursor=...
+  → Drizzle query on companion_profiles WHERE is_visible_to_users=TRUE
+  → Companion appears immediately (no admin approval wait)
+  → minPrice: reads session_cards first, falls back to companion_profiles.hourly_rate
+  → primaryPhotoUrl: companion_photos WHERE deleted_at IS NULL (no is_approved filter)
+  → tags: companion_vibe_tags junction table → vibe_tags lookup
+    NOTE: blushbite.live stores vibe_tags as JSON in companion_profiles (not junction table)
+          → companions registered via blushbite.live show NO vibe tags on discover cards
+          → KNOWN GAP — not yet fixed (see Section 22)
 
-2b. GET /api/admin/companions → lists with filters:
-      pending   → companion_stage=3 AND is_live=false
-      live      → is_live=true
-      rejected  → has onboarding_progress stage 3 status='rejected'
-      incomplete → companion_stage < 3
+GET /api/companions/[profileId]
+  → Full profile for ProfileDrawer
+  → Same fallback logic for minPrice
+  → All photos WHERE deleted_at IS NULL
 
-2c. GET /api/admin/companions/[id] → full detail:
-      companion + profile + verification (Didit) + legal_docs
-      + onboarding_progress + photos + videos + fantasy_tags + vibe_tags + session_cards
+─── STEP 3: DREAMER BOOKS (blushbite.co) ────────────────────────────────────────
 
-2d. PATCH /api/admin/companions/[id]:
-      { is_live: true }       → is_live=true, is_visible_to_users=true, approved_at=now()
-      { is_live: false }      → is_live=false, is_visible_to_users=false
-      { force_verify: true }  → is_verified=true, verified_at=now()
-      { fantasy_tag_ids: [] } → replaces companion fantasy tags
-      { vibe_tag_ids: [] }    → replaces companion vibe tags
-
-─── STEP 3: COMPANION ONBOARDING (blushbite.co/companion — NextAuth session) ────
-
-3a. Companion logs in via NextAuth credentials → companion_accounts table
-
-3b. Profile builder at /companion/profile/builder
-    8 collapsible sections (each auto-saved via PATCH /api/companions/profile/full):
-      identity  → display name, tagline, bio
-      location  → city, session_modality (in_person/online/both), availability_status
-      look      → gender, height_cm, body_type, ethnicity, eye_color, hair_color, skin_color
-      languages → companion_languages table (native/fluent/conversational)
-      vibe      → vibe_tags + fantasy_tags (multi-select)
-      sessions  → session_cards (title, price, duration, type)
-      connect   → whatsapp_number, instagram_handle, website_url
-      verified  → Didit liveness/ID check → companion_verifications table
-
-    profile_completeness: 0–100% (server-computed)
-    Go-live toggle on profile: requires ≥70% completeness
-    NOTE: is_live can only be set to true by ADMIN (PATCH admin endpoint)
-          The companion toggle updates their own is_live but admin must have approved first
-
-3c. Photos/videos uploaded via:
-      POST /api/companions/media/photo → Cloudinary or R2
-      POST /api/companions/media/video → R2
-
-3d. Story bridge: companion links their stories to platform content
-      /companion/bridge → POST /api/companion/bridge/link
-
-─── STEP 4: DREAMER DISCOVERY (blushbite.co — public) ──────────────────────────
-
-GET /api/companions/feed     → personalized (fantasy_tag_overlap_scores), is_visible_to_users=true
-GET /api/companions/discover → cursor-paginated, profile_completeness DESC, optional geo
-GET /api/companions/nearby   → Haversine distance, requires user coords
-GET /api/companions/[id]     → public profile card
-
-Dreamer opens ProfileDrawer → views photos, vibe tags, session cards
-Dreamer books via POST /api/companions/bookings (booking_requests row, status='pending')
+POST /api/companions/bookings
+  → booking_requests INSERT (user_id → users, companion_profile_id → companion_profiles)
+  → Companion sees booking at /dashboard/bookings on blushbite.live
+  → PATCH /api/companions/bookings/[id] { status: 'accepted' | 'declined' }
 ```
 
 ---
 
-### Shared database (Railway PostgreSQL)
-Both `blushbite.live` and `blushbite.co` connect to the **same** `DATABASE_URL`.
-- `blushbite.live` uses raw `pg` Pool — writes directly to `companions`, `companion_profiles`, `companion_photos`, `companion_onboarding_progress`
-- `blushbite.co` uses Drizzle ORM — reads/writes all 35 tables
-- No cross-DB sync needed — single source of truth
+### Cross-Codebase Schema Compatibility Map
 
-### Key flags that control companion visibility
+| Column / Table | Written by | Read by | Notes |
+|---|---|---|---|
+| `companion_profiles.is_visible_to_users` | blushbite.live (apply route, instant-live=TRUE) | blushbite.co (discover gate) | Admin can set FALSE to take down |
+| `companion_profiles.is_live` | blushbite.live (apply route, TRUE) | blushbite.co (admin) | Mirrors is_visible_to_users |
+| `companion_profiles.hourly_rate` | blushbite.live (profile PATCH) | blushbite.co (discover + profileId — fallback) | Fallback when no session_cards |
+| `companion_profiles.currency` | blushbite.live (profile PATCH) | blushbite.co (discover + profileId) | Used with hourly_rate fallback |
+| `companion_profiles.city_slug` | blushbite.live (profile PATCH via lib/slug.ts) | blushbite.co (geo landing pages — future) | URL-safe city slug |
+| `companion_profiles.country_slug` | blushbite.live (profile PATCH via lib/slug.ts) | blushbite.co (geo landing pages — future) | URL-safe country slug |
+| `companion_profiles.gender_community` | blushbite.live (apply route) | blushbite.co (not yet read — future filter) | 'female'\|'male'\|'shemale' |
+| `companion_photos.is_approved` | blushbite.live (upload-photo — always TRUE) | blushbite.co (NOT filtered — only deleted_at IS NULL) | Auto-approved, admin deletes violations |
+| `companion_photos.is_primary` | blushbite.live (auto-set on first upload) | blushbite.co (discover + profileId primaryPhotoUrl) | Auto-set when existingCount=0 |
+| `companion_photos.photo_verification_status` | blushbite.live (upload-photo — 'pending') | blushbite.co (not yet read) | For gold badge workflow |
+| `session_cards` | blushbite.co only (companion profile builder) | blushbite.co (discover + profileId minPrice) | Never created by blushbite.live |
+| `companion_vibe_tags` (junction) | blushbite.co only (profile builder) | blushbite.co (discover tags) | blushbite.live uses JSON column instead |
+| `companion_profiles.vibe_tags` (JSON) | blushbite.live (dashboard settings — if implemented) | Neither app reads this for discover | KNOWN GAP |
+| `device_community_bindings` | blushbite.live (fingerprint.ts) | blushbite.live only | Not relevant to blushbite.co |
+| `companion_nudges` | blushbite.live (cron/drip) | blushbite.live only | Drip email state |
+| `companion_subscriptions` | NEITHER (Sprint 6 deferred) | NEITHER | Table exists, no data |
+
+---
+
+### Known Cross-Codebase Gaps
+
+These are **documented gaps** — not bugs, but known incompatibilities between the two apps.
+Do not fix these unless explicitly asked.
+
+**GAP 1 — vibe_tags (LOW PRIORITY)**
+- blushbite.live stores vibe tags as a JSON array in `companion_profiles.vibe_tags` (if collected)
+- blushbite.co reads vibe tags from `companion_vibe_tags` junction table → `vibe_tags` lookup table
+- Result: companions registered via blushbite.live show NO vibe tags on discover cards
+- Fix options: (A) sync blushbite.live profile PATCH to also write junction rows, (B) blushbite.co fallback to JSON column, (C) both
+
+**GAP 2 — latitude/longitude (NOT BLOCKING)**
+- blushbite.live does not collect lat/lng coordinates
+- blushbite.co's discover route uses Haversine distance filtering
+- Companions with no lat/lng always appear (query includes `latitude IS NULL → pass`)
+- No distance shown for blushbite.live companions — but they still appear in all queries
+
+**GAP 3 — session_cards (FIXED — hourly_rate fallback)**
+- blushbite.live stores pricing as `hourly_rate` + `currency` on `companion_profiles`
+- blushbite.co's `discover` and `[profileId]` routes now fall back to `hourly_rate` when no session_cards exist
+- This fallback is already implemented in both routes
+
+**GAP 4 — gender_community not used for filtering on blushbite.co (FUTURE)**
+- blushbite.live writes `gender_community` to `companion_profiles`
+- blushbite.co's discover route does not yet filter by gender_community
+- This will be needed when blushbite.co builds community-specific feeds
+
+---
+
+## 22. SEO STRATEGY
+
+### blushbite.co — Consumer App SEO
+
+#### Geo Landing Pages
+Goal: rank for "{city} escort", "{city} companion", "companions in {city}", etc.
+
+Data source: `companion_profiles.city_slug` + `companion_profiles.country_slug`
+(both written by blushbite.live profile PATCH via `lib/slug.ts toSlug()`)
+
+Route pattern (to build):
 ```
-companions.companion_stage        int      1–7 onboarding stage
-companion_profiles.is_live        boolean  admin-controlled: show/hide toggle
-companion_profiles.is_visible_to_users boolean  mirrors is_live, gates all dreamer queries
-companion_profiles.is_verified    boolean  set by Didit webhook OR admin force_verify
-companion_photos.is_approved      boolean  photo approved (admin can reject individual photos)
+/companions/[countrySlug]/[citySlug]   → e.g. /companions/netherlands/amsterdam
+/companions/[countrySlug]              → e.g. /companions/netherlands
+```
+
+Each page:
+- SSR with ISR (revalidate: 3600) — SEO-critical
+- Lists companions filtered by city/country slug
+- H1: "Companions in Amsterdam" — exact-match keyword
+- Meta title: "Companions in Amsterdam — BlushBite" — city in title tag
+- Meta description: city-specific, evocative but keyword-rich
+- JSON-LD: `ItemList` schema with companion names + profile URLs
+- Canonical URL: `https://blushbite.co/companions/netherlands/amsterdam`
+- Breadcrumbs: Home → Netherlands → Amsterdam
+
+#### JSON-LD Structured Data (per companion profile page)
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Ava",
+  "description": "Romantic companion available in Amsterdam",
+  "address": { "@type": "PostalAddress", "addressLocality": "Amsterdam", "addressCountry": "NL" }
+}
+```
+
+#### sitemap.xml
+Generate at `/app/sitemap.ts` (Next.js Metadata API):
+- Static routes: `/`, `/companions`, `/stories`, `/audio`
+- Dynamic: one URL per `companion_profiles WHERE is_visible_to_users=TRUE` → `/companions/[countrySlug]/[citySlug]/[profileId]`
+- Dynamic geo pages: one per unique city_slug/country_slug combination
+
+#### robots.txt
+```
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /api/
+Sitemap: https://blushbite.co/sitemap.xml
+```
+
+#### OG Images
+- Per companion profile: dynamic OG image with companion name + city + gradient background
+- Use Next.js `ImageResponse` at `/app/companions/[profileId]/opengraph-image.tsx`
+
+---
+
+### blushbite.live — Companion Portal SEO
+
+#### Community Pages
+- `/female`, `/male`, `/shemale` are discoverable (no auth required)
+- Title: "Join as a Female Companion — BlushBite" (community-specific)
+- Description: community-specific copy, emphasises screening + premium clients
+- robots: `index, follow` on community pages; `noindex` on `/dashboard/*`, `/login`, `/status`
+
+#### Legal Pages
+- `/terms`, `/privacy`, `/companion-guidelines` — fully indexed
+- Needed for Google Trust signals, App Store compliance
+
+#### sitemap.xml (blushbite.live)
+Static only:
+```
+/ (picker)
+/female
+/male
+/shemale
+/terms
+/privacy
+/companion-guidelines
 ```
 
 ---

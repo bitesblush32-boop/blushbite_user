@@ -17,7 +17,7 @@ import Link from 'next/link'
 
 const TABS = [
   { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending Review' },
+  { key: 'new_today', label: 'New Today' },
   { key: 'live', label: 'Live' },
   { key: 'rejected', label: 'Rejected' },
   { key: 'incomplete', label: 'Incomplete' },

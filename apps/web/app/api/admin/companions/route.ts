@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import { companions, companionProfiles, companionVerifications } from '@/db/schema'
-import { eq, and, or, isNull, lt, ilike, desc, sql } from 'drizzle-orm'
+import { eq, and, or, isNull, lt, gte, ilike, desc, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
@@ -18,13 +18,9 @@ export async function GET(req: NextRequest) {
 
   const filters: SQL[] = []
 
-  if (filter === 'pending') {
-    filters.push(
-      and(
-        eq(companions.companion_stage, 3),
-        or(isNull(companionProfiles.is_live), eq(companionProfiles.is_live, false))
-      ) as SQL
-    )
+  if (filter === 'new_today') {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    filters.push(gte(companions.created_at, since))
   } else if (filter === 'live') {
     filters.push(eq(companionProfiles.is_live, true))
   } else if (filter === 'rejected') {

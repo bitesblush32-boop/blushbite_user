@@ -46,6 +46,7 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
       tagline: companionProfiles.tagline,
       city: companionProfiles.city,
       currency: companionProfiles.currency,
+      hourly_rate: companionProfiles.hourly_rate,
       is_verified: companionProfiles.is_verified,
       session_modality: companionProfiles.session_modality,
       is_visible_to_users: companionProfiles.is_visible_to_users,
@@ -109,6 +110,8 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
   const currency = profile.currency ?? 'EUR'
   const currSym = sym(currency)
 
+  // Fall back to hourly_rate from companion_profiles when no session_cards exist
+  // (companions registered via blushbite.live set hourly_rate directly, not session_cards)
   const minPrice =
     sessionCardRows.length > 0
       ? `${currSym}${Math.round(
@@ -120,7 +123,9 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
             ).price ?? '0'
           )
         )}`
-      : null
+      : profile.hourly_rate
+        ? `${currSym}${Math.round(parseFloat(String(profile.hourly_rate)))}`
+        : null
 
   return NextResponse.json({
     id: profile.id,

@@ -81,6 +81,7 @@ export async function GET(req: NextRequest) {
       currency: companionProfiles.currency,
       is_verified: companionProfiles.is_verified,
       session_modality: companionProfiles.session_modality,
+      hourly_rate: companionProfiles.hourly_rate,
       // Haversine distance in km (null when companion has no location)
       distance_km: useLocation
         ? sql<number | null>`
@@ -194,9 +195,14 @@ export async function GET(req: NextRequest) {
     const comp = companionMap.get(row.companionId)
     const priceInfo = minPriceMap.get(row.profileId)
     const tags = vibeTagMapByProfile.get(row.profileId) ?? []
+    const currency = row.currency ?? 'EUR'
+    // Fall back to hourly_rate from companion_profiles when no session_cards exist
+    // (companions registered via blushbite.live set hourly_rate directly)
     const minPrice = priceInfo
       ? `${currencySymbol(priceInfo.currency)}${Math.round(parseFloat(priceInfo.price))}`
-      : null
+      : row.hourly_rate
+        ? `${currencySymbol(currency)}${Math.round(parseFloat(String(row.hourly_rate)))}`
+        : null
 
     return {
       id: row.profileId,
@@ -206,7 +212,7 @@ export async function GET(req: NextRequest) {
       city: row.city ?? null,
       distance_km: row.distance_km ?? null,
       minPrice,
-      currency: row.currency ?? 'EUR',
+      currency,
       vibe: row.tagline ?? null,
       tags,
       primaryPhotoUrl: photoMap.get(row.profileId) ?? null,

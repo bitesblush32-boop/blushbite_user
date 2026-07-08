@@ -20,6 +20,7 @@ import {
   notifications,
   stories,
   audioRecordings,
+  deviceCommunityBindings,
 } from '@/db/schema'
 import { eq, and, isNull, asc, sql } from 'drizzle-orm'
 
@@ -329,7 +330,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     .where(eq(audioRecordings.author_companion_id, id))
   // Remove device fingerprint bindings so the deleted companion returns to the community picker
   // if they visit again — treated as a completely new user
-  await db.execute(sql`DELETE FROM device_community_bindings WHERE companion_id = ${id}`)
+  await db.delete(deviceCommunityBindings).where(eq(deviceCommunityBindings.companion_id, id))
   // Delete the companion — cascades: companion_accounts, companion_profiles (→ photos, videos,
   // languages, tags, session_cards, story_bridges, analytics_events), onboarding_progress,
   // didit_extracted_data
