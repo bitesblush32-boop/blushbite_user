@@ -15,13 +15,7 @@ export default function GeoLayout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="border-b border-[#1c2333] px-6 h-16 flex items-center justify-between relative z-10">
         <Link href="https://blushbite.co/home">
-          <Image
-            src="/bb.png"
-            alt="BlushBite"
-            width={120}
-            height={40}
-            className="h-8 w-auto"
-          />
+          <Image src="/bb.png" alt="BlushBite" width={120} height={40} className="h-8 w-auto" />
         </Link>
         <div className="flex items-center gap-4">
           <Link
@@ -53,7 +47,11 @@ export default function GeoLayout({ children }: { children: React.ReactNode }) {
               ['Privacy', 'https://blushbite.co/privacy'],
               ['For companions', 'https://blushbite.live'],
             ].map(([label, href]) => (
-              <a key={label} href={href} className="text-xs text-[#4b5563] hover:text-[#6b7280] transition-colors">
+              <a
+                key={label}
+                href={href}
+                className="text-xs text-[#4b5563] hover:text-[#6b7280] transition-colors"
+              >
                 {label}
               </a>
             ))}

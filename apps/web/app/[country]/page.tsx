@@ -119,7 +119,8 @@ export default async function CountryPage({ params }: PageParams) {
         {/* City list */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {cities.map((c) => {
-            const cityDisplay = c.city || c.city_slug.replace(/-/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())
+            const cityDisplay =
+              c.city || c.city_slug.replace(/-/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())
             const count = parseInt(c.companion_count, 10)
             return (
               <Link

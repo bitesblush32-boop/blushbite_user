@@ -21,7 +21,7 @@ import {
   stories,
   audioRecordings,
 } from '@/db/schema'
-import { eq, and, isNull, asc } from 'drizzle-orm'
+import { eq, and, isNull, asc, sql } from 'drizzle-orm'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireAdmin(req)
@@ -258,14 +258,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           .delete(companionFantasyTags)
           .where(eq(companionFantasyTags.companion_profile_id, profileRow.id))
         if ((body.fantasy_tag_ids as number[]).length) {
-          await db
-            .insert(companionFantasyTags)
-            .values(
-              (body.fantasy_tag_ids as number[]).map((tid: number) => ({
-                companion_profile_id: profileRow.id,
-                fantasy_tag_id: tid,
-              }))
-            )
+          await db.insert(companionFantasyTags).values(
+            (body.fantasy_tag_ids as number[]).map((tid: number) => ({
+              companion_profile_id: profileRow.id,
+              fantasy_tag_id: tid,
+            }))
+          )
         }
       }
       if (body.vibe_tag_ids !== undefined) {
@@ -273,14 +271,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           .delete(companionVibeTags)
           .where(eq(companionVibeTags.companion_profile_id, profileRow.id))
         if ((body.vibe_tag_ids as number[]).length) {
-          await db
-            .insert(companionVibeTags)
-            .values(
-              (body.vibe_tag_ids as number[]).map((tid: number) => ({
-                companion_profile_id: profileRow.id,
-                vibe_tag_id: tid,
-              }))
-            )
+          await db.insert(companionVibeTags).values(
+            (body.vibe_tag_ids as number[]).map((tid: number) => ({
+              companion_profile_id: profileRow.id,
+              vibe_tag_id: tid,
+            }))
+          )
         }
       }
     }
@@ -331,6 +327,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     .update(audioRecordings)
     .set({ author_companion_id: null, companion_profile_id: null, author_type: 'user' })
     .where(eq(audioRecordings.author_companion_id, id))
+  // Remove device fingerprint bindings so the deleted companion returns to the community picker
+  // if they visit again — treated as a completely new user
+  await db.execute(sql`DELETE FROM device_community_bindings WHERE companion_id = ${id}`)
   // Delete the companion — cascades: companion_accounts, companion_profiles (→ photos, videos,
   // languages, tags, session_cards, story_bridges, analytics_events), onboarding_progress,
   // didit_extracted_data

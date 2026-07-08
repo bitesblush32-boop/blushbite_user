@@ -56,14 +56,12 @@ export async function POST(req: NextRequest) {
           )
       : Promise.resolve(),
     (orientation_tag_ids as number[]).length
-      ? db
-          .insert(storyOrientationTags)
-          .values(
-            (orientation_tag_ids as number[]).map((tid) => ({
-              story_id: storyId,
-              orientation_tag_id: tid,
-            }))
-          )
+      ? db.insert(storyOrientationTags).values(
+          (orientation_tag_ids as number[]).map((tid) => ({
+            story_id: storyId,
+            orientation_tag_id: tid,
+          }))
+        )
       : Promise.resolve(),
     (fantasy_tag_ids as number[]).length
       ? db

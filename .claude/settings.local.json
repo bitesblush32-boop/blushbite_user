@@ -323,7 +323,10 @@
       "Bash(grep -n \"from 'next/image'\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\notifications\\\\page.tsx\" \\\\\n  \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(dreamer\\)\\\\profile\\\\page.tsx\")",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next lint 2>&1; echo \"Exit: $?\")",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx prettier --write \"**/*.{ts,tsx}\" --ignore-path .gitignore 2>&1 | tail -20)",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node --version && npx next lint 2>&1; echo \"Exit: $?\")"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node --version && npx next lint 2>&1; echo \"Exit: $?\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm run format 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm run lint:fix 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm run build 2>&1)"
     ]
   }
 }
