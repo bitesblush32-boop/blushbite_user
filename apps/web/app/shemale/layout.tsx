@@ -1,5 +1,5 @@
 import GeoPageLayout from '@/components/geo/GeoPageLayout'
 
-export default function GeoLayout({ children }: { children: React.ReactNode }) {
+export default function ShemaleLayout({ children }: { children: React.ReactNode }) {
   return <GeoPageLayout>{children}</GeoPageLayout>
 }

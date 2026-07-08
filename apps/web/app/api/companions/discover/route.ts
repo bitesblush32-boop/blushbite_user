@@ -44,12 +44,16 @@ function decodeCursor(cursor: string): { score: number; id: string } | null {
   }
 }
 
+const VALID_GENDERS = ['female', 'male', 'shemale']
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const latParam = searchParams.get('lat')
   const lngParam = searchParams.get('lng')
   const radiusParam = searchParams.get('radius')
   const cursorParam = searchParams.get('cursor')
+  const genderParam = searchParams.get('gender')
+  const gender = genderParam && VALID_GENDERS.includes(genderParam) ? genderParam : null
 
   const lat = latParam ? parseFloat(latParam) : null
   const lng = lngParam ? parseFloat(lngParam) : null
@@ -111,6 +115,9 @@ export async function GET(req: NextRequest) {
               POWER(SIN(RADIANS(${companionProfiles.longitude}::numeric - ${lng}) / 2), 2)
             )) <= ${radius}
           )`
+          : undefined,
+        gender
+          ? sql`${companionProfiles.companion_id} IN (SELECT id FROM companions WHERE gender_community = ${gender})`
           : undefined,
         cursorWhere
       )

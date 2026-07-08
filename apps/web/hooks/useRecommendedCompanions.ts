@@ -10,11 +10,23 @@ interface FeedPage {
   nextCursor: string | null
 }
 
-async function fetchFeedPage({ pageParam }: { pageParam: unknown }): Promise<FeedPage> {
+function buildFeedUrl(cursor: string | null, gender: string | null): string {
+  const params = new URLSearchParams()
+  if (cursor) params.set('cursor', cursor)
+  if (gender) params.set('gender', gender)
+  const qs = params.toString()
+  return qs ? `/api/companions/feed?${qs}` : '/api/companions/feed'
+}
+
+async function fetchFeedPage({
+  pageParam,
+  meta,
+}: {
+  pageParam: unknown
+  meta?: { gender?: string | null }
+}): Promise<FeedPage> {
   const cursor = pageParam as string | null
-  const url = cursor
-    ? `/api/companions/feed?cursor=${encodeURIComponent(cursor)}`
-    : '/api/companions/feed'
+  const url = buildFeedUrl(cursor, meta?.gender ?? null)
   const res = await fetch(url)
   if (!res.ok) throw new Error('Feed fetch failed')
   return res.json()
@@ -35,7 +47,7 @@ export function toCompanionCard(item: CompanionFeedItem): Companion {
   }
 }
 
-export function useRecommendedCompanions() {
+export function useRecommendedCompanions(gender?: string | null) {
   const query = useInfiniteQuery<
     FeedPage,
     Error,
@@ -43,8 +55,8 @@ export function useRecommendedCompanions() {
     readonly unknown[],
     string | null
   >({
-    queryKey: ['companions', 'feed'] as const,
-    queryFn: fetchFeedPage,
+    queryKey: ['companions', 'feed', gender ?? 'all'] as const,
+    queryFn: ({ pageParam }) => fetchFeedPage({ pageParam, meta: { gender } }),
     initialPageParam: null,
     getNextPageParam: (lastPage: FeedPage) => lastPage.nextCursor ?? null,
     staleTime: 5 * 60 * 1000,

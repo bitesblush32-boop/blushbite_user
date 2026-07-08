@@ -67,10 +67,14 @@ function decodeCursor(cursor: string): { score: number; id: string } | null {
   }
 }
 
+const VALID_GENDERS = ['female', 'male', 'shemale']
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const cursorParam = searchParams.get('cursor')
   const cursor = cursorParam ? decodeCursor(cursorParam) : null
+  const genderParam = searchParams.get('gender')
+  const gender = genderParam && VALID_GENDERS.includes(genderParam) ? genderParam : null
 
   // Public feed — ordered by profile completeness (descending)
   const cursorCompleteness = cursor ? Math.round(cursor.score * 100) : 0
@@ -94,9 +98,18 @@ export async function GET(req: NextRequest) {
       currency: companionProfiles.currency,
       is_verified: companionProfiles.is_verified,
       session_modality: companionProfiles.session_modality,
+      hourly_rate: companionProfiles.hourly_rate,
     })
     .from(companionProfiles)
-    .where(and(eq(companionProfiles.is_visible_to_users, true), cursorWhere))
+    .where(
+      and(
+        eq(companionProfiles.is_visible_to_users, true),
+        gender
+          ? sql`${companionProfiles.companion_id} IN (SELECT id FROM companions WHERE gender_community = ${gender})`
+          : undefined,
+        cursorWhere
+      )
+    )
     .orderBy(desc(companionProfiles.profile_completeness), asc(companionProfiles.id))
     .limit(LIMIT + 1)
 
@@ -109,6 +122,7 @@ export async function GET(req: NextRequest) {
     currency: r.currency,
     is_verified: r.is_verified,
     session_modality: r.session_modality,
+    hourly_rate: r.hourly_rate,
   }))
 
   const hasNextPage = profileRows.length > LIMIT
@@ -196,9 +210,12 @@ export async function GET(req: NextRequest) {
     const priceInfo = minPriceMap.get(row.profileId)
     const tags = vibeTagMapByProfile.get(row.profileId) ?? []
 
+    const currency = row.currency ?? 'EUR'
     const minPrice = priceInfo
       ? `${currencySymbol(priceInfo.currency)}${Math.round(parseFloat(priceInfo.price))}`
-      : null
+      : row.hourly_rate
+        ? `${currencySymbol(currency)}${Math.round(parseFloat(String(row.hourly_rate)))}`
+        : null
 
     return {
       id: row.profileId,
@@ -207,7 +224,7 @@ export async function GET(req: NextRequest) {
       age: ageFromDob(comp?.date_of_birth ?? null),
       city: row.city ?? null,
       minPrice,
-      currency: row.currency ?? 'EUR',
+      currency,
       vibe: row.tagline ?? null,
       tags,
       primaryPhotoUrl: photoMap.get(row.profileId) ?? null,

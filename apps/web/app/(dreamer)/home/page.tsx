@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { stories, audios } from '@/lib/data'
 import type { Companion } from '@/lib/types'
 import { useRecommendedCompanions } from '@/hooks/useRecommendedCompanions'
+import { useDeviceCommunity } from '@/hooks/useDeviceCommunity'
 import { useMoodStore } from '@/store/moodStore'
 import { useUIStore } from '@/store/uiStore'
 import { usePlayerStore } from '@/store/playerStore'
@@ -33,11 +34,12 @@ export default function HomePage() {
   const { intensity, setIntensity } = useMoodStore()
   const openModal = useUIStore((s) => s.openModal)
   const play = usePlayerStore((s) => s.play)
+  const { community } = useDeviceCommunity()
   const {
     companionCards,
     companions: realCompanions,
     isLoading: companionsLoading,
-  } = useRecommendedCompanions()
+  } = useRecommendedCompanions(community)
   const router = useRouter()
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
