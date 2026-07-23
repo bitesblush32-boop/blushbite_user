@@ -1045,10 +1045,12 @@ export default function AdminCompanionDetailPage() {
                   className="relative group rounded-[10px] overflow-hidden bg-[#161d2a] border border-[#1c2333]"
                   style={{ aspectRatio: '3/4' }}
                 >
-                  {/* placeholder — real photos in phase 2 */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <ImageIcon size={24} color="#1c2333" />
-                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt={photo.alt_text ?? ''}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
                     {photo.is_primary && (
@@ -1127,10 +1129,39 @@ export default function AdminCompanionDetailPage() {
               {videos.map((video) => (
                 <div
                   key={video.id}
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 flex items-center justify-between gap-4"
+                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] overflow-hidden flex items-stretch gap-0"
                 >
+                  {/* Thumbnail */}
+                  <a
+                    href={video.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative flex-shrink-0 w-[100px] bg-[#111620] flex items-center justify-center group"
+                    style={{ minHeight: 72 }}
+                  >
+                    {video.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={video.thumbnail_url}
+                        alt=""
+                        className="w-full h-full object-cover absolute inset-0"
+                      />
+                    ) : null}
+                    <div className="relative z-10 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center group-hover:bg-black/80 transition-colors">
+                      <Video size={14} color="white" />
+                    </div>
+                  </a>
+                  {/* Info */}
+                  <div className="flex items-center justify-between gap-4 flex-1 px-4 py-3">
                   <div>
-                    <div className="text-[13px] text-[#eeeef0]">Video</div>
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[13px] text-[#e8607a] hover:underline"
+                    >
+                      Watch video ↗
+                    </a>
                     {video.duration_seconds && (
                       <div className="text-[11px] text-[#6b7280] mt-[2px]">
                         {video.duration_seconds}s
@@ -1177,6 +1208,7 @@ export default function AdminCompanionDetailPage() {
                     >
                       Remove
                     </button>
+                  </div>
                   </div>
                 </div>
               ))}

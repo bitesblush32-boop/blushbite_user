@@ -4,6 +4,7 @@ import {
   companions,
   companionProfiles,
   companionPhotos,
+  companionVideos,
   sessionCards,
   companionVibeTags,
   vibeTags,
@@ -59,7 +60,7 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const [companionRow, photoRows, sessionCardRows, vibeTagRows] = await Promise.all([
+  const [companionRow, photoRows, videoRows, sessionCardRows, vibeTagRows] = await Promise.all([
     db
       .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
       .from(companions)
@@ -75,9 +76,29 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
       })
       .from(companionPhotos)
       .where(
-        and(eq(companionPhotos.companion_profile_id, profileId), isNull(companionPhotos.deleted_at))
+        and(
+          eq(companionPhotos.companion_profile_id, profileId),
+          eq(companionPhotos.is_approved, true),
+          isNull(companionPhotos.deleted_at)
+        )
       )
       .orderBy(asc(companionPhotos.sort_order)),
+
+    db
+      .select({
+        id: companionVideos.id,
+        url: companionVideos.url,
+        thumbnail_url: companionVideos.thumbnail_url,
+        duration_seconds: companionVideos.duration_seconds,
+      })
+      .from(companionVideos)
+      .where(
+        and(
+          eq(companionVideos.companion_profile_id, profileId),
+          eq(companionVideos.is_approved, true),
+          isNull(companionVideos.deleted_at)
+        )
+      ),
 
     db
       .select({
@@ -142,6 +163,12 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
     gradient: gradientFromId(profile.id),
     primaryPhotoUrl: primaryPhoto,
     photoUrls: photoRows.map((p) => p.url),
+    videos: videoRows.map((v) => ({
+      id: v.id,
+      url: v.url,
+      thumbnailUrl: v.thumbnail_url,
+      durationSeconds: v.duration_seconds,
+    })),
     tags: vibeTagRows.map((v) => v.name),
     sessionCards: sessionCardRows.map((sc) => ({
       id: sc.id,

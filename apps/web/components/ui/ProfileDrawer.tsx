@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
+import { X } from 'lucide-react'
 
 import { useUIStore } from '@/store/uiStore'
 
@@ -22,6 +23,12 @@ interface RealCompanionProfile {
   primaryPhotoUrl: string | null
   photoUrls: string[]
   tags: string[]
+  videos: Array<{
+    id: string
+    url: string
+    thumbnailUrl: string | null
+    durationSeconds: number | null
+  }>
   sessionCards: Array<{
     id: string
     title: string | null
@@ -92,6 +99,7 @@ function buildContactLinks(name: string) {
 export default function ProfileDrawer() {
   const { activeCompanionId, closeModal, openBookingModal } = useUIStore()
   const [selectedDuration, setSelectedDuration] = useState('2h')
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const realId = isRealId(activeCompanionId)
 
@@ -118,8 +126,10 @@ export default function ProfileDrawer() {
         price: realProfile.minPrice ?? '—',
         gradient: realProfile.gradient,
         photoUrl: realProfile.primaryPhotoUrl,
+        photoUrls: realProfile.photoUrls ?? [],
         bio: realProfile.bio ?? VIBE_BIOS['Romantic & in control'],
         isVerified: realProfile.isVerified,
+        videos: realProfile.videos ?? [],
         sessions:
           realProfile.sessionCards.length > 0
             ? realProfile.sessionCards.map((sc) => ({
@@ -326,10 +336,140 @@ export default function ProfileDrawer() {
 
                   {/* ── SECTION B: Body ───────────────────────────────────────────── */}
                   <div className="p-8 pt-6">
+                    {/* Photo gallery strip — all approved photos */}
+                    {display.photoUrls.length > 1 && (
+                      <div className="mb-6">
+                        <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] font-medium mb-3">
+                          Photos
+                        </p>
+                        <div
+                          className="flex gap-2 overflow-x-auto pb-1"
+                          style={{ scrollbarWidth: 'none' }}
+                        >
+                          {display.photoUrls.map((url, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setLightboxUrl(url)}
+                              className="flex-shrink-0 rounded-[8px] overflow-hidden"
+                              style={{
+                                width: 80,
+                                height: 108,
+                                background: '#111620',
+                                border: '1px solid #1c2333',
+                                padding: 0,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={url}
+                                alt=""
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Bio */}
                     <p className="text-[13.5px] text-[#6b7280] leading-[1.75] mb-8 max-w-[520px]">
                       {display.bio}
                     </p>
+
+                    {/* Videos */}
+                    {display.videos.length > 0 && (
+                      <div className="mb-8">
+                        <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] font-medium mb-3">
+                          Videos
+                        </p>
+                        <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                          {display.videos.map((v) => (
+                            <a
+                              key={v.id}
+                              href={v.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 relative rounded-[10px] overflow-hidden"
+                              style={{
+                                width: 120,
+                                height: 160,
+                                background: '#111620',
+                                border: '1px solid #1c2333',
+                                display: 'block',
+                              }}
+                            >
+                              {v.thumbnailUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={v.thumbnailUrl}
+                                  alt=""
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                >
+                                  <svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(255,255,255,0.25)">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              )}
+                              {/* Play overlay */}
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  background: 'rgba(7,9,15,0.35)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: '50%',
+                                    background: 'rgba(232,96,122,0.85)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              </div>
+                              {/* Duration badge */}
+                              {v.durationSeconds && (
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: 6,
+                                    right: 6,
+                                    fontSize: 10,
+                                    background: 'rgba(7,9,15,0.8)',
+                                    color: '#eeeef0',
+                                    padding: '2px 5px',
+                                    borderRadius: 4,
+                                  }}
+                                >
+                                  {Math.floor(v.durationSeconds / 60)}:{String(v.durationSeconds % 60).padStart(2, '0')}
+                                </span>
+                              )}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Session packages */}
                     <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] font-medium mb-4">
@@ -426,6 +566,61 @@ export default function ProfileDrawer() {
             </motion.div>
           </motion.div>
         </>
+      )}
+
+      {/* ── Lightbox ────────────────────────────────────────────────────── */}
+      {lightboxUrl && (
+        <motion.div
+          key="lightbox"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setLightboxUrl(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(7,9,15,0.92)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: '#eeeef0',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <X size={16} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '90vh',
+              borderRadius: 12,
+              objectFit: 'contain',
+              boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+            }}
+          />
+        </motion.div>
       )}
     </AnimatePresence>
   )

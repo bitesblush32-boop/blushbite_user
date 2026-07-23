@@ -5,18 +5,24 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { stories, audios } from '@/lib/data'
-import type { Companion } from '@/lib/types'
+import { audios } from '@/lib/data'
+// TODO Phase 2: replace `audios` with /api/platform-audio (ElevenLabs)
+import type { Story as StaticStory, Companion } from '@/lib/types'
 import { useRecommendedCompanions } from '@/hooks/useRecommendedCompanions'
 import { useDeviceCommunity } from '@/hooks/useDeviceCommunity'
+import { useInfiniteStories } from '@/hooks/useInfiniteStories'
+import { useInfiniteConfessions } from '@/hooks/useInfiniteConfessions'
+import { usePlatformVideos } from '@/hooks/usePlatformVideos'
 import { useMoodStore } from '@/store/moodStore'
 import { useUIStore } from '@/store/uiStore'
 import { usePlayerStore } from '@/store/playerStore'
 import CompanionCard from '@/components/ui/CompanionCard'
 import StoryCard from '@/components/ui/StoryCard'
 import AudioCard from '@/components/ui/AudioCard'
+import VideoCard from '@/components/ui/VideoCard'
 import DesiresDrawer from '@/components/ui/DesiresDrawer'
 import GenderPickerOverlay from '@/components/GenderPickerOverlay'
+import type { Story as ApiStory } from '@/hooks/useInfiniteConfessions'
 
 // ─── Framer Motion stagger variants ───────────────────────────────────────────
 
@@ -29,6 +35,39 @@ const cardItem = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
 }
 
+// ─── Gradient helper (deterministic from id) ──────────────────────────────────
+
+const STORY_GRADIENTS = [
+  'linear-gradient(135deg,#1a0e20,#2a1540,#1a1220)',
+  'linear-gradient(135deg,#0f1628,#1a1040,#1a0e20)',
+  'linear-gradient(135deg,#201228,#1a2030,#2a1a18)',
+  'linear-gradient(135deg,#0a1620,#1a1535,#201a10)',
+  'linear-gradient(135deg,#1a1020,#2a1530,#101820)',
+  'linear-gradient(135deg,#101820,#201028,#102020)',
+]
+
+function gradientFromId(id: string): string {
+  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return STORY_GRADIENTS[hash % STORY_GRADIENTS.length]
+}
+
+// ─── Map API story → StaticStory for StoryCard ────────────────────────────────
+
+function mapToCard(s: ApiStory, type: 'Story' | 'Confession'): StaticStory {
+  const wordCount = (s.rawBody ?? '').split(' ').filter(Boolean).length
+  const mins = Math.max(1, Math.ceil(wordCount / 200))
+  return {
+    id: s.id,
+    title: s.title,
+    type,
+    duration: `${mins} min`,
+    vibe: s.moodTags[0] ?? s.categoryName ?? 'Intimate',
+    tags: s.moodTags.slice(0, 3),
+    handle: s.isAnonymous ? 'Anonymous' : s.authorAlias ? `@${s.authorAlias}` : 'Anonymous',
+    gradient: gradientFromId(s.id),
+  }
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -38,29 +77,45 @@ export default function HomePage() {
   const { community, needsPicker, bindCommunity } = useDeviceCommunity()
   const {
     companionCards,
-    companions: realCompanions,
     isLoading: companionsLoading,
   } = useRecommendedCompanions(community)
+
+  const { stories: platformStoriesRaw, status: storiesStatus } = useInfiniteStories()
+  const { stories: confessionsRaw, status: confessionsStatus } = useInfiniteConfessions()
+  const { videos: platformVideos, status: videosStatus } = usePlatformVideos()
+
   const router = useRouter()
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
   const [heroShadow, setHeroShadow] = useState(false)
   const [desiresOpen, setDesiresOpen] = useState(false)
 
-  const filteredStories =
-    activeFilter === 'All' ? stories : stories.filter((s) => s.type === activeFilter)
+  // Map to static card shape
+  const platformStoryCards = platformStoriesRaw.map((s) => mapToCard(s, 'Story'))
+  const confessionCards = confessionsRaw.map((s) => mapToCard(s, 'Confession'))
 
-  const confessions = stories.filter((s) => s.type === 'Confession')
-  const bridgeItems = confessions.flatMap((confession, i) => [
+  const filteredStories =
+    activeFilter === 'All'
+      ? [...platformStoryCards, ...confessionCards]
+      : activeFilter === 'Story'
+        ? platformStoryCards
+        : confessionCards
+
+  const bridgeItems = confessionCards.flatMap((confession, i) => [
     { kind: 'story' as const, item: confession },
     ...(companionCards.length > 0
       ? [{ kind: 'companion' as const, item: companionCards[i % companionCards.length] }]
       : []),
   ])
 
+  const storiesLoading = storiesStatus === 'pending' || confessionsStatus === 'pending'
+
   // Use top real recommendation only — no dummy fallback
   const topReal = companionCards[0] ?? null
   const featured = topReal
+
+  // First live story for mood panel
+  const moodStory = platformStoryCards[0] ?? null
 
   return (
     <>
@@ -305,9 +360,11 @@ export default function HomePage() {
           <div className="flex flex-col gap-3 flex-1">
             <MoodItem
               type="Story"
-              title={stories[0].title}
-              meta={`${stories[0].duration} · gentle tension`}
-              onAction={() => router.push(`/stories/${stories[0].id}`)}
+              title={moodStory?.title ?? 'An intimate story awaits'}
+              meta={`${moodStory?.duration ?? '—'} · ${moodStory?.vibe ?? 'gentle tension'}`}
+              onAction={() =>
+                moodStory ? router.push(`/stories/${moodStory.id}`) : router.push('/stories')
+              }
               actionLabel="Read & listen"
             />
             <MoodItem
@@ -436,31 +493,116 @@ export default function HomePage() {
           ))}
         </div>
 
-        <motion.div
-          key={activeFilter}
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="flex gap-4 overflow-x-auto pb-3"
-          style={
-            {
-              scrollSnapType: 'x mandatory',
-              scrollbarWidth: 'none',
-              WebkitOverflowScrolling: 'touch',
-            } as React.CSSProperties
-          }
-        >
-          {filteredStories.map((s) => (
-            <motion.div
-              key={s.id}
-              variants={cardItem}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
-            >
-              <StoryCard story={s} />
-            </motion.div>
-          ))}
-        </motion.div>
+        {storiesLoading ? (
+          <div
+            className="flex gap-4 overflow-x-auto pb-3"
+            style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+          >
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: 240,
+                  height: 220,
+                  flexShrink: 0,
+                  borderRadius: 14,
+                  background: '#111620',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            key={activeFilter}
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="flex gap-4 overflow-x-auto pb-3"
+            style={
+              {
+                scrollSnapType: 'x mandatory',
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+              } as React.CSSProperties
+            }
+          >
+            {filteredStories.map((s) => (
+              <motion.div
+                key={s.id}
+                variants={cardItem}
+                style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+              >
+                <StoryCard story={s} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
+
+      {/* ── BLOCK 4.5: Private glimpses (videos) ─────────────────────────────── */}
+      {(videosStatus === 'pending' || platformVideos.length > 0) && (
+        <div className="mb-14">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <div
+                className="text-[22px] text-[#eeeef0] mb-1"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Private glimpses
+              </div>
+              <p className="text-[12px] text-[#6b7280] max-w-[480px] leading-[1.5]">
+                Short moments. A window into their world.
+              </p>
+            </div>
+          </div>
+
+          {videosStatus === 'pending' ? (
+            <div
+              className="flex gap-4 overflow-x-auto pb-3"
+              style={{ scrollbarWidth: 'none' } as React.CSSProperties}
+            >
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 220,
+                    height: 240,
+                    flexShrink: 0,
+                    borderRadius: 14,
+                    background: '#111620',
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="flex gap-4 overflow-x-auto pb-3"
+              style={
+                {
+                  scrollSnapType: 'x mandatory',
+                  scrollbarWidth: 'none',
+                  WebkitOverflowScrolling: 'touch',
+                } as React.CSSProperties
+              }
+            >
+              {platformVideos.map((v) => (
+                <motion.div
+                  key={v.id}
+                  variants={cardItem}
+                  style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+                >
+                  <VideoCard video={v} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      )}
 
       {/* ── BLOCK 5: Audio for tonight ───────────────────────────────────────── */}
       <div className="mb-14">
@@ -510,54 +652,56 @@ export default function HomePage() {
       </div>
 
       {/* ── BLOCK 6: Confession → Companion bridge ───────────────────────────── */}
-      <div className="mb-14">
-        <div className="flex items-end justify-between mb-5">
-          <div>
-            <div
-              className="text-[22px] text-[#eeeef0] mb-1"
-              style={{ fontFamily: "'Playfair Display', serif" }}
-            >
-              From confession to companion
+      {bridgeItems.length > 0 && (
+        <div className="mb-14">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <div
+                className="text-[22px] text-[#eeeef0] mb-1"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                From confession to companion
+              </div>
+              <p className="text-[12px] text-[#6b7280] max-w-[480px] leading-[1.5]">
+                Anonymous fantasies — and companions who can bring them to life.
+              </p>
             </div>
-            <p className="text-[12px] text-[#6b7280] max-w-[480px] leading-[1.5]">
-              Anonymous fantasies — and companions who can bring them to life.
-            </p>
           </div>
-        </div>
 
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="flex gap-4 overflow-x-auto pb-3"
-          style={
-            {
-              scrollSnapType: 'x mandatory',
-              scrollbarWidth: 'none',
-              WebkitOverflowScrolling: 'touch',
-            } as React.CSSProperties
-          }
-        >
-          {bridgeItems.map((entry, idx) => (
-            <motion.div
-              key={`${entry.kind}-${idx}`}
-              variants={cardItem}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
-            >
-              {entry.kind === 'story' ? (
-                <StoryCard story={entry.item as (typeof stories)[0]} />
-              ) : (
-                <div
-                  className="rounded-[14px]"
-                  style={{ border: '1px solid rgba(201,169,110,0.25)' }}
-                >
-                  <CompanionCard companion={entry.item as Companion} />
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="flex gap-4 overflow-x-auto pb-3"
+            style={
+              {
+                scrollSnapType: 'x mandatory',
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+              } as React.CSSProperties
+            }
+          >
+            {bridgeItems.map((entry, idx) => (
+              <motion.div
+                key={`${entry.kind}-${idx}`}
+                variants={cardItem}
+                style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+              >
+                {entry.kind === 'story' ? (
+                  <StoryCard story={entry.item as StaticStory} />
+                ) : (
+                  <div
+                    className="rounded-[14px]"
+                    style={{ border: '1px solid rgba(201,169,110,0.25)' }}
+                  >
+                    <CompanionCard companion={entry.item as Companion} />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      )}
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="mt-20 pt-10 border-t border-[#1c2333]">
