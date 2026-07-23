@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
@@ -91,9 +91,10 @@ const SESSIONS = [
 function buildContactLinks(
   name: string,
   whatsappNumber: string | null,
-  telegramHandle: string | null
+  telegramHandle: string | null,
+  message?: string
 ) {
-  const text = encodeURIComponent(`Hey ${name}, let's connect`)
+  const text = encodeURIComponent(message ?? `Hey ${name}, let's connect`)
   const waNum = whatsappNumber?.replace(/^\+/, '') ?? null
   const tgVal = telegramHandle?.startsWith('@')
     ? telegramHandle.slice(1)
@@ -107,9 +108,15 @@ function buildContactLinks(
 export default function ProfileDrawer() {
   const { activeCompanionId, closeModal, openBookingModal } = useUIStore()
   const [selectedDuration, setSelectedDuration] = useState('2h')
+  const [selectedSessionIdx, setSelectedSessionIdx] = useState<number | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const realId = isRealId(activeCompanionId)
+
+  // Reset session selection when a different profile opens
+  useEffect(() => {
+    setSelectedSessionIdx(null)
+  }, [activeCompanionId])
 
   // Fetch real companion data when ID is a DB UUID
   const { data: realProfile, isLoading: realLoading } = useQuery<RealCompanionProfile>({
@@ -480,13 +487,28 @@ export default function ProfileDrawer() {
                     )}
 
                     {/* Session packages */}
-                    <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] font-medium mb-4">
+                    <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] font-medium mb-1">
                       Choose an experience
+                    </p>
+                    <p className="text-[11px] text-[#4b5563] mb-4">
+                      Select one to unlock the contact buttons below
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                      {display.sessions.map((session) => (
-                        <div key={session.name} className="session-card">
+                      {display.sessions.map((session, idx) => (
+                        <div
+                          key={session.name}
+                          className="session-card"
+                          onClick={() => setSelectedSessionIdx(idx)}
+                          style={
+                            selectedSessionIdx === idx
+                              ? { borderColor: 'rgba(232,96,122,0.65)', background: 'rgba(232,96,122,0.05)' }
+                              : undefined
+                          }
+                        >
+                          {selectedSessionIdx === idx && (
+                            <div className="text-[10px] text-[#e8607a] font-medium mb-1">✓ Selected</div>
+                          )}
                           <div className="session-name">{session.name}</div>
                           <p className="session-desc">{session.desc}</p>
                           <div className="session-price">{session.price}</div>
@@ -495,7 +517,7 @@ export default function ProfileDrawer() {
                               <button
                                 key={pill}
                                 className={`duration-pill${selectedDuration === pill ? ' active' : ''}`}
-                                onClick={() => setSelectedDuration(pill)}
+                                onClick={(e) => { e.stopPropagation(); setSelectedDuration(pill) }}
                               >
                                 {pill}
                               </button>
@@ -507,11 +529,37 @@ export default function ProfileDrawer() {
 
                     {/* Primary CTAs — WhatsApp + Telegram */}
                     {(() => {
+                      const sessionSelected = selectedSessionIdx !== null
+                      const selectedDisplay = sessionSelected ? display.sessions[selectedSessionIdx] : null
+                      const selectedCard = (sessionSelected && realProfile && realProfile.sessionCards.length > 0)
+                        ? realProfile.sessionCards[selectedSessionIdx]
+                        : null
+
+                      const contactMessage = selectedDisplay
+                        ? `Hi ${display.name}! I'd like to book "${selectedDisplay.name}"${selectedDisplay.price && selectedDisplay.price !== 'From —' && selectedDisplay.price !== 'On request' ? ` (${selectedDisplay.price})` : ''}. When are you available?`
+                        : undefined
+
                       const { whatsapp, telegram } = buildContactLinks(
                         display.name,
                         realProfile?.whatsappNumber ?? null,
-                        realProfile?.telegramHandle ?? null
+                        realProfile?.telegramHandle ?? null,
+                        contactMessage
                       )
+
+                      function logBooking(channel: 'whatsapp' | 'telegram') {
+                        if (!realProfile) return
+                        fetch('/api/bookings', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            companion_profile_id: realProfile.id,
+                            session_card_id: selectedCard?.id ?? null,
+                            message: contactMessage ?? null,
+                            channel,
+                          }),
+                        }).catch(() => {/* fire-and-forget */})
+                      }
+
                       if (!whatsapp && !telegram) {
                         return (
                           <p className="text-center text-[13px] text-[#6b7280] py-3">
@@ -519,61 +567,75 @@ export default function ProfileDrawer() {
                           </p>
                         )
                       }
-                      return (
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          {whatsapp && (
-                            <a
-                              href={whatsapp}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
-                              style={{
-                                background: 'linear-gradient(135deg, #25D366, #1da851)',
-                                boxShadow: '0 4px 20px rgba(37,211,102,0.22)',
-                              }}
-                              onMouseEnter={(e) => {
-                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                  '0 8px 28px rgba(37,211,102,0.38)'
-                              }}
-                              onMouseLeave={(e) => {
-                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                  '0 4px 20px rgba(37,211,102,0.22)'
-                              }}
-                            >
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.528 5.855L0 24l6.335-1.505A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.5-5.207-1.378l-.373-.22-3.862.917.974-3.768-.243-.387A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                              </svg>
-                              Message on WhatsApp
-                            </a>
-                          )}
 
-                          {telegram && (
-                            <a
-                              href={telegram}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
-                              style={{
-                                background: 'linear-gradient(135deg, #229ED9, #1a7fb5)',
-                                boxShadow: '0 4px 20px rgba(34,158,217,0.22)',
-                              }}
-                              onMouseEnter={(e) => {
-                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                  '0 8px 28px rgba(34,158,217,0.38)'
-                              }}
-                              onMouseLeave={(e) => {
-                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                  '0 4px 20px rgba(34,158,217,0.22)'
-                              }}
-                            >
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.664l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.895z" />
-                              </svg>
-                              Chat on Telegram
-                            </a>
+                      const blurStyle = !sessionSelected
+                        ? { filter: 'blur(4px)', opacity: 0.4, pointerEvents: 'none' as const, userSelect: 'none' as const }
+                        : {}
+
+                      return (
+                        <>
+                          {!sessionSelected && (
+                            <p className="text-center text-[11.5px] text-[#6b7280] mb-3">
+                              Select an experience above to contact {display.name}
+                            </p>
                           )}
-                        </div>
+                          <div className="flex flex-col sm:flex-row gap-3" style={blurStyle}>
+                            {whatsapp && (
+                              <a
+                                href={sessionSelected ? whatsapp : undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => logBooking('whatsapp')}
+                                className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
+                                style={{
+                                  background: 'linear-gradient(135deg, #25D366, #1da851)',
+                                  boxShadow: '0 4px 20px rgba(37,211,102,0.22)',
+                                }}
+                                onMouseEnter={(e) => {
+                                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                    '0 8px 28px rgba(37,211,102,0.38)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                    '0 4px 20px rgba(37,211,102,0.22)'
+                                }}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.528 5.855L0 24l6.335-1.505A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.5-5.207-1.378l-.373-.22-3.862.917.974-3.768-.243-.387A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                                </svg>
+                                Message on WhatsApp
+                              </a>
+                            )}
+
+                            {telegram && (
+                              <a
+                                href={sessionSelected ? telegram : undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => logBooking('telegram')}
+                                className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
+                                style={{
+                                  background: 'linear-gradient(135deg, #229ED9, #1a7fb5)',
+                                  boxShadow: '0 4px 20px rgba(34,158,217,0.22)',
+                                }}
+                                onMouseEnter={(e) => {
+                                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                    '0 8px 28px rgba(34,158,217,0.38)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                    '0 4px 20px rgba(34,158,217,0.22)'
+                                }}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.664l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.895z" />
+                                </svg>
+                                Chat on Telegram
+                              </a>
+                            )}
+                          </div>
+                        </>
                       )
                     })()}
 

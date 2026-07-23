@@ -16,15 +16,17 @@ export async function PATCH(
 
   const VALID = ['active', 'cancelled', 'expired']
   if (!status || !VALID.includes(status)) {
-    return NextResponse.json({ error: 'Invalid status. Use: active | cancelled | expired' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid status. Use: active | cancelled | expired' },
+      { status: 400 }
+    )
   }
 
   try {
     const [row] = await db.execute(sql`
-      UPDATE companion_boosts
-      SET status = ${status}
+      UPDATE companion_boosts SET status = ${status}
       WHERE id = ${id}
-      RETURNING id, status
+      RETURNING id, status, boost_type, community
     `)
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ ok: true, ...row })

@@ -735,13 +735,13 @@ export const bookingRequests = pgTable(
   'booking_requests',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    user_id: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
+    // nullable — anonymous dreamers (not signed in) can still send contact requests
+    user_id: uuid('user_id').references(() => users.id),
     companion_profile_id: uuid('companion_profile_id')
       .notNull()
       .references(() => companionProfiles.id),
     session_card_id: uuid('session_card_id').references(() => sessionCards.id),
+    channel: varchar('channel', { length: 20 }),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
     requested_date: date('requested_date'),
     requested_time: time('requested_time'),
