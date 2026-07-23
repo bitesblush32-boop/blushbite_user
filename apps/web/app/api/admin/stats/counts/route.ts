@@ -15,13 +15,15 @@ export async function GET(req: NextRequest) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
-  const [
-    [pendingCompanionsRow],
-    [pendingStoriesRow],
-    [pendingAudioRow],
-    [openBookingsRow],
-    [pendingBridgesRow],
-  ] = await Promise.all([
+  let pendingCompanionsRow, pendingStoriesRow, pendingAudioRow, openBookingsRow, pendingBridgesRow
+  try {
+    ;[
+      [pendingCompanionsRow],
+      [pendingStoriesRow],
+      [pendingAudioRow],
+      [openBookingsRow],
+      [pendingBridgesRow],
+    ] = await Promise.all([
     db
       .select({ n: sql<number>`COUNT(*)::int` })
       .from(companions)
@@ -55,7 +57,11 @@ export async function GET(req: NextRequest) {
       .select({ n: sql<number>`COUNT(*)::int` })
       .from(companionStoryBridges)
       .where(eq(companionStoryBridges.status, 'pending')),
-  ])
+    ])
+  } catch (err) {
+    console.error('[admin/stats/counts] DB error:', err)
+    return NextResponse.json({ error: 'database_error' }, { status: 500 })
+  }
 
   return NextResponse.json({
     pending_companions: pendingCompanionsRow?.n ?? 0,
