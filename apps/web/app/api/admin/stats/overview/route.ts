@@ -25,25 +25,15 @@ export async function GET(req: NextRequest) {
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)
 
-  const [
-    rDreamers,
-    rCompanionsLive,
-    rCompanionsPending,
-    rCompanionsAll,
-    rStoriesPending,
-    rStoriesApproved,
-    rStoriesTotal,
-    rAudioPending,
-    rBookingsOpen,
-    rBookingsTotal,
-    rBookingsCompleted,
-    rNewDreamers,
-    rNewCompanions,
-    rNewStories,
-    rLikes,
-    rSaves,
-    rComments,
-  ] = await Promise.all([
+  let rDreamers, rCompanionsLive, rCompanionsPending, rCompanionsAll, rStoriesPending,
+      rStoriesApproved, rStoriesTotal, rAudioPending, rBookingsOpen, rBookingsTotal,
+      rBookingsCompleted, rNewDreamers, rNewCompanions, rNewStories, rLikes, rSaves, rComments
+  try {
+    ;[
+      rDreamers, rCompanionsLive, rCompanionsPending, rCompanionsAll, rStoriesPending,
+      rStoriesApproved, rStoriesTotal, rAudioPending, rBookingsOpen, rBookingsTotal,
+      rBookingsCompleted, rNewDreamers, rNewCompanions, rNewStories, rLikes, rSaves, rComments,
+    ] = await Promise.all([
     // Platform totals
     db.select({ n: sql`count(*)` }).from(users),
     db
@@ -114,7 +104,11 @@ export async function GET(req: NextRequest) {
       .select({ n: sql`count(*)` })
       .from(comments)
       .where(isNull(comments.deleted_at)),
-  ])
+    ])
+  } catch (err) {
+    console.error('[admin/stats/overview] DB error:', err)
+    return NextResponse.json({ error: 'database_error' }, { status: 500 })
+  }
 
   return NextResponse.json({
     data: {

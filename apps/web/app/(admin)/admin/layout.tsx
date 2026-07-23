@@ -17,6 +17,7 @@ import {
   CalendarDays,
   Tags,
   Link2,
+  Megaphone,
   ExternalLink,
   LogOut,
   Menu,
@@ -204,6 +205,7 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
           onClick={onNav}
         />
         <NavItem href="/admin/tags" icon={Tags} label="Tag Library" onClick={onNav} />
+        <NavItem href="/admin/ads" icon={Megaphone} label="Ad Slots" onClick={onNav} />
       </nav>
 
       {/* Separator */}
