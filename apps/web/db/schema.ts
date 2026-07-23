@@ -260,6 +260,8 @@ export const companionProfiles = pgTable(
     is_visible_to_users: boolean('is_visible_to_users').notNull().default(false),
     // WhatsApp (E.164 format e.g. "+31612345678")
     whatsapp_number: varchar('whatsapp_number', { length: 20 }),
+    // Telegram handle or phone (e.g. "@username" or "+31612345678")
+    telegram_handle: varchar('telegram_handle', { length: 100 }),
     // Social / modality (added v2)
     session_modality: varchar('session_modality', { length: 20 }).notNull().default('in_person'),
     instagram_handle: varchar('instagram_handle', { length: 100 }),

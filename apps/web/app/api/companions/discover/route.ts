@@ -8,7 +8,7 @@ import {
   companionVibeTags,
   vibeTags,
 } from '@/db/schema'
-import { eq, and, isNull, asc, desc, inArray, sql, or } from 'drizzle-orm'
+import { eq, and, isNull, isNotNull, asc, desc, inArray, sql, or } from 'drizzle-orm'
 
 const LIMIT = 12
 
@@ -104,6 +104,8 @@ export async function GET(req: NextRequest) {
     .where(
       and(
         eq(companionProfiles.is_visible_to_users, true),
+        // Only surface profiles that have a WhatsApp number (required for the contact CTA)
+        isNotNull(companionProfiles.whatsapp_number),
         // Location filter: when using location, only exclude companions that HAVE a location but are outside radius.
         // Companions with no location (latitude IS NULL) always pass through.
         useLocation

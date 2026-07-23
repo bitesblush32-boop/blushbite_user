@@ -51,12 +51,15 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
       is_verified: companionProfiles.is_verified,
       session_modality: companionProfiles.session_modality,
       is_visible_to_users: companionProfiles.is_visible_to_users,
+      whatsapp_number: companionProfiles.whatsapp_number,
+      telegram_handle: companionProfiles.telegram_handle,
     })
     .from(companionProfiles)
     .where(eq(companionProfiles.id, profileId))
     .limit(1)
 
-  if (!profile || !profile.is_visible_to_users) {
+  // Hidden until companion has a WhatsApp number (needed for the contact CTA)
+  if (!profile || !profile.is_visible_to_users || !profile.whatsapp_number) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
@@ -163,6 +166,8 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
     gradient: gradientFromId(profile.id),
     primaryPhotoUrl: primaryPhoto,
     photoUrls: photoRows.map((p) => p.url),
+    whatsappNumber: profile.whatsapp_number ?? null,
+    telegramHandle: profile.telegram_handle ?? null,
     videos: videoRows.map((v) => ({
       id: v.id,
       url: v.url,

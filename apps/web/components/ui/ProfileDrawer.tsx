@@ -23,6 +23,8 @@ interface RealCompanionProfile {
   primaryPhotoUrl: string | null
   photoUrls: string[]
   tags: string[]
+  whatsappNumber: string | null
+  telegramHandle: string | null
   videos: Array<{
     id: string
     url: string
@@ -86,13 +88,19 @@ const SESSIONS = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const CONTACT_NUMBER = '919325235592' // +91 9325235592
-
-function buildContactLinks(name: string) {
-  const text = encodeURIComponent(`Hey, ${name} let's connect`)
+function buildContactLinks(
+  name: string,
+  whatsappNumber: string | null,
+  telegramHandle: string | null
+) {
+  const text = encodeURIComponent(`Hey ${name}, let's connect`)
+  const waNum = whatsappNumber?.replace(/^\+/, '') ?? null
+  const tgVal = telegramHandle?.startsWith('@')
+    ? telegramHandle.slice(1)
+    : telegramHandle ?? null
   return {
-    whatsapp: `https://wa.me/${CONTACT_NUMBER}?text=${text}`,
-    telegram: `https://t.me/+${CONTACT_NUMBER}`,
+    whatsapp: waNum ? `https://wa.me/${waNum}?text=${text}` : null,
+    telegram: tgVal ? `https://t.me/${tgVal}` : null,
   }
 }
 
@@ -499,57 +507,72 @@ export default function ProfileDrawer() {
 
                     {/* Primary CTAs — WhatsApp + Telegram */}
                     {(() => {
-                      const { whatsapp, telegram } = buildContactLinks(display.name)
+                      const { whatsapp, telegram } = buildContactLinks(
+                        display.name,
+                        realProfile?.whatsappNumber ?? null,
+                        realProfile?.telegramHandle ?? null
+                      )
+                      if (!whatsapp && !telegram) {
+                        return (
+                          <p className="text-center text-[13px] text-[#6b7280] py-3">
+                            Contact details coming soon.
+                          </p>
+                        )
+                      }
                       return (
                         <div className="flex flex-col sm:flex-row gap-3">
-                          <a
-                            href={whatsapp}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
-                            style={{
-                              background: 'linear-gradient(135deg, #25D366, #1da851)',
-                              boxShadow: '0 4px 20px rgba(37,211,102,0.22)',
-                            }}
-                            onMouseEnter={(e) => {
-                              ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                '0 8px 28px rgba(37,211,102,0.38)'
-                            }}
-                            onMouseLeave={(e) => {
-                              ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                '0 4px 20px rgba(37,211,102,0.22)'
-                            }}
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.528 5.855L0 24l6.335-1.505A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.5-5.207-1.378l-.373-.22-3.862.917.974-3.768-.243-.387A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                            </svg>
-                            Message on WhatsApp
-                          </a>
+                          {whatsapp && (
+                            <a
+                              href={whatsapp}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
+                              style={{
+                                background: 'linear-gradient(135deg, #25D366, #1da851)',
+                                boxShadow: '0 4px 20px rgba(37,211,102,0.22)',
+                              }}
+                              onMouseEnter={(e) => {
+                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                  '0 8px 28px rgba(37,211,102,0.38)'
+                              }}
+                              onMouseLeave={(e) => {
+                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                  '0 4px 20px rgba(37,211,102,0.22)'
+                              }}
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.528 5.855L0 24l6.335-1.505A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.5-5.207-1.378l-.373-.22-3.862.917.974-3.768-.243-.387A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                              </svg>
+                              Message on WhatsApp
+                            </a>
+                          )}
 
-                          <a
-                            href={telegram}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
-                            style={{
-                              background: 'linear-gradient(135deg, #229ED9, #1a7fb5)',
-                              boxShadow: '0 4px 20px rgba(34,158,217,0.22)',
-                            }}
-                            onMouseEnter={(e) => {
-                              ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                '0 8px 28px rgba(34,158,217,0.38)'
-                            }}
-                            onMouseLeave={(e) => {
-                              ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                                '0 4px 20px rgba(34,158,217,0.22)'
-                            }}
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.664l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.895z" />
-                            </svg>
-                            Chat on Telegram
-                          </a>
+                          {telegram && (
+                            <a
+                              href={telegram}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
+                              style={{
+                                background: 'linear-gradient(135deg, #229ED9, #1a7fb5)',
+                                boxShadow: '0 4px 20px rgba(34,158,217,0.22)',
+                              }}
+                              onMouseEnter={(e) => {
+                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                  '0 8px 28px rgba(34,158,217,0.38)'
+                              }}
+                              onMouseLeave={(e) => {
+                                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                                  '0 4px 20px rgba(34,158,217,0.22)'
+                              }}
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.664l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.895z" />
+                              </svg>
+                              Chat on Telegram
+                            </a>
+                          )}
                         </div>
                       )
                     })()}
