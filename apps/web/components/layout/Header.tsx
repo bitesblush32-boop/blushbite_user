@@ -673,174 +673,271 @@ export default function Header() {
           height: 75,
         }}
       >
+        {/* max-width container with design-system padding */}
         <div
-          className="px-5 md:px-8"
+          className="max-w-[1400px] mx-auto px-5 md:px-10"
           style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr auto 1fr',
+            display: 'flex',
             alignItems: 'center',
-            width: '100%',
+            justifyContent: 'space-between',
             height: '100%',
+            gap: 16,
           }}
         >
-          <div style={{ justifySelf: 'start' }}>
-            <button
-              type="button"
-              aria-label="Write a confession"
-              onClick={() => router.push('/create')}
-              onMouseEnter={() => setPlusHover(true)}
-              onMouseLeave={() => setPlusHover(false)}
-              style={{
-                width: 44,
-                height: 44,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                background: plusHover ? 'rgba(232,96,122,0.10)' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-            >
-              <Plus
-                size={28}
-                strokeWidth={2}
-                color={plusHover ? '#e8607a' : '#6b7280'}
-                style={{ transition: 'color 0.15s' }}
-              />
-            </button>
-          </div>
+          {/* ── Left — logo ──────────────────────────────────────────────── */}
+          <Link href="/" className="flex-shrink-0 block" aria-label="BlushBite home">
+            <Image
+              src="/logo_light.png"
+              alt="BlushBite"
+              width={120}
+              height={44}
+              priority
+              className="w-[96px] h-auto md:w-[120px]"
+              style={{ objectFit: 'contain', objectPosition: 'left center', display: 'block' }}
+            />
+          </Link>
 
-          <div style={{ justifySelf: 'center' }}>
-            <Link href="/" className="flex-shrink-0 block">
-              <Image
-                src="/bb_croped.png"
-                alt="BlushBite"
-                width={140}
-                height={1150}
-                // width={90}
-                // height={1150}
-                priority
-                style={{ objectFit: 'contain', objectPosition: 'center', display: 'block' }}
-              />
-            </Link>
-          </div>
-
-          <div style={{ justifySelf: 'end' }}>
-            {!dreamerLoading && !dreamer ? (
-              /* ── Not signed in — show Sign in pill ── */
-              <button
-                type="button"
-                onClick={() => openAuthModal()}
+          {/* ── Center — "For Companions" (desktop, logged-out only) ──────── */}
+          {!dreamer && !dreamerLoading && (
+            <div className="hidden md:flex flex-1 justify-center">
+              <Link
+                href="https://blushbite.live"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
-                  height: 34,
-                  padding: '0 16px',
-                  background: 'rgba(232,96,122,0.10)',
-                  border: '1px solid rgba(232,96,122,0.25)',
-                  borderRadius: 20,
-                  color: '#e8607a',
+                  color: '#6b7280',
                   fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  letterSpacing: 0.1,
-                  transition: 'background 0.15s, border-color 0.15s',
-                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                  letterSpacing: 0.2,
+                  transition: 'color 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '6px 0',
                 }}
                 onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.18)'
-                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,96,122,0.45)'
+                  ;(e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af'
                 }}
                 onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)'
-                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,96,122,0.25)'
+                  ;(e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'
                 }}
               >
-                Sign in
-              </button>
-            ) : isProfile ? (
-              /* ── Signed in + profile page — 3-line settings ── */
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                className="flex items-center justify-center rounded-full transition-all duration-150"
-                style={{
-                  width: 44,
-                  height: 44,
-                  background: 'transparent',
-                  border: 'none',
-                  color: settingsOpen ? '#e8607a' : '#6b7280',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)'
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                }}
-              >
-                <Menu size={22} strokeWidth={1.5} />
-              </button>
-            ) : (
-              /* ── Signed in + other pages — Bell notification ── */
-              <div style={{ position: 'relative' }}>
+                For Companions
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5 }}>
+                  <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
+            </div>
+          )}
+
+          {/* spacer to push right actions to edge when signed in */}
+          {(dreamer || dreamerLoading) && <div className="flex-1" />}
+
+          {/* ── Right — auth buttons / icon actions ──────────────────────── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            {!dreamerLoading && !dreamer ? (
+              /* ── Not signed in — Sign in (ghost) + Enter (filled) ── */
+              <>
+                {/* "Sign in" hidden on xs, visible sm+ */}
                 <button
                   type="button"
-                  onClick={() => router.push('/notifications')}
+                  onClick={() => openAuthModal()}
+                  className="hidden sm:flex items-center"
+                  style={{
+                    height: 36,
+                    padding: '0 18px',
+                    background: 'transparent',
+                    border: '1px solid #1c2333',
+                    borderRadius: 8,
+                    color: '#6b7280',
+                    fontSize: 13,
+                    fontWeight: 400,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: 0.1,
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,96,122,0.35)'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#1c2333'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#6b7280'
+                  }}
+                >
+                  Sign in
+                </button>
+                {/* "Enter" — always visible, filled rose */}
+                <button
+                  type="button"
+                  onClick={() => openAuthModal()}
+                  style={{
+                    height: 36,
+                    padding: '0 20px',
+                    background: '#e8607a',
+                    border: 'none',
+                    borderRadius: 8,
+                    color: '#fff',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: 0.2,
+                    boxShadow: '0 0 16px rgba(232,96,122,0.30)',
+                    transition: 'opacity 0.15s, box-shadow 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.opacity = '0.9'
+                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(232,96,122,0.45)'
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.opacity = '1'
+                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 16px rgba(232,96,122,0.30)'
+                  }}
+                >
+                  Enter
+                </button>
+              </>
+            ) : isProfile ? (
+              /* ── Signed in + profile page — Plus + Menu ── */
+              <>
+                <button
+                  type="button"
+                  aria-label="Write a confession"
+                  onClick={() => router.push('/create')}
+                  onMouseEnter={() => setPlusHover(true)}
+                  onMouseLeave={() => setPlusHover(false)}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    background: plusHover ? 'rgba(232,96,122,0.10)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <Plus
+                    size={24}
+                    strokeWidth={2}
+                    color={plusHover ? '#e8607a' : '#6b7280'}
+                    style={{ transition: 'color 0.15s' }}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
                   className="flex items-center justify-center rounded-full transition-all duration-150"
                   style={{
                     width: 44,
                     height: 44,
-                    background:
-                      pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent',
+                    background: 'transparent',
                     border: 'none',
-                    color: pathname === '/notifications' ? '#e8607a' : '#6b7280',
+                    color: settingsOpen ? '#e8607a' : '#6b7280',
                     cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.background =
-                      'rgba(232,96,122,0.10)'
+                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)'
                   }}
                   onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.background =
-                      pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent'
+                    ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
                   }}
                 >
-                  <Bell size={22} strokeWidth={1.5} />
+                  <Menu size={22} strokeWidth={1.5} />
                 </button>
-                <AnimatePresence>
-                  {unreadCount > 0 && (
-                    <motion.span
-                      key="badge"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                      style={{
-                        position: 'absolute',
-                        top: -3,
-                        right: -3,
-                        minWidth: 16,
-                        height: 16,
-                        borderRadius: 8,
-                        background: '#e8607a',
-                        border: '2px solid #07090f',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: '#fff',
-                        lineHeight: 1,
-                        padding: '0 3px',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
+              </>
+            ) : (
+              /* ── Signed in + other pages — Plus + Bell ── */
+              <>
+                <button
+                  type="button"
+                  aria-label="Write a confession"
+                  onClick={() => router.push('/create')}
+                  onMouseEnter={() => setPlusHover(true)}
+                  onMouseLeave={() => setPlusHover(false)}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    background: plusHover ? 'rgba(232,96,122,0.10)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <Plus
+                    size={24}
+                    strokeWidth={2}
+                    color={plusHover ? '#e8607a' : '#6b7280'}
+                    style={{ transition: 'color 0.15s' }}
+                  />
+                </button>
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/notifications')}
+                    className="flex items-center justify-center rounded-full transition-all duration-150"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      background:
+                        pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent',
+                      border: 'none',
+                      color: pathname === '/notifications' ? '#e8607a' : '#6b7280',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      ;(e.currentTarget as HTMLButtonElement).style.background =
+                        'rgba(232,96,122,0.10)'
+                    }}
+                    onMouseLeave={(e) => {
+                      ;(e.currentTarget as HTMLButtonElement).style.background =
+                        pathname === '/notifications' ? 'rgba(232,96,122,0.10)' : 'transparent'
+                    }}
+                  >
+                    <Bell size={22} strokeWidth={1.5} />
+                  </button>
+                  <AnimatePresence>
+                    {unreadCount > 0 && (
+                      <motion.span
+                        key="badge"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                        style={{
+                          position: 'absolute',
+                          top: -3,
+                          right: -3,
+                          minWidth: 16,
+                          height: 16,
+                          borderRadius: 8,
+                          background: '#e8607a',
+                          border: '2px solid #07090f',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 9,
+                          fontWeight: 700,
+                          color: '#fff',
+                          lineHeight: 1,
+                          padding: '0 3px',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
             )}
           </div>
         </div>
