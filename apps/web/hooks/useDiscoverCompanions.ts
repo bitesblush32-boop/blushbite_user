@@ -17,7 +17,7 @@ export interface DiscoverCompanionItem {
   gradient: string
   isVerified: boolean
   sessionModality: string
-  alias: string | null
+  id: string | null
 }
 
 interface DiscoverPage {

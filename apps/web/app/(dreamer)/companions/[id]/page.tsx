@@ -10,16 +10,15 @@ import { CheckCircle, MapPin, MessageCircle } from 'lucide-react'
 export const revalidate = 3600
 export const dynamicParams = true
 
-type Props = { params: Promise<{ alias: string }> }
+type Props = { params: Promise<{ id: string }> }
 
-async function getCompanionByAlias(alias: string) {
+async function getCompanionById(id: string) {
   const rows = await db
     .select({
       profileId: companionProfiles.id,
       companionId: companions.id,
       name: companions.name,
       date_of_birth: companions.date_of_birth,
-      alias: companions.alias,
       bio: companionProfiles.bio,
       tagline: companionProfiles.tagline,
       city: companionProfiles.city,
@@ -36,7 +35,7 @@ async function getCompanionByAlias(alias: string) {
     })
     .from(companions)
     .innerJoin(companionProfiles, eq(companionProfiles.companion_id, companions.id))
-    .where(and(eq(companions.alias, alias), eq(companionProfiles.is_visible_to_users, true)))
+    .where(and(eq(companions.id, id), eq(companionProfiles.is_visible_to_users, true)))
     .limit(1)
 
   if (!rows[0]) return null
@@ -62,15 +61,15 @@ async function getCompanionByAlias(alias: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { alias } = await params
-  const data = await getCompanionByAlias(alias)
+  const { id } = await params
+  const data = await getCompanionById(id)
   if (!data) return { title: 'Companion Not Found — BlushBite' }
 
   const cityStr = data.city ? ` in ${data.city}` : ''
   return {
     title: `${data.name ?? 'Companion'}${cityStr} — BlushBite`,
     description: data.tagline ?? `${data.name ?? 'Private companion'} advertising time and companionship${cityStr}. EU-hosted platform.`,
-    alternates: { canonical: `https://blushbite.co/companions/${alias}` },
+    alternates: { canonical: `https://blushbite.co/companions/${id}` },
     robots: { index: true, follow: true },
     openGraph: {
       title: `${data.name ?? 'Companion'} — BlushBite`,
@@ -87,8 +86,8 @@ const COMMUNITY_CONFIG: Record<string, { label: string; color: string; href: str
 }
 
 export default async function CompanionProfilePage({ params }: Props) {
-  const { alias } = await params
-  const data = await getCompanionByAlias(alias)
+  const { id } = await params
+  const data = await getCompanionById(id)
   if (!data) notFound()
 
   const community = data.gender_community ?? 'female'
@@ -103,8 +102,8 @@ export default async function CompanionProfilePage({ params }: Props) {
       { '@type': 'ListItem', position: 2, name: cfg.label, item: `https://blushbite.co${cfg.href}` },
       ...(data.city_slug && data.city
         ? [{ '@type': 'ListItem', position: 3, name: data.city, item: `https://blushbite.co${cfg.href}/${data.city_slug}` },
-           { '@type': 'ListItem', position: 4, name: data.name ?? alias, item: `https://blushbite.co/companions/${alias}` }]
-        : [{ '@type': 'ListItem', position: 3, name: data.name ?? alias, item: `https://blushbite.co/companions/${alias}` }]
+           { '@type': 'ListItem', position: 4, name: data.name ?? 'Companion', item: `https://blushbite.co/companions/${id}` }]
+        : [{ '@type': 'ListItem', position: 3, name: data.name ?? 'Companion', item: `https://blushbite.co/companions/${id}` }]
       ),
     ],
   }
@@ -136,7 +135,7 @@ export default async function CompanionProfilePage({ params }: Props) {
               </>
             )}
             <span style={{ fontSize: 12, color: '#4b5563' }}>/</span>
-            <span style={{ fontSize: 12, color: cfg.color }}>{data.name ?? alias}</span>
+            <span style={{ fontSize: 12, color: cfg.color }}>{data.name ?? 'Companion'}</span>
           </nav>
 
           {/* Profile layout */}

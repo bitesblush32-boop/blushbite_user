@@ -12,7 +12,7 @@ export type CityCompanion = {
   photoUrl: string | null
   isVerified: boolean
   sessionModality: string
-  alias: string | null
+  companionId: string
 }
 
 function ageFromDob(dob: string | null): number | null {
@@ -48,7 +48,7 @@ export async function getCityCompanions(
       session_modality: companionProfiles.session_modality,
       name: companions.name,
       date_of_birth: companions.date_of_birth,
-      alias: companions.alias,
+      companionId: companions.id,
     })
     .from(companionProfiles)
     .innerJoin(companions, eq(companionProfiles.companion_id, companions.id))
@@ -95,7 +95,7 @@ export async function getCityCompanions(
       photoUrl: photoMap.get(r.profileId) ?? null,
       isVerified: r.is_verified ?? false,
       sessionModality: r.session_modality ?? 'in_person',
-      alias: r.alias ?? null,
+      companionId: r.companionId,
     }
   })
 }

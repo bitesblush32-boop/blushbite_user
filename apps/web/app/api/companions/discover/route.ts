@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
 
   const [companionRows, photoRows, sessionCardRows, vibeTagRows] = await Promise.all([
     db
-      .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth, alias: companions.alias })
+      .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
       .from(companions)
       .where(inArray(companions.id, companionIds)),
 
@@ -238,7 +238,7 @@ export async function GET(req: NextRequest) {
       gradient: gradientFromId(row.profileId),
       isVerified: row.is_verified ?? false,
       sessionModality: row.session_modality ?? 'in_person',
-      alias: comp?.alias ?? null,
+      id: comp?.id ?? null,
     }
   })
 

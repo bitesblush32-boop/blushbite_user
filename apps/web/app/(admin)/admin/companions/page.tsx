@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -26,7 +26,7 @@ const TABS = [
 interface CompanionRow {
   id: string
   email: string
-  alias: string | null
+  name: string | null
   full_name: string | null
   country: string | null
   companion_stage: number | null
@@ -208,6 +208,88 @@ function DeleteCompanionModal({
   )
 }
 
+function BulkDeleteCompanionsModal({
+  count,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  count: number
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-[6px] z-[900] flex items-center justify-center px-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[440px] overflow-hidden"
+      >
+        <div
+          className="h-[2px]"
+          style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }}
+        />
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}
+              >
+                <Trash2 size={16} color="#ef4444" />
+              </div>
+              <h3
+                style={{ fontFamily: "'Playfair Display', serif" }}
+                className="text-[20px] text-[#eeeef0]"
+              >
+                Delete {count} companion{count !== 1 ? 's' : ''}
+              </h3>
+            </div>
+            <button
+              onClick={onCancel}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-1">
+            This will permanently delete{' '}
+            <span className="text-[#eeeef0]">{count} selected companion{count !== 1 ? 's' : ''}</span> and wipe all
+            associated data:
+          </p>
+          <ul className="text-[12px] text-[#6b7280] leading-[1.7] mb-5 ml-2">
+            <li>· Profiles, photos, videos, and session cards</li>
+            <li>· Verification, legal docs, and payment setup</li>
+            <li>· All booking requests and analytics events</li>
+            <li>· Authored stories and audio recordings</li>
+          </ul>
+          <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              disabled={isPending}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isPending}
+              className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
+              style={{ background: '#ef4444' }}
+            >
+              {isPending ? 'Deleting…' : `Delete ${count} permanently`}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 const cardItem = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
@@ -223,6 +305,8 @@ export default function AdminCompanionsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [deleteCompanionId, setDeleteCompanionId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBulkModal, setShowBulkModal] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const queryClient = useQueryClient()
 
@@ -238,6 +322,10 @@ export default function AdminCompanionsPage() {
   useEffect(() => {
     setPage(1)
   }, [tab])
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [tab, page])
 
   const queryKey = ['admin', 'companions', tab, debouncedSearch, page]
 
@@ -297,10 +385,36 @@ export default function AdminCompanionsPage() {
     },
   })
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/admin/companions/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      if (!res.ok) throw new Error('Failed')
+    },
+    onSuccess: () => {
+      setSelectedIds(new Set())
+      setShowBulkModal(false)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'companions'] })
+    },
+  })
+
   const rows = data?.data ?? []
   const meta = data?.meta
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1
   const deleteTarget = rows.find((r) => r.id === deleteCompanionId)
+
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
+  const toggleOne = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  const toggleAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.id)))
 
   return (
     <motion.div
@@ -363,6 +477,14 @@ export default function AdminCompanionsPage() {
         <table className="w-full">
           <thead>
             <tr style={{ background: '#111620', borderBottom: '1px solid #1c2333' }}>
+              <th className="px-4 py-3 w-[40px]">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="w-[14px] h-[14px] accent-[#e8607a] cursor-pointer"
+                />
+              </th>
               {[
                 'Companion',
                 'Country',
@@ -393,6 +515,9 @@ export default function AdminCompanionsPage() {
                       background: i % 2 === 0 ? '#0d1117' : '#07090f',
                     }}
                   >
+                    <td className="px-4 py-4 w-[40px]">
+                      <div className="w-[14px] h-[14px] rounded bg-[#1c2333] animate-pulse" />
+                    </td>
                     {Array.from({ length: 8 }).map((_, j) => (
                       <td key={j} className="px-4 py-4">
                         <div
@@ -413,7 +538,7 @@ export default function AdminCompanionsPage() {
               >
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center text-[#6b7280] text-[13px] py-16">
+                    <td colSpan={9} className="text-center text-[#6b7280] text-[13px] py-16">
                       Nothing here yet.
                     </td>
                   </tr>
@@ -424,19 +549,29 @@ export default function AdminCompanionsPage() {
                       variants={cardItem}
                       style={{
                         borderBottom: '1px solid #1c2333',
-                        background: idx % 2 === 0 ? '#0d1117' : '#07090f',
+                        background: selectedIds.has(c.id)
+                          ? 'rgba(239,68,68,0.05)'
+                          : idx % 2 === 0
+                          ? '#0d1117'
+                          : '#07090f',
                       }}
                       className="hover:bg-[#111620] transition-colors group"
                     >
+                      {/* Checkbox */}
+                      <td className="px-4 py-4 w-[40px]">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(c.id)}
+                          onChange={() => toggleOne(c.id)}
+                          className="w-[14px] h-[14px] accent-[#e8607a] cursor-pointer"
+                        />
+                      </td>
                       {/* Companion */}
                       <td className="px-4 py-4">
                         <div className="text-[13px] text-[#eeeef0] font-medium">
-                          {c.full_name ?? c.alias ?? '—'}
+                          {c.full_name ?? c.name ?? '—'}
                         </div>
                         <div className="text-[11px] text-[#6b7280] mt-[2px]">{c.email}</div>
-                        {c.alias && (
-                          <div className="text-[10px] text-[#6b7280] mt-[2px]">{c.alias}</div>
-                        )}
                       </td>
                       {/* Country */}
                       <td className="px-4 py-4 text-[12px] text-[#6b7280]">{c.country ?? '—'}</td>
@@ -526,7 +661,7 @@ export default function AdminCompanionsPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <div className="text-[13px] text-[#eeeef0] font-medium">
-                            {c.full_name ?? c.alias ?? '—'}
+                            {c.full_name ?? c.name ?? '—'}
                           </div>
                           <div className="text-[11px] text-[#6b7280]">{c.email}</div>
                         </div>
@@ -598,15 +733,60 @@ export default function AdminCompanionsPage() {
         </div>
       )}
 
-      {/* Delete modal */}
+      {/* Bulk action bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="sticky bottom-6 flex items-center gap-3 mt-6 px-4 py-[10px] rounded-[12px] border border-[#1c2333] w-fit mx-auto"
+            style={{ background: '#111620', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+          >
+            <span className="text-[13px] text-[#eeeef0]">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-[12px] text-[#6b7280] hover:text-[#eeeef0] transition-colors px-3 py-[6px] rounded-[8px] border border-[#1c2333] cursor-pointer"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setShowBulkModal(true)}
+              className="text-[12px] text-white px-4 py-[6px] rounded-[8px] cursor-pointer font-medium flex items-center gap-[6px] transition-all hover:opacity-90"
+              style={{ background: '#ef4444' }}
+            >
+              <Trash2 size={12} />
+              Delete {selectedIds.size} companion{selectedIds.size !== 1 ? 's' : ''}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Single delete modal */}
       <AnimatePresence>
         {deleteCompanionId && (
           <DeleteCompanionModal
             key="delete-companion"
-            name={deleteTarget?.full_name ?? deleteTarget?.alias ?? null}
+            name={deleteTarget?.full_name ?? deleteTarget?.name ?? null}
             onConfirm={() => deleteMutation.mutate(deleteCompanionId!)}
             onCancel={() => setDeleteCompanionId(null)}
             isPending={deleteMutation.isPending}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Bulk delete modal */}
+      <AnimatePresence>
+        {showBulkModal && (
+          <BulkDeleteCompanionsModal
+            key="bulk-delete-companions"
+            count={selectedIds.size}
+            onConfirm={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+            onCancel={() => setShowBulkModal(false)}
+            isPending={bulkDeleteMutation.isPending}
           />
         )}
       </AnimatePresence>

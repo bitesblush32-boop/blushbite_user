@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
       approved_at: companionStoryBridges.approved_at,
       created_at: companionStoryBridges.created_at,
       profile_id: companionProfiles.id,
-      companion_alias: companions.alias,
       companion_name: companions.name,
       story_id: stories.id,
       story_title: stories.title,

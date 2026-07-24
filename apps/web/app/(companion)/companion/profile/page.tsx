@@ -896,7 +896,7 @@ export default function CompanionProfilePage() {
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
-  const alias = profileData?.companion?.alias ?? session?.user?.alias ?? '@you'
+  const alias = profileData?.companion?.name ? `@${profileData.companion.name}` : '@you'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
   const vibes =
     profileData?.available_vibe_tags

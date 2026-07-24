@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       or(
         ilike(companions.email, `%${search}%`),
         ilike(companions.full_name, `%${search}%`),
-        ilike(companions.alias, `%${search}%`)
+        ilike(companions.name, `%${search}%`)
       ) as SQL
     )
   }
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       .select({
         id: companions.id,
         email: companions.email,
-        alias: companions.alias,
+        name: companions.name,
         full_name: companions.full_name,
         date_of_birth: companions.date_of_birth,
         country: companions.country,

@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
         comment_count: stories.comment_count,
         published_at: stories.published_at,
         final_score: finalScore,
-        companion_alias: companions.alias,
+        companion_name: companions.name,
         category_name: storyCategories.name,
         mood_tags: sql<string | null>`(
           SELECT STRING_AGG(mt.name, ',' ORDER BY mt.name)
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
       return {
         id: r.id,
         title: r.title ?? '',
-        authorAlias: r.is_anonymous ? null : (r.companion_alias ?? null),
+        authorAlias: r.is_anonymous ? null : (r.companion_name ?? null),
         isAnonymous: r.is_anonymous,
         body: r.body,
         rawBody: (parsedBody.raw as string) ?? r.body ?? '',

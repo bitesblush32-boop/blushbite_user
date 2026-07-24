@@ -22,7 +22,6 @@ interface AudioItem {
   save_count: number
   created_at: string
   user_alias: string | null
-  companion_alias: string | null
   companion_name: string | null
 }
 
@@ -161,7 +160,7 @@ function AudioCard({
   const authorLabel = item.is_anonymous
     ? 'Anonymous'
     : item.author_type === 'companion'
-      ? (item.companion_name ?? item.companion_alias ?? 'Companion')
+      ? (item.companion_name ?? 'Companion')
       : (item.user_alias ?? 'User')
 
   const voiceLabel = item.is_original_voice ? 'Companion Voice' : 'User Upload'

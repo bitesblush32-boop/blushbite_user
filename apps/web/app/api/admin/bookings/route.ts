@@ -36,7 +36,6 @@ export async function GET(req: NextRequest) {
         updated_at: bookingRequests.updated_at,
         user_alias: users.alias,
         companion_name: companions.name,
-        companion_alias: companions.alias,
         city: companionProfiles.city,
         session_title: sessionCards.title,
         session_type: sessionCards.session_type,

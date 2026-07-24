@@ -37,7 +37,6 @@ export async function GET(req: NextRequest) {
         save_count: audioRecordings.save_count,
         created_at: audioRecordings.created_at,
         user_alias: users.alias,
-        companion_alias: companions.alias,
         companion_name: companions.name,
       })
       .from(audioRecordings)

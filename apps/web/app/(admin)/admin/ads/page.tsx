@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -15,6 +15,8 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Trash2,
+  X,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -24,7 +26,6 @@ interface BoostRow {
   companion_id: string
   companion_name: string | null
   companion_email: string
-  companion_alias: string | null
   boost_type: string
   community: string
   week_start: string
@@ -208,6 +209,84 @@ function CommunityChip({ community }: { community: string }) {
   )
 }
 
+// ── Bulk delete modal ───────────────────────────────────────────────────────────
+
+function BulkDeleteAdsModal({
+  count,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  count: number
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-[6px] z-[900] flex items-center justify-center px-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-[#0d1117] border border-[#1c2333] rounded-[20px] w-full max-w-[440px] overflow-hidden"
+      >
+        <div
+          className="h-[2px]"
+          style={{ background: 'linear-gradient(90deg,transparent,#ef4444,transparent)' }}
+        />
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}
+              >
+                <Trash2 size={16} color="#ef4444" />
+              </div>
+              <h3
+                style={{ fontFamily: "'Playfair Display', serif" }}
+                className="text-[20px] text-[#eeeef0]"
+              >
+                Delete {count} boost{count !== 1 ? 's' : ''}
+              </h3>
+            </div>
+            <button
+              onClick={onCancel}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7280] hover:text-[#eeeef0] hover:bg-white/[0.06] transition-all"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-4">
+            This will permanently delete{' '}
+            <span className="text-[#eeeef0]">{count} selected boost record{count !== 1 ? 's' : ''}</span>{' '}
+            from the database. Companions will lose their placement history for these slots.
+          </p>
+          <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              disabled={isPending}
+              className="flex-1 bg-transparent text-[#6b7280] border border-[#1c2333] px-4 py-[10px] rounded-[10px] text-[13px] cursor-pointer transition-all hover:border-white/20 hover:text-[#eeeef0] disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isPending}
+              className="flex-1 text-white border-none px-4 py-[10px] rounded-[10px] text-[13px] font-medium cursor-pointer flex items-center justify-center gap-2 disabled:opacity-70"
+              style={{ background: '#ef4444' }}
+            >
+              {isPending ? 'Deleting…' : `Delete ${count} permanently`}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Settings panel ─────────────────────────────────────────────────────────────
 
 function SettingsPanel() {
@@ -383,6 +462,8 @@ const container = {
 export default function AdminAdsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBulkModal, setShowBulkModal] = useState(false)
   const queryClient = useQueryClient()
 
   const queryKey = ['admin', 'boosts', statusFilter, page]
@@ -412,10 +493,41 @@ export default function AdminAdsPage() {
     },
   })
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/admin/boosts/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      if (!res.ok) throw new Error('Failed')
+    },
+    onSuccess: () => {
+      setSelectedIds(new Set())
+      setShowBulkModal(false)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'boosts'] })
+    },
+  })
+
+  // Clear selection when filter or page changes
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [statusFilter, page])
+
   const rows = data?.data ?? []
   const meta = data?.meta
   const stats = data?.stats
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1
+
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
+  const toggleOne = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  const toggleAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.id)))
 
   return (
     <motion.div
@@ -520,6 +632,14 @@ export default function AdminAdsPage() {
         <table className="w-full">
           <thead>
             <tr style={{ background: '#111620', borderBottom: '1px solid #1c2333' }}>
+              <th className="px-4 py-3 w-[40px]">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="w-[14px] h-[14px] accent-[#e8607a] cursor-pointer"
+                />
+              </th>
               {['Companion', 'Slot', 'Community', 'Week', 'Price', 'Status', 'Booked', ''].map(
                 (h) => (
                   <th
@@ -543,6 +663,9 @@ export default function AdminAdsPage() {
                       background: i % 2 === 0 ? '#0d1117' : '#07090f',
                     }}
                   >
+                    <td className="px-4 py-4 w-[40px]">
+                      <div className="w-[14px] h-[14px] rounded bg-[#1c2333] animate-pulse" />
+                    </td>
                     {Array.from({ length: 8 }).map((_, j) => (
                       <td key={j} className="px-4 py-4">
                         <div
@@ -564,7 +687,7 @@ export default function AdminAdsPage() {
                 {rows.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-16"
                       style={{ fontSize: 13, color: '#6b7280' }}
                     >
@@ -578,14 +701,27 @@ export default function AdminAdsPage() {
                       variants={cardItem}
                       style={{
                         borderBottom: '1px solid #1c2333',
-                        background: idx % 2 === 0 ? '#0d1117' : '#07090f',
+                        background: selectedIds.has(b.id)
+                          ? 'rgba(239,68,68,0.05)'
+                          : idx % 2 === 0
+                          ? '#0d1117'
+                          : '#07090f',
                       }}
                       className="group hover:bg-[#111620] transition-colors"
                     >
+                      {/* Checkbox */}
+                      <td className="px-4 py-4 w-[40px]">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(b.id)}
+                          onChange={() => toggleOne(b.id)}
+                          className="w-[14px] h-[14px] accent-[#e8607a] cursor-pointer"
+                        />
+                      </td>
                       {/* Companion */}
                       <td className="px-4 py-4">
                         <div style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>
-                          {b.companion_name ?? b.companion_alias ?? '—'}
+                          {b.companion_name ?? '—'}
                         </div>
                         <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
                           {b.companion_email}
@@ -669,7 +805,7 @@ export default function AdminAdsPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>
-                          {b.companion_name ?? b.companion_alias ?? '—'}
+                          {b.companion_name ?? '—'}
                         </div>
                         <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
                           {b.companion_email}
@@ -749,6 +885,51 @@ export default function AdminAdsPage() {
           </p>
         </div>
       )}
+
+      {/* Bulk action bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="sticky bottom-6 flex items-center gap-3 mt-6 px-4 py-[10px] rounded-[12px] border border-[#1c2333] w-fit mx-auto"
+            style={{ background: '#111620', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+          >
+            <span style={{ fontSize: 13, color: '#eeeef0' }}>
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-[12px] text-[#6b7280] hover:text-[#eeeef0] transition-colors px-3 py-[6px] rounded-[8px] border border-[#1c2333] cursor-pointer"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setShowBulkModal(true)}
+              className="text-[12px] text-white px-4 py-[6px] rounded-[8px] cursor-pointer font-medium flex items-center gap-[6px] transition-all hover:opacity-90"
+              style={{ background: '#ef4444' }}
+            >
+              <Trash2 size={12} />
+              Delete {selectedIds.size} boost{selectedIds.size !== 1 ? 's' : ''}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk delete modal */}
+      <AnimatePresence>
+        {showBulkModal && (
+          <BulkDeleteAdsModal
+            key="bulk-delete-ads"
+            count={selectedIds.size}
+            onConfirm={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+            onCancel={() => setShowBulkModal(false)}
+            isPending={bulkDeleteMutation.isPending}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

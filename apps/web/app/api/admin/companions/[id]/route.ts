@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       .select({
         id: companions.id,
         email: companions.email,
-        alias: companions.alias,
+        name: companions.name,
         full_name: companions.full_name,
         date_of_birth: companions.date_of_birth,
         country: companions.country,

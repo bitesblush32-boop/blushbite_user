@@ -205,7 +205,7 @@ function CompanionCard({
   community: string
   accentColor: string
 }) {
-  const href = companion.alias ? `/companions/${companion.alias}` : `/companions`
+  const href = `/companions/${companion.companionId}`
 
   return (
     <Link

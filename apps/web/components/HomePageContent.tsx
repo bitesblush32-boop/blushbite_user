@@ -845,7 +845,7 @@ function MoodItem({
 // Full-width banner strip between the nav and BLOCK 1
 
 function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_alias ? `/companions/${data.companion_alias}` : '/companions'
+  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
   return (
     <div
       style={{
@@ -864,13 +864,17 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
       }}
     >
       {data.banner_image_url && (
-        <Image
-          src={data.banner_image_url}
-          alt={data.banner_headline ?? 'Sponsored'}
-          fill
-          style={{ objectFit: 'cover', opacity: 0.25 }}
-          sizes="100vw"
-        />
+        <>
+          <Image
+            src={data.banner_image_url}
+            alt={data.banner_headline ?? 'Sponsored'}
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center', opacity: 1 }}
+            sizes="100vw"
+          />
+          {/* dark overlay so text stays readable over the custom image */}
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,15,0.55)' }} />
+        </>
       )}
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div
@@ -934,7 +938,7 @@ const CARD_GRADIENTS = [
 ]
 
 function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_alias ? `/companions/${data.companion_alias}` : '/companions'
+  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
   const hash = (data.companion_id ?? data.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const gradient = CARD_GRADIENTS[hash % CARD_GRADIENTS.length]
   const [hovered, setHovered] = useState(false)
@@ -1049,7 +1053,7 @@ function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
 // Native-looking sponsored card injected at position 3 in the companions carousel
 
 function MidGridAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_alias ? `/companions/${data.companion_alias}` : '/companions'
+  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
   const hash = (data.companion_id ?? data.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const gradient = CARD_GRADIENTS[hash % CARD_GRADIENTS.length]
   const [hovered, setHovered] = useState(false)
@@ -1147,7 +1151,7 @@ function MidGridAd({ data }: { data: ActiveBoostItem }) {
 // 280px sticky companion card shown on xl screens (desktop right rail)
 
 function RightRailAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_alias ? `/companions/${data.companion_alias}` : '/companions'
+  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
   const hash = (data.companion_id ?? data.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const gradient = CARD_GRADIENTS[hash % CARD_GRADIENTS.length]
 
@@ -1160,15 +1164,15 @@ function RightRailAd({ data }: { data: ActiveBoostItem }) {
         background: '#0d1117',
       }}
     >
-      {/* Photo */}
+      {/* Photo / custom banner */}
       <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
-        <div style={{ position: 'relative', aspectRatio: '3/4', background: gradient }}>
-          {data.companion_photo_url && (
+        <div style={{ position: 'relative', aspectRatio: data.banner_image_url ? '280/400' : '3/4', background: gradient }}>
+          {(data.banner_image_url || data.companion_photo_url) && (
             <Image
-              src={data.companion_photo_url}
+              src={data.banner_image_url ?? data.companion_photo_url!}
               alt={data.companion_name ?? 'Featured companion'}
               fill
-              style={{ objectFit: 'cover', objectPosition: 'top' }}
+              style={{ objectFit: 'cover', objectPosition: data.banner_image_url ? 'center' : 'top' }}
               sizes="280px"
             />
           )}

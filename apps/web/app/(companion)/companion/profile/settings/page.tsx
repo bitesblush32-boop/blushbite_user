@@ -926,9 +926,9 @@ function ProfileHeaderSection({
           >
             {data.companion.name || 'Your name'}
           </div>
-          {data.companion.alias && (
+          {data.companion.name && (
             <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
-              @{data.companion.alias}
+              @{data.companion.name}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>

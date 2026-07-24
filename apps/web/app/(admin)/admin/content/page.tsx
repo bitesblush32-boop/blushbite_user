@@ -25,7 +25,6 @@ interface StoryListItem {
   created_at: string
   published_at: string | null
   user_alias: string | null
-  companion_alias: string | null
   companion_name: string | null
   category_name: string | null
 }
@@ -65,7 +64,7 @@ function authorLabel(item: StoryListItem) {
   if (item.is_anonymous) return 'Anonymous'
   if (item.author_type === 'admin') return 'Admin'
   if (item.author_type === 'companion')
-    return item.companion_name ?? item.companion_alias ?? 'Companion'
+    return item.companion_name ?? 'Companion'
   return item.user_alias ?? 'User'
 }
 

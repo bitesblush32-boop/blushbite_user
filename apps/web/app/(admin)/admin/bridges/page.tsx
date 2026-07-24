@@ -14,7 +14,6 @@ interface Bridge {
   approved_at: string | null
   created_at: string
   profile_id: string
-  companion_alias: string | null
   companion_name: string | null
   story_id: string
   story_title: string
@@ -51,7 +50,7 @@ function BridgeCard({
   const [noteOpen, setNoteOpen] = useState(false)
   const [note, setNote] = useState('')
 
-  const initials = (bridge.companion_name ?? bridge.companion_alias ?? '?')[0].toUpperCase()
+  const initials = (bridge.companion_name ?? '?')[0].toUpperCase()
 
   return (
     <motion.div
@@ -89,7 +88,7 @@ function BridgeCard({
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0' }}>
-              {bridge.companion_alias ?? '—'}
+              {bridge.companion_name ?? '—'}
             </div>
             {bridge.companion_name && (
               <div style={{ fontSize: 11, color: '#6b7280' }}>{bridge.companion_name}</div>

@@ -25,7 +25,7 @@ interface CompanionDossier {
   companion: {
     id: string
     email: string
-    alias: string | null
+    name: string | null
     full_name: string | null
     date_of_birth: string | null
     country: string | null
@@ -479,19 +479,16 @@ export default function AdminCompanionDetailPage() {
                 className="w-14 h-14 rounded-full flex items-center justify-center text-white font-semibold text-[18px] flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg,#e8607a,#9b5fe0)' }}
               >
-                {(companion.full_name ?? companion.alias ?? '?')[0].toUpperCase()}
+                {(companion.full_name ?? companion.name ?? '?')[0].toUpperCase()}
               </div>
               <div>
                 <h1
                   style={{ fontFamily: "'Playfair Display', serif" }}
                   className="text-[24px] text-[#eeeef0] mb-[2px]"
                 >
-                  {companion.full_name ?? companion.alias ?? companion.email}
+                  {companion.full_name ?? companion.name ?? companion.email}
                 </h1>
                 <div className="text-[12px] text-[#6b7280]">{companion.email}</div>
-                {companion.alias && (
-                  <div className="text-[11px] text-[#6b7280]">{companion.alias}</div>
-                )}
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -1223,7 +1220,7 @@ export default function AdminCompanionDetailPage() {
         style={{ background: 'rgba(13,17,23,0.96)', backdropFilter: 'blur(20px)' }}
       >
         <div className="text-[12px] text-[#6b7280] hidden sm:block">
-          {companion.full_name ?? companion.alias ?? companion.email}
+          {companion.full_name ?? companion.name ?? companion.email}
           {isLive && <span className="ml-2 text-[#e8607a]">● Live</span>}
           {isPending && <span className="ml-2 text-[#eeeef0]">— Awaiting review</span>}
         </div>

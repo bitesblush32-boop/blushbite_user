@@ -15,7 +15,6 @@ export interface ActiveBoostItem {
   boost_type: string
   companion_id: string | null
   companion_name: string | null
-  companion_alias: string | null
   companion_tagline: string | null
   companion_city: string | null
   companion_photo_url: string | null
@@ -44,7 +43,6 @@ export async function GET(req: NextRequest) {
       banner_headline: companionBoosts.banner_headline,
       banner_tagline: companionBoosts.banner_tagline,
       companion_name: companions.name,
-      companion_alias: companions.alias,
       profile_id: companionProfiles.id,
       companion_tagline: companionProfiles.tagline,
       companion_city: companionProfiles.city,
@@ -107,7 +105,6 @@ export async function GET(req: NextRequest) {
       boost_type: r.boost_type,
       companion_id: r.companion_id,
       companion_name: r.companion_name ?? null,
-      companion_alias: r.companion_alias ?? null,
       companion_tagline: r.companion_tagline ?? null,
       companion_city: r.companion_city ?? null,
       companion_photo_url: r.profile_id ? (photoMap.get(r.profile_id) ?? null) : null,

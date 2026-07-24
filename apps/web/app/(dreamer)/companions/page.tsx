@@ -38,7 +38,7 @@ const CompanionCard = memo(function CompanionCard({
   accentColor: string
   index: number
 }) {
-  const href = companion.alias ? `/companions/${companion.alias}` : '#'
+  const href = companion.id ? `/companions/${companion.id}` : '#'
 
   return (
     <Link

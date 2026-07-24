@@ -21,7 +21,6 @@ interface Booking {
   updated_at: string
   user_alias: string | null
   companion_name: string | null
-  companion_alias: string | null
   city: string | null
   session_title: string | null
   session_type: string | null
@@ -139,13 +138,7 @@ function BookingCard({
             style={{ fontFamily: "'Playfair Display', serif" }}
             className="text-[14px] text-[#eeeef0] mb-[2px]"
           >
-            For {booking.companion_name ?? booking.companion_alias ?? '—'}
-            {booking.companion_alias && (
-              <span className="text-[12px] text-[#6b7280] font-normal">
-                {' '}
-                ({booking.companion_alias})
-              </span>
-            )}
+            For {booking.companion_name ?? '—'}
           </div>
 
           <div className="text-[12px] text-[#6b7280] mb-1">From @{booking.user_alias ?? '—'}</div>

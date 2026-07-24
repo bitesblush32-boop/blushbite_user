@@ -1,5 +1,6 @@
-// In-memory OTP store — module-level singleton, shared across route handlers
-// Suitable for single Railway instance (landing page volume is low)
+// In-memory OTP store — globalThis singleton so it survives Next.js HMR in dev
+// and is shared across all route handlers in the same Node process.
+// Suitable for single Railway instance (landing page volume is low).
 
 interface OtpEntry {
   otp: string
@@ -12,8 +13,15 @@ interface RateEntry {
   windowStart: number // Unix ms
 }
 
-const otpStore = new Map<string, OtpEntry>()
-const rateStore = new Map<string, RateEntry>()
+// Attach to globalThis so HMR module re-evaluation doesn't reset the Maps
+const g = globalThis as typeof globalThis & {
+  _bb_otpStore?: Map<string, OtpEntry>
+  _bb_rateStore?: Map<string, RateEntry>
+}
+if (!g._bb_otpStore) g._bb_otpStore = new Map()
+if (!g._bb_rateStore) g._bb_rateStore = new Map()
+const otpStore = g._bb_otpStore
+const rateStore = g._bb_rateStore
 
 const OTP_TTL_MS = 10 * 60 * 1000 // 10 minutes
 const RATE_WINDOW_MS = 10 * 60 * 1000 // 10-minute window

@@ -52,7 +52,6 @@ export async function GET(req: NextRequest) {
         created_at: stories.created_at,
         published_at: stories.published_at,
         user_alias: users.alias,
-        companion_alias: companions.alias,
         companion_name: companions.name,
         category_name: storyCategories.name,
       })
