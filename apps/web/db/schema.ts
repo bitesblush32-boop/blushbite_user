@@ -90,6 +90,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }),
   image: text('image'),
   alias: varchar('alias', { length: 100 }).unique(),
+  phone: varchar('phone', { length: 30 }),
   onboarding_complete: boolean('onboarding_complete').notNull().default(false),
   is_flagged: boolean('is_flagged').notNull().default(false),
   deleted_at: timestamp('deleted_at', { withTimezone: true }),
@@ -190,6 +191,7 @@ export const companions = pgTable('companions', {
   date_of_birth: date('date_of_birth'),
   country: varchar('country', { length: 100 }),
   companion_stage: integer('companion_stage').notNull().default(1),
+  gender_community: varchar('gender_community', { length: 20 }),
   tour_completed_at: timestamp('tour_completed_at', { withTimezone: true }),
   whatsapp_number: varchar('whatsapp_number', { length: 20 }),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -264,6 +266,8 @@ export const companionProfiles = pgTable(
     telegram_handle: varchar('telegram_handle', { length: 100 }),
     // Social / modality (added v2)
     session_modality: varchar('session_modality', { length: 20 }).notNull().default('in_person'),
+    city_slug: varchar('city_slug', { length: 100 }),
+    country_slug: varchar('country_slug', { length: 100 }),
     instagram_handle: varchar('instagram_handle', { length: 100 }),
     website_url: text('website_url'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -885,4 +889,41 @@ export const diditExtractedData = pgTable('didit_extracted_data', {
   overall_status: varchar('overall_status', { length: 30 }),
   raw_payload: jsonb('raw_payload').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ─── BOOST / AD SYSTEM ────────────────────────────────────────────────────────
+// Tables created by blushbite.live; declared here for Drizzle type safety
+
+export const companionBoosts = pgTable('companion_boosts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  companion_id: uuid('companion_id')
+    .notNull()
+    .references(() => companions.id, { onDelete: 'cascade' }),
+  boost_type: varchar('boost_type', { length: 30 }).notNull(),
+  // 'featured_1' | 'featured_2' | 'featured_3' | 'header_banner' | 'right_rail' | 'mid_grid'
+  community: varchar('community', { length: 20 }).notNull(),
+  week_start: date('week_start').notNull(),
+  week_end: date('week_end').notNull(),
+  price_eur: numeric('price_eur', { precision: 8, scale: 2 }).notNull(),
+  status: varchar('status', { length: 20 }).default('active'),
+  is_enabled: boolean('is_enabled').default(true),
+  banner_image_url: text('banner_image_url'),
+  banner_headline: text('banner_headline'),
+  banner_tagline: text('banner_tagline'),
+  payment_ref: varchar('payment_ref', { length: 100 }),
+  payment_status: varchar('payment_status', { length: 20 }).default('manual'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const boostSettings = pgTable('boost_settings', {
+  id: integer('id').primaryKey(),
+  header_banner_enabled: boolean('header_banner_enabled').notNull().default(true),
+  right_rail_enabled: boolean('right_rail_enabled').notNull().default(true),
+  mid_grid_enabled: boolean('mid_grid_enabled').notNull().default(true),
+  featured_enabled: boolean('featured_enabled').notNull().default(true),
+  price_featured_eur: numeric('price_featured_eur', { precision: 8, scale: 2 }).default('15.00'),
+  price_header_banner_eur: numeric('price_header_banner_eur', { precision: 8, scale: 2 }).default('25.00'),
+  price_right_rail_eur: numeric('price_right_rail_eur', { precision: 8, scale: 2 }).default('15.00'),
+  price_mid_grid_eur: numeric('price_mid_grid_eur', { precision: 8, scale: 2 }).default('10.00'),
+  max_weeks_advance: integer('max_weeks_advance').default(4),
 })

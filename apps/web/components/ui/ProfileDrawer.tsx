@@ -106,7 +106,7 @@ function buildContactLinks(
 }
 
 export default function ProfileDrawer() {
-  const { activeCompanionId, closeModal, openBookingModal } = useUIStore()
+  const { activeCompanionId, closeModal, openBookingModal, dreamer, openAuthModal } = useUIStore()
   const [selectedDuration, setSelectedDuration] = useState('2h')
   const [selectedSessionIdx, setSelectedSessionIdx] = useState<number | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
@@ -582,14 +582,22 @@ export default function ProfileDrawer() {
                           <div className="flex flex-col sm:flex-row gap-3" style={blurStyle}>
                             {whatsapp && (
                               <a
-                                href={sessionSelected ? whatsapp : undefined}
+                                href={sessionSelected && dreamer ? whatsapp : undefined}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={() => logBooking('whatsapp')}
+                                onClick={(e) => {
+                                  if (!dreamer) {
+                                    e.preventDefault()
+                                    openAuthModal('contact')
+                                    return
+                                  }
+                                  logBooking('whatsapp')
+                                }}
                                 className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
                                 style={{
                                   background: 'linear-gradient(135deg, #25D366, #1da851)',
                                   boxShadow: '0 4px 20px rgba(37,211,102,0.22)',
+                                  cursor: 'pointer',
                                 }}
                                 onMouseEnter={(e) => {
                                   ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
@@ -604,20 +612,28 @@ export default function ProfileDrawer() {
                                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                                   <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.528 5.855L0 24l6.335-1.505A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.5-5.207-1.378l-.373-.22-3.862.917.974-3.768-.243-.387A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
                                 </svg>
-                                Message on WhatsApp
+                                {dreamer ? 'Message on WhatsApp' : 'Sign in to message'}
                               </a>
                             )}
 
                             {telegram && (
                               <a
-                                href={sessionSelected ? telegram : undefined}
+                                href={sessionSelected && dreamer ? telegram : undefined}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={() => logBooking('telegram')}
+                                onClick={(e) => {
+                                  if (!dreamer) {
+                                    e.preventDefault()
+                                    openAuthModal('contact')
+                                    return
+                                  }
+                                  logBooking('telegram')
+                                }}
                                 className="flex-1 flex items-center justify-center gap-[10px] py-[13px] px-5 rounded-[10px] text-[13.5px] font-medium text-white transition-all duration-200 hover:-translate-y-px"
                                 style={{
                                   background: 'linear-gradient(135deg, #229ED9, #1a7fb5)',
                                   boxShadow: '0 4px 20px rgba(34,158,217,0.22)',
+                                  cursor: 'pointer',
                                 }}
                                 onMouseEnter={(e) => {
                                   ;(e.currentTarget as HTMLAnchorElement).style.boxShadow =
@@ -631,7 +647,7 @@ export default function ProfileDrawer() {
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                   <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.664l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.895z" />
                                 </svg>
-                                Chat on Telegram
+                                {dreamer ? 'Chat on Telegram' : 'Sign in to chat'}
                               </a>
                             )}
                           </div>

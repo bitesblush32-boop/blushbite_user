@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { useUIStore } from '@/store/uiStore'
 
 // ─── Tour step definitions ────────────────────────────────────────────────────
 
@@ -54,16 +54,17 @@ const STEPS: TourStep[] = [
 const TOUR_KEY = 'bb_tour_v1_seen'
 
 export function TourOverlay() {
-  const { data: session, status } = useSession()
+  const { dreamer, dreamerLoading } = useUIStore()
   const [visible, setVisible] = useState(false)
   const [step, setStep] = useState(0)
 
   useEffect(() => {
-    if (status !== 'authenticated') return
+    if (dreamerLoading) return
+    if (!dreamer) return
     // Only show once per browser, for logged-in users
     const seen = localStorage.getItem(TOUR_KEY)
     if (!seen) setVisible(true)
-  }, [status])
+  }, [dreamer, dreamerLoading])
 
   const dismiss = () => {
     localStorage.setItem(TOUR_KEY, '1')

@@ -17,6 +17,7 @@ export interface DiscoverCompanionItem {
   gradient: string
   isVerified: boolean
   sessionModality: string
+  alias: string | null
 }
 
 interface DiscoverPage {
@@ -29,13 +30,20 @@ interface Props {
   lng: number | null
   radius?: number
   sessionKey?: number
+  community?: string | null
+  minAge?: number | null
+  maxAge?: number | null
+  enabled?: boolean
 }
 
 async function fetchDiscoverPage(
   { pageParam }: { pageParam: unknown },
   lat: number | null,
   lng: number | null,
-  radius: number
+  radius: number,
+  community?: string | null,
+  minAge?: number | null,
+  maxAge?: number | null
 ): Promise<DiscoverPage> {
   const cursor = pageParam as string | null
   const params = new URLSearchParams()
@@ -45,6 +53,9 @@ async function fetchDiscoverPage(
     params.set('radius', String(radius))
   }
   if (cursor) params.set('cursor', cursor)
+  if (community) params.set('gender', community)
+  if (minAge != null) params.set('minAge', String(minAge))
+  if (maxAge != null) params.set('maxAge', String(maxAge))
 
   const url = `/api/companions/discover${params.toString() ? `?${params}` : ''}`
   const res = await fetch(url)
@@ -52,7 +63,7 @@ async function fetchDiscoverPage(
   return res.json()
 }
 
-export function useDiscoverCompanions({ lat, lng, radius = 100, sessionKey = 0 }: Props) {
+export function useDiscoverCompanions({ lat, lng, radius = 100, sessionKey = 0, community, minAge, maxAge, enabled = true }: Props) {
   const query = useInfiniteQuery<
     DiscoverPage,
     Error,
@@ -60,13 +71,14 @@ export function useDiscoverCompanions({ lat, lng, radius = 100, sessionKey = 0 }
     readonly unknown[],
     string | null
   >({
-    queryKey: ['companions', 'discover', lat, lng, radius, sessionKey] as const,
-    queryFn: ({ pageParam }) => fetchDiscoverPage({ pageParam }, lat, lng, radius),
+    queryKey: ['companions', 'discover', lat, lng, radius, sessionKey, community, minAge, maxAge] as const,
+    queryFn: ({ pageParam }) => fetchDiscoverPage({ pageParam }, lat, lng, radius, community, minAge, maxAge),
     initialPageParam: null,
     getNextPageParam: (lastPage: DiscoverPage) => lastPage.nextCursor ?? null,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     maxPages: 10,
+    enabled,
   })
 
   const companions: DiscoverCompanionItem[] = query.data?.pages.flatMap((p) => p.items) ?? []

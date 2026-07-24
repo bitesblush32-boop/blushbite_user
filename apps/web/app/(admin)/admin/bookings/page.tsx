@@ -173,7 +173,7 @@ function BookingCard({
                   transition: 'max-height 0.3s ease',
                 }}
               >
-                "{booking.message}"
+                &ldquo;{booking.message}&rdquo;
               </div>
               {booking.message.length > 100 && (
                 <button
@@ -198,7 +198,7 @@ function BookingCard({
                   transition: 'max-height 0.3s ease',
                 }}
               >
-                "{booking.message}"
+                &ldquo;{booking.message}&rdquo;
               </div>
               {booking.message.length > 150 && (
                 <button

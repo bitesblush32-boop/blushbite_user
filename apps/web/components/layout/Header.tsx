@@ -531,6 +531,9 @@ export default function Header() {
   const [submitting, setSubmitting] = useState(false)
   const avatarUrl = useUIStore((s) => s.avatarUrl)
   const setAvatarUrl = useUIStore((s) => s.setAvatarUrl)
+  const dreamer = useUIStore((s) => s.dreamer)
+  const dreamerLoading = useUIStore((s) => s.dreamerLoading)
+  const openAuthModal = useUIStore((s) => s.openAuthModal)
   const { unreadCount } = useNotifications()
 
   const {
@@ -568,8 +571,8 @@ export default function Header() {
   const pathname = usePathname()
   const isProfile = pathname === '/profile' || (isCompanion && pathname === '/companion/profile')
 
-  const alias = '@guest'
-  const initials = 'BB'
+  const alias = dreamer?.alias ? `@${dreamer.alias}` : (dreamer?.email ?? '@guest')
+  const initials = dreamer?.alias ? dreamer.alias.slice(0, 2).toUpperCase() : 'BB'
 
   useEffect(() => {
     setSettingsOpen(false)
@@ -582,24 +585,41 @@ export default function Header() {
     href?: string
     onClick?: () => void
   }> = [
-    {
-      label: 'Edit profile',
-      icon: Pencil,
-      tone: 'default',
-      onClick: () => setEditProfileOpen(true),
-    },
+    ...(dreamer
+      ? [
+          {
+            label: 'Edit profile',
+            icon: Pencil,
+            tone: 'default' as const,
+            onClick: () => setEditProfileOpen(true),
+          },
+        ]
+      : []),
     {
       label: 'Privacy & safety',
       href: '/privacy',
       icon: Shield,
-      tone: 'default',
+      tone: 'default' as const,
     },
     {
       label: 'Help & support',
       href: '/help',
       icon: HelpCircle,
-      tone: 'default',
+      tone: 'default' as const,
     },
+    ...(dreamer
+      ? [
+          {
+            label: 'Sign out',
+            icon: ArrowLeft,
+            tone: 'danger' as const,
+            onClick: async () => {
+              await fetch('/api/users/auth/logout', { method: 'POST' })
+              window.location.href = '/'
+            },
+          },
+        ]
+      : []),
   ]
 
   const profileAccent = avatarUrl
@@ -693,7 +713,7 @@ export default function Header() {
           </div>
 
           <div style={{ justifySelf: 'center' }}>
-            <Link href="/home" className="flex-shrink-0 block">
+            <Link href="/" className="flex-shrink-0 block">
               <Image
                 src="/bb_croped.png"
                 alt="BlushBite"
@@ -708,7 +728,38 @@ export default function Header() {
           </div>
 
           <div style={{ justifySelf: 'end' }}>
-            {isProfile ? (
+            {!dreamerLoading && !dreamer ? (
+              /* ── Not signed in — show Sign in pill ── */
+              <button
+                type="button"
+                onClick={() => openAuthModal()}
+                style={{
+                  height: 34,
+                  padding: '0 16px',
+                  background: 'rgba(232,96,122,0.10)',
+                  border: '1px solid rgba(232,96,122,0.25)',
+                  borderRadius: 20,
+                  color: '#e8607a',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  letterSpacing: 0.1,
+                  transition: 'background 0.15s, border-color 0.15s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.18)'
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,96,122,0.45)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)'
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,96,122,0.25)'
+                }}
+              >
+                Sign in
+              </button>
+            ) : isProfile ? (
+              /* ── Signed in + profile page — 3-line settings ── */
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
@@ -731,6 +782,7 @@ export default function Header() {
                 <Menu size={22} strokeWidth={1.5} />
               </button>
             ) : (
+              /* ── Signed in + other pages — Bell notification ── */
               <div style={{ position: 'relative' }}>
                 <button
                   type="button"

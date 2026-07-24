@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, useAnimation } from 'framer-motion'
+import { useRef, useState } from 'react'
+import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { Heart, MessageCircle, Bookmark, Volume2, VolumeX } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useLikeMutation } from '@/hooks/useLikeMutation'
@@ -71,7 +71,7 @@ export function ActionPill({
   onLike,
   onSave,
 }: Props) {
-  const { openComments, toggleMute, isMuted } = useUIStore()
+  const { openComments, toggleMute, isMuted, dreamer, openAuthModal } = useUIStore()
   const muted = isMuted(storyId)
   const likeAnim = useAnimation()
   const saveAnim = useAnimation()
@@ -81,13 +81,24 @@ export function ActionPill({
 
   // Phase 2 audio stub — local state for horizontal layout
   const [audioOn, setAudioOn] = useState(true)
+  const [showAuthToast, setShowAuthToast] = useState(false)
+  const authToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const springTap = {
     scale: [1, 1.35, 0.9, 1] as number[],
     transition: { type: 'spring' as const, stiffness: 400, damping: 12 },
   }
 
+  const requireAuth = () => {
+    if (authToastTimerRef.current) clearTimeout(authToastTimerRef.current)
+    setShowAuthToast(true)
+    authToastTimerRef.current = setTimeout(() => setShowAuthToast(false), 3000)
+    openAuthModal('interact')
+    return false
+  }
+
   const handleLike = () => {
+    if (!dreamer) { requireAuth(); return }
     likeAnim.start(springTap)
     if (onLike) {
       onLike()
@@ -96,6 +107,7 @@ export function ActionPill({
     }
   }
   const handleSave = () => {
+    if (!dreamer) { requireAuth(); return }
     saveAnim.start(springTap)
     if (onSave) {
       onSave()
@@ -104,6 +116,7 @@ export function ActionPill({
     }
   }
   const handleOpenComments = () => {
+    if (!dreamer) { requireAuth(); return }
     // Prevent focused background control from remaining active while dialog applies aria-hidden.
     if (typeof document !== 'undefined') {
       const active = document.activeElement
@@ -189,27 +202,67 @@ export function ActionPill({
     </>
   )
 
+  const authToast = (
+    <AnimatePresence>
+      {showAuthToast && (
+        <motion.div
+          key="auth-toast"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            position: 'fixed',
+            bottom: 100,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            background: 'rgba(13,17,23,0.95)',
+            border: '1px solid rgba(232,96,122,0.3)',
+            borderRadius: 24,
+            padding: '10px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            backdropFilter: 'blur(12px)',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontSize: 13, color: '#9ca3af' }}>Sign in to react</span>
+          <span style={{ fontSize: 13, color: '#e8607a' }}>→</span>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
   if (isHorizontal) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          width: '100%',
-        }}
-      >
-        {buttons}
-      </div>
+      <>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            width: '100%',
+          }}
+        >
+          {buttons}
+        </div>
+        {authToast}
+      </>
     )
   }
 
   return (
-    <div
-      className="absolute flex flex-col items-center"
-      style={{ right: 12, bottom: 120, zIndex: 20, gap: 24 }}
-    >
-      {buttons}
-    </div>
+    <>
+      <div
+        className="absolute flex flex-col items-center"
+        style={{ right: 12, bottom: 120, zIndex: 20, gap: 24 }}
+      >
+        {buttons}
+      </div>
+      {authToast}
+    </>
   )
 }

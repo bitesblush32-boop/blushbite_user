@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import HomePageContent from '@/components/HomePageContent'
 
-export default function DreamerIndexPage() {
-  redirect('/home')
+export default function DreamerRootPage() {
+  return <HomePageContent />
 }

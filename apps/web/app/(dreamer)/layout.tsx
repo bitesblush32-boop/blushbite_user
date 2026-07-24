@@ -14,6 +14,8 @@ const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { s
 const BookingModal = dynamic(() => import('@/components/ui/BookingModal'), { ssr: false })
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
 const LocationBanner = dynamic(() => import('@/components/ui/LocationBanner'), { ssr: false })
+const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
+const DreamerSessionInit = dynamic(() => import('@/components/ui/DreamerSessionInit'), { ssr: false })
 const TourOverlay = dynamic(
   () => import('@/components/ui/TourOverlay').then((m) => ({ default: m.TourOverlay })),
   { ssr: false }
@@ -53,6 +55,8 @@ export default function DreamerLayout({ children }: { children: React.ReactNode 
       <BottomNav />
       <LocationBanner />
       <TourOverlay />
+      <AuthModal />
+      <DreamerSessionInit />
     </div>
   )
 }

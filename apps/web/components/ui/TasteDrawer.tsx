@@ -339,7 +339,7 @@ export default function TasteDrawer({
                     textUnderlineOffset: 3,
                   }}
                 >
-                  I'm open to everyone
+                  I&apos;m open to everyone
                 </button>
               </div>
 

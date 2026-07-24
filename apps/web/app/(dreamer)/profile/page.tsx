@@ -6,10 +6,9 @@ import dynamic from 'next/dynamic'
 
 const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false })
 import { useQuery } from '@tanstack/react-query'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Camera, LayoutGrid, Heart, Bookmark, BookMarked, Pencil, MapPin } from 'lucide-react'
+import { Camera, LayoutGrid, Heart, Bookmark, BookMarked, Pencil, MapPin, LogIn } from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
@@ -397,18 +396,13 @@ function SavedTabContent({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
-  const { data: session } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const setAvatarUrl = useUIStore((s) => s.setAvatarUrl)
   const openProfileViewer = useUIStore((s) => s.openProfileViewer)
-
-  // Companions have their own full-featured profile page
-  const platformRole = (session?.user as any)?.platform_role
-  const isCompanion = platformRole === 'companion' || platformRole === 'dream'
-  useEffect(() => {
-    if (isCompanion) router.replace('/companion/profile')
-  }, [isCompanion, router])
+  const dreamer = useUIStore((s) => s.dreamer)
+  const dreamerLoading = useUIStore((s) => s.dreamerLoading)
+  const openAuthModal = useUIStore((s) => s.openAuthModal)
 
   const [tasteOpen, setTasteOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<MainTab>('posts')
@@ -514,7 +508,7 @@ export default function ProfilePage() {
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
-  const alias = profile?.alias ?? session?.user?.alias ?? '@you'
+  const alias = profile?.alias ?? dreamer?.alias ?? '@you'
   const initials = alias.replace('@', '').slice(0, 2).toUpperCase()
   const vibes = profile?.vibes?.length ? profile.vibes : []
   const desires = profile?.desired_genders?.length ? profile.desired_genders : []
@@ -524,6 +518,63 @@ export default function ProfilePage() {
     { id: 'likes', icon: <Heart size={20} /> },
     { id: 'saved', icon: <Bookmark size={20} /> },
   ]
+
+  // ── Auth gate ──────────────────────────────────────────────────────────────
+  if (!dreamerLoading && !dreamer) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-5 px-5"
+        style={{ minHeight: '100svh', paddingTop: 75 }}
+      >
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            background: 'rgba(232,96,122,0.08)',
+            border: '1px solid rgba(232,96,122,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <LogIn size={28} color="#e8607a" strokeWidth={1.5} />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <p
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 20,
+              color: '#eeeef0',
+              marginBottom: 8,
+            }}
+          >
+            Your private world awaits
+          </p>
+          <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, maxWidth: 280 }}>
+            Sign in to access your profile, saved confessions, and likes.
+          </p>
+        </div>
+        <button
+          onClick={() => openAuthModal()}
+          style={{
+            height: 44,
+            padding: '0 28px',
+            background: '#e8607a',
+            border: 'none',
+            borderRadius: 22,
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+            boxShadow: '0 6px 20px rgba(232,96,122,0.28)',
+          }}
+        >
+          Sign in
+        </button>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -676,7 +727,7 @@ export default function ProfilePage() {
             ) : locationStatus === 'failed' ? (
               <div className="flex flex-col items-center gap-[10px]">
                 <span style={{ fontSize: 11, color: '#4b5563' }}>
-                  We couldn't find your location
+                  We couldn&apos;t find your location
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -918,7 +969,7 @@ export default function ProfilePage() {
                           commentCount: p.commentCount,
                           userHasLiked: false,
                           userHasSaved: false,
-                          authorAlias: session?.user?.alias ?? null,
+                          authorAlias: dreamer?.alias ?? null,
                           isAnonymous: false,
                           createdAt: p.createdAt,
                         }))

@@ -1,756 +1,532 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useRef, useEffect, useState, memo } from 'react'
 import Image from 'next/image'
-import { motion, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'framer-motion'
-import { MapPin, Heart, X, Star, RefreshCw, Globe } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useGeolocation } from '@/hooks/useGeolocation'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { MapPin, CheckCircle, ChevronDown, Navigation } from 'lucide-react'
+import { useDeviceCommunity } from '@/hooks/useDeviceCommunity'
 import { useDiscoverCompanions } from '@/hooks/useDiscoverCompanions'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import type { DiscoverCompanionItem } from '@/hooks/useDiscoverCompanions'
-import { useUIStore } from '@/store/uiStore'
 
-// ─── Radius options ─────────────────────────────────────────────────────────────
-const RADIUS_OPTIONS: { label: string; value: number | null }[] = [
-  { label: '10 km', value: 10 },
-  { label: '25 km', value: 25 },
-  { label: '50 km', value: 50 },
-  { label: '100 km', value: 100 },
-  { label: 'Worldwide', value: null },
+// ── Config ───────────────────────────────────────────────────────────────────
+
+const COMMUNITY_CONFIG = {
+  female:  { label: 'Female', accentColor: '#e8607a' },
+  male:    { label: 'Men',    accentColor: '#60a5fa' },
+  shemale: { label: 'Trans',  accentColor: '#c084fc' },
+} as const
+type Community = keyof typeof COMMUNITY_CONFIG
+
+const AGE_RANGES = [
+  { label: 'Any age', min: null as number | null, max: null as number | null },
+  { label: '18 – 25', min: 18,  max: 25  },
+  { label: '26 – 35', min: 26,  max: 35  },
+  { label: '36 – 45', min: 36,  max: 45  },
+  { label: '45+',     min: 45,  max: null as number | null },
 ]
 
-// ─── Gradient pool (keyed by profile id hash) ──────────────────────────────────
+// ── CompanionCard ─────────────────────────────────────────────────────────────
 
-const GRADIENTS = [
-  'linear-gradient(145deg,#1a1228,#2a1535,#1a2240)',
-  'linear-gradient(145deg,#0f1a28,#1f2840,#2a1020)',
-  'linear-gradient(145deg,#201228,#1a2030,#2a1a18)',
-  'linear-gradient(145deg,#0a1620,#1a1535,#201a10)',
-  'linear-gradient(145deg,#1a1020,#2a1530,#101820)',
-  'linear-gradient(145deg,#101820,#201028,#102020)',
-]
-function gradientFromId(id: string) {
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return GRADIENTS[hash % GRADIENTS.length]
-}
-
-// ─── Swipe Card ────────────────────────────────────────────────────────────────
-
-interface SwipeCardProps {
+const CompanionCard = memo(function CompanionCard({
+  companion,
+  accentColor,
+  index,
+}: {
   companion: DiscoverCompanionItem
-  stackIndex: number // 0 = top, 1 = second, 2 = third
-  onLike: () => void
-  onSkip: () => void
-}
-
-function SwipeCard({ companion, stackIndex, onLike, onSkip }: SwipeCardProps) {
-  const openModal = useUIStore((s) => s.openModal)
-  const qc = useQueryClient()
-  const x = useMotionValue(0)
-  const rotate = useTransform(x, [-160, 0, 160], [-14, 0, 14])
-  const roseOpacity = useTransform(x, [0, 80, 160], [0, 0.5, 1])
-  const skipOpacity = useTransform(x, [-160, -80, 0], [1, 0.5, 0])
-  const controls = useAnimation()
-  // Track whether the user actually dragged so we don't open the modal on swipe-end
-  const didDragRef = useRef(false)
-
-  const gradient = companion.gradient || gradientFromId(companion.id)
-  const isTop = stackIndex === 0
-  const peekScale = stackIndex === 1 ? 0.95 : 0.9
-  const peekY = stackIndex === 1 ? 14 : 26
-
-  function prefetchProfile() {
-    qc.prefetchQuery({
-      queryKey: ['companion-profile', companion.id],
-      queryFn: () => fetch(`/api/companions/${companion.id}`).then((r) => r.json()),
-      staleTime: 5 * 60 * 1000,
-    })
-  }
-
-  async function handleDragEnd(_: unknown, info: { offset: { x: number } }) {
-    if (Math.abs(info.offset.x) > 10) didDragRef.current = true
-    if (info.offset.x > 80) {
-      await controls.start({ x: 500, rotate: 20, opacity: 0, transition: { duration: 0.3 } })
-      onLike()
-    } else if (info.offset.x < -80) {
-      await controls.start({ x: -500, rotate: -20, opacity: 0, transition: { duration: 0.3 } })
-      onSkip()
-    } else {
-      didDragRef.current = false
-      controls.start({
-        x: 0,
-        rotate: 0,
-        transition: { type: 'spring', stiffness: 300, damping: 25 },
-      })
-    }
-  }
-
-  const distanceText =
-    companion.distance_km !== null && companion.distance_km !== undefined
-      ? `${Math.round(companion.distance_km as number)} km away`
-      : null
+  accentColor: string
+  index: number
+}) {
+  const href = companion.alias ? `/companions/${companion.alias}` : '#'
 
   return (
-    <motion.div
-      drag={isTop ? 'x' : false}
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.9}
-      onDragEnd={isTop ? handleDragEnd : undefined}
-      animate={isTop ? controls : { scale: peekScale, y: peekY, opacity: 1 }}
-      initial={isTop ? { scale: 1, y: 0, opacity: 1 } : { scale: peekScale, y: peekY, opacity: 1 }}
-      style={
-        isTop
-          ? {
-              x,
-              rotate,
-              zIndex: 30 - stackIndex,
-              position: 'absolute',
-              inset: 0,
-              cursor: 'grab',
-              touchAction: 'none',
-            }
-          : { zIndex: 30 - stackIndex, position: 'absolute', inset: 0 }
-      }
-      transition={{ duration: 0.25 }}
+    <Link
+      href={href}
+      style={{
+        textDecoration: 'none',
+        display: 'block',
+        animationName: 'bb-card-in',
+        animationDuration: '0.3s',
+        animationTimingFunction: 'ease',
+        animationFillMode: 'both',
+        animationDelay: `${Math.min(index % 12, 11) * 40}ms`,
+      }}
     >
-      {/* Card shell */}
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          background: gradient,
-          borderRadius: 24,
+          borderRadius: 14,
           overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: isTop ? '0 32px 80px rgba(0,0,0,0.6)' : '0 8px 24px rgba(0,0,0,0.4)',
-          position: 'relative',
-          userSelect: 'none',
+          background: companion.gradient,
+          border: '1px solid #1c2333',
+          cursor: 'pointer',
+          transition: 'border-color 0.15s, transform 0.15s',
         }}
-        onMouseEnter={isTop ? prefetchProfile : undefined}
-        onClick={
-          isTop
-            ? () => {
-                if (didDragRef.current) {
-                  didDragRef.current = false
-                  return
-                }
-                openModal(companion.id)
-              }
-            : undefined
-        }
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLElement).style.borderColor = `${accentColor}55`
+          ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLElement).style.borderColor = '#1c2333'
+          ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+        }}
       >
         {/* Photo */}
-        {companion.primaryPhotoUrl && (
-          <Image
-            src={companion.primaryPhotoUrl}
-            alt={companion.name ?? ''}
-            fill
-            style={{ objectFit: 'cover', objectPosition: 'top' }}
-            sizes="(max-width: 768px) 100vw, 50vw"
-            draggable={false}
-          />
-        )}
-
-        {/* Bottom gradient */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(to top, rgba(7,9,15,0.95) 0%, rgba(7,9,15,0.4) 45%, transparent 70%)',
-          }}
-        />
-
-        {/* Rose glow — right swipe */}
-        {isTop && (
-          <motion.div
+        <div style={{ position: 'relative', aspectRatio: '3/4', background: companion.gradient }}>
+          {companion.primaryPhotoUrl && (
+            <Image
+              src={companion.primaryPhotoUrl}
+              alt={companion.name ?? 'Companion'}
+              fill
+              style={{ objectFit: 'cover', objectPosition: 'top' }}
+              sizes="(max-width: 480px) 50vw, (max-width: 960px) 25vw, 200px"
+            />
+          )}
+          <div
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(135deg, rgba(232,96,122,0.35) 0%, transparent 60%)',
-              opacity: roseOpacity,
-              pointerEvents: 'none',
+              background: 'linear-gradient(to top, rgba(7,9,15,0.9) 0%, transparent 55%)',
             }}
           />
-        )}
-
-        {/* Skip tint — left swipe */}
-        {isTop && (
-          <motion.div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(225deg, rgba(100,110,130,0.35) 0%, transparent 60%)',
-              opacity: skipOpacity,
-              pointerEvents: 'none',
-            }}
-          />
-        )}
-
-        {/* Like / Nope badge */}
-        {isTop && (
-          <>
-            <motion.div
-              style={{
-                position: 'absolute',
-                top: 28,
-                left: 24,
-                padding: '8px 18px',
-                borderRadius: 8,
-                border: '3px solid #e8607a',
-                color: '#e8607a',
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: 2,
-                opacity: roseOpacity,
-                transform: 'rotate(-15deg)',
-                pointerEvents: 'none',
-              }}
-            >
-              LIKE
-            </motion.div>
-            <motion.div
-              style={{
-                position: 'absolute',
-                top: 28,
-                right: 24,
-                padding: '8px 18px',
-                borderRadius: 8,
-                border: '3px solid #6b7280',
-                color: '#6b7280',
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: 2,
-                opacity: skipOpacity,
-                transform: 'rotate(15deg)',
-                pointerEvents: 'none',
-              }}
-            >
-              NOPE
-            </motion.div>
-          </>
-        )}
-
-        {/* Verified + session modality badge */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
-            display: 'flex',
-            gap: 6,
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-          }}
-        >
           {companion.isVerified && (
-            <span
-              style={{
-                fontSize: 10,
-                padding: '3px 10px',
-                borderRadius: 999,
-                color: '#c9a96e',
-                background: 'rgba(201,169,110,0.15)',
-                border: '1px solid rgba(201,169,110,0.35)',
-              }}
-            >
-              ✦ Verified
-            </span>
+            <div style={{ position: 'absolute', top: 8, right: 8 }}>
+              <CheckCircle size={14} color="#c9a96e" fill="rgba(201,169,110,0.2)" />
+            </div>
           )}
-          {companion.sessionModality === 'online' && (
-            <span
-              style={{
-                fontSize: 10,
-                padding: '3px 10px',
-                borderRadius: 999,
-                color: '#60a5fa',
-                background: 'rgba(96,165,250,0.12)',
-                border: '1px solid rgba(96,165,250,0.3)',
-              }}
-            >
-              Online
-            </span>
-          )}
-          {companion.sessionModality === 'both' && (
-            <span
-              style={{
-                fontSize: 10,
-                padding: '3px 10px',
-                borderRadius: 999,
-                color: '#34d399',
-                background: 'rgba(52,211,153,0.12)',
-                border: '1px solid rgba(52,211,153,0.3)',
-              }}
-            >
-              In person + Online
-            </span>
-          )}
-        </div>
-
-        {/* Bottom info */}
-        <div
-          style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px 28px' }}
-        >
-          {/* Dots indicator */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-            {companion.tags.slice(0, 3).map((_: string, i: number) => (
-              <div
-                key={i}
-                style={{
-                  width: i === 0 ? 20 : 6,
-                  height: 4,
-                  borderRadius: 2,
-                  background: i === 0 ? '#e8607a' : 'rgba(255,255,255,0.3)',
-                  transition: 'width 0.2s',
-                }}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-            <span
+          <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10 }}>
+            <p
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: 26,
+                fontSize: 15,
                 color: '#eeeef0',
-                fontWeight: 600,
+                marginBottom: 2,
+                lineHeight: 1.2,
               }}
             >
               {companion.name}
-            </span>
-            {companion.age && (
-              <span style={{ fontSize: 20, color: '#9ca3af', fontWeight: 300 }}>
-                {companion.age}
-              </span>
-            )}
-          </div>
-
-          {/* Location row — city + distance, always prominent */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-            <MapPin size={12} color="#e8607a" strokeWidth={2} />
+              {companion.age ? `, ${companion.age}` : ''}
+            </p>
             {companion.city && (
-              <span style={{ fontSize: 13, color: '#eeeef0', fontWeight: 500 }}>
-                {companion.city}
-              </span>
-            )}
-            {distanceText && (
-              <>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>·</span>
-                <span style={{ fontSize: 12, color: '#9ca3af' }}>{distanceText}</span>
-              </>
-            )}
-            {companion.minPrice && (
-              <>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>·</span>
-                <span style={{ fontSize: 12, color: '#9ca3af' }}>{companion.minPrice}/eve</span>
-              </>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <MapPin size={10} color={accentColor} />
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>{companion.city}</span>
+              </div>
             )}
           </div>
+        </div>
 
+        {/* Info strip */}
+        <div style={{ padding: '10px 12px' }}>
           {companion.vibe && (
             <p
               style={{
-                fontSize: 13,
-                color: '#c4c8d0',
-                marginBottom: 10,
+                fontSize: 11,
+                color: '#6b7280',
                 lineHeight: 1.4,
-                maxWidth: 280,
+                marginBottom: companion.minPrice ? 6 : 0,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
               }}
             >
               {companion.vibe}
             </p>
           )}
-
-          {companion.tags.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {companion.tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  style={{
-                    fontSize: 10,
-                    padding: '3px 10px',
-                    borderRadius: 999,
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#9ca3af',
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+          {companion.minPrice && (
+            <span
+              style={{
+                fontSize: 11,
+                color: accentColor,
+                background: `${accentColor}12`,
+                border: `1px solid ${accentColor}30`,
+                borderRadius: 999,
+                padding: '2px 8px',
+                display: 'inline-block',
+              }}
+            >
+              from {companion.minPrice}
+            </span>
           )}
         </div>
       </div>
-    </motion.div>
+    </Link>
   )
-}
+})
 
-// ─── Action Button ──────────────────────────────────────────────────────────────
+// ── CommunityPicker ───────────────────────────────────────────────────────────
 
-function ActionBtn({
-  onClick,
-  size,
-  children,
-  color,
-  bg,
-  border: borderStyle,
-}: {
-  onClick: () => void
-  size: number
-  children: React.ReactNode
-  color: string
-  bg: string
-  border: string
-}) {
-  return (
-    <motion.button
-      onClick={onClick}
-      whileTap={{ scale: 0.88 }}
-      whileHover={{ scale: 1.08 }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        border: borderStyle,
-        background: bg,
-        color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        flexShrink: 0,
-        boxShadow: `0 8px 24px ${bg === 'transparent' ? 'rgba(0,0,0,0.3)' : bg.replace(')', ',0.4)').replace('rgb', 'rgba')}`,
-      }}
-    >
-      {children}
-    </motion.button>
-  )
-}
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
-
-export default function CompanionsPage() {
-  const {
-    latitude,
-    longitude,
-    loading: geoLoading,
-    permission,
-    isSupported,
-    requestLocation,
-  } = useGeolocation()
-  const hasLocation = latitude !== null && longitude !== null
-
-  const [radiusKm, setRadiusKm] = useState<number | null>(100)
-  const [sessionKey, setSessionKey] = useState(0)
-
-  // When worldwide selected, disable distance scoring (pass null lat/lng)
-  const effectiveLat = radiusKm === null ? null : latitude
-  const effectiveLng = radiusKm === null ? null : longitude
-
-  const { companions, isLoading, isFetchingMore, hasNextPage, fetchNextPage, error } =
-    useDiscoverCompanions({
-      lat: effectiveLat,
-      lng: effectiveLng,
-      radius: radiusKm ?? 100,
-      sessionKey,
-    })
-
-  const [cursor, setCursor] = useState(0)
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
-
-  const currentCompanions = companions.slice(cursor)
-  const topThree = currentCompanions.slice(0, 3)
-
-  const advance = useCallback(
-    (dir: 'left' | 'right') => {
-      setCursor((c) => {
-        const next = c + 1
-        // Pre-fetch next page when we get near the end
-        if (companions.length - next <= 4 && hasNextPage && !isFetchingMore) {
-          fetchNextPage()
-        }
-        return next
-      })
-      if (dir === 'right')
-        setLikedIds((ids) => {
-          const s = new Set(ids)
-          s.add(companions[cursor]?.id ?? '')
-          return s
-        })
-    },
-    [companions, cursor, hasNextPage, isFetchingMore, fetchNextPage]
-  )
-
-  const handleLike = useCallback(() => advance('right'), [advance])
-  const handleSkip = useCallback(() => advance('left'), [advance])
-
-  const isEmpty = !isLoading && currentCompanions.length === 0
-  const showStack = !isLoading && topThree.length > 0
-
+function CommunityPicker({ onPick }: { onPick: (c: string) => Promise<void> }) {
   return (
     <div
       style={{
-        position: 'fixed',
-        inset: 0,
+        minHeight: '100vh',
         background: '#07090f',
         display: 'flex',
-        flexDirection: 'column',
-        paddingTop: 75,
-        zIndex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 20px',
       }}
     >
-      {/* Noise texture */}
-      <div
-        className="fixed inset-0 pointer-events-none z-[1000] opacity-60"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 40% at 50% 60%, rgba(232,96,122,0.05) 0%, transparent 70%)',
-        }}
-      />
-
-      {/* ── Status bar ────────────────────────────────────────────────────────── */}
-      <div style={{ padding: '12px 20px 0', flexShrink: 0, zIndex: 2 }}>
-        {/* Location banner — persists until coords are fetched */}
-        {radiusKm !== null && !hasLocation && isSupported && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 16px',
-              borderRadius: 12,
-              background: 'rgba(232,96,122,0.07)',
-              border: '1px solid rgba(232,96,122,0.2)',
-              marginBottom: 10,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <MapPin size={13} color="#e8607a" />
-              <span style={{ fontSize: 12, color: '#6b7280' }}>
-                {permission === 'denied'
-                  ? 'Enable location in browser settings to see nearby companions'
-                  : permission === 'granted' || geoLoading
-                    ? 'Detecting your city…'
-                    : 'Share your location to find companions near you'}
-              </span>
-            </div>
-            {permission !== 'denied' && permission !== 'granted' && (
-              <button
-                onClick={requestLocation}
-                disabled={geoLoading}
-                style={{
-                  fontSize: 12,
-                  padding: '10px 16px',
-                  borderRadius: 999,
-                  minHeight: 44,
-                  background: 'rgba(232,96,122,0.12)',
-                  border: '1px solid rgba(232,96,122,0.35)',
-                  color: '#e8607a',
-                  cursor: geoLoading ? 'default' : 'pointer',
-                  flexShrink: 0,
-                  opacity: geoLoading ? 0.6 : 1,
-                }}
-              >
-                {geoLoading ? 'Locating…' : 'Allow →'}
-              </button>
-            )}
-            {(permission === 'granted' || geoLoading) && (
-              <span style={{ fontSize: 12, color: '#e8607a', flexShrink: 0 }}>●</span>
-            )}
-          </motion.div>
-        )}
-
-        {/* Stats row */}
-        <div
+      <div style={{ textAlign: 'center', maxWidth: 440 }}>
+        <p
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 10,
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 26,
+            color: '#eeeef0',
+            marginBottom: 8,
+            lineHeight: 1.3,
           }}
         >
-          <div>
-            <h1
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 20,
-                color: '#eeeef0',
-                marginBottom: 2,
-              }}
+          Who are you looking{' '}
+          <em style={{ fontStyle: 'italic', color: '#e8607a' }}>for?</em>
+        </p>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 36 }}>
+          We&apos;ll remember your preference.
+        </p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {(Object.entries(COMMUNITY_CONFIG) as [Community, { label: string; accentColor: string }][]).map(
+            ([key, cfg]) => (
+              <button
+                key={key}
+                onClick={() => onPick(key)}
+                style={{
+                  padding: '14px 30px',
+                  borderRadius: 12,
+                  background: `${cfg.accentColor}10`,
+                  border: `1px solid ${cfg.accentColor}40`,
+                  color: cfg.accentColor,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s, transform 0.1s',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}20`
+                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}10`
+                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+                }}
+              >
+                {cfg.label}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function GridSkeleton() {
+  return (
+    <div
+      style={{
+        maxWidth: 960,
+        margin: '0 auto',
+        padding: '0 20px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+        gap: 16,
+      }}
+    >
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            borderRadius: 14,
+            aspectRatio: '3/4',
+            background: '#0d1117',
+            border: '1px solid #1c2333',
+            animationName: 'bb-pulse',
+            animationDuration: '1.5s',
+            animationTimingFunction: 'ease',
+            animationIterationCount: 'infinite',
+            animationDelay: `${i * 50}ms`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ── Shared select wrapper style ───────────────────────────────────────────────
+
+const SELECT_BASE: React.CSSProperties = {
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  background: '#0d1117',
+  border: '1px solid #1c2333',
+  borderRadius: 10,
+  color: '#eeeef0',
+  fontSize: 13,
+  padding: '8px 36px 8px 12px',
+  cursor: 'pointer',
+  outline: 'none',
+  fontFamily: "'DM Sans', sans-serif",
+  minWidth: 150,
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
+export default function CompanionsPage() {
+  const { community, loading: communityLoading, needsPicker, bindCommunity } = useDeviceCommunity()
+  const router = useRouter()
+  const geo = useGeolocation()
+
+  const [cities, setCities]             = useState<{ slug: string; name: string }[]>([])
+  const [selectedCity, setSelectedCity] = useState('')          // '' = all cities
+  const [ageRangeIndex, setAgeRangeIndex] = useState(0)
+  const [geoSlug, setGeoSlug]           = useState<string | null>(null)  // detected city slug
+  const geoCheckedRef                   = useRef(false)         // ref avoids effect deps
+  const sentinelRef                     = useRef<HTMLDivElement>(null)
+
+  const cfg =
+    community && community in COMMUNITY_CONFIG
+      ? COMMUNITY_CONFIG[community as Community]
+      : null
+
+  const selectedAge = AGE_RANGES[ageRangeIndex]
+
+  const { companions, isLoading: isLoadingCards, hasNextPage, fetchNextPage, isFetchingMore } =
+    useDiscoverCompanions({
+      lat: null,
+      lng: null,
+      community: community ?? null,
+      minAge: selectedAge.min,
+      maxAge: selectedAge.max,
+      enabled: !!community,   // don't fire until community is resolved
+    })
+
+  // Fetch city list once community is known
+  useEffect(() => {
+    if (!community) return
+    fetch(`/api/cities?community=${community}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setCities)
+      .catch(() => {})
+  }, [community])
+
+  // Auto-detect nearest city — pre-select in dropdown, don't auto-navigate
+  useEffect(() => {
+    if (geoCheckedRef.current) return
+    if (!community) return
+    if (geo.latitude === null || geo.longitude === null) return
+
+    geoCheckedRef.current = true   // ref — doesn't trigger re-render
+
+    fetch(`/api/companions/nearby-city?lat=${geo.latitude}&lng=${geo.longitude}&community=${community}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { slug: string | null; name: string | null } | null) => {
+        if (data?.slug) {
+          setGeoSlug(data.slug)
+          setSelectedCity(data.slug)  // pre-select in dropdown — user navigates manually
+        }
+      })
+      .catch(() => {})
+  }, [geo.latitude, geo.longitude, community])
+
+  // IntersectionObserver — infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingMore) fetchNextPage()
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingMore, fetchNextPage])
+
+  function handleCityChange(slug: string) {
+    setSelectedCity(slug)
+    if (slug && community) {
+      router.push(`/${community}/${slug}`)
+    }
+  }
+
+  // ── Render states ──
+
+  if (communityLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#07090f', paddingTop: 76 }}>
+        <style>{`@keyframes bb-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px 24px' }}>
+          <div
+            style={{
+              width: 220,
+              height: 30,
+              borderRadius: 8,
+              background: '#1c2333',
+              marginBottom: 24,
+              animationName: 'bb-pulse',
+              animationDuration: '1.5s',
+              animationTimingFunction: 'ease',
+              animationIterationCount: 'infinite',
+            }}
+          />
+        </div>
+        <GridSkeleton />
+      </div>
+    )
+  }
+
+  if (needsPicker) return <CommunityPicker onPick={bindCommunity} />
+
+  if (!community || !cfg) return null
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#07090f', paddingTop: 76, paddingBottom: 80 }}>
+      <style>{`
+        @keyframes bb-card-in { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes bb-pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .bb-sel:focus { border-color: ${cfg.accentColor}80 !important; outline: none; }
+        .bb-sel:hover { border-color: #374151 !important; }
+        .bb-sel option { background: #111620; }
+      `}</style>
+
+      {/* ── Header ── */}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px 24px' }}>
+        <h1
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(22px, 4vw, 32px)',
+            color: '#eeeef0',
+            marginBottom: 6,
+            lineHeight: 1.25,
+          }}
+        >
+          Browse{' '}
+          <em style={{ fontStyle: 'italic', color: cfg.accentColor }}>{cfg.label}</em>{' '}
+          Companions
+        </h1>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+          EU-hosted · GDPR compliant · Adults 18+ only
+        </p>
+
+        {/* ── Filters ── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+
+          {/* City dropdown */}
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <select
+              className="bb-sel"
+              style={SELECT_BASE}
+              value={selectedCity}
+              onChange={(e) => handleCityChange(e.target.value)}
             >
-              {radiusKm === null ? 'Worldwide' : hasLocation ? 'Near you' : 'Discover'}
-            </h1>
-            <p style={{ fontSize: 11, color: '#6b7280' }}>
-              {isLoading
-                ? 'Finding companions…'
-                : isEmpty
-                  ? "You've seen everyone"
-                  : `${currentCompanions.length} companion${currentCompanions.length !== 1 ? 's' : ''} to explore`}
-            </p>
+              <option value="">
+                {geo.loading ? 'Detecting city…' : 'All cities'}
+              </option>
+              {/* Detected city at top if it's not already in the fetched list */}
+              {geoSlug && !cities.find((c) => c.slug === geoSlug) && (
+                <option value={geoSlug}>
+                  {geoSlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())} (near you)
+                </option>
+              )}
+              {cities.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}{geoSlug === c.slug ? ' (near you)' : ''}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              color="#6b7280"
+              style={{ position: 'absolute', right: 10, pointerEvents: 'none' }}
+            />
           </div>
-          {/* Like counter */}
-          {likedIds.size > 0 && (
-            <div
+
+          {/* Age dropdown */}
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <select
+              className="bb-sel"
+              style={{ ...SELECT_BASE, minWidth: 120 }}
+              value={ageRangeIndex}
+              onChange={(e) => setAgeRangeIndex(Number(e.target.value))}
+            >
+              {AGE_RANGES.map((r, i) => (
+                <option key={i} value={i}>{r.label}</option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              color="#6b7280"
+              style={{ position: 'absolute', right: 10, pointerEvents: 'none' }}
+            />
+          </div>
+
+          {/* "Near me" button — only when geo not yet asked */}
+          {geo.permission === 'prompt' && !geo.loading && (
+            <button
+              onClick={geo.requestLocation}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                color: cfg.accentColor,
+                background: `${cfg.accentColor}10`,
+                border: `1px solid ${cfg.accentColor}30`,
+                borderRadius: 8,
+                padding: '8px 13px',
+                cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}20` }}
+              onMouseLeave={(e) => { ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}10` }}
+            >
+              <Navigation size={12} />
+              Near me
+            </button>
+          )}
+
+          {/* Active filter pills */}
+          {ageRangeIndex !== 0 && (
+            <button
+              onClick={() => setAgeRangeIndex(0)}
+              style={{
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
                 fontSize: 12,
-                color: '#e8607a',
+                color: '#9ca3af',
+                background: '#0d1117',
+                border: '1px solid #1c2333',
+                borderRadius: 8,
+                padding: '8px 13px',
+                cursor: 'pointer',
+                fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              <Heart size={12} fill="#e8607a" />
-              <span>{likedIds.size}</span>
-            </div>
+              {AGE_RANGES[ageRangeIndex].label} ✕
+            </button>
           )}
-        </div>
-
-        {/* Radius filter pills */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 6,
-            overflowX: 'auto',
-            paddingBottom: 4,
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch' as any,
-          }}
-        >
-          {RADIUS_OPTIONS.map((opt) => {
-            const isActive = radiusKm === opt.value
-            return (
-              <button
-                key={String(opt.value)}
-                onClick={() => {
-                  setRadiusKm(opt.value)
-                  setCursor(0)
-                  setLikedIds(new Set())
-                  setSessionKey((k) => k + 1)
-                }}
-                style={{
-                  flexShrink: 0,
-                  fontSize: 12,
-                  padding: '10px 14px',
-                  borderRadius: 999,
-                  minHeight: 44,
-                  border: isActive ? '1px solid rgba(232,96,122,0.5)' : '1px solid #1c2333',
-                  background: isActive ? 'rgba(232,96,122,0.12)' : 'transparent',
-                  color: isActive ? '#e8607a' : '#6b7280',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                {opt.value === null && <Globe size={10} />}
-                {opt.label}
-              </button>
-            )
-          })}
         </div>
       </div>
 
-      {/* ── Swipe area ────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '12px 20px',
-          zIndex: 2,
-          minHeight: 0,
-        }}
-      >
-        {/* Loading skeleton */}
-        {isLoading && (
+      {/* ── Grid ── */}
+      {isLoadingCards ? (
+        <GridSkeleton />
+      ) : companions.length === 0 ? (
+        <div style={{ maxWidth: 960, margin: '40px auto', padding: '0 20px', textAlign: 'center' }}>
           <div
             style={{
-              width: '100%',
-              maxWidth: 380,
-              aspectRatio: '3/4',
-              borderRadius: 24,
-              background: 'linear-gradient(145deg,#111620,#161d2a)',
+              padding: '48px 32px',
+              borderRadius: 16,
+              background: '#0d1117',
               border: '1px solid #1c2333',
-              position: 'relative',
-              overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)',
-                animation: 'shimmer 1.4s ease-in-out infinite',
-              }}
-            />
-            <div style={{ position: 'absolute', bottom: 28, left: 24, right: 24 }}>
-              <div
-                style={{
-                  height: 28,
-                  width: '60%',
-                  borderRadius: 6,
-                  background: '#1c2333',
-                  marginBottom: 10,
-                }}
-              />
-              <div
-                style={{
-                  height: 13,
-                  width: '40%',
-                  borderRadius: 4,
-                  background: '#1c2333',
-                  marginBottom: 8,
-                }}
-              />
-              <div style={{ display: 'flex', gap: 6 }}>
-                {[60, 50, 70].map((w, i) => (
-                  <div
-                    key={i}
-                    style={{ height: 20, width: w, borderRadius: 999, background: '#1c2333' }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {isEmpty && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            style={{ textAlign: 'center', maxWidth: 320 }}
-          >
-            <div
-              style={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                margin: '0 auto 20px',
-                background: 'rgba(232,96,122,0.08)',
-                border: '1px solid rgba(232,96,122,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <RefreshCw size={28} color="#e8607a" />
-            </div>
             <p
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -759,114 +535,110 @@ export default function CompanionsPage() {
                 marginBottom: 10,
               }}
             >
-              You&apos;ve explored everyone nearby
+              No companions match these filters.
             </p>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20, lineHeight: 1.6 }}>
-              More companions join every day. Come back soon, or expand your search radius.
+            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+              Try a different age range or browse all cities.
             </p>
-            <button
-              onClick={() => {
-                setSessionKey((k) => k + 1)
-                setCursor(0)
-                setLikedIds(new Set())
-              }}
-              style={{
-                fontSize: 13,
-                padding: '10px 24px',
-                borderRadius: 10,
-                background: 'rgba(232,96,122,0.1)',
-                border: '1px solid rgba(232,96,122,0.3)',
-                color: '#e8607a',
-                cursor: 'pointer',
-              }}
-            >
-              Start over
-            </button>
-          </motion.div>
-        )}
-
-        {/* Error state */}
-        {error && !isLoading && (
-          <div style={{ textAlign: 'center', color: '#6b7280', fontSize: 13 }}>
-            Something slipped away. Try again.
+            {ageRangeIndex !== 0 && (
+              <button
+                onClick={() => setAgeRangeIndex(0)}
+                style={{
+                  fontSize: 13,
+                  padding: '10px 20px',
+                  borderRadius: 10,
+                  background: `${cfg.accentColor}12`,
+                  border: `1px solid ${cfg.accentColor}35`,
+                  color: cfg.accentColor,
+                  cursor: 'pointer',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                Clear age filter
+              </button>
+            )}
           </div>
-        )}
-
-        {/* Card stack */}
-        {showStack && (
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 400,
-              position: 'relative',
-              aspectRatio: '3/4.2',
-            }}
-          >
-            <AnimatePresence mode="sync">
-              {topThree.map((companion, i) => (
-                <SwipeCard
-                  key={`${companion.id}-${sessionKey}`}
-                  companion={companion}
-                  stackIndex={i}
-                  onLike={handleLike}
-                  onSkip={handleSkip}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
-
-      {/* ── Action row ────────────────────────────────────────────────────────── */}
-      {showStack && (
+        </div>
+      ) : (
         <div
           style={{
-            padding: '16px 24px',
-            paddingBottom: 'calc(64px + env(safe-area-inset-bottom) + 16px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 24,
-            flexShrink: 0,
-            zIndex: 2,
+            maxWidth: 960,
+            margin: '0 auto',
+            padding: '0 20px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+            gap: 16,
           }}
         >
-          {/* Skip */}
-          <ActionBtn
-            onClick={handleSkip}
-            size={60}
-            color="#9ca3af"
-            bg="rgba(28,35,51,0.9)"
-            border="1px solid #1c2333"
-          >
-            <X size={22} strokeWidth={2.5} />
-          </ActionBtn>
-
-          {/* Save / Super like */}
-          <ActionBtn
-            onClick={() => {}} // TODO: save to bookmarks
-            size={52}
-            color="#c9a96e"
-            bg="rgba(201,169,110,0.08)"
-            border="1px solid rgba(201,169,110,0.3)"
-          >
-            <Star size={18} fill="rgba(201,169,110,0.2)" />
-          </ActionBtn>
-
-          {/* Like */}
-          <ActionBtn onClick={handleLike} size={60} color="#fff" bg="#e8607a" border="none">
-            <Heart size={22} fill="white" />
-          </ActionBtn>
+          {companions.map((c, i) => (
+            <CompanionCard
+              key={c.id}
+              companion={c}
+              accentColor={cfg.accentColor}
+              index={i}
+            />
+          ))}
         </div>
       )}
 
-      {/* Shimmer keyframe */}
-      <style>{`
-        @keyframes shimmer {
-          0%   { transform: translateX(-100%) }
-          100% { transform: translateX(100%) }
-        }
-      `}</style>
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} style={{ height: 1, marginTop: 32 }} />
+      {isFetchingMore && (
+        <p style={{ textAlign: 'center', padding: '16px 0', fontSize: 13, color: '#4b5563' }}>
+          Loading more…
+        </p>
+      )}
+
+      {/* Companion join CTA */}
+      {!isLoadingCards && (
+        <div style={{ maxWidth: 960, margin: '48px auto 0', padding: '0 20px' }}>
+          <div
+            style={{
+              padding: '24px',
+              borderRadius: 16,
+              background: '#0d1117',
+              border: `1px solid ${cfg.accentColor}22`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 17,
+                  color: '#eeeef0',
+                  marginBottom: 4,
+                }}
+              >
+                Are you a companion?
+              </p>
+              <p style={{ fontSize: 13, color: '#6b7280' }}>
+                Join BlushBite — go live in minutes, no approval wait.
+              </p>
+            </div>
+            <a
+              href="https://blushbite.live"
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                padding: '11px 22px',
+                borderRadius: 10,
+                background: cfg.accentColor,
+                color: '#fff',
+                textDecoration: 'none',
+                flexShrink: 0,
+                display: 'inline-block',
+              }}
+            >
+              Join BlushBite →
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

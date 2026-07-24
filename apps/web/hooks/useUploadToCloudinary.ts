@@ -87,6 +87,7 @@ export function useUploadToCloudinary(options: UseUploadToCloudinaryOptions = {}
 
         if (retryCountRef.current < MAX_RETRIES) {
           retryCountRef.current += 1
+          // eslint-disable-next-line no-console
           console.warn(`[Upload] Retrying (${retryCountRef.current}/${MAX_RETRIES})`)
           await new Promise((resolve) =>
             setTimeout(resolve, Math.pow(2, retryCountRef.current) * 1000)

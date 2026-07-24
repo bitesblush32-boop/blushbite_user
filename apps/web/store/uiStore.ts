@@ -22,6 +22,14 @@ export interface ProfileViewerStory {
   createdAt: string
 }
 
+// ── Dreamer session (lightweight, shared across app) ───────────────────────
+
+export interface DreamerUser {
+  id: string
+  email: string
+  alias: string | null
+}
+
 // ── UIStore ────────────────────────────────────────────────────────────────
 
 interface UIStore {
@@ -38,6 +46,17 @@ interface UIStore {
   openBookingModal: () => void
   closeBookingModal: () => void
   setAvatarUrl: (url: string | null) => void
+
+  // Dreamer auth
+  dreamer: DreamerUser | null
+  dreamerLoading: boolean
+  setDreamer: (d: DreamerUser | null) => void
+  setDreamerLoading: (v: boolean) => void
+  // Auth modal
+  authModalOpen: boolean
+  authModalIntent: 'contact' | 'interact' | null
+  openAuthModal: (intent?: 'contact' | 'interact') => void
+  closeAuthModal: () => void
 
   // Confessions feed
   activeStoryId: string | null
@@ -81,6 +100,16 @@ export const useUIStore = create<UIStore>((set, get) => ({
   closeBookingModal: () => set({ bookingModalOpen: false }),
 
   setAvatarUrl: (url) => set({ avatarUrl: url }),
+
+  // Dreamer auth
+  dreamer: null,
+  dreamerLoading: true,
+  setDreamer: (d) => set({ dreamer: d }),
+  setDreamerLoading: (v) => set({ dreamerLoading: v }),
+  authModalOpen: false,
+  authModalIntent: null,
+  openAuthModal: (intent) => set({ authModalOpen: true, authModalIntent: intent ?? null }),
+  closeAuthModal: () => set({ authModalOpen: false, authModalIntent: null }),
 
   // Confessions
   activeStoryId: null,

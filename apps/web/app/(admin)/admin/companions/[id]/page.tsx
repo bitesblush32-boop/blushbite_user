@@ -911,7 +911,7 @@ export default function AdminCompanionDetailPage() {
                       className="text-[13px] text-[#eeeef0] italic"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
-                      "{profile.tagline}"
+                      &ldquo;{profile.tagline}&rdquo;
                     </p>
                   )}
                   {profile.bio && (

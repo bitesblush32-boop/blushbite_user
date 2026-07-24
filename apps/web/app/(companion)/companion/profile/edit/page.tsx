@@ -1707,7 +1707,7 @@ export default function EditProfilePage() {
               }}
             />
             <p style={{ fontSize: 13, color: '#c9a96e' }}>
-              Verification under review. We'll notify you by email.
+              Verification under review. We&apos;ll notify you by email.
             </p>
           </div>
         )}

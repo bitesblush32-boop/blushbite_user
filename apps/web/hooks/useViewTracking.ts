@@ -50,9 +50,11 @@ export function useViewTracking(minViewDuration = 2000) {
   )
 
   useEffect(() => {
+    const currentTimers = timers.current
+    const currentObservers = observers.current
     return () => {
-      Array.from(timers.current.values()).forEach((t) => clearTimeout(t))
-      Array.from(observers.current.values()).forEach((o) => o.disconnect())
+      Array.from(currentTimers.values()).forEach((t) => clearTimeout(t))
+      Array.from(currentObservers.values()).forEach((o) => o.disconnect())
     }
   }, [])
 

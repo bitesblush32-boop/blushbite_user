@@ -157,7 +157,7 @@ export default function TermsPage() {
         {/* 4. Companion Verification */}
         <Section title="4. Companion Verification Requirement">
           <P>
-            All companions ("The Dream") must complete identity verification via our third-party
+            All companions (&ldquo;The Dream&rdquo;) must complete identity verification via our third-party
             provider, Didit (didit.me), before their profile is made live on the platform.
             Verification includes submission of a government-issued photo ID and a liveness selfie
             check.
@@ -178,7 +178,7 @@ export default function TermsPage() {
           <UL
             items={[
               <>Impersonate another person or entity.</>,
-              <>Share another person's personal information without their explicit consent.</>,
+              <>Share another person&apos;s personal information without their explicit consent.</>,
               <>Solicit or post illegal content of any kind.</>,
               <>
                 Use the platform in jurisdictions where such platforms are prohibited (see Section
@@ -211,7 +211,7 @@ export default function TermsPage() {
         {/* 7. User-Generated Content (UGC) */}
         <Section title="7. User-Generated Content (UGC)">
           <P>
-            Both companions ("The Dream") and users ("The Dreamer") may submit stories and
+            Both companions (&ldquo;The Dream&rdquo;) and users (&ldquo;The Dreamer&rdquo;) may submit stories and
             confessions to the platform. The following rules apply to all UGC:
           </P>
           <UL

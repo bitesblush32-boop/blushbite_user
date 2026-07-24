@@ -1,15 +1,17 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import dynamic from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 import { Camera, LayoutGrid, Heart, Bookmark, BookMarked, Settings2, MapPin } from 'lucide-react'
 
-const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), { ssr: false })
+const LocationPicker = nextDynamic(() => import('@/components/ui/LocationPicker'), { ssr: false })
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
 import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollectionCard'
 import { LikedGrid } from '@/components/ui/LikedGrid'
@@ -1068,7 +1070,7 @@ export default function CompanionProfilePage() {
             ) : locationStatus === 'failed' ? (
               <div className="flex flex-col items-center gap-[10px]">
                 <span style={{ fontSize: 11, color: '#4b5563' }}>
-                  We couldn't find your location
+                  We couldn&apos;t find your location
                 </span>
                 <div className="flex items-center gap-2">
                   <button

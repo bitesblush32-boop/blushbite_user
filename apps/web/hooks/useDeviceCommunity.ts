@@ -13,12 +13,29 @@ interface DeviceCommunity {
   bindCommunity: (chosen: string) => Promise<void>
 }
 
-export function useDeviceCommunity(): DeviceCommunity {
-  const [community, setCommunity] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
+  const forced = forceCommunity && VALID.has(forceCommunity) ? forceCommunity : undefined
+
+  const [community, setCommunity] = useState<string | null>(forced ?? null)
+  const [loading, setLoading] = useState(!forced)
   const [needsPicker, setNeedsPicker] = useState(false)
 
   useEffect(() => {
+    if (forced) {
+      // Bind device to this community in the background — no UI needed
+      try { localStorage.setItem(LS_KEY, forced) } catch { /* ignore */ }
+      getFingerprint()
+        .then((fp) =>
+          fetch('/api/device/bind', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fingerprint_hash: fp, community: forced }),
+          })
+        )
+        .catch(() => { /* best effort */ })
+      return
+    }
+
     let cancelled = false
 
     async function resolve() {
@@ -59,7 +76,7 @@ export function useDeviceCommunity(): DeviceCommunity {
 
     resolve()
     return () => { cancelled = true }
-  }, [])
+  }, [forced])
 
   const bindCommunity = useCallback(async (chosen: string) => {
     if (!VALID.has(chosen)) return
