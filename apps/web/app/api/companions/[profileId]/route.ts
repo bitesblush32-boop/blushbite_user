@@ -39,31 +39,58 @@ function ageFromDob(dob: string | null): number | null {
 export async function GET(_req: NextRequest, { params }: { params: { profileId: string } }) {
   const { profileId } = params
 
-  const [profile] = await db
-    .select({
-      id: companionProfiles.id,
-      companion_id: companionProfiles.companion_id,
-      bio: companionProfiles.bio,
-      tagline: companionProfiles.tagline,
-      city: companionProfiles.city,
-      currency: companionProfiles.currency,
-      hourly_rate: companionProfiles.hourly_rate,
-      is_verified: companionProfiles.is_verified,
-      session_modality: companionProfiles.session_modality,
-      is_visible_to_users: companionProfiles.is_visible_to_users,
-      whatsapp_number: companionProfiles.whatsapp_number,
-      telegram_handle: companionProfiles.telegram_handle,
-    })
-    .from(companionProfiles)
-    .where(eq(companionProfiles.id, profileId))
-    .limit(1)
+  let profile: Awaited<ReturnType<typeof db.select<{
+    id: typeof companionProfiles.id
+    companion_id: typeof companionProfiles.companion_id
+    bio: typeof companionProfiles.bio
+    tagline: typeof companionProfiles.tagline
+    city: typeof companionProfiles.city
+    currency: typeof companionProfiles.currency
+    hourly_rate: typeof companionProfiles.hourly_rate
+    is_verified: typeof companionProfiles.is_verified
+    session_modality: typeof companionProfiles.session_modality
+    is_visible_to_users: typeof companionProfiles.is_visible_to_users
+    whatsapp_number: typeof companionProfiles.whatsapp_number
+    telegram_handle: typeof companionProfiles.telegram_handle
+  }>>>[0] | undefined
+
+  try {
+    ;[profile] = await db
+      .select({
+        id: companionProfiles.id,
+        companion_id: companionProfiles.companion_id,
+        bio: companionProfiles.bio,
+        tagline: companionProfiles.tagline,
+        city: companionProfiles.city,
+        currency: companionProfiles.currency,
+        hourly_rate: companionProfiles.hourly_rate,
+        is_verified: companionProfiles.is_verified,
+        session_modality: companionProfiles.session_modality,
+        is_visible_to_users: companionProfiles.is_visible_to_users,
+        whatsapp_number: companionProfiles.whatsapp_number,
+        telegram_handle: companionProfiles.telegram_handle,
+      })
+      .from(companionProfiles)
+      .where(eq(companionProfiles.id, profileId))
+      .limit(1)
+  } catch (err) {
+    console.error('[companions/profileId] DB error (profile lookup):', err)
+    return NextResponse.json({ error: 'database_error' }, { status: 500 })
+  }
 
   // Hidden until companion has a WhatsApp number (needed for the contact CTA)
   if (!profile || !profile.is_visible_to_users || !profile.whatsapp_number) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const [companionRow, photoRows, videoRows, sessionCardRows, vibeTagRows] = await Promise.all([
+  let companionRow: { id: string; name: string | null; date_of_birth: string | null } | null
+  let photoRows: { url: string; is_primary: boolean | null; sort_order: number | null }[]
+  let videoRows: { id: string; url: string; thumbnail_url: string | null; duration_seconds: number | null }[]
+  let sessionCardRows: { id: string; title: string; description: string | null; price: string | null; currency: string | null; session_type: string | null; duration_minutes: number | null }[]
+  let vibeTagRows: { name: string }[]
+
+  try {
+    ;[companionRow, photoRows, videoRows, sessionCardRows, vibeTagRows] = await Promise.all([
     db
       .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
       .from(companions)
@@ -128,7 +155,11 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
       .from(companionVibeTags)
       .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
       .where(eq(companionVibeTags.companion_profile_id, profileId)),
-  ])
+    ])
+  } catch (err) {
+    console.error('[companions/profileId] DB error (detail queries):', err)
+    return NextResponse.json({ error: 'database_error' }, { status: 500 })
+  }
 
   const primaryPhoto = photoRows.find((p) => p.is_primary)?.url ?? photoRows[0]?.url ?? null
   const currency = profile.currency ?? 'EUR'
