@@ -4,11 +4,18 @@ import { getCitySlugsForGender } from '@/lib/cityPage'
 const BASE_URL = 'https://blushbite.co'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [femaleCities, maleCities, shemaleCities] = await Promise.all([
-    getCitySlugsForGender('female'),
-    getCitySlugsForGender('male'),
-    getCitySlugsForGender('shemale'),
-  ])
+  let femaleCities: string[] = []
+  let maleCities: string[] = []
+  let shemaleCities: string[] = []
+  try {
+    ;[femaleCities, maleCities, shemaleCities] = await Promise.all([
+      getCitySlugsForGender('female'),
+      getCitySlugsForGender('male'),
+      getCitySlugsForGender('shemale'),
+    ])
+  } catch {
+    // DB not available at build time — city entries will be empty, sitemap populated at runtime
+  }
 
   const citiyEntries = (cities: string[], gender: string): MetadataRoute.Sitemap =>
     cities.map((city) => ({
