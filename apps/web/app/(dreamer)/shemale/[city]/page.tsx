@@ -8,8 +8,12 @@ export const dynamicParams = true
 type Props = { params: Promise<{ city: string }> }
 
 export async function generateStaticParams() {
-  const slugs = await getCitySlugsForGender('shemale')
-  return slugs.map((city) => ({ city }))
+  try {
+    const slugs = await getCitySlugsForGender('shemale')
+    return slugs.map((city) => ({ city }))
+  } catch {
+    return []
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -332,7 +332,8 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx eslint . --ext .ts,.tsx --max-warnings=0 2>&1 | head -200)",
       "Bash(ls \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\"/*.json \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\"/.eslint* 2>/dev/null | grep -v node_modules)",
       "Bash(echo \"\" > \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\.eslintrc.json\")",
-      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx eslint . --ext .ts,.tsx --max-warnings=0 2>&1)"
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx eslint . --ext .ts,.tsx --max-warnings=0 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next build 2>&1 | tail -40)"
     ]
   }
 }
