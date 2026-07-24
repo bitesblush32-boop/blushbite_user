@@ -48,7 +48,7 @@ export async function getCityCompanions(
       session_modality: companionProfiles.session_modality,
       name: companions.name,
       date_of_birth: companions.date_of_birth,
-      companionId: companions.id,
+      companionUuid: companions.id,
     })
     .from(companionProfiles)
     .innerJoin(companions, eq(companionProfiles.companion_id, companions.id))

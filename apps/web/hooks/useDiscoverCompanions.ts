@@ -5,6 +5,7 @@ import type { InfiniteData } from '@tanstack/react-query'
 export interface DiscoverCompanionItem {
   id: string
   companionId: string
+  companionUuid: string | null
   name: string | null
   age: number | null
   city: string | null
@@ -17,7 +18,6 @@ export interface DiscoverCompanionItem {
   gradient: string
   isVerified: boolean
   sessionModality: string
-  id: string | null
 }
 
 interface DiscoverPage {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
-import { sql } from 'drizzle-orm'
+import { companionBoosts } from '@/db/schema'
+import { inArray } from 'drizzle-orm'
 
 export async function DELETE(req: NextRequest) {
   const guard = await requireAdmin(req)
@@ -18,11 +19,12 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const result = await db.execute(sql`
-      DELETE FROM companion_boosts WHERE id = ANY(${ids}::uuid[])
-      RETURNING id
-    `)
-    return NextResponse.json({ ok: true, deleted: (result as any[]).length })
+    const deleted = await db
+      .delete(companionBoosts)
+      .where(inArray(companionBoosts.id, ids))
+      .returning({ id: companionBoosts.id })
+
+    return NextResponse.json({ ok: true, deleted: deleted.length })
   } catch (err) {
     console.error('[admin/boosts/bulk] DB error:', err)
     return NextResponse.json({ error: 'database_error' }, { status: 500 })

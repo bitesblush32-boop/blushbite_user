@@ -39,20 +39,20 @@ function ageFromDob(dob: string | null): number | null {
 export async function GET(_req: NextRequest, { params }: { params: { profileId: string } }) {
   const { profileId } = params
 
-  let profile: Awaited<ReturnType<typeof db.select<{
-    id: typeof companionProfiles.id
-    companion_id: typeof companionProfiles.companion_id
-    bio: typeof companionProfiles.bio
-    tagline: typeof companionProfiles.tagline
-    city: typeof companionProfiles.city
-    currency: typeof companionProfiles.currency
-    hourly_rate: typeof companionProfiles.hourly_rate
-    is_verified: typeof companionProfiles.is_verified
-    session_modality: typeof companionProfiles.session_modality
-    is_visible_to_users: typeof companionProfiles.is_visible_to_users
-    whatsapp_number: typeof companionProfiles.whatsapp_number
-    telegram_handle: typeof companionProfiles.telegram_handle
-  }>>>[0] | undefined
+  let profile: {
+    id: string
+    companion_id: string
+    bio: string | null
+    tagline: string | null
+    city: string | null
+    currency: string
+    hourly_rate: string | null
+    is_verified: boolean | null
+    session_modality: string | null
+    is_visible_to_users: boolean | null
+    whatsapp_number: string | null
+    telegram_handle: string | null
+  } | undefined
 
   try {
     ;[profile] = await db

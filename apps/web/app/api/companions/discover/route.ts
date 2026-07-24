@@ -238,7 +238,7 @@ export async function GET(req: NextRequest) {
       gradient: gradientFromId(row.profileId),
       isVerified: row.is_verified ?? false,
       sessionModality: row.session_modality ?? 'in_person',
-      id: comp?.id ?? null,
+      companionUuid: comp?.id ?? null,
     }
   })
 
