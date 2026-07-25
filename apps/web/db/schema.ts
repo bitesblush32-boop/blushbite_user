@@ -697,7 +697,7 @@ export const notifications = pgTable(
     ),
     notifTypeCheck: check(
       'notif_type_check',
-      sql`${table.notification_type} IN ('profile_viewed','story_linked','booking_request','admin_approved','verification_complete','bridge_approved')`
+      sql`${table.notification_type} IN ('profile_viewed','story_linked','booking_request','admin_approved','verification_complete','bridge_approved','story_like','story_save','story_comment','comment_reply','comment_like','booking_confirmed','booking_declined','booking_reminder','badge_awarded','payment_received','payout_processed','new_device_login','password_changed')`
     ),
     recipientIdx: index('notif_recipient_idx').on(table.recipient_id),
   })
