@@ -165,10 +165,6 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
   if (photoRows.length === 0)
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Gate: must have ≥1 active session card OR a fallback hourly_rate
-  if (sessionCardRows.length === 0 && !profile.hourly_rate)
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
   const primaryPhoto = photoRows.find((p) => p.is_primary)?.url ?? photoRows[0]?.url ?? null
   const currency = profile.currency ?? 'EUR'
   const currSym = sym(currency)

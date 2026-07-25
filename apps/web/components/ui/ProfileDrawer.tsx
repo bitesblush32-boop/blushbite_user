@@ -146,14 +146,14 @@ export default function ProfileDrawer() {
         isVerified: realProfile.isVerified,
         videos: realProfile.videos ?? [],
         sessions:
-          realProfile.sessionCards.length > 0
+          (realProfile.sessionCards ?? []).length > 0
             ? realProfile.sessionCards.map((sc) => ({
                 name: sc.title ?? 'Session',
                 desc: sc.description ?? '',
                 price: sc.price ?? 'On request',
                 pills: sc.durationMinutes ? [`${sc.durationMinutes} min`] : [],
               }))
-            : SESSIONS.map((s) => ({ ...s, price: `From —` })),
+            : [],
       }
     : null
 
@@ -487,6 +487,8 @@ export default function ProfileDrawer() {
                     )}
 
                     {/* Session packages */}
+                    {display.sessions.length > 0 && (
+                    <>
                     <p className="text-[10px] text-[#e8607a] uppercase tracking-[0.1em] font-medium mb-1">
                       Choose an experience
                     </p>
@@ -526,12 +528,15 @@ export default function ProfileDrawer() {
                         </div>
                       ))}
                     </div>
+                    </>
+                    )}
 
                     {/* Primary CTAs — WhatsApp + Telegram */}
                     {(() => {
-                      const sessionSelected = selectedSessionIdx !== null
-                      const selectedDisplay = sessionSelected ? display.sessions[selectedSessionIdx] : null
-                      const selectedCard = (sessionSelected && realProfile && realProfile.sessionCards.length > 0)
+                      // When no sessions exist, CTAs unlock immediately (no selection needed)
+                      const sessionSelected = display.sessions.length === 0 || selectedSessionIdx !== null
+                      const selectedDisplay = selectedSessionIdx !== null ? display.sessions[selectedSessionIdx] : null
+                      const selectedCard = (selectedSessionIdx !== null && realProfile && (realProfile.sessionCards ?? []).length > 0)
                         ? realProfile.sessionCards[selectedSessionIdx]
                         : null
 
@@ -574,7 +579,7 @@ export default function ProfileDrawer() {
 
                       return (
                         <>
-                          {!sessionSelected && (
+                          {!sessionSelected && display.sessions.length > 0 && (
                             <p className="text-center text-[11.5px] text-[#6b7280] mb-3">
                               Select an experience above to contact {display.name}
                             </p>
