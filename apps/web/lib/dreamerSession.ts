@@ -3,7 +3,7 @@
 
 import { cookies } from 'next/headers'
 
-const SECRET = process.env.DREAMER_JWT_SECRET?.trim() || process.env.AUTH_SECRET?.trim() || ''
+const SECRET = process.env.DREAMER_JWT_SECRET ?? ''
 const COOKIE_NAME =
   process.env.NODE_ENV === 'production' ? '__Host-bb_dreamer_session' : 'bb_dreamer_session'
 const TTL_DAYS = 30
