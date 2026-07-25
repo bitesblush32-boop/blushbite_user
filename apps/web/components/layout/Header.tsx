@@ -692,7 +692,7 @@ export default function Header() {
               width={120}
               height={44}
               priority
-              className="w-[96px] h-auto md:w-[120px]"
+              className="w-[76px] h-auto md:w-[100px]"
               style={{ objectFit: 'contain', objectPosition: 'left center', display: 'block' }}
             />
           </Link>
