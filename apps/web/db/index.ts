@@ -14,7 +14,9 @@ const client = postgres(process.env.DATABASE_URL!, {
   // Railway's proxy silently drops connections (no TCP RST), so Node.js would
   // otherwise hang for ~67s waiting for the OS-level TCP timeout.
   // 25 seconds is safe: no legitimate DB query in this app should take longer.
+  // postgres.js v3 supports `socket` at runtime but its typedefs omit it
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // @ts-expect-error
   socket(opt: any) {
     // postgres.js v3 passes host/port as arrays; net.createConnection needs scalars
     const host = Array.isArray(opt.host) ? opt.host[0] : (opt.hostname ?? opt.host)
