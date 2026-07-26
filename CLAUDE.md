@@ -3,6 +3,22 @@
 
 ---
 
+## Feature status tracking — MANDATORY
+
+`FEATURE_STATUS.md` (repo root) is the ground-truth tracker of what's actually built vs.
+stubbed vs. tested vs. flawed for this repo. Several sections of this CLAUDE.md (schema table
+counts, file structure in Section 19/21) are already known stale — `FEATURE_STATUS.md` is what
+should be trusted for current build state, not those sections.
+
+**Before ending any session that adds, fixes, or stubs a route/component/table:** update the
+matching row in `FEATURE_STATUS.md`. Set `built` once real code lands. Only set `built+tested`
+when the user explicitly confirms in this session that they manually tested it in the UI —
+never set it yourself from code review alone. Add or update a `bug`/`major-flaw` row for
+anything discovered but not fixed immediately, so it doesn't get silently lost. This applies
+regardless of which developer is prompting — it's a standing rule, not a one-off request.
+
+---
+
 ## 1. PROJECT IDENTITY & EMOTIONAL DESIGN BRIEF
 
 BlushBite is a **premium adult companion & erotic fantasy platform**.
