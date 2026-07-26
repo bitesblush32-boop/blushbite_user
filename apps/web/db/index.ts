@@ -35,6 +35,7 @@ const client = postgres(process.env.DATABASE_URL!, {
 // connections that Railway's TCP proxy kills. These have no request-level promise
 // waiting for them so Node.js promotes them to unhandledRejection.
 // Route-level try/catch already handles the same errors on in-flight queries.
+process.setMaxListeners(20)
 process.on('unhandledRejection', (reason) => {
   if (
     reason instanceof Error &&

@@ -1130,115 +1130,164 @@ db.select({ id: stories.id, title: stories.title }).from(stories)
 16. Output           — create files only. Never explain code back.
 ```
 
-## 19. CURRENT FILE STRUCTURE (as-built — updated 2026-04-05)
+## 19. CURRENT FILE STRUCTURE (as-built — updated 2026-07)
+
+> Section 19 reflects actual filesystem as of Sprint 7. The April 2026 version was stale.
+> Trust FEATURE_STATUS.md at repo root for per-route build status.
 
 ```
 BlushBite/                                  ← monorepo root
-├── .dockerignore
-├── .gitattributes
-├── .gitignore
+├── CLAUDE.md                               ← this file
+├── FEATURE_STATUS.md                       ← ground-truth build status tracker
+├── .dockerignore / .gitignore / .gitattributes
 ├── .npmrc                                  ← shamefully-hoist=true
 ├── Dockerfile                              ← multi-stage node:20-alpine build
-├── nixpacks.toml                           ← nixPkgs = ["nodejs_20"]
-├── pnpm-lock.yaml
-├── pnpm-workspace.yaml                     ← packages: ['apps/*']
-├── railway.json                            ← builder: DOCKERFILE
+├── nixpacks.toml
+├── pnpm-lock.yaml / pnpm-workspace.yaml / railway.json
 │
 ├── apps/
-│   └── web/                               ← Next.js 14 App Router
+│   └── web/                               ← Next.js 14 App Router (blushbite.co)
 │       ├── .env.local
 │       ├── auth.config.ts                 ← edge-safe, no bcrypt/db
-│       ├── auth.ts                        ← full Node.js, all 3 providers
+│       ├── auth.ts                        ← full Node.js, Google + Twitter + Credentials
 │       ├── drizzle.config.ts
-│       ├── middleware.ts                  ← 3-gate auth middleware
+│       ├── middleware.ts                  ← 3-gate: no session → /auth/signin, age_verified=false → /auth/age-gate, onboarding_complete=false → /auth/onboarding
 │       ├── next.config.js
-│       ├── next-env.d.ts
-│       ├── package.json                   ← name: blushbite-web
-│       ├── postcss.config.js
-│       ├── tailwind.config.ts
-│       ├── tsconfig.json
+│       ├── package.json / postcss.config.js / tailwind.config.ts / tsconfig.json
 │       │
-│       ├── app/                           ← Next.js App Router root
-│       │   ├── globals.css                ← Tailwind base + design tokens + body.feed-mode + body.canvas-mode
+│       ├── app/
+│       │   ├── globals.css                ← Tailwind v3 base + design tokens
 │       │   ├── layout.tsx                 ← root layout, fonts, providers
 │       │   ├── providers.tsx              ← QueryClientProvider + SessionProvider
+│       │   ├── robots.ts                  ← robots.txt generation
+│       │   ├── sitemap.ts                 ← sitemap generation
+│       │   ├── privacy/page.tsx
+│       │   ├── terms/page.tsx
 │       │   │
-│       │   ├── (auth)/                    ← auth route group
+│       │   ├── (auth)/                    ← auth pages (public — skips middleware)
 │       │   │   ├── layout.tsx
 │       │   │   └── auth/
 │       │   │       ├── signin/page.tsx    ← Google + Credentials, register toggle
-│       │   │       └── onboarding/page.tsx
+│       │   │       └── onboarding/page.tsx ← 3-step: what gender? → who interested in? → pick fantasy themes
 │       │   │
-│       │   ├── (dreamer)/                 ← main app route group
-│       │   │   ├── layout.tsx             ← Header + BottomNav + MiniPlayer + pt-[95px]
-│       │   │   ├── page.tsx               ← home feed
-│       │   │   ├── confessions/page.tsx   ← full-screen reel (feed-mode, no padding)
-│       │   │   ├── create/page.tsx        ← composer: canvas → meta → preview/publish
-│       │   │   └── profile/page.tsx
+│       │   ├── (dreamer)/                 ← main dreamer app (auth-gated by middleware)
+│       │   │   ├── layout.tsx             ← Header + BottomNav + MiniPlayer
+│       │   │   ├── page.tsx               ← home feed (uses lib/data.ts — real data wiring pending)
+│       │   │   ├── confessions/page.tsx   ← full-screen snap reel
+│       │   │   ├── create/page.tsx        ← story composer
+│       │   │   ├── profile/page.tsx       ← dreamer profile
+│       │   │   ├── stories/page.tsx       ← stories listing
+│       │   │   ├── notifications/page.tsx ← dreamer notification center
+│       │   │   ├── female/                ← gender geo pages (SEO: "female companions amsterdam")
+│       │   │   │   ├── layout.tsx
+│       │   │   │   ├── page.tsx           ← noindex, country listing
+│       │   │   │   └── [country]/
+│       │   │   │       ├── page.tsx
+│       │   │   │       └── [city]/page.tsx ← MAIN SEO TARGET
+│       │   │   ├── male/                  ← same structure as female/
+│       │   │   └── shemale/               ← same structure as female/ (primary SEO target: "ts escort in pune")
 │       │   │
-│       │   ├── (companion)/               ← companion onboarding route group
+│       │   ├── (companion)/               ← companion portal pages (auth-gated)
 │       │   │   ├── layout.tsx
-│       │   │   └── companion/onboarding/
-│       │   │       ├── identity/page.tsx
-│       │   │       └── verify/page.tsx    ← Didit liveness check
+│       │   │   └── companion/
+│       │   │       ├── analytics/page.tsx ← companion analytics
+│       │   │       ├── bridge/page.tsx    ← companion bridge (cross-platform links)
+│       │   │       ├── legal/page.tsx     ← companion legal docs / terms acceptance
+│       │   │       ├── notifications/page.tsx ← companion notification center
+│       │   │       └── profile/page.tsx   ← companion profile management
 │       │   │
-│       │   ├── privacy/page.tsx
-│       │   ├── terms/page.tsx
+│       │   ├── (admin)/                   ← admin panel (auth-gated by layout)
+│       │   │   ├── layout.tsx             ← reads admin session, redirects if not admin
+│       │   │   └── admin/
+│       │   │       ├── page.tsx           ← admin overview
+│       │   │       ├── companions/        ← companion list + [id] detail
+│       │   │       │   ├── page.tsx
+│       │   │       │   └── [id]/page.tsx
+│       │   │       ├── activity/page.tsx  ← activity feed
+│       │   │       ├── ads/page.tsx       ← ads/boosts management
+│       │   │       ├── audio/page.tsx     ← audio moderation
+│       │   │       ├── bookings/page.tsx  ← booking overview
+│       │   │       ├── bridges/page.tsx   ← bridge management
+│       │   │       ├── content/page.tsx   ← content moderation
+│       │   │       ├── tags/page.tsx      ← tag management
+│       │   │       └── users/             ← user management
+│       │   │
+│       │   ├── admin-login/               ← standalone admin login (NOT NextAuth)
+│       │   │   └── page.tsx
 │       │   │
 │       │   └── api/
 │       │       ├── auth/
 │       │       │   ├── [...nextauth]/route.ts
 │       │       │   ├── register/route.ts
-│       │       │   └── complete-onboarding/route.ts
-│       │       ├── companions/onboarding/
-│       │       │   ├── identity/route.ts
-│       │       │   └── verify/
-│       │       │       ├── start/route.ts
-│       │       │       └── status/route.ts
-│       │       ├── confessions/route.ts   ← GET paginated feed
-│       │       ├── stories/
-│       │       │   ├── route.ts           ← POST create story
-│       │       │   ├── views/route.ts     ← POST bulk view tracking
-│       │       │   └── [id]/
-│       │       │       ├── comments/route.ts
-│       │       │       ├── like/route.ts   ← POST like / DELETE unlike
-│       │       │       └── save/route.ts
-│       │       ├── tags/route.ts
-│       │       ├── users/
+│       │       │   ├── complete-onboarding/route.ts
+│       │       │   └── session/route.ts   ← GET current session info
+│       │       ├── admin/
+│       │       │   └── analytics/route.ts ← admin analytics
+│       │       ├── analytics/route.ts     ← platform-wide analytics
+│       │       ├── boosts/
+│       │       │   └── active/route.ts    ← GET active boosts for community page (`?community=female`)
+│       │       ├── bookings/route.ts      ← booking management
+│       │       ├── cities/route.ts        ← city list for geo pages
+│       │       ├── companion/route.ts     ← companion session helper
+│       │       ├── companions/
+│       │       │   ├── discover/route.ts  ← cursor-paginated, Haversine distance, gender filter
+│       │       │   ├── feed/route.ts      ← home feed companions (gender filter)
+│       │       │   ├── nearby/route.ts    ← companions near lat/lng
+│       │       │   ├── nearby-city/route.ts ← companions in same city
+│       │       │   ├── media/route.ts     ← companion media (photos/videos)
+│       │       │   ├── onboarding/        ← companion identity + Didit liveness
+│       │       │   │   ├── identity/route.ts
+│       │       │   │   └── verify/{start,status}/route.ts
+│       │       │   ├── apply/route.ts     ← companion apply from blushbite.co side
+│       │       │   ├── send-otp/route.ts
+│       │       │   ├── verify-otp/route.ts
 │       │       │   ├── profile/route.ts
-│       │       │   ├── avatar/route.ts
-│       │       │   ├── photos/route.ts
-│       │       │   └── posts/
-│       │       │       ├── route.ts
-│       │       │       └── [id]/route.ts
-│       │       ├── upload/
-│       │       │   ├── file/route.ts      ← PUT direct upload → R2
-│       │       │   └── presigned-url/route.ts
+│       │       │   ├── settings/route.ts
+│       │       │   ├── analytics/route.ts
+│       │       │   ├── bookings/route.ts
+│       │       │   └── [profileId]/route.ts ← full profile for ProfileDrawer
+│       │       ├── confessions/route.ts
+│       │       ├── device/
+│       │       │   ├── bind/route.ts      ← POST fingerprint → community binding
+│       │       │   └── community-lookup/route.ts ← POST fingerprint → community lookup
+│       │       ├── location/route.ts      ← POST lat/lng for distance sorting
+│       │       ├── notifications/
+│       │       │   ├── route.ts           ← GET list / PATCH mark read
+│       │       │   ├── count/route.ts     ← GET unread count
+│       │       │   ├── read-all/route.ts  ← POST mark all read
+│       │       │   └── [id]/route.ts      ← PATCH single notification
+│       │       ├── platform-stories/route.ts ← GET companion+admin stories for dreamer feed
+│       │       ├── platform-videos/route.ts  ← companion video feed (pending)
+│       │       ├── push/
+│       │       │   ├── subscribe/route.ts
+│       │       │   └── unsubscribe/route.ts
+│       │       ├── stories/
+│       │       │   ├── route.ts
+│       │       │   ├── views/route.ts
+│       │       │   └── [id]/{comments,like,save}/route.ts
+│       │       ├── tags/route.ts
+│       │       ├── upload/{file,presigned-url}/route.ts
+│       │       ├── users/{profile,avatar,photos,posts}/route.ts
 │       │       ├── webhooks/didit/route.ts
 │       │       ├── health/route.ts
 │       │       └── dev/reset-test-user/route.ts
 │       │
 │       ├── components/
+│       │   ├── geo/
+│       │   │   ├── GeoPageLayout.tsx      ← shared geo page header/footer/texture
+│       │   │   ├── GenderIndexPage.tsx    ← country listing for a gender
+│       │   │   ├── GenderCountryPage.tsx  ← city listing for gender+country
+│       │   │   └── GenderCityPage.tsx     ← companion grid + JSON-LD (main SEO page)
 │       │   ├── layout/
-│       │   │   ├── Header.tsx             ← fixed 75px, .bb-header, glassmorphism
-│       │   │   ├── BottomNav.tsx          ← .bb-bottom-nav, hidden in feed-mode
+│       │   │   ├── Header.tsx             ← fixed 75px, glassmorphism
+│       │   │   ├── BottomNav.tsx
 │       │   │   └── MiniPlayer.tsx         ← fixed bottom-0 68px, playerStore
 │       │   └── ui/
-│       │       ├── ActionPill.tsx         ← like/comment/save/mute, useLikeMutation
-│       │       ├── AudioCard.tsx          ← React.memo, 240px, CSS waveform
-│       │       ├── BookingModal.tsx       ← next/dynamic ssr:false
-│       │       ├── CommentsSheet.tsx      ← vaul drawer, uiStore.activeStoryId
-│       │       ├── CompanionCard.tsx      ← React.memo, 220px
-│       │       ├── ConfessionCard.tsx     ← memo, double-tap → useLikeMutation
-│       │       ├── ConfessionsFeed.tsx    ← fixed inset-0, snap-y, body.feed-mode
-│       │       ├── DiditVerify.tsx        ← Didit liveness SDK wrapper
-│       │       ├── EditProfileDrawer.tsx
-│       │       ├── FileUpload.tsx         ← useUploadToR2
-│       │       ├── ProfileDrawer.tsx      ← next/dynamic ssr:false
-│       │       ├── StoryCard.tsx          ← React.memo, 240px
-│       │       ├── StoryMeta.tsx          ← author + tags, bottom:48, no excerpt
-│       │       ├── StoryPageContent.tsx   ← swipe pages, dots bottom-center
-│       │       └── TasteDrawer.tsx
+│       │       ├── ActionPill.tsx / AudioCard.tsx / BookingModal.tsx
+│       │       ├── CommentsSheet.tsx / CompanionCard.tsx / ConfessionCard.tsx
+│       │       ├── ConfessionsFeed.tsx / DiditVerify.tsx / EditProfileDrawer.tsx
+│       │       ├── FileUpload.tsx / ProfileDrawer.tsx / StoryCard.tsx
+│       │       ├── StoryMeta.tsx / StoryPageContent.tsx / TasteDrawer.tsx
 │       │
 │       ├── db/
 │       │   ├── index.ts                   ← Drizzle + postgres connection
@@ -1518,10 +1567,48 @@ The admin filter "Pending Review" tab is obsolete — all new companions are imm
 | `/dashboard/bookings` | Auth + visible | Booking requests |
 | `/dashboard/analytics` | Auth + visible | Analytics |
 | `/dashboard/settings` | Auth + visible | Account settings |
-| `/dashboard/upgrade` | Auth | Subscription upgrade (UI only — Sprint 6 deferred) |
+| `/dashboard/upgrade` | Auth | Subscription tier comparison (CCBill deferred) |
+| `/dashboard/boost` | Auth | Boost / ads purchase UI — slot calendar, banner upload |
+| `/admin/login` | Public | Admin login (key = `CRON_SECRET` → `bb_admin_key` cookie, 24h) |
+| `/admin/ads` | Admin cookie | Admin ads dashboard — view/toggle/cancel boosts, edit pricing |
 | `/terms` | Public | Terms of Service |
 | `/privacy` | Public | Privacy Policy |
 | `/companion-guidelines` | Public | Companion content guidelines |
+
+#### blushbite.live New API Routes (Sprint 7)
+
+| Route | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/companions/session-cards` | GET/POST | Auth | List / create session cards |
+| `/api/companions/session-cards/[id]` | PATCH/DELETE | Auth | Update / soft-delete session card |
+| `/api/companions/notifications` | GET/PATCH | Auth | In-app notifications list / mark read |
+| `/api/companions/push/subscribe` | POST | Auth | Register Web Push subscription |
+| `/api/companions/push/unsubscribe` | POST | Auth | Remove Web Push subscription |
+| `/api/companions/location` | POST | Auth | Update `latitude`, `longitude` on `companion_profiles` |
+| `/api/companions/boosts` | GET/POST | Auth | List / book boost slots |
+| `/api/companions/boosts/slots` | GET | Auth | Check slot availability |
+| `/api/companions/boosts/upload-banner` | POST | Auth | Upload boost banner image to Cloudinary |
+| `/api/boosts/active` | GET | Public | Active boosts for community page (`?community=female`) |
+| `/api/admin/auth` | POST/DELETE | Public | Set / clear `bb_admin_key` cookie |
+| `/api/admin/boosts` | GET | Admin cookie | All boosts across companions |
+| `/api/admin/boosts/[id]` | PATCH | Admin cookie | Enable / disable / cancel a boost |
+| `/api/admin/boost-settings` | GET/PATCH | Admin cookie | Global pricing and toggles |
+
+#### blushbite.live New DB Tables (Sprint 7)
+
+| Table | Purpose |
+|---|---|
+| `push_subscriptions` | `(companion_id, endpoint UNIQUE, p256dh, auth)` — Web Push endpoints |
+| `notifications` | `(recipient_type, recipient_id, notification_type, title, body, action_url, is_read)` — in-app notifications |
+| `companion_boosts` | `(companion_id, boost_type, community, week_start, week_end, price_eur, status, is_enabled, banner_*)` — UNIQUE(boost_type, community, week_start) |
+| `boost_settings` | Singleton row (id=1): per-type pricing + enabled flags, admin-editable |
+
+#### blushbite.live New Columns (Sprint 7)
+
+`companion_profiles` additions:
+- `latitude NUMERIC(10,7)`, `longitude NUMERIC(10,7)`, `location_enabled BOOLEAN`, `location_updated_at TIMESTAMP`
+
+These feed directly into blushbite.co Haversine distance sort in `/api/companions/discover`.
 
 #### Auth (blushbite.live)
 
@@ -1531,12 +1618,31 @@ The admin filter "Pending Review" tab is obsolete — all new companions are imm
 - **Env var:** `COMPANION_JWT_SECRET`
 - **Expiry:** 7 days
 
+#### Admin Auth (blushbite.live)
+
+- **Cookie:** `bb_admin_key` (24h)
+- **Key:** `CRON_SECRET` env var (same secret used for cron endpoint)
+- **Flow:** POST `/api/admin/auth` with `{ key: CRON_SECRET }` → sets cookie → grants access to `/admin/*` routes
+- **No NextAuth** — standalone cookie auth, not connected to the dreamer session system
+
 #### Drip Email Cron (`/api/cron/drip`)
 
-Secured by `Authorization: Bearer <CRON_SECRET>`. Triggered by Railway cron.
+Secured by `Authorization: Bearer <CRON_SECRET>`. Triggered by Railway cron every 15 min.
 Checks `companion_nudges` table for companions who haven't completed profile.
 Uses Resend to send reminder emails at configured intervals.
 Tracks nudge state in `companion_nudges.sent_at`, `.opened_at`, `.clicked_at`.
+**Status: implemented but marked "not finalized" — drip functions exist, logic flagged buggy.**
+
+#### Notification + Push System (blushbite.live Sprint 7)
+
+`lib/notify.ts` → `createNotification(recipientId, type, title, body, actionUrl)`:
+- Writes to `notifications` table
+- Calls `sendPushToCompanion()` from `lib/push.ts`
+- Currently only called from booking accept/decline (`/api/companions/bookings/[id]`)
+
+`lib/push.ts` → `sendPushToCompanion(companionId, title, body, url)`:
+- Reads `push_subscriptions WHERE companion_id = $1`
+- Sends Web Push via VAPID keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`)
 
 #### Subscription Status (Sprint 6 — DEFERRED)
 
