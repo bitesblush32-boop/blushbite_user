@@ -16,7 +16,6 @@ import { usePlatformVideos } from '@/hooks/usePlatformVideos'
 import { useActiveBoosts } from '@/hooks/useActiveBoosts'
 import type { ActiveBoostItem } from '@/hooks/useActiveBoosts'
 import { useMoodStore } from '@/store/moodStore'
-import { useUIStore } from '@/store/uiStore'
 import { usePlayerStore } from '@/store/playerStore'
 import CompanionCard from '@/components/ui/CompanionCard'
 import StoryCard from '@/components/ui/StoryCard'
@@ -76,7 +75,6 @@ function mapToCard(s: ApiStory, type: 'Story' | 'Confession'): StaticStory {
 
 export default function HomePageContent({ forceCommunity }: { forceCommunity?: string }) {
   const { intensity, setIntensity } = useMoodStore()
-  const openModal = useUIStore((s) => s.openModal)
   const play = usePlayerStore((s) => s.play)
   const { community, needsPicker, bindCommunity } = useDeviceCommunity(forceCommunity)
   const {
@@ -225,7 +223,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
             style={{ boxShadow: heroShadow ? '0 0 40px rgba(232,96,122,0.18)' : 'none' }}
             onMouseEnter={() => setHeroShadow(true)}
             onMouseLeave={() => setHeroShadow(false)}
-            onClick={() => openModal(featured.id)}
+            onClick={() => router.push(`/companions/${featured.id}`)}
           >
             {/* Image strip */}
             <div
@@ -333,7 +331,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                     className="bg-[#e8607a] hover:bg-[#c4485e] text-white border-none px-[22px] py-[12px] rounded-[10px] text-[13.5px] font-medium cursor-pointer transition-all duration-200 hover:-translate-y-px"
                     onClick={(e) => {
                       e.stopPropagation()
-                      openModal(featured.id)
+                      router.push(`/companions/${featured.id}`)
                     }}
                     onMouseEnter={(e) =>
                       ((e.currentTarget as HTMLButtonElement).style.boxShadow =

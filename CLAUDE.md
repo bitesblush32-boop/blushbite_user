@@ -1569,8 +1569,6 @@ The admin filter "Pending Review" tab is obsolete — all new companions are imm
 | `/dashboard/settings` | Auth + visible | Account settings |
 | `/dashboard/upgrade` | Auth | Subscription tier comparison (CCBill deferred) |
 | `/dashboard/boost` | Auth | Boost / ads purchase UI — slot calendar, banner upload |
-| `/admin/login` | Public | Admin login (key = `CRON_SECRET` → `bb_admin_key` cookie, 24h) |
-| `/admin/ads` | Admin cookie | Admin ads dashboard — view/toggle/cancel boosts, edit pricing |
 | `/terms` | Public | Terms of Service |
 | `/privacy` | Public | Privacy Policy |
 | `/companion-guidelines` | Public | Companion content guidelines |
@@ -1588,11 +1586,8 @@ The admin filter "Pending Review" tab is obsolete — all new companions are imm
 | `/api/companions/boosts` | GET/POST | Auth | List / book boost slots |
 | `/api/companions/boosts/slots` | GET | Auth | Check slot availability |
 | `/api/companions/boosts/upload-banner` | POST | Auth | Upload boost banner image to Cloudinary |
+| `/api/companions/boost-pricing` | GET | Public | Read boost_settings row (pricing + slot enabled flags) — used by companion boost page |
 | `/api/boosts/active` | GET | Public | Active boosts for community page (`?community=female`) |
-| `/api/admin/auth` | POST/DELETE | Public | Set / clear `bb_admin_key` cookie |
-| `/api/admin/boosts` | GET | Admin cookie | All boosts across companions |
-| `/api/admin/boosts/[id]` | PATCH | Admin cookie | Enable / disable / cancel a boost |
-| `/api/admin/boost-settings` | GET/PATCH | Admin cookie | Global pricing and toggles |
 
 #### blushbite.live New DB Tables (Sprint 7)
 
@@ -1618,20 +1613,13 @@ These feed directly into blushbite.co Haversine distance sort in `/api/companion
 - **Env var:** `COMPANION_JWT_SECRET`
 - **Expiry:** 7 days
 
-#### Admin Auth (blushbite.live)
-
-- **Cookie:** `bb_admin_key` (24h)
-- **Key:** `CRON_SECRET` env var (same secret used for cron endpoint)
-- **Flow:** POST `/api/admin/auth` with `{ key: CRON_SECRET }` → sets cookie → grants access to `/admin/*` routes
-- **No NextAuth** — standalone cookie auth, not connected to the dreamer session system
-
 #### Drip Email Cron (`/api/cron/drip`)
 
 Secured by `Authorization: Bearer <CRON_SECRET>`. Triggered by Railway cron every 15 min.
 Checks `companion_nudges` table for companions who haven't completed profile.
 Uses Resend to send reminder emails at configured intervals.
-Tracks nudge state in `companion_nudges.sent_at`, `.opened_at`, `.clicked_at`.
-**Status: implemented but marked "not finalized" — drip functions exist, logic flagged buggy.**
+Tracks nudge state in `companion_nudges` via UNIQUE(companion_id, nudge_type) dedup constraint.
+**Status: implemented and fixed (July 2026) — nudge 3 condition changed to `profile_completeness < 60`; DB migration required for UNIQUE constraint (see blushbite.live todo.md).**
 
 #### Notification + Push System (blushbite.live Sprint 7)
 
@@ -1999,6 +1987,285 @@ Static only:
 /privacy
 /companion-guidelines
 ```
+
+---
+
+## 23. COMPLETE API ROUTE REFERENCE — blushbite.co
+
+> blushbite.co serves THREE user types from one Next.js 14 codebase: **Dreamers** (consumers), **Companions** (discover-only, no dashboard), and **Admins**.
+> All routes under `apps/web/app/api/`.
+
+### Dreamer Auth
+
+| Route | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/auth/[...nextauth]` | GET/POST | Public | NextAuth v5 — Google + Twitter + Credentials handlers |
+| `/api/auth/register` | POST | Public | Create dreamer account → `users` table |
+| `/api/auth/login` | POST | Public | OTP or credential login → `bb_dreamer_session` JWT cookie |
+| `/api/auth/logout` | POST | Auth | Clear dreamer session cookie |
+
+### Dreamer Content Routes
+
+| Route | Method | Auth | Purpose | DB Tables |
+|---|---|---|---|---|
+| `/api/companions/discover` | GET | Optional | Paginated companion grid (cursor-based). Params: `lat`, `lng`, `radius`, `gender`, `cursor` | `companion_profiles`, `companion_photos`, `session_cards`, `companion_vibe_tags` |
+| `/api/companions/[profileId]` | GET | Optional | Full companion profile for ProfileDrawer — all photos, session cards, bio, vibe tags | `companions`, `companion_profiles`, `companion_photos`, `session_cards`, `companion_vibe_tags` |
+| `/api/companions/feed` | GET | Optional | Home feed personalized companions. Params: `gender`, `cursor` | same tables as discover |
+| `/api/companions/bookings` | POST | Dreamer | Create booking request | `booking_requests` |
+| `/api/companions/bookings/[id]` | GET/PATCH | Dreamer | View / update own booking | `booking_requests` |
+| `/api/platform-stories` | GET | Optional | Approved companion + admin stories feed | `stories` WHERE `is_published=TRUE AND moderation_status='approved'` |
+| `/api/platform-videos` | GET | Optional | Approved companion videos | `companion_videos` WHERE `is_approved=TRUE` |
+| `/api/confessions` | GET | Optional | User confession stories | `confessions` |
+| `/api/confessions` | POST | Dreamer | Create confession | `confessions` |
+| `/api/likes` | POST | Dreamer | Like/unlike companion or content | `likes` |
+| `/api/saves` | POST | Dreamer | Save/unsave companion | `saves` |
+| `/api/device/community-lookup` | POST | Public | Fingerprint → community lookup | `device_community_bindings` |
+| `/api/boosts/active` | GET | Public | Active boosts for a community (proxied from blushbite.live public route via shared DB) | `companion_boosts`, `companion_profiles`, `companion_photos` |
+
+### Admin Routes — Complete Reference
+
+**Auth guard:** All `/api/admin/*` routes check `admin_session` cookie against `ADMIN_SESSION_SECRET`.
+**Admin login page:** `/(admin)/admin/login` → POST `/api/admin/auth/login` → sets `admin_session` cookie.
+
+| Route | Method | Auth | Purpose | DB Tables Read/Written |
+|---|---|---|---|---|
+| `/api/admin/auth/login` | POST | Public | Validate admin password → set `admin_session` cookie | none |
+| `/api/admin/auth/logout` | POST | Admin | Clear admin session cookie | none |
+| `/api/admin/companions` | GET | Admin | Paginated companion list. Params: `tab` (all/live/taken_down/new_today), `search`, `cursor` | `companions`, `companion_profiles`, `companion_photos` |
+| `/api/admin/companions/[id]` | GET | Admin | Full companion detail with photos, videos, stories, bookings | all companion tables |
+| `/api/admin/companions/[id]` | PATCH | Admin | TakeDown (`is_live=false`, `is_visible_to_users=false`) / Restore / ForceVerify | `companions`, `companion_profiles` |
+| `/api/admin/companions/[id]/photos` | PATCH | Admin | Approve / reject photo (`is_approved`, `photo_verification_status`) | `companion_photos` |
+| `/api/admin/users` | GET | Admin | Paginated dreamer list | `users`, `user_profiles` |
+| `/api/admin/users/[id]` | GET | Admin | Dreamer detail with likes, saves, bookings | all user tables |
+| `/api/admin/users/[id]` | PATCH | Admin | Suspend / restore dreamer | `users` |
+| `/api/admin/stories` | GET | Admin | Stories moderation queue | `stories` |
+| `/api/admin/stories/[id]` | PATCH | Admin | Approve / reject story (sets `moderation_status`) | `stories` |
+| `/api/admin/audio` | GET | Admin | Audio content list | `audio_clips` |
+| `/api/admin/audio/[id]` | PATCH | Admin | Approve / reject audio | `audio_clips` |
+| `/api/admin/boosts` | GET | Admin | All boosts across companions, paginated. Includes KPI stats (total revenue, active count) | `companion_boosts`, `companions` |
+| `/api/admin/boosts/[id]` | PATCH | Admin | Enable / disable / cancel a boost (`is_enabled`, `status`) | `companion_boosts` |
+| `/api/admin/boosts/bulk` | DELETE | Admin | Bulk cancel / delete boosts by IDs | `companion_boosts` |
+| `/api/admin/boost-settings` | GET | Admin | Read boost_settings singleton (pricing + enabled flags) | `boost_settings` |
+| `/api/admin/boost-settings` | PATCH | Admin | Update boost prices and enable/disable slot types | `boost_settings` |
+| `/api/admin/bridges` | GET | Admin | Cross-platform bridge requests | `bridges` |
+| `/api/admin/bridges/[id]` | PATCH | Admin | Approve / reject bridge | `bridges` |
+| `/api/admin/bookings` | GET | Admin | All booking requests, filterable by status | `booking_requests` |
+| `/api/admin/bookings/[id]` | PATCH | Admin | Intervene on booking (cancel, flag) | `booking_requests` |
+| `/api/admin/tags` | GET/POST | Admin | List / create vibe tags | `vibe_tags` |
+| `/api/admin/tags/[id]` | PATCH/DELETE | Admin | Update / delete vibe tag | `vibe_tags` |
+| `/api/admin/activity` | GET | Admin | Recent platform activity log | `analytics_events` |
+
+### Webhook Routes
+
+| Route | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/webhooks/ccbill` | POST | CCBill signature | Handle subscription events (DEFERRED — not yet built) |
+
+---
+
+## 24. SYSTEM ARCHITECTURE — THREE-APP MAP + KEY DATA FLOWS
+
+### Three-App ASCII Map
+
+```
+┌─────────────────────────────────┐      ┌──────────────────────────────────┐
+│       blushbite.live            │      │        blushbite.co              │
+│  (Companion Portal)             │      │  (Consumer App + Admin Panel)    │
+│  Next.js 15 · raw pg Pool       │      │  Next.js 14 · Drizzle ORM        │
+│  Port 3000 (dev)                │      │  Port 3001 (dev)                 │
+│  Auth: COMPANION_JWT_SECRET     │      │  Auth: DREAMER_JWT_SECRET        │
+│        bb_session cookie        │      │        ADMIN_SESSION_SECRET      │
+│                                 │      │        bb_dreamer_session cookie  │
+│  PRIMARY WRITER of:             │      │  PRIMARY WRITER of:              │
+│  · companions                   │      │  · users + user_profiles         │
+│  · companion_profiles           │      │  · booking_requests              │
+│  · companion_photos/videos      │      │  · likes, saves, comments        │
+│  · stories (companion-authored) │      │  · analytics_events              │
+│  · companion_boosts (booking)   │      │  · boost_settings (admin edits)  │
+│  · otp_codes, companion_nudges  │      │                                  │
+│  · device_community_bindings    │      │  READS: all companion tables     │
+│                                 │      │  ADMIN: manage companions,       │
+│  PUBLIC: /api/boosts/active     │      │          boosts, stories, users  │
+└───────────────┬─────────────────┘      └──────────────────┬───────────────┘
+                │                                           │
+                └────────────────────┬──────────────────────┘
+                                     ▼
+               ┌─────────────────────────────────────────────┐
+               │    Railway PostgreSQL  (single shared DB)   │
+               │  DATABASE_URL — identical in both .env.local │
+               │  70+ tables · Drizzle schema in blushbite.co │
+               │  Raw SQL queries in blushbite.live           │
+               └─────────────────────────────────────────────┘
+```
+
+**Cookie map — who sets and who reads each:**
+
+| Cookie | Set By | Read By | TTL | Purpose |
+|---|---|---|---|---|
+| `bb_session` / `__Host-bb_session` | blushbite.live (apply + login) | blushbite.live middleware | 7 days | Companion auth |
+| `bb_community` | both apps (on community pick or login) | both middlewares | 1 year | Root `/` routing to `/{community}` |
+| `bb_dreamer_session` / `__Host-bb_dreamer_session` | blushbite.co (auth routes) | blushbite.co middleware | 30 days | Dreamer auth |
+| `admin_session` | blushbite.co `/api/admin/auth/login` | blushbite.co admin middleware | session | Admin auth |
+
+### Flow 1 — Dreamer Discovers a Companion
+
+```
+Dreamer visits blushbite.co/
+  └─ hooks/useDeviceCommunity.ts
+     ├─ lib/fingerprint.ts → SHA-256 hash
+     └─ POST /api/device/community-lookup { fingerprint_hash }
+        ├─ HIT: community='female' → gender filter applied
+        └─ MISS: no filter, show all communities
+
+  └─ HomePageContent.tsx → useRecommendedCompanions(community?)
+     └─ GET /api/companions/feed?gender=female&cursor=...
+        ├─ Drizzle: companion_profiles WHERE is_visible_to_users=TRUE
+        │   AND (gender_community=? OR no gender param)
+        ├─ JOIN companion_photos WHERE deleted_at IS NULL (first row = primary)
+        ├─ JOIN session_cards (MIN price) OR FALLBACK companion_profiles.hourly_rate
+        ├─ JOIN companion_vibe_tags → vibe_tags (for tag chips)
+        └─ Returns cursor-paginated companion cards
+
+  └─ Dreamer taps card → ProfileDrawer opens
+     └─ GET /api/companions/[profileId]
+        ├─ Full bio, all photos, all session cards, all vibe tags
+        └─ Dreamer taps "Book"
+           └─ POST /api/companions/bookings { companionProfileId, message, requestedFor, modality }
+              ├─ INSERT booking_requests (user_id → users, companion_profile_id → companion_profiles)
+              └─ Companion sees this at blushbite.live /dashboard/bookings
+```
+
+### Flow 2 — Companion Registers → Appears on blushbite.co
+
+```
+Companion visits blushbite.live/ → picks community (female/male/shemale)
+  └─ Redirected to /female → GenderLanding.tsx
+     └─ Step 1: displayName + email + agree
+        └─ POST /api/companions/apply { displayName, email, agreeToTerms, gender_community }
+           ├─ BEGIN transaction (raw pg Pool)
+           ├─ INSERT companions { name, email, companion_stage=3, gender_community }
+           ├─ INSERT companion_profiles { is_live=TRUE, is_visible_to_users=TRUE }
+           ├─ INSERT companion_onboarding_progress stages 1,2,7 as 'completed'
+           ├─ COMMIT
+           ├─ sendWelcomeEmail() → Resend
+           ├─ Set-Cookie: bb_session=<JWT> + bb_community=female
+           └─ Return { redirectTo: '/dashboard?welcome=1' }
+              └─ TourGuide activates (6-step onboarding walkthrough)
+
+[NOW VISIBLE on blushbite.co within milliseconds of registration]
+  GET /api/companions/discover → new companion row appears
+  (is_visible_to_users=TRUE from apply route)
+```
+
+### Flow 3 — Admin Takes Down a Companion
+
+```
+Admin visits blushbite.co/admin → protected by admin_session cookie
+  └─ POST /api/admin/auth/login { password: ADMIN_PASSWORD }
+     └─ Sets admin_session cookie (ADMIN_SESSION_SECRET)
+        └─ Redirected to /admin
+
+  └─ Admin opens companion row → clicks "Take Down"
+     └─ PATCH /api/admin/companions/[id] { action: 'takeDown' }
+        ├─ UPDATE companions SET review_status='taken_down'
+        ├─ UPDATE companion_profiles SET is_live=false, is_visible_to_users=false
+        └─ [Companion disappears from all blushbite.co discover/feed queries immediately]
+           [Companion can still log into blushbite.live; sees "Profile paused" notice]
+
+  └─ Admin clicks "Restore"
+     └─ PATCH /api/admin/companions/[id] { action: 'restore' }
+        ├─ UPDATE companions SET review_status='approved'
+        └─ UPDATE companion_profiles SET is_live=true, is_visible_to_users=true
+```
+
+### Flow 4 — Companion Books a Boost → Appears on blushbite.co
+
+```
+Companion opens /dashboard/boost (blushbite.live)
+  ├─ GET /api/companions/boost-pricing  [public, no auth]
+  │    └─ SELECT * FROM boost_settings WHERE id=1
+  │       Returns: prices + enabled flags (admin-editable from blushbite.co /admin/ads)
+  │
+  └─ GET /api/companions/boosts/slots?type=featured_1&community=female
+       └─ Calculates next max_weeks_advance ISO weeks
+          Queries companion_boosts to mark occupied slots
+          Returns calendar grid: week → available/taken
+
+  └─ Companion picks week + uploads banner + submits
+     └─ POST /api/companions/boosts { boost_type, community, week_start, banner_image_url }
+        ├─ BEGIN transaction
+        ├─ SELECT FOR: check UNIQUE(boost_type, community, week_start) conflict → 409 if taken
+        ├─ INSERT companion_boosts { ...all fields, status='active', is_enabled=true }
+        └─ COMMIT
+
+[NOW SERVED on blushbite.co community pages]
+  HeaderBannerAd / FeaturedBoostCard / MidGridAd / RightRailAd
+    └─ useActiveBoosts(community) hook
+       └─ GET /api/boosts/active?community=female  [blushbite.live public route]
+          └─ SELECT companion_boosts
+             WHERE community='female' AND status='active' AND is_enabled=TRUE
+             AND week_start <= CURRENT_DATE AND week_end >= CURRENT_DATE
+             JOIN companions + companion_profiles + companion_photos (primary)
+             Returns: { headerBanner, featured[3], rightRail, midGrid }
+```
+
+### Flow 5 — Admin Manages Boosts (blushbite.co)
+
+```
+Admin opens /admin/ads (blushbite.co admin panel)
+  └─ GET /api/admin/boosts → paginated list of all active boosts + KPI stats
+     ├─ Total revenue, active count, per-community breakdown
+     └─ Admin can: enable/disable per-boost, cancel, bulk delete
+
+  └─ Admin edits pricing
+     └─ PATCH /api/admin/boost-settings { price_featured_eur: 20.00, header_banner_enabled: false }
+        └─ UPDATE boost_settings SET ... WHERE id=1
+           [Takes effect immediately — companion boost page reads this on next load]
+```
+
+---
+
+## 25. ADMIN PANEL — COMPLETE REFERENCE (blushbite.co)
+
+### Admin Auth
+
+- **Login page:** `apps/web/app/(admin)/admin/login/page.tsx`
+- **API:** `POST /api/admin/auth/login` — body `{ password }` compared to `ADMIN_PASSWORD` env var. Sets `admin_session` cookie (signed with `ADMIN_SESSION_SECRET`, session-length)
+- **Logout:** `POST /api/admin/auth/logout` — clears cookie
+- **Guard:** `apps/web/lib/adminAuth.ts` → `verifyAdminSession()` — called at top of every admin route handler and `/(admin)/layout.tsx`
+- **No NextAuth** — completely independent of dreamer auth
+
+### Admin Pages Map
+
+| URL | File | Purpose |
+|---|---|---|
+| `/admin/login` | `app/(admin)/admin/login/page.tsx` | Standalone login (no Clerk, no NextAuth) |
+| `/admin` | `app/(admin)/admin/page.tsx` | KPI overview: companion count, dreamer count, revenue, new today |
+| `/admin/companions` | `app/(admin)/admin/companions/page.tsx` | Companions table: filter tabs (All / Live / Taken Down / New Today), search |
+| `/admin/companions/[id]` | `app/(admin)/admin/companions/[id]/page.tsx` | Companion detail: photos, videos, stories, bookings, status controls |
+| `/admin/users` | `app/(admin)/admin/users/page.tsx` | Dreamers table |
+| `/admin/ads` | `app/(admin)/admin/ads/page.tsx` | Boost management: view all boosts, toggle, cancel; edit global pricing |
+| `/admin/stories` | `app/(admin)/admin/stories/page.tsx` | Stories moderation queue |
+| `/admin/bookings` | `app/(admin)/admin/bookings/page.tsx` | All booking requests |
+
+### Admin Companion Actions
+
+| Action | API Call | DB Effect | blushbite.live Effect |
+|---|---|---|---|
+| **Take Down** | `PATCH /api/admin/companions/[id] { action:'takeDown' }` | `is_live=false, is_visible_to_users=false` | Companion sees "Profile paused" badge in sidebar |
+| **Restore** | `PATCH /api/admin/companions/[id] { action:'restore' }` | `is_live=true, is_visible_to_users=true` | Companion becomes visible again on discover |
+| **Force Verify** | `PATCH /api/admin/companions/[id] { action:'forceVerify' }` | `is_verified=true, verified_at=now()` | Gold verified badge appears on profile |
+| **Approve Photo** | `PATCH /api/admin/companions/[id]/photos { photoId, action:'approve' }` | `is_approved=true, photo_verification_status='verified'` | Photo shows gold badge in companion dashboard |
+| **Reject Photo** | `PATCH /api/admin/companions/[id]/photos { photoId, action:'reject' }` | `photo_verification_status='failed'` | Photo shows failed badge |
+
+### Admin Boost Management
+
+All boost management is exclusively in blushbite.co admin (blushbite.live has no admin panel):
+- **View all boosts:** `/admin/ads` → GET `/api/admin/boosts` — shows companion name, boost type, community, week, price, enabled status
+- **Toggle individual boost:** `PATCH /api/admin/boosts/[id] { is_enabled: false }` — kills display immediately (next poll of `/api/boosts/active` won't include it)
+- **Cancel boost:** `PATCH /api/admin/boosts/[id] { status: 'cancelled' }`
+- **Edit pricing:** `PATCH /api/admin/boost-settings { price_featured_eur: X, header_banner_enabled: true|false, ... }` — takes effect on next companion boost page load
+- **Slot types managed:** `featured_1`, `featured_2`, `featured_3`, `header_banner`, `right_rail`, `mid_grid` — 1 per community per ISO week except featured (3 slots)
 
 ---
 

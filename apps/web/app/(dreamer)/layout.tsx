@@ -1,17 +1,13 @@
 'use client'
 
 // Dreamer route group layout — shared chrome for all dreamer (user) pages.
-// Provides: fixed Header, fixed MiniPlayer, noise texture, ambient glow,
-// ProfileDrawer & BookingModal (lazy-loaded, ssr:false).
+// Provides: fixed Header, fixed MiniPlayer, noise texture, ambient glow.
 // Used by: / (home), /companions, /stories, /audio, /explore, /profile, etc.
 
 import dynamic from 'next/dynamic'
 import Header from '@/components/layout/Header'
 import MiniPlayer from '@/components/layout/MiniPlayer'
 import BottomNav from '@/components/layout/BottomNav'
-
-const ProfileDrawer = dynamic(() => import('@/components/ui/ProfileDrawer'), { ssr: false })
-const BookingModal = dynamic(() => import('@/components/ui/BookingModal'), { ssr: false })
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
 const LocationBanner = dynamic(() => import('@/components/ui/LocationBanner'), { ssr: false })
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
@@ -48,9 +44,7 @@ export default function DreamerLayout({ children }: { children: React.ReactNode 
       {/* ── Page content ─────────────────────────────────────────────────── */}
       {children}
 
-      {/* ── Global modals/drawers (lazy, ssr:false — not in initial bundle) ── */}
-      <ProfileDrawer />
-      <BookingModal />
+      {/* ── Global modals/overlays (lazy, ssr:false — not in initial bundle) ── */}
       <ProfilePostViewer />
       <BottomNav />
       <LocationBanner />

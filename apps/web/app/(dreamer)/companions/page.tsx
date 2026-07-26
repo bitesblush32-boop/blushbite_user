@@ -57,99 +57,97 @@ const CompanionCard = memo(function CompanionCard({
     >
       <div
         style={{
-          borderRadius: 14,
+          position: 'relative',
+          borderRadius: 12,
           overflow: 'hidden',
+          aspectRatio: '2 / 3',
           background: companion.gradient,
           border: '1px solid #1c2333',
           cursor: 'pointer',
-          transition: 'border-color 0.15s, transform 0.15s',
+          transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
         }}
         onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLElement).style.borderColor = `${accentColor}55`
-          ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+          const el = e.currentTarget as HTMLElement
+          el.style.borderColor = `${accentColor}50`
+          el.style.transform = 'translateY(-3px)'
+          el.style.boxShadow = '0 20px 48px rgba(0,0,0,0.5)'
         }}
         onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLElement).style.borderColor = '#1c2333'
-          ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+          const el = e.currentTarget as HTMLElement
+          el.style.borderColor = '#1c2333'
+          el.style.transform = 'translateY(0)'
+          el.style.boxShadow = 'none'
         }}
       >
         {/* Photo */}
-        <div style={{ position: 'relative', aspectRatio: '3/4', background: companion.gradient }}>
-          {companion.primaryPhotoUrl && (
-            <Image
-              src={companion.primaryPhotoUrl}
-              alt={companion.name ?? 'Companion'}
-              fill
-              style={{ objectFit: 'cover', objectPosition: 'top' }}
-              sizes="(max-width: 480px) 50vw, (max-width: 960px) 25vw, 200px"
-            />
-          )}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(to top, rgba(7,9,15,0.9) 0%, transparent 55%)',
-            }}
+        {companion.primaryPhotoUrl && (
+          <Image
+            src={companion.primaryPhotoUrl}
+            alt={companion.name ?? 'Companion'}
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'top' }}
+            sizes="(max-width: 480px) 50vw, (max-width: 960px) 25vw, 220px"
           />
-          {companion.isVerified && (
-            <div style={{ position: 'absolute', top: 8, right: 8 }}>
-              <CheckCircle size={14} color="#c9a96e" fill="rgba(201,169,110,0.2)" />
-            </div>
-          )}
-          <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10 }}>
-            <p
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 15,
-                color: '#eeeef0',
-                marginBottom: 2,
-                lineHeight: 1.2,
-              }}
-            >
-              {companion.name}
-              {companion.age ? `, ${companion.age}` : ''}
-            </p>
-            {companion.city && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <MapPin size={10} color={accentColor} />
-                <span style={{ fontSize: 11, color: '#9ca3af' }}>{companion.city}</span>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
 
-        {/* Info strip */}
-        <div style={{ padding: '10px 12px' }}>
-          {companion.vibe && (
-            <p
-              style={{
-                fontSize: 11,
-                color: '#6b7280',
-                lineHeight: 1.4,
-                marginBottom: companion.minPrice ? 6 : 0,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}
-            >
-              {companion.vibe}
-            </p>
-          )}
-          {companion.minPrice && (
-            <span
-              style={{
-                fontSize: 11,
-                color: accentColor,
-                background: `${accentColor}12`,
-                border: `1px solid ${accentColor}30`,
-                borderRadius: 999,
-                padding: '2px 8px',
+        {/* Deep gradient overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to top, rgba(7,9,15,0.96) 0%, rgba(7,9,15,0.5) 38%, transparent 60%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Verified dot */}
+        {companion.isVerified && (
+          <div style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            background: 'rgba(7,9,15,0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 9,
+            color: '#c9a96e',
+          }}>
+            ✦
+          </div>
+        )}
+
+        {/* Name + age + city */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 12px 14px' }}>
+          <p style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 15,
+            fontStyle: 'italic',
+            color: '#eeeef0',
+            lineHeight: 1.2,
+            marginBottom: 4,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {companion.name}{companion.age ? `, ${companion.age}` : ''}
+          </p>
+          {companion.city && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{
+                width: 5,
+                height: 5,
+                borderRadius: '50%',
+                background: accentColor,
+                flexShrink: 0,
                 display: 'inline-block',
-              }}
-            >
-              from {companion.minPrice}
-            </span>
+              }} />
+              <span style={{ fontSize: 10.5, color: '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {companion.city}
+              </span>
+            </div>
           )}
         </div>
       </div>
