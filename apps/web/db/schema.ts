@@ -910,6 +910,10 @@ export const companionBoosts = pgTable('companion_boosts', {
   banner_image_url: text('banner_image_url'),
   banner_headline: text('banner_headline'),
   banner_tagline: text('banner_tagline'),
+  promo_mode: varchar('promo_mode', { length: 20 }).default('custom_image'),
+  // 'profile_card' | 'custom_image' | 'animated_gif'
+  // For multi-slot types (right_rail): 1–10; single-slot types: always 1
+  slot_index: integer('slot_index').default(1).notNull(),
   payment_ref: varchar('payment_ref', { length: 100 }),
   payment_status: varchar('payment_status', { length: 20 }).default('manual'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

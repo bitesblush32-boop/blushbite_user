@@ -279,14 +279,26 @@ function GridSkeleton() {
 // ── Boost components ──────────────────────────────────────────────────────────
 
 function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
+  const mode = data.promo_mode ?? 'custom_image'
+  const isGif = mode === 'animated_gif'
+  const isProfileCard = mode === 'profile_card'
+
+  // Background image: companion photo for profile_card, uploaded banner for custom/gif
+  const bgUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
+
+  const bgStyle = bgUrl && !isGif
+    ? {
+        background: `linear-gradient(135deg,rgba(7,9,15,0.85),rgba(7,9,15,0.6)),url(${bgUrl}) ${isProfileCard ? 'top' : 'center'}/cover`,
+      }
+    : { background: 'linear-gradient(135deg,#140d1f,#1a1228)' }
+
   return (
     <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
       <div
         style={{
-          background: data.banner_image_url
-            ? `linear-gradient(135deg,rgba(7,9,15,0.85),rgba(7,9,15,0.6)),url(${data.banner_image_url}) center/cover`
-            : 'linear-gradient(135deg,#140d1f,#1a1228)',
+          position: 'relative',
+          overflow: 'hidden',
           borderBottom: '1px solid rgba(232,96,122,0.2)',
           padding: '14px 20px',
           display: 'flex',
@@ -294,10 +306,30 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
           justifyContent: 'space-between',
           gap: 16,
           cursor: 'pointer',
-          transition: 'background 0.15s',
+          ...bgStyle,
         }}
       >
-        <div>
+        {/* GIF: use <img> to preserve animation, CSS background can't animate GIFs */}
+        {isGif && bgUrl && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={bgUrl}
+              alt=""
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+              }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,15,0.6)' }} />
+          </>
+        )}
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
           <span
             style={{
               fontSize: 10,
@@ -321,7 +353,7 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
           >
             {data.banner_headline ?? data.companion_name}
           </p>
-          {(data.banner_tagline_text ?? data.companion_tagline) && (
+          {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
             <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>
               {data.banner_tagline_text ?? data.companion_tagline}
             </p>
@@ -329,6 +361,8 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
         </div>
         <span
           style={{
+            position: 'relative',
+            zIndex: 1,
             fontSize: 12,
             color: '#e8607a',
             border: '1px solid rgba(232,96,122,0.35)',
@@ -354,7 +388,7 @@ function FeaturedBoostCard({
   accentColor: string
   index: number
 }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
   return (
     <Link
       href={href}
@@ -484,7 +518,7 @@ function FeaturedBoostCard({
 }
 
 function MidGridAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
   return (
     <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
       <div

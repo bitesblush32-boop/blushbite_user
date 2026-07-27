@@ -79,7 +79,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
   const { stories: platformStoriesRaw, status: storiesStatus } = useInfiniteStories()
   const { stories: confessionsRaw, status: confessionsStatus } = useInfiniteConfessions()
   const { videos: platformVideos, status: videosStatus } = usePlatformVideos()
-  const { headerBanner, featuredBoosts, rightRailBoost, midGridBoost } = useActiveBoosts(community)
+  const { headerBanner, featuredBoosts, rightRailBoosts, midGridBoost } = useActiveBoosts(community)
 
   const router = useRouter()
 
@@ -719,12 +719,14 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
           {/* end main content column */}
 
           {/* ── Right rail ad placement (desktop ≥1280px) ─────────────────────── */}
-          {rightRailBoost && (
+          {rightRailBoosts.length > 0 && (
             <div
-              className="hidden xl:block flex-shrink-0 w-[280px]"
+              className="hidden xl:flex flex-col flex-shrink-0 w-[200px] gap-3"
               style={{ position: 'sticky', top: 80, alignSelf: 'flex-start' }}
             >
-              <RightRailAd data={rightRailBoost} />
+              {rightRailBoosts.map((boost) => (
+                <RightRailAd key={boost.id} data={boost} />
+              ))}
             </div>
           )}
         </div>
@@ -789,16 +791,22 @@ function MoodItem({
 // Full-width banner strip between the nav and BLOCK 1
 
 function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
+  const mode = data.promo_mode ?? 'custom_image'
+  const isGif = mode === 'animated_gif'
+  const isProfileCard = mode === 'profile_card'
+  const hasCustomImage = !isProfileCard && !!data.banner_image_url
+
+  // Background image source: custom/gif upload or companion photo for profile_card
+  const bgPhotoUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
+
   return (
     <div
       style={{
         position: 'relative',
         borderRadius: 14,
         overflow: 'hidden',
-        background: data.banner_image_url
-          ? 'transparent'
-          : 'linear-gradient(135deg,#1a1228,#2a1535)',
+        background: bgPhotoUrl ? 'transparent' : 'linear-gradient(135deg,#1a1228,#2a1535)',
         border: '1px solid rgba(232,96,122,0.2)',
         marginBottom: 24,
         display: 'flex',
@@ -809,19 +817,36 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
         minHeight: 80,
       }}
     >
-      {data.banner_image_url && (
+      {/* Background — GIFs use <img> to preserve animation; others use <Image> */}
+      {bgPhotoUrl && (
         <>
-          <Image
-            src={data.banner_image_url}
-            alt={data.banner_headline ?? 'Sponsored'}
-            fill
-            style={{ objectFit: 'cover', objectPosition: 'center', opacity: 1 }}
-            sizes="100vw"
-          />
-          {/* dark overlay so text stays readable over the custom image */}
+          {isGif ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={bgPhotoUrl}
+              alt={data.banner_headline ?? 'Sponsored'}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+              }}
+            />
+          ) : (
+            <Image
+              src={bgPhotoUrl}
+              alt={data.banner_headline ?? 'Sponsored'}
+              fill
+              style={{ objectFit: 'cover', objectPosition: isProfileCard ? 'top' : 'center' }}
+              sizes="100vw"
+            />
+          )}
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,15,0.55)' }} />
         </>
       )}
+
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div
           style={{
@@ -845,14 +870,16 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
           }}
         >
           {data.banner_headline ?? data.companion_name ?? 'Featured companion'}
-          {data.banner_headline ? (
+          {data.banner_headline || isProfileCard ? (
             ''
           ) : (
             <em style={{ color: '#e8607a', fontStyle: 'italic' }}> awaits.</em>
           )}
         </div>
-        {data.banner_tagline_text && (
-          <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{data.banner_tagline_text}</p>
+        {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
+          <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+            {data.banner_tagline_text ?? data.companion_tagline}
+          </p>
         )}
       </div>
       <Link
@@ -872,7 +899,7 @@ function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
           whiteSpace: 'nowrap' as const,
         }}
       >
-        View profile →
+        {isProfileCard ? 'View profile →' : hasCustomImage ? 'Learn more →' : 'View profile →'}
       </Link>
     </div>
   )
@@ -888,7 +915,7 @@ const CARD_GRADIENTS = [
 ]
 
 function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
   const hash = (data.companion_id ?? data.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const gradient = CARD_GRADIENTS[hash % CARD_GRADIENTS.length]
   const [hovered, setHovered] = useState(false)
@@ -1003,7 +1030,7 @@ function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
 // Native-looking sponsored card injected at position 3 in the companions carousel
 
 function MidGridAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
   const hash = (data.companion_id ?? data.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const gradient = CARD_GRADIENTS[hash % CARD_GRADIENTS.length]
   const [hovered, setHovered] = useState(false)
@@ -1098,12 +1125,19 @@ function MidGridAd({ data }: { data: ActiveBoostItem }) {
 }
 
 // ─── RightRailAd ─────────────────────────────────────────────────────────────
-// 280px sticky companion card shown on xl screens (desktop right rail)
+// 200px sticky companion card shown on xl screens (desktop right rail)
 
 function RightRailAd({ data }: { data: ActiveBoostItem }) {
-  const href = data.companion_id ? `/companions/${data.companion_id}` : '/companions'
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
   const hash = (data.companion_id ?? data.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   const gradient = CARD_GRADIENTS[hash % CARD_GRADIENTS.length]
+  const mode = data.promo_mode ?? 'custom_image'
+  const isGif = mode === 'animated_gif'
+  const isProfileCard = mode === 'profile_card'
+
+  // For profile_card: show companion photo; for custom/gif: show banner image
+  const imageUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
+  const fallbackUrl = isProfileCard ? null : data.companion_photo_url
 
   return (
     <div
@@ -1119,21 +1153,37 @@ function RightRailAd({ data }: { data: ActiveBoostItem }) {
         <div
           style={{
             position: 'relative',
-            aspectRatio: data.banner_image_url ? '280/400' : '3/4',
+            aspectRatio: '200/286',
             background: gradient,
           }}
         >
-          {(data.banner_image_url || data.companion_photo_url) && (
-            <Image
-              src={data.banner_image_url ?? data.companion_photo_url!}
-              alt={data.companion_name ?? 'Featured companion'}
-              fill
-              style={{
-                objectFit: 'cover',
-                objectPosition: data.banner_image_url ? 'center' : 'top',
-              }}
-              sizes="280px"
-            />
+          {(imageUrl ?? fallbackUrl) && (
+            isGif ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imageUrl ?? fallbackUrl!}
+                alt={data.companion_name ?? 'Featured companion'}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+              />
+            ) : (
+              <Image
+                src={imageUrl ?? fallbackUrl!}
+                alt={data.companion_name ?? 'Featured companion'}
+                fill
+                style={{
+                  objectFit: 'cover',
+                  objectPosition: isProfileCard ? 'top' : 'center',
+                }}
+                sizes="200px"
+              />
+            )
           )}
           <div
             style={{
@@ -1169,9 +1219,9 @@ function RightRailAd({ data }: { data: ActiveBoostItem }) {
                 lineHeight: 1.2,
               }}
             >
-              {data.companion_name ?? 'Private Companion'}
+              {data.banner_headline ?? data.companion_name ?? 'Private Companion'}
             </p>
-            {data.companion_city && (
+            {(data.companion_city && isProfileCard) && (
               <p style={{ fontSize: 12, color: '#9ca3af' }}>{data.companion_city}</p>
             )}
           </div>
@@ -1180,7 +1230,7 @@ function RightRailAd({ data }: { data: ActiveBoostItem }) {
 
       {/* Info */}
       <div style={{ padding: '14px 16px' }}>
-        {data.companion_tagline && (
+        {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
           <p
             style={{
               fontSize: 12,
@@ -1190,10 +1240,10 @@ function RightRailAd({ data }: { data: ActiveBoostItem }) {
               fontStyle: 'italic',
             }}
           >
-            &ldquo;{data.companion_tagline}&rdquo;
+            &ldquo;{data.banner_tagline_text ?? data.companion_tagline}&rdquo;
           </p>
         )}
-        {data.companion_min_rate && (
+        {isProfileCard && data.companion_min_rate && (
           <p style={{ fontSize: 12, color: '#e8607a', marginBottom: 12 }}>
             From {data.companion_min_rate} / session
           </p>

@@ -13,6 +13,8 @@ import {
   fantasyTags,
   companionVibeTags,
   vibeTags,
+  companionLanguages,
+  languages,
   sessionCards,
   companionPaymentSetup,
   bookingRequests,
@@ -39,6 +41,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         full_name: companions.full_name,
         date_of_birth: companions.date_of_birth,
         country: companions.country,
+        whatsapp_number: companions.whatsapp_number,
+        gender_community: companions.gender_community,
         companion_stage: companions.companion_stage,
         onboarding_complete: companions.onboarding_complete,
         created_at: companions.created_at,
@@ -61,7 +65,19 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         is_verified: companionProfiles.is_verified,
         verified_at: companionProfiles.verified_at,
         is_live: companionProfiles.is_live,
+        is_visible_to_users: companionProfiles.is_visible_to_users,
         approved_at: companionProfiles.approved_at,
+        profile_completeness: companionProfiles.profile_completeness,
+        whatsapp_number: companionProfiles.whatsapp_number,
+        telegram_handle: companionProfiles.telegram_handle,
+        height_cm: companionProfiles.height_cm,
+        body_type: companionProfiles.body_type,
+        hair_color: companionProfiles.hair_color,
+        eye_color: companionProfiles.eye_color,
+        ethnicity: companionProfiles.ethnicity,
+        session_modality: companionProfiles.session_modality,
+        instagram_handle: companionProfiles.instagram_handle,
+        website_url: companionProfiles.website_url,
         created_at: companionProfiles.created_at,
         updated_at: companionProfiles.updated_at,
       })
@@ -82,6 +98,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     videos,
     fantasyTagRows,
     vibeTagRows,
+    languageRows,
     sessionCardRows,
   ] = await Promise.all([
     db
@@ -188,6 +205,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     profile
       ? db
+          .select({ id: languages.id, name: languages.name })
+          .from(companionLanguages)
+          .innerJoin(languages, eq(languages.id, companionLanguages.language_id))
+          .where(eq(companionLanguages.companion_profile_id, profile.id))
+      : Promise.resolve([]),
+
+    profile
+      ? db
           .select({
             id: sessionCards.id,
             title: sessionCards.title,
@@ -217,6 +242,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     videos,
     fantasy_tags: fantasyTagRows,
     vibe_tags: vibeTagRows,
+    languages: languageRows,
     session_cards: sessionCardRows,
   })
 }

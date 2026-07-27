@@ -26,7 +26,7 @@ export function useActiveBoosts(community: string | null) {
   return {
     headerBanner: boosts.find((b) => b.boost_type === 'header_banner') ?? null,
     featuredBoosts: boosts.filter((b) => FEATURED_TYPES.includes(b.boost_type)),
-    rightRailBoost: boosts.find((b) => b.boost_type === 'right_rail') ?? null,
+    rightRailBoosts: boosts.filter((b) => b.boost_type === 'right_rail'),
     midGridBoost: boosts.find((b) => b.boost_type === 'mid_grid') ?? null,
     isLoading,
   }

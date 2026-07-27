@@ -29,6 +29,8 @@ interface CompanionDossier {
     full_name: string | null
     date_of_birth: string | null
     country: string | null
+    whatsapp_number: string | null
+    gender_community: string | null
     companion_stage: number | null
     onboarding_complete: boolean
     created_at: string
@@ -44,7 +46,19 @@ interface CompanionDossier {
     is_verified: boolean | null
     verified_at: string | null
     is_live: boolean | null
+    is_visible_to_users: boolean | null
     approved_at: string | null
+    profile_completeness: number | null
+    whatsapp_number: string | null
+    telegram_handle: string | null
+    height_cm: number | null
+    body_type: string | null
+    hair_color: string | null
+    eye_color: string | null
+    ethnicity: string | null
+    session_modality: string | null
+    instagram_handle: string | null
+    website_url: string | null
   } | null
   verification: {
     id: string
@@ -90,6 +104,7 @@ interface CompanionDossier {
   }>
   fantasy_tags: Array<{ id: number; name: string; slug: string }>
   vibe_tags: Array<{ id: number; name: string; slug: string; emoji: string | null }>
+  languages: Array<{ id: number; name: string }>
   session_cards: Array<{
     id: string
     title: string
@@ -172,13 +187,13 @@ function ScoreBar({ score, label }: { score: string | null; label: string }) {
 // ── Onboarding stages ──────────────────────────────────────────────────────
 
 const STAGES = [
-  { n: 1, label: 'Identity' },
-  { n: 2, label: 'Verify' },
-  { n: 3, label: 'Review' },
+  { n: 1, label: 'Registered' },
+  { n: 2, label: 'Approved' },
+  { n: 3, label: 'Onboarding' },
   { n: 4, label: 'Legal' },
   { n: 5, label: 'Profile' },
   { n: 6, label: 'Content' },
-  { n: 7, label: 'Complete' },
+  { n: 7, label: 'Active' },
 ]
 
 function OnboardingTracker({ progress }: { progress: CompanionDossier['onboarding_progress'] }) {
@@ -451,6 +466,7 @@ export default function AdminCompanionDetailPage() {
     videos,
     fantasy_tags,
     vibe_tags,
+    languages,
     session_cards,
   } = data
   const isLive = profile?.is_live === true
@@ -494,7 +510,28 @@ export default function AdminCompanionDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {isLive && (
+              {isLive ? (
+                <span
+                  className="text-[11px] px-[10px] py-1 rounded-full text-[#4ade80]"
+                  style={{
+                    background: 'rgba(74,222,128,0.1)',
+                    border: '1px solid rgba(74,222,128,0.3)',
+                  }}
+                >
+                  ● Live
+                </span>
+              ) : (
+                <span
+                  className="text-[11px] px-[10px] py-1 rounded-full text-[#f87171]"
+                  style={{
+                    background: 'rgba(248,113,113,0.1)',
+                    border: '1px solid rgba(248,113,113,0.3)',
+                  }}
+                >
+                  ○ Offline
+                </span>
+              )}
+              {profile?.is_visible_to_users ? (
                 <span
                   className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
                   style={{
@@ -502,7 +539,14 @@ export default function AdminCompanionDetailPage() {
                     border: '1px solid rgba(232,96,122,0.3)',
                   }}
                 >
-                  ● Live
+                  ◎ Visible
+                </span>
+              ) : (
+                <span
+                  className="text-[11px] px-[10px] py-1 rounded-full text-[#6b7280]"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1c2333' }}
+                >
+                  ◎ Hidden
                 </span>
               )}
               {profile?.is_verified && (
@@ -516,12 +560,31 @@ export default function AdminCompanionDetailPage() {
                   ✦ Verified
                 </span>
               )}
-              {isPending && (
+              {profile?.profile_completeness != null && (
                 <span
-                  className="text-[11px] px-[10px] py-1 rounded-full text-[#eeeef0]"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #1c2333' }}
+                  className="text-[11px] px-[10px] py-1 rounded-full"
+                  style={{
+                    background:
+                      profile.profile_completeness >= 80
+                        ? 'rgba(74,222,128,0.1)'
+                        : profile.profile_completeness >= 50
+                          ? 'rgba(201,169,110,0.1)'
+                          : 'rgba(255,255,255,0.04)',
+                    border:
+                      profile.profile_completeness >= 80
+                        ? '1px solid rgba(74,222,128,0.3)'
+                        : profile.profile_completeness >= 50
+                          ? '1px solid rgba(201,169,110,0.3)'
+                          : '1px solid #1c2333',
+                    color:
+                      profile.profile_completeness >= 80
+                        ? '#4ade80'
+                        : profile.profile_completeness >= 50
+                          ? '#c9a96e'
+                          : '#6b7280',
+                  }}
                 >
-                  Awaiting Review
+                  {profile.profile_completeness}% complete
                 </span>
               )}
             </div>
@@ -547,7 +610,28 @@ export default function AdminCompanionDetailPage() {
                 <span className="text-[13px] font-medium text-[#eeeef0]">Identity</span>
               </div>
               <dl className="flex flex-col gap-3">
+                {/* Community badge */}
+                {companion.gender_community && (
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-[12px] text-[#6b7280] flex-shrink-0">Community</dt>
+                    <dd>
+                      <span
+                        className="text-[11px] px-[10px] py-[3px] rounded-full font-medium"
+                        style={
+                          companion.gender_community === 'female'
+                            ? { background: 'rgba(232,96,122,0.12)', border: '1px solid rgba(232,96,122,0.35)', color: '#e8607a' }
+                            : companion.gender_community === 'male'
+                              ? { background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.35)', color: '#60a5fa' }
+                              : { background: 'rgba(201,169,110,0.12)', border: '1px solid rgba(201,169,110,0.35)', color: '#c9a96e' }
+                        }
+                      >
+                        {companion.gender_community === 'female' ? 'Female' : companion.gender_community === 'male' ? 'Male' : 'TS / Shemale'}
+                      </span>
+                    </dd>
+                  </div>
+                )}
                 {[
+                  ['Display name', companion.name ?? '—'],
                   ['Full name', companion.full_name ?? '—'],
                   [
                     'Date of birth',
@@ -557,10 +641,6 @@ export default function AdminCompanionDetailPage() {
                   ],
                   ['Country', companion.country ?? '—'],
                   ['City', profile?.city ?? '—'],
-                  [
-                    'Stage',
-                    companion.companion_stage != null ? `${companion.companion_stage}` : '—',
-                  ],
                   [
                     'Joined',
                     new Date(companion.created_at).toLocaleDateString('en-GB', {
@@ -575,6 +655,29 @@ export default function AdminCompanionDetailPage() {
                     <dd className="text-[13px] text-[#eeeef0] text-right">{val}</dd>
                   </div>
                 ))}
+                {/* WhatsApp */}
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-[12px] text-[#6b7280] flex-shrink-0">WhatsApp</dt>
+                  <dd className="text-[13px] text-right">
+                    {companion.whatsapp_number || profile?.whatsapp_number ? (
+                      <a
+                        href={`tel:${companion.whatsapp_number ?? profile?.whatsapp_number}`}
+                        className="text-[#4ade80] hover:underline"
+                      >
+                        {companion.whatsapp_number ?? profile?.whatsapp_number}
+                      </a>
+                    ) : (
+                      <span className="text-[#6b7280]">—</span>
+                    )}
+                  </dd>
+                </div>
+                {/* Telegram */}
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-[12px] text-[#6b7280] flex-shrink-0">Telegram</dt>
+                  <dd className="text-[13px] text-[#eeeef0] text-right">
+                    {profile?.telegram_handle ? `@${profile.telegram_handle}` : <span className="text-[#6b7280]">—</span>}
+                  </dd>
+                </div>
               </dl>
             </div>
 
@@ -926,12 +1029,56 @@ export default function AdminCompanionDetailPage() {
                           : '—',
                       ],
                       ['Availability', profile.availability_status ?? '—'],
+                      [
+                        'Modality',
+                        profile.session_modality === 'in_person'
+                          ? 'In Person'
+                          : profile.session_modality === 'online'
+                            ? 'Online'
+                            : profile.session_modality === 'both'
+                              ? 'In Person + Online'
+                              : '—',
+                      ],
                     ].map(([label, val]) => (
                       <div key={label} className="flex items-start justify-between gap-3">
                         <dt className="text-[12px] text-[#6b7280] flex-shrink-0">{label}</dt>
                         <dd className="text-[13px] text-[#eeeef0] text-right">{val}</dd>
                       </div>
                     ))}
+                    {/* Instagram */}
+                    {profile.instagram_handle && (
+                      <div className="flex items-start justify-between gap-3">
+                        <dt className="text-[12px] text-[#6b7280] flex-shrink-0">Instagram</dt>
+                        <dd className="text-[13px] text-right">
+                          <a
+                            href={`https://instagram.com/${profile.instagram_handle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#e8607a] hover:underline"
+                          >
+                            @{profile.instagram_handle}
+                          </a>
+                        </dd>
+                      </div>
+                    )}
+                    {/* Website */}
+                    {profile.website_url && (
+                      <div className="flex items-start justify-between gap-3">
+                        <dt className="text-[12px] text-[#6b7280] flex-shrink-0">Website</dt>
+                        <dd className="text-[13px] text-right">
+                          <a
+                            href={profile.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#e8607a] hover:underline"
+                          >
+                            {profile.website_url.length > 35
+                              ? profile.website_url.slice(0, 35) + '…'
+                              : profile.website_url}
+                          </a>
+                        </dd>
+                      </div>
+                    )}
                   </dl>
                 </div>
               )}
@@ -979,6 +1126,48 @@ export default function AdminCompanionDetailPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Physical attributes */}
+            {profile && (profile.height_cm || profile.body_type || profile.hair_color || profile.eye_color || profile.ethnicity) && (
+              <div className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-5">
+                <div className="text-[13px] font-medium text-[#eeeef0] mb-3">Physical</div>
+                <dl className="flex flex-col gap-2">
+                  {[
+                    ['Height', profile.height_cm ? `${profile.height_cm} cm` : '—'],
+                    ['Body type', profile.body_type ? profile.body_type.replace(/_/g, ' ') : '—'],
+                    ['Hair', profile.hair_color ?? '—'],
+                    ['Eyes', profile.eye_color ?? '—'],
+                    ['Ethnicity', profile.ethnicity ?? '—'],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex items-start justify-between gap-3">
+                      <dt className="text-[12px] text-[#6b7280] flex-shrink-0">{label}</dt>
+                      <dd className="text-[13px] text-[#eeeef0] text-right capitalize">{val}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+
+            {/* Languages */}
+            {languages.length > 0 && (
+              <div className="bg-[#111620] border border-[#1c2333] rounded-[14px] p-5">
+                <div className="text-[13px] font-medium text-[#eeeef0] mb-3">Languages</div>
+                <div className="flex flex-wrap gap-2">
+                  {languages.map((lang) => (
+                    <span
+                      key={lang.id}
+                      className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
+                      style={{
+                        background: 'rgba(232,96,122,0.08)',
+                        border: '1px solid rgba(232,96,122,0.25)',
+                      }}
+                    >
+                      {lang.name}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 

@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import {
   users,
+  userProfiles,
   companions,
   companionProfiles,
   stories,
@@ -12,7 +13,7 @@ import {
   saves,
   comments,
 } from '@/db/schema'
-import { eq, gte, isNull, and, sql } from 'drizzle-orm'
+import { eq, gte, isNull, and, or, ne, sql } from 'drizzle-orm'
 
 const cnt = (rows: { n: unknown }[]) => Number(rows[0]?.n ?? 0)
 const q = (table: Parameters<typeof db.select>[0] extends undefined ? never : any) =>
@@ -63,15 +64,27 @@ export async function GET(req: NextRequest) {
       rComments,
     ] = await Promise.all([
       // Platform totals
-      db.select({ n: sql`count(*)` }).from(users),
+      // Dreamers = users excluding admin accounts (same filter as /admin/users page)
+      db
+        .select({ n: sql`count(*)` })
+        .from(users)
+        .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
+        .where(or(isNull(userProfiles.platform_role), ne(userProfiles.platform_role, 'admin'))),
       db
         .select({ n: sql`count(*)` })
         .from(companionProfiles)
         .where(eq(companionProfiles.is_live, true)),
+      // "Awaiting approval" = companions taken down by admin (is_live=false, is_visible_to_users=false)
+      // Platform is instant-live so there is no approval queue; this shows admin-actioned accounts
       db
         .select({ n: sql`count(*)` })
-        .from(companions)
-        .where(eq(companions.companion_stage, 3)),
+        .from(companionProfiles)
+        .where(
+          and(
+            eq(companionProfiles.is_live, false),
+            eq(companionProfiles.is_visible_to_users, false)
+          )
+        ),
       db.select({ n: sql`count(*)` }).from(companions),
 
       // Content counts
@@ -115,7 +128,13 @@ export async function GET(req: NextRequest) {
       db
         .select({ n: sql`count(*)` })
         .from(users)
-        .where(gte(users.created_at, todayStart)),
+        .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
+        .where(
+          and(
+            gte(users.created_at, todayStart),
+            or(isNull(userProfiles.platform_role), ne(userProfiles.platform_role, 'admin'))
+          )
+        ),
       db
         .select({ n: sql`count(*)` })
         .from(companions)

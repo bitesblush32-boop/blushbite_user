@@ -13,6 +13,9 @@ function currencySymbol(code: string): string {
 export interface ActiveBoostItem {
   id: string
   boost_type: string
+  promo_mode: string | null
+  // profile_id = companion_profiles.id — use this for /companions/[id] links
+  profile_id: string | null
   companion_id: string | null
   companion_name: string | null
   companion_tagline: string | null
@@ -38,6 +41,7 @@ export async function GET(req: NextRequest) {
     .select({
       id: companionBoosts.id,
       boost_type: companionBoosts.boost_type,
+      promo_mode: companionBoosts.promo_mode,
       companion_id: companionBoosts.companion_id,
       banner_image_url: companionBoosts.banner_image_url,
       banner_headline: companionBoosts.banner_headline,
@@ -104,6 +108,8 @@ export async function GET(req: NextRequest) {
     return {
       id: r.id,
       boost_type: r.boost_type,
+      promo_mode: r.promo_mode ?? null,
+      profile_id: r.profile_id ?? null,
       companion_id: r.companion_id,
       companion_name: r.companion_name ?? null,
       companion_tagline: r.companion_tagline ?? null,

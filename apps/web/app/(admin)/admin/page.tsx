@@ -287,7 +287,7 @@ export default function AdminDashboardPage() {
                 }}
               >
                 {d?.total_companions_pending} companion
-                {d?.total_companions_pending !== 1 ? 's' : ''} waiting for approval →
+                {d?.total_companions_pending !== 1 ? 's' : ''} taken down →
               </button>
             )}
             {pending_combined > 0 && (
@@ -376,10 +376,10 @@ export default function AdminDashboardPage() {
           <StatTile
             icon={Clock}
             iconColor="#c9a96e"
-            label="Awaiting Approval"
+            label="Taken Down"
             value={d?.total_companions_pending ?? 0}
             pulse="gold"
-            onClick={() => router.push('/admin/companions?filter=pending')}
+            onClick={() => router.push('/admin/companions')}
           />
           <StatTile
             icon={CalendarDays}
