@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
         eq(companionBoosts.status, 'active'),
         eq(companionBoosts.is_enabled, true),
         lte(companionBoosts.week_start, today),
-        gte(companionBoosts.week_end, today),
+        gte(companionBoosts.week_end, today)
       )
     )
     .orderBy(companionBoosts.boost_type)
@@ -70,21 +70,22 @@ export async function GET(req: NextRequest) {
 
   // Batch-fetch primary photos for all companion profiles
   const profileIds = boostRows.map((r) => r.profile_id).filter((id): id is string => !!id)
-  const photoRows = profileIds.length > 0
-    ? await db
-        .select({
-          companion_profile_id: companionPhotos.companion_profile_id,
-          url: companionPhotos.url,
-          is_primary: companionPhotos.is_primary,
-        })
-        .from(companionPhotos)
-        .where(
-          and(
-            inArray(companionPhotos.companion_profile_id, profileIds),
-            isNull(companionPhotos.deleted_at)
+  const photoRows =
+    profileIds.length > 0
+      ? await db
+          .select({
+            companion_profile_id: companionPhotos.companion_profile_id,
+            url: companionPhotos.url,
+            is_primary: companionPhotos.is_primary,
+          })
+          .from(companionPhotos)
+          .where(
+            and(
+              inArray(companionPhotos.companion_profile_id, profileIds),
+              isNull(companionPhotos.deleted_at)
+            )
           )
-        )
-    : []
+      : []
 
   // Build photo map: profile_id → primary photo url (first is_primary, else first any)
   const photoMap = new Map<string, string>()

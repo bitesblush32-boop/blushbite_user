@@ -54,7 +54,13 @@ export default function BottomNav() {
         }}
       >
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-          const active = href === '/' ? pathname === '/' || pathname === '/female' || pathname === '/male' || pathname === '/shemale' : pathname.startsWith(href)
+          const active =
+            href === '/'
+              ? pathname === '/' ||
+                pathname === '/female' ||
+                pathname === '/male' ||
+                pathname === '/shemale'
+              : pathname.startsWith(href)
           const color = active ? '#e8607a' : '#4b5563'
 
           return (

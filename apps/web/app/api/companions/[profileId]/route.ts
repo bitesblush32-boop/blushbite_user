@@ -39,20 +39,22 @@ function ageFromDob(dob: string | null): number | null {
 export async function GET(_req: NextRequest, { params }: { params: { profileId: string } }) {
   const { profileId } = params
 
-  let profile: {
-    id: string
-    companion_id: string
-    bio: string | null
-    tagline: string | null
-    city: string | null
-    currency: string
-    hourly_rate: string | null
-    is_verified: boolean | null
-    session_modality: string | null
-    is_visible_to_users: boolean | null
-    whatsapp_number: string | null
-    telegram_handle: string | null
-  } | undefined
+  let profile:
+    | {
+        id: string
+        companion_id: string
+        bio: string | null
+        tagline: string | null
+        city: string | null
+        currency: string
+        hourly_rate: string | null
+        is_verified: boolean | null
+        session_modality: string | null
+        is_visible_to_users: boolean | null
+        whatsapp_number: string | null
+        telegram_handle: string | null
+      }
+    | undefined
 
   try {
     ;[profile] = await db
@@ -85,76 +87,93 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
 
   let companionRow: { id: string; name: string | null; date_of_birth: string | null } | null
   let photoRows: { url: string; is_primary: boolean | null; sort_order: number | null }[]
-  let videoRows: { id: string; url: string; thumbnail_url: string | null; duration_seconds: number | null }[]
-  let sessionCardRows: { id: string; title: string; description: string | null; price: string | null; currency: string | null; session_type: string | null; duration_minutes: number | null }[]
+  let videoRows: {
+    id: string
+    url: string
+    thumbnail_url: string | null
+    duration_seconds: number | null
+  }[]
+  let sessionCardRows: {
+    id: string
+    title: string
+    description: string | null
+    price: string | null
+    currency: string | null
+    session_type: string | null
+    duration_minutes: number | null
+  }[]
   let vibeTagRows: { name: string }[]
 
   try {
     ;[companionRow, photoRows, videoRows, sessionCardRows, vibeTagRows] = await Promise.all([
-    db
-      .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth })
-      .from(companions)
-      .where(eq(companions.id, profile.companion_id))
-      .limit(1)
-      .then((r) => r[0] ?? null),
+      db
+        .select({
+          id: companions.id,
+          name: companions.name,
+          date_of_birth: companions.date_of_birth,
+        })
+        .from(companions)
+        .where(eq(companions.id, profile.companion_id))
+        .limit(1)
+        .then((r) => r[0] ?? null),
 
-    db
-      .select({
-        url: companionPhotos.url,
-        is_primary: companionPhotos.is_primary,
-        sort_order: companionPhotos.sort_order,
-      })
-      .from(companionPhotos)
-      .where(
-        and(
-          eq(companionPhotos.companion_profile_id, profileId),
-          eq(companionPhotos.is_approved, true),
-          isNull(companionPhotos.deleted_at)
+      db
+        .select({
+          url: companionPhotos.url,
+          is_primary: companionPhotos.is_primary,
+          sort_order: companionPhotos.sort_order,
+        })
+        .from(companionPhotos)
+        .where(
+          and(
+            eq(companionPhotos.companion_profile_id, profileId),
+            eq(companionPhotos.is_approved, true),
+            isNull(companionPhotos.deleted_at)
+          )
         )
-      )
-      .orderBy(asc(companionPhotos.sort_order)),
+        .orderBy(asc(companionPhotos.sort_order)),
 
-    db
-      .select({
-        id: companionVideos.id,
-        url: companionVideos.url,
-        thumbnail_url: companionVideos.thumbnail_url,
-        duration_seconds: companionVideos.duration_seconds,
-      })
-      .from(companionVideos)
-      .where(
-        and(
-          eq(companionVideos.companion_profile_id, profileId),
-          eq(companionVideos.is_approved, true),
-          isNull(companionVideos.deleted_at)
+      db
+        .select({
+          id: companionVideos.id,
+          url: companionVideos.url,
+          thumbnail_url: companionVideos.thumbnail_url,
+          duration_seconds: companionVideos.duration_seconds,
+        })
+        .from(companionVideos)
+        .where(
+          and(
+            eq(companionVideos.companion_profile_id, profileId),
+            eq(companionVideos.is_approved, true),
+            isNull(companionVideos.deleted_at)
+          )
+        ),
+
+      db
+        .select({
+          id: sessionCards.id,
+          title: sessionCards.title,
+          description: sessionCards.description,
+          price: sessionCards.price,
+          currency: sessionCards.currency,
+          session_type: sessionCards.session_type,
+          duration_minutes: sessionCards.duration_minutes,
+        })
+        .from(sessionCards)
+        .where(
+          and(
+            eq(sessionCards.companion_profile_id, profileId),
+            eq(sessionCards.is_active, true),
+            isNull(sessionCards.deleted_at)
+          )
         )
-      ),
+        .orderBy(asc(sessionCards.sort_order)),
 
-    db
-      .select({
-        id: sessionCards.id,
-        title: sessionCards.title,
-        description: sessionCards.description,
-        price: sessionCards.price,
-        currency: sessionCards.currency,
-        session_type: sessionCards.session_type,
-        duration_minutes: sessionCards.duration_minutes,
-      })
-      .from(sessionCards)
-      .where(
-        and(
-          eq(sessionCards.companion_profile_id, profileId),
-          eq(sessionCards.is_active, true),
-          isNull(sessionCards.deleted_at)
-        )
-      )
-      .orderBy(asc(sessionCards.sort_order)),
-
-    db
-      .select({ name: vibeTags.name })
-      .from(companionVibeTags)
-      .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
-      .where(eq(companionVibeTags.companion_profile_id, profileId)),
+      db
+        .select({ name: vibeTags.name })
+        .from(companionVibeTags)
+        .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
+        .where(eq(companionVibeTags.companion_profile_id, profileId)),
     ])
   } catch (err) {
     console.error('[companions/profileId] DB error (detail queries):', err)
@@ -162,8 +181,7 @@ export async function GET(_req: NextRequest, { params }: { params: { profileId: 
   }
 
   // Gate: must have ≥1 approved photo
-  if (photoRows.length === 0)
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (photoRows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const primaryPhoto = photoRows.find((p) => p.is_primary)?.url ?? photoRows[0]?.url ?? null
   const currency = profile.currency ?? 'EUR'

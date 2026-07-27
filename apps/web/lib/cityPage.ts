@@ -66,12 +66,21 @@ export async function getCityCompanions(
 
   const profileIds = rows.map((r) => r.profileId)
   const photoRows = await db
-    .select({ companion_profile_id: companionPhotos.companion_profile_id, url: companionPhotos.url, is_primary: companionPhotos.is_primary })
+    .select({
+      companion_profile_id: companionPhotos.companion_profile_id,
+      url: companionPhotos.url,
+      is_primary: companionPhotos.is_primary,
+    })
     .from(companionPhotos)
-    .where(and(
-      sql`${companionPhotos.companion_profile_id} = ANY(ARRAY[${sql.join(profileIds.map(id => sql`${id}::uuid`), sql`, `)}])`,
-      isNull(companionPhotos.deleted_at)
-    ))
+    .where(
+      and(
+        sql`${companionPhotos.companion_profile_id} = ANY(ARRAY[${sql.join(
+          profileIds.map((id) => sql`${id}::uuid`),
+          sql`, `
+        )}])`,
+        isNull(companionPhotos.deleted_at)
+      )
+    )
 
   const photoMap = new Map<string, string>()
   for (const p of photoRows) {

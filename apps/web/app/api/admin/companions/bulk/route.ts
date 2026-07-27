@@ -41,7 +41,9 @@ export async function DELETE(req: NextRequest) {
 
   // Delete non-cascade tables in dependency order
   if (profileIds.length > 0) {
-    await db.delete(bookingRequests).where(inArray(bookingRequests.companion_profile_id, profileIds))
+    await db
+      .delete(bookingRequests)
+      .where(inArray(bookingRequests.companion_profile_id, profileIds))
     await db
       .delete(fantasyTagOverlapScores)
       .where(inArray(fantasyTagOverlapScores.companion_profile_id, profileIds))
@@ -50,14 +52,13 @@ export async function DELETE(req: NextRequest) {
   await db
     .delete(notifications)
     .where(
-      and(
-        eq(notifications.recipient_type, 'companion'),
-        inArray(notifications.recipient_id, ids)
-      )
+      and(eq(notifications.recipient_type, 'companion'), inArray(notifications.recipient_id, ids))
     )
   await db.delete(companionVerifications).where(inArray(companionVerifications.companion_id, ids))
   await db.delete(companionLegalDocs).where(inArray(companionLegalDocs.companion_id, ids))
-  await db.delete(companionOnboardingProgress).where(inArray(companionOnboardingProgress.companion_id, ids))
+  await db
+    .delete(companionOnboardingProgress)
+    .where(inArray(companionOnboardingProgress.companion_id, ids))
   await db.delete(companionPaymentSetup).where(inArray(companionPaymentSetup.companion_id, ids))
 
   // Disassociate authored content (preserve content, remove author link)
@@ -72,9 +73,7 @@ export async function DELETE(req: NextRequest) {
     .where(inArray(audioRecordings.author_companion_id, ids))
 
   // Remove device fingerprint bindings
-  await db
-    .delete(deviceCommunityBindings)
-    .where(inArray(deviceCommunityBindings.companion_id, ids))
+  await db.delete(deviceCommunityBindings).where(inArray(deviceCommunityBindings.companion_id, ids))
 
   // Delete companions — CASCADE removes profiles, photos, videos, tags, session_cards, etc.
   const deleted = await db

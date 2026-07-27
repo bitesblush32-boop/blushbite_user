@@ -93,7 +93,10 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('[users/auth/send-otp]', err)
-    return NextResponse.json({ error: 'Could not send the code. Please try again.' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Could not send the code. Please try again.' },
+      { status: 500 }
+    )
   }
 
   return NextResponse.json({ sent: true })

@@ -267,8 +267,8 @@ export default function PrivacyPage() {
                 may ask us to correct inaccurate data.
               </>,
               <>
-                Right of <strong className="text-[#eeeef0] font-medium">erasure</strong> (&ldquo;right to
-                be forgotten&rdquo;) — you may request deletion of your data.
+                Right of <strong className="text-[#eeeef0] font-medium">erasure</strong>{' '}
+                (&ldquo;right to be forgotten&rdquo;) — you may request deletion of your data.
               </>,
               <>
                 Right to{' '}
@@ -343,19 +343,19 @@ export default function PrivacyPage() {
             rectification, erasure, restriction, portability, and objection.
           </P>
           <P>
-            UK residents may also lodge a complaint with the UK Information Commissioner&apos;s Office
-            (ICO) at <span className="text-[#e8607a]">ico.org.uk</span>.
+            UK residents may also lodge a complaint with the UK Information Commissioner&apos;s
+            Office (ICO) at <span className="text-[#e8607a]">ico.org.uk</span>.
           </P>
         </Section>
 
         {/* 11. User-Generated Content */}
         <Section title="11. User-Generated Content">
           <P>
-            Both companions (&ldquo;The Dream&rdquo;) and registered users (&ldquo;The Dreamer&rdquo;) may submit stories
-            and confessions to the platform. All user-generated content (UGC) is moderated before
-            publication. Submitters retain authorship of their original content but grant BlushBite
-            a non-exclusive, royalty-free licence to display that content on the platform for as
-            long as the submission remains live.
+            Both companions (&ldquo;The Dream&rdquo;) and registered users (&ldquo;The
+            Dreamer&rdquo;) may submit stories and confessions to the platform. All user-generated
+            content (UGC) is moderated before publication. Submitters retain authorship of their
+            original content but grant BlushBite a non-exclusive, royalty-free licence to display
+            that content on the platform for as long as the submission remains live.
           </P>
           <P>
             Content submitted anonymously is stored with a pseudonymous identifier and is not linked

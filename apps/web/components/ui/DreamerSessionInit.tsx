@@ -13,7 +13,11 @@ export default function DreamerSessionInit() {
     fetch('/api/users/me')
       .then((r) => r.json())
       .then((data) => {
-        setDreamer(data.user ? { id: data.user.id, email: data.user.email, alias: data.user.alias ?? null } : null)
+        setDreamer(
+          data.user
+            ? { id: data.user.id, email: data.user.email, alias: data.user.alias ?? null }
+            : null
+        )
       })
       .catch(() => setDreamer(null))
       .finally(() => setDreamerLoading(false))

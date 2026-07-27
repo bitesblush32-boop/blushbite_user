@@ -240,7 +240,10 @@ function BulkDeleteAdsModal({
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}
+                style={{
+                  background: 'rgba(239,68,68,0.12)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                }}
               >
                 <Trash2 size={16} color="#ef4444" />
               </div>
@@ -260,7 +263,9 @@ function BulkDeleteAdsModal({
           </div>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-4">
             This will permanently delete{' '}
-            <span className="text-[#eeeef0]">{count} selected boost record{count !== 1 ? 's' : ''}</span>{' '}
+            <span className="text-[#eeeef0]">
+              {count} selected boost record{count !== 1 ? 's' : ''}
+            </span>{' '}
             from the database. Companions will lose their placement history for these slots.
           </p>
           <p className="text-[12px] text-[#ef4444] mb-5">This action cannot be undone.</p>
@@ -332,12 +337,19 @@ function SettingsPanel() {
   ]
 
   return (
-    <div className="border border-[#1c2333] rounded-[16px] overflow-hidden" style={{ background: '#111620' }}>
+    <div
+      className="border border-[#1c2333] rounded-[16px] overflow-hidden"
+      style={{ background: '#111620' }}
+    >
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between p-5 text-left"
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '' }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLElement).style.background = ''
+        }}
       >
         <div className="flex items-center gap-3">
           <Settings2 size={16} color="#6b7280" />
@@ -358,12 +370,23 @@ function SettingsPanel() {
           >
             <div className="border-t border-[#1c2333] p-5">
               {isLoading ? (
-                <div className="h-[80px] animate-pulse rounded-[10px]" style={{ background: '#1c2333' }} />
+                <div
+                  className="h-[80px] animate-pulse rounded-[10px]"
+                  style={{ background: '#1c2333' }}
+                />
               ) : (
                 <div className="flex flex-col gap-6">
                   {/* Prices */}
                   <div>
-                    <p style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        marginBottom: 12,
+                      }}
+                    >
                       Pricing
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -383,7 +406,15 @@ function SettingsPanel() {
 
                   {/* Enabled toggles */}
                   <div>
-                    <p style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        marginBottom: 12,
+                      }}
+                    >
                       Slot Enabled
                     </p>
                     <div className="flex flex-wrap gap-3">
@@ -403,7 +434,8 @@ function SettingsPanel() {
                               background: enabled ? 'rgba(74,222,128,0.08)' : 'transparent',
                             }}
                           >
-                            {enabled ? '● ' : '○ '}{label}
+                            {enabled ? '● ' : '○ '}
+                            {label}
                           </button>
                         )
                       })}
@@ -417,7 +449,9 @@ function SettingsPanel() {
                       <input
                         type="number"
                         value={String(merged.max_weeks_advance ?? '')}
-                        onChange={(e) => setDraft((p) => ({ ...p, max_weeks_advance: parseInt(e.target.value) }))}
+                        onChange={(e) =>
+                          setDraft((p) => ({ ...p, max_weeks_advance: parseInt(e.target.value) }))
+                        }
                         className="w-[100px] bg-[#0d1117] border border-[#1c2333] rounded-[8px] px-3 py-[8px] text-[13px] text-[#eeeef0] outline-none focus:border-[rgba(232,96,122,0.5)]"
                       />
                     </div>
@@ -526,8 +560,7 @@ export default function AdminAdsPage() {
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
-  const toggleAll = () =>
-    setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.id)))
+  const toggleAll = () => setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.id)))
 
   return (
     <motion.div
@@ -613,7 +646,10 @@ export default function AdminAdsPage() {
           {STATUS_TABS.map((t) => (
             <button
               key={t.key}
-              onClick={() => { setStatusFilter(t.key); setPage(1) }}
+              onClick={() => {
+                setStatusFilter(t.key)
+                setPage(1)
+              }}
               className="text-[12px] px-[14px] py-[6px] rounded-full border cursor-pointer transition-all duration-150"
               style={{
                 borderColor: statusFilter === t.key ? '#e8607a' : '#1c2333',
@@ -704,8 +740,8 @@ export default function AdminAdsPage() {
                         background: selectedIds.has(b.id)
                           ? 'rgba(239,68,68,0.05)'
                           : idx % 2 === 0
-                          ? '#0d1117'
-                          : '#07090f',
+                            ? '#0d1117'
+                            : '#07090f',
                       }}
                       className="group hover:bg-[#111620] transition-colors"
                     >
@@ -897,9 +933,7 @@ export default function AdminAdsPage() {
             className="sticky bottom-6 flex items-center gap-3 mt-6 px-4 py-[10px] rounded-[12px] border border-[#1c2333] w-fit mx-auto"
             style={{ background: '#111620', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
           >
-            <span style={{ fontSize: 13, color: '#eeeef0' }}>
-              {selectedIds.size} selected
-            </span>
+            <span style={{ fontSize: 13, color: '#eeeef0' }}>{selectedIds.size} selected</span>
             <button
               onClick={() => setSelectedIds(new Set())}
               className="text-[12px] text-[#6b7280] hover:text-[#eeeef0] transition-colors px-3 py-[6px] rounded-[8px] border border-[#1c2333] cursor-pointer"

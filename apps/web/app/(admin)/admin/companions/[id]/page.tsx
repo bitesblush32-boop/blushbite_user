@@ -322,7 +322,9 @@ export default function AdminCompanionDetailPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  const [modal, setModal] = useState<'takedown' | 'restore' | 'changes' | 'force_verify' | null>(null)
+  const [modal, setModal] = useState<'takedown' | 'restore' | 'changes' | 'force_verify' | null>(
+    null
+  )
 
   const { data, isLoading, error } = useQuery<CompanionDossier>({
     queryKey: ['admin', 'companion', id],
@@ -1150,62 +1152,64 @@ export default function AdminCompanionDetailPage() {
                   </a>
                   {/* Info */}
                   <div className="flex items-center justify-between gap-4 flex-1 px-4 py-3">
-                  <div>
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[13px] text-[#e8607a] hover:underline"
-                    >
-                      Watch video ↗
-                    </a>
-                    {video.duration_seconds && (
-                      <div className="text-[11px] text-[#6b7280] mt-[2px]">
-                        {video.duration_seconds}s
-                      </div>
-                    )}
-                    <div className="text-[11px] text-[#6b7280]">
-                      {new Date(video.created_at).toLocaleDateString('en-GB')}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {video.is_approved ? (
-                      <span
-                        className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
-                        style={{
-                          background: 'rgba(201,169,110,0.12)',
-                          border: '1px solid rgba(201,169,110,0.3)',
-                        }}
+                    <div>
+                      <a
+                        href={video.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[13px] text-[#e8607a] hover:underline"
                       >
-                        ✦ Approved
-                      </span>
-                    ) : (
+                        Watch video ↗
+                      </a>
+                      {video.duration_seconds && (
+                        <div className="text-[11px] text-[#6b7280] mt-[2px]">
+                          {video.duration_seconds}s
+                        </div>
+                      )}
+                      <div className="text-[11px] text-[#6b7280]">
+                        {new Date(video.created_at).toLocaleDateString('en-GB')}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {video.is_approved ? (
+                        <span
+                          className="text-[11px] px-[10px] py-1 rounded-full text-[#c9a96e]"
+                          style={{
+                            background: 'rgba(201,169,110,0.12)',
+                            border: '1px solid rgba(201,169,110,0.3)',
+                          }}
+                        >
+                          ✦ Approved
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            videoMutation.mutate({ video_id: video.id, action: 'approve' })
+                          }
+                          className="text-[11px] px-[10px] py-1 rounded-full text-white transition-all hover:opacity-80"
+                          style={{
+                            background: 'rgba(34,197,94,0.2)',
+                            border: '1px solid rgba(34,197,94,0.4)',
+                            color: '#22c55e',
+                          }}
+                        >
+                          Approve
+                        </button>
+                      )}
                       <button
                         onClick={() =>
-                          videoMutation.mutate({ video_id: video.id, action: 'approve' })
+                          videoMutation.mutate({ video_id: video.id, action: 'reject' })
                         }
-                        className="text-[11px] px-[10px] py-1 rounded-full text-white transition-all hover:opacity-80"
+                        className="text-[11px] px-[10px] py-1 rounded-full transition-all hover:opacity-80"
                         style={{
-                          background: 'rgba(34,197,94,0.2)',
-                          border: '1px solid rgba(34,197,94,0.4)',
-                          color: '#22c55e',
+                          background: 'rgba(239,68,68,0.1)',
+                          border: '1px solid rgba(239,68,68,0.3)',
+                          color: '#ef4444',
                         }}
                       >
-                        Approve
+                        Remove
                       </button>
-                    )}
-                    <button
-                      onClick={() => videoMutation.mutate({ video_id: video.id, action: 'reject' })}
-                      className="text-[11px] px-[10px] py-1 rounded-full transition-all hover:opacity-80"
-                      style={{
-                        background: 'rgba(239,68,68,0.1)',
-                        border: '1px solid rgba(239,68,68,0.3)',
-                        color: '#ef4444',
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
+                    </div>
                   </div>
                 </div>
               ))}

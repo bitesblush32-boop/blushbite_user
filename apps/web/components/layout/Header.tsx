@@ -723,8 +723,20 @@ export default function Header() {
                 }}
               >
                 For Companions
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.5 }}>
-                  <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  style={{ opacity: 0.5 }}
+                >
+                  <path
+                    d="M1 9L9 1M9 1H3M9 1V7"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </Link>
             </div>
@@ -758,7 +770,8 @@ export default function Header() {
                     transition: 'border-color 0.15s, color 0.15s',
                   }}
                   onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,96,122,0.35)'
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      'rgba(232,96,122,0.35)'
                     ;(e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
                   }}
                   onMouseLeave={(e) => {
@@ -789,11 +802,13 @@ export default function Header() {
                   }}
                   onMouseEnter={(e) => {
                     ;(e.currentTarget as HTMLButtonElement).style.opacity = '0.9'
-                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 24px rgba(232,96,122,0.45)'
+                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+                      '0 0 24px rgba(232,96,122,0.45)'
                   }}
                   onMouseLeave={(e) => {
                     ;(e.currentTarget as HTMLButtonElement).style.opacity = '1'
-                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 16px rgba(232,96,122,0.30)'
+                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+                      '0 0 16px rgba(232,96,122,0.30)'
                   }}
                 >
                   Enter
@@ -841,7 +856,8 @@ export default function Header() {
                     cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,96,122,0.10)'
+                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                      'rgba(232,96,122,0.10)'
                   }}
                   onMouseLeave={(e) => {
                     ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'

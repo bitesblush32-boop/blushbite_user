@@ -14,7 +14,12 @@ const OVERLAY = {
 }
 const CARD = {
   hidden: { opacity: 0, scale: 0.96, y: 8 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 30 } },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 420, damping: 30 },
+  },
   exit: { opacity: 0, scale: 0.97, y: 4, transition: { duration: 0.14 } },
 }
 
@@ -72,7 +77,10 @@ export default function AuthModal() {
         body: JSON.stringify({ email: targetEmail }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Could not send code.'); return }
+      if (!res.ok) {
+        setError(data.error ?? 'Could not send code.')
+        return
+      }
       setStep('otp')
       setResendCooldown(60)
     } finally {
@@ -90,7 +98,10 @@ export default function AuthModal() {
         body: JSON.stringify({ email, otp }),
       })
       const data = await res.json()
-      if (!res.ok || !data.verified) { setError(data.error ?? 'Invalid code.'); return }
+      if (!res.ok || !data.verified) {
+        setError(data.error ?? 'Invalid code.')
+        return
+      }
 
       if (data.isNew) {
         setStep('setup')
@@ -118,7 +129,10 @@ export default function AuthModal() {
         body: JSON.stringify({ alias: alias.trim(), phone: phone.trim() || undefined }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Could not save. Try again.'); return }
+      if (!res.ok) {
+        setError(data.error ?? 'Could not save. Try again.')
+        return
+      }
       await refreshSession()
       closeAuthModal()
     } finally {
@@ -133,7 +147,9 @@ export default function AuthModal() {
       if (data.user) {
         setDreamer({ id: data.user.id, email: data.user.email, alias: data.user.alias ?? null })
       }
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }
 
   function handleEmailSubmit(e: React.FormEvent) {
@@ -193,12 +209,31 @@ export default function AuthModal() {
           }}
         >
           {/* Top accent line */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, borderRadius: '20px 20px 0 0', background: 'linear-gradient(90deg,transparent,#e8607a,transparent)' }} />
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 2,
+              borderRadius: '20px 20px 0 0',
+              background: 'linear-gradient(90deg,transparent,#e8607a,transparent)',
+            }}
+          />
 
           {/* Close */}
           <button
             onClick={closeAuthModal}
-            style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: '#4b5563', padding: 4 }}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#4b5563',
+              padding: 4,
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -207,8 +242,20 @@ export default function AuthModal() {
           {/* Back (otp/setup) */}
           {(step === 'otp' || step === 'setup') && (
             <button
-              onClick={() => { setStep(step === 'setup' ? 'otp' : 'email'); setError('') }}
-              style={{ position: 'absolute', top: 16, left: 16, background: 'none', border: 'none', cursor: 'pointer', color: '#4b5563', padding: 4 }}
+              onClick={() => {
+                setStep(step === 'setup' ? 'otp' : 'email')
+                setError('')
+              }}
+              style={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#4b5563',
+                padding: 4,
+              }}
               aria-label="Back"
             >
               <ArrowLeft size={18} />
@@ -234,10 +281,26 @@ export default function AuthModal() {
           {/* ── EMAIL STEP ── */}
           {step === 'email' && (
             <form onSubmit={handleEmailSubmit}>
-              <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', marginBottom: 8 }}>
+              <p
+                style={{
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: '#6b7280',
+                  marginBottom: 8,
+                }}
+              >
                 Sign in
               </p>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: '#eeeef0', lineHeight: 1.3, marginBottom: 6 }}>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 24,
+                  color: '#eeeef0',
+                  lineHeight: 1.3,
+                  marginBottom: 6,
+                }}
+              >
                 Enter your <em style={{ fontStyle: 'italic', color: '#e8607a' }}>email.</em>
               </h2>
               <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>
@@ -286,7 +349,13 @@ export default function AuthModal() {
                   transition: 'background .15s',
                 }}
               >
-                {loading ? <><Loader2 size={15} className="animate-spin" /> Sending…</> : 'Send code →'}
+                {loading ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> Sending…
+                  </>
+                ) : (
+                  'Send code →'
+                )}
               </button>
             </form>
           )}
@@ -294,10 +363,26 @@ export default function AuthModal() {
           {/* ── OTP STEP ── */}
           {step === 'otp' && (
             <form onSubmit={handleOtpSubmit}>
-              <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', marginBottom: 8 }}>
+              <p
+                style={{
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: '#6b7280',
+                  marginBottom: 8,
+                }}
+              >
                 Verify
               </p>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: '#eeeef0', lineHeight: 1.3, marginBottom: 6 }}>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 24,
+                  color: '#eeeef0',
+                  lineHeight: 1.3,
+                  marginBottom: 6,
+                }}
+              >
                 Check your <em style={{ fontStyle: 'italic', color: '#e8607a' }}>inbox.</em>
               </h2>
               <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>
@@ -359,16 +444,31 @@ export default function AuthModal() {
                   transition: 'background .15s',
                 }}
               >
-                {loading ? <><Loader2 size={15} className="animate-spin" /> Verifying…</> : 'Verify →'}
+                {loading ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> Verifying…
+                  </>
+                ) : (
+                  'Verify →'
+                )}
               </button>
               <div style={{ textAlign: 'center', marginTop: 16 }}>
                 {resendCooldown > 0 ? (
-                  <span style={{ fontSize: 12, color: '#4b5563' }}>Resend in {resendCooldown}s</span>
+                  <span style={{ fontSize: 12, color: '#4b5563' }}>
+                    Resend in {resendCooldown}s
+                  </span>
                 ) : (
                   <button
                     type="button"
                     onClick={() => sendOtp()}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#6b7280', textDecoration: 'underline' }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      color: '#6b7280',
+                      textDecoration: 'underline',
+                    }}
                   >
                     Resend code
                   </button>
@@ -380,26 +480,65 @@ export default function AuthModal() {
           {/* ── SETUP STEP ── */}
           {step === 'setup' && (
             <form onSubmit={handleSetupSubmit}>
-              <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', marginBottom: 8 }}>
+              <p
+                style={{
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: '#6b7280',
+                  marginBottom: 8,
+                }}
+              >
                 Almost there
               </p>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: '#eeeef0', lineHeight: 1.3, marginBottom: 6 }}>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 24,
+                  color: '#eeeef0',
+                  lineHeight: 1.3,
+                  marginBottom: 6,
+                }}
+              >
                 Set up your <em style={{ fontStyle: 'italic', color: '#e8607a' }}>profile.</em>
               </h2>
               <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>
                 Pick a username so companions can recognise you.
               </p>
 
-              <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', display: 'block', marginBottom: 6 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: '#6b7280',
+                  display: 'block',
+                  marginBottom: 6,
+                }}
+              >
                 Username <span style={{ color: '#e8607a' }}>*</span>
               </label>
               <div style={{ position: 'relative', marginBottom: 4 }}>
-                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#4b5563', fontSize: 14 }}>@</span>
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#4b5563',
+                    fontSize: 14,
+                  }}
+                >
+                  @
+                </span>
                 <input
                   ref={aliasRef}
                   type="text"
                   value={alias}
-                  onChange={(e) => { setAlias(e.target.value.replace(/\s/g, '')); setError('') }}
+                  onChange={(e) => {
+                    setAlias(e.target.value.replace(/\s/g, ''))
+                    setError('')
+                  }}
                   placeholder="yourname"
                   maxLength={50}
                   required
@@ -416,11 +555,22 @@ export default function AuthModal() {
                   }}
                 />
               </div>
-              <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 20 }}>This is how you&apos;ll appear to companions.</p>
+              <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 20 }}>
+                This is how you&apos;ll appear to companions.
+              </p>
 
               {error && <p style={{ fontSize: 12, color: '#f87171', marginBottom: 16 }}>{error}</p>}
 
-              <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6b7280', display: 'block', marginBottom: 6 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: '#6b7280',
+                  display: 'block',
+                  marginBottom: 6,
+                }}
+              >
                 Phone number <span style={{ color: '#4b5563' }}>(optional)</span>
               </label>
               <input
@@ -443,7 +593,9 @@ export default function AuthModal() {
                   marginBottom: 4,
                 }}
               />
-              <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 24 }}>Used only for important updates, never shown publicly.</p>
+              <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 24 }}>
+                Used only for important updates, never shown publicly.
+              </p>
 
               <button
                 type="submit"
@@ -465,7 +617,13 @@ export default function AuthModal() {
                   transition: 'background .15s',
                 }}
               >
-                {loading ? <><Loader2 size={15} className="animate-spin" /> Creating…</> : 'Create my account →'}
+                {loading ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> Creating…
+                  </>
+                ) : (
+                  'Create my account →'
+                )}
               </button>
             </form>
           )}

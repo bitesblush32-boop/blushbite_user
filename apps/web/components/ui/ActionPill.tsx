@@ -98,7 +98,10 @@ export function ActionPill({
   }
 
   const handleLike = () => {
-    if (!dreamer) { requireAuth(); return }
+    if (!dreamer) {
+      requireAuth()
+      return
+    }
     likeAnim.start(springTap)
     if (onLike) {
       onLike()
@@ -107,7 +110,10 @@ export function ActionPill({
     }
   }
   const handleSave = () => {
-    if (!dreamer) { requireAuth(); return }
+    if (!dreamer) {
+      requireAuth()
+      return
+    }
     saveAnim.start(springTap)
     if (onSave) {
       onSave()
@@ -116,7 +122,10 @@ export function ActionPill({
     }
   }
   const handleOpenComments = () => {
-    if (!dreamer) { requireAuth(); return }
+    if (!dreamer) {
+      requireAuth()
+      return
+    }
     // Prevent focused background control from remaining active while dialog applies aria-hidden.
     if (typeof document !== 'undefined') {
       const active = document.activeElement

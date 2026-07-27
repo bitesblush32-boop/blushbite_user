@@ -42,7 +42,12 @@ export default async function MaleCityPage({ params }: Props) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'BlushBite', item: 'https://blushbite.co' },
       { '@type': 'ListItem', position: 2, name: 'Male', item: 'https://blushbite.co/male' },
-      { '@type': 'ListItem', position: 3, name: cityName, item: `https://blushbite.co/male/${city}` },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: cityName,
+        item: `https://blushbite.co/male/${city}`,
+      },
     ],
   }
 
@@ -52,12 +57,7 @@ export default async function MaleCityPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <CityCompanionGrid
-        community="male"
-        city={city}
-        cityName={cityName}
-        companions={companions}
-      />
+      <CityCompanionGrid community="male" city={city} cityName={cityName} companions={companions} />
     </>
   )
 }

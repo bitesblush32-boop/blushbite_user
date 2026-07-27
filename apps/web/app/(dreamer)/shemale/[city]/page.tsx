@@ -42,7 +42,12 @@ export default async function ShemaleCityPage({ params }: Props) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'BlushBite', item: 'https://blushbite.co' },
       { '@type': 'ListItem', position: 2, name: 'Trans', item: 'https://blushbite.co/shemale' },
-      { '@type': 'ListItem', position: 3, name: cityName, item: `https://blushbite.co/shemale/${city}` },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: cityName,
+        item: `https://blushbite.co/shemale/${city}`,
+      },
     ],
   }
 

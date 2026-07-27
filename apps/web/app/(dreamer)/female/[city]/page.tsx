@@ -42,7 +42,12 @@ export default async function FemaleCityPage({ params }: Props) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'BlushBite', item: 'https://blushbite.co' },
       { '@type': 'ListItem', position: 2, name: 'Female', item: 'https://blushbite.co/female' },
-      { '@type': 'ListItem', position: 3, name: cityName, item: `https://blushbite.co/female/${city}` },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: cityName,
+        item: `https://blushbite.co/female/${city}`,
+      },
     ],
   }
 

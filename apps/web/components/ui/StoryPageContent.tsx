@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useBridgeMutation } from '@/hooks/useBridgeMutation'
-import { useUIStore } from '@/store/uiStore'
 import { computePages, paginateText, FONT_SIZE_PX, FONT_SIZE_CHARS } from '@/lib/paginateText'
 import type { FontSize } from '@/lib/paginateText'
 
@@ -48,7 +47,6 @@ const slideVariants = {
 // ─── BridgePage ───────────────────────────────────────────────────────────────
 
 function BridgePage({ storyId, gradient }: { storyId: string; gradient: string }) {
-  const openModal = useUIStore((s) => s.openModal)
   const { isCompanion, bridgeStatus, loading, bridge } = useBridgeMutation(storyId)
 
   const { data, isLoading } = useQuery<{ data: BridgeCompanion[] }>({
@@ -201,7 +199,7 @@ function BridgePage({ storyId, gradient }: { storyId: string; gradient: string }
               {shown.map((c) => (
                 <div
                   key={c.id}
-                  onClick={() => openModal(c.id)}
+                  onClick={() => (window.location.href = '/companions/' + c.id)}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',

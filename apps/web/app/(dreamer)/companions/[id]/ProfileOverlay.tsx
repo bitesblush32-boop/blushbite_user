@@ -44,7 +44,7 @@ export default function ProfileOverlay({ children, accentColor }: Props) {
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
         display: 'flex',
-        alignItems: 'flex-end',   // mobile: sheet from bottom
+        alignItems: 'flex-end', // mobile: sheet from bottom
         justifyContent: 'center',
         overflowY: 'auto',
       }}

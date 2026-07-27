@@ -8,7 +8,16 @@ const LocationPicker = dynamic(() => import('@/components/ui/LocationPicker'), {
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Camera, LayoutGrid, Heart, Bookmark, BookMarked, Pencil, MapPin, LogIn } from 'lucide-react'
+import {
+  Camera,
+  LayoutGrid,
+  Heart,
+  Bookmark,
+  BookMarked,
+  Pencil,
+  MapPin,
+  LogIn,
+} from 'lucide-react'
 import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'

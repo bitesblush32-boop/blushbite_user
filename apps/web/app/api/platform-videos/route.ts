@@ -75,10 +75,7 @@ export async function GET(req: NextRequest) {
         )`,
       })
       .from(companionVideos)
-      .innerJoin(
-        companionProfiles,
-        eq(companionProfiles.id, companionVideos.companion_profile_id)
-      )
+      .innerJoin(companionProfiles, eq(companionProfiles.id, companionVideos.companion_profile_id))
       .innerJoin(companions, eq(companions.id, companionProfiles.companion_id))
       .where(whereClause)
       .orderBy(desc(companionVideos.created_at), desc(companionVideos.id))
@@ -88,9 +85,7 @@ export async function GET(req: NextRequest) {
     const items = rows.slice(0, limit)
     const last = items[items.length - 1]
     const nextCursor: Cursor | null =
-      hasMore && last
-        ? { created_at: last.created_at?.toISOString() ?? '', id: last.id }
-        : null
+      hasMore && last ? { created_at: last.created_at?.toISOString() ?? '', id: last.id } : null
 
     return NextResponse.json({
       items: items.map((r) => ({

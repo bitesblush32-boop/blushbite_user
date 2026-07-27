@@ -15,18 +15,18 @@ import type { ActiveBoostItem } from '@/hooks/useActiveBoosts'
 // ── Config ───────────────────────────────────────────────────────────────────
 
 const COMMUNITY_CONFIG = {
-  female:  { label: 'Female', accentColor: '#e8607a' },
-  male:    { label: 'Men',    accentColor: '#60a5fa' },
-  shemale: { label: 'Trans',  accentColor: '#c084fc' },
+  female: { label: 'Female', accentColor: '#e8607a' },
+  male: { label: 'Men', accentColor: '#60a5fa' },
+  shemale: { label: 'Trans', accentColor: '#c084fc' },
 } as const
 type Community = keyof typeof COMMUNITY_CONFIG
 
 const AGE_RANGES = [
   { label: 'Any age', min: null as number | null, max: null as number | null },
-  { label: '18 – 25', min: 18,  max: 25  },
-  { label: '26 – 35', min: 26,  max: 35  },
-  { label: '36 – 45', min: 36,  max: 45  },
-  { label: '45+',     min: 45,  max: null as number | null },
+  { label: '18 – 25', min: 18, max: 25 },
+  { label: '26 – 35', min: 26, max: 35 },
+  { label: '36 – 45', min: 36, max: 45 },
+  { label: '45+', min: 45, max: null as number | null },
 ]
 
 // ── CompanionCard ─────────────────────────────────────────────────────────────
@@ -91,60 +91,78 @@ const CompanionCard = memo(function CompanionCard({
         )}
 
         {/* Deep gradient overlay */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(to top, rgba(7,9,15,0.96) 0%, rgba(7,9,15,0.5) 38%, transparent 60%)',
-          pointerEvents: 'none',
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(to top, rgba(7,9,15,0.96) 0%, rgba(7,9,15,0.5) 38%, transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
 
         {/* Verified dot */}
         {companion.isVerified && (
-          <div style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: 'rgba(7,9,15,0.75)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 9,
-            color: '#c9a96e',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: 'rgba(7,9,15,0.75)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 9,
+              color: '#c9a96e',
+            }}
+          >
             ✦
           </div>
         )}
 
         {/* Name + age + city */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 12px 14px' }}>
-          <p style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 15,
-            fontStyle: 'italic',
-            color: '#eeeef0',
-            lineHeight: 1.2,
-            marginBottom: 4,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}>
-            {companion.name}{companion.age ? `, ${companion.age}` : ''}
+          <p
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 15,
+              fontStyle: 'italic',
+              color: '#eeeef0',
+              lineHeight: 1.2,
+              marginBottom: 4,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {companion.name}
+            {companion.age ? `, ${companion.age}` : ''}
           </p>
           {companion.city && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{
-                width: 5,
-                height: 5,
-                borderRadius: '50%',
-                background: accentColor,
-                flexShrink: 0,
-                display: 'inline-block',
-              }} />
-              <span style={{ fontSize: 10.5, color: '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  background: accentColor,
+                  flexShrink: 0,
+                  display: 'inline-block',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10.5,
+                  color: '#9ca3af',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
                 {companion.city}
               </span>
             </div>
@@ -179,43 +197,45 @@ function CommunityPicker({ onPick }: { onPick: (c: string) => Promise<void> }) {
             lineHeight: 1.3,
           }}
         >
-          Who are you looking{' '}
-          <em style={{ fontStyle: 'italic', color: '#e8607a' }}>for?</em>
+          Who are you looking <em style={{ fontStyle: 'italic', color: '#e8607a' }}>for?</em>
         </p>
         <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 36 }}>
           We&apos;ll remember your preference.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {(Object.entries(COMMUNITY_CONFIG) as [Community, { label: string; accentColor: string }][]).map(
-            ([key, cfg]) => (
-              <button
-                key={key}
-                onClick={() => onPick(key)}
-                style={{
-                  padding: '14px 30px',
-                  borderRadius: 12,
-                  background: `${cfg.accentColor}10`,
-                  border: `1px solid ${cfg.accentColor}40`,
-                  color: cfg.accentColor,
-                  fontSize: 15,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'background 0.15s, transform 0.1s',
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}20`
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}10`
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-                }}
-              >
-                {cfg.label}
-              </button>
-            )
-          )}
+          {(
+            Object.entries(COMMUNITY_CONFIG) as [
+              Community,
+              { label: string; accentColor: string },
+            ][]
+          ).map(([key, cfg]) => (
+            <button
+              key={key}
+              onClick={() => onPick(key)}
+              style={{
+                padding: '14px 30px',
+                borderRadius: 12,
+                background: `${cfg.accentColor}10`,
+                border: `1px solid ${cfg.accentColor}40`,
+                color: cfg.accentColor,
+                fontSize: 15,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background 0.15s, transform 0.1s',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}20`
+                ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}10`
+                ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+              }}
+            >
+              {cfg.label}
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -366,7 +386,13 @@ function FeaturedBoostCard({
           ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
         }}
       >
-        <div style={{ position: 'relative', aspectRatio: '3/4', background: 'linear-gradient(135deg,#1a1228,#2a1535)' }}>
+        <div
+          style={{
+            position: 'relative',
+            aspectRatio: '3/4',
+            background: 'linear-gradient(135deg,#1a1228,#2a1535)',
+          }}
+        >
           {data.companion_photo_url && (
             <Image
               src={data.companion_photo_url}
@@ -479,7 +505,13 @@ function MidGridAd({ data }: { data: ActiveBoostItem }) {
           ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
         }}
       >
-        <div style={{ position: 'relative', aspectRatio: '3/4', background: 'linear-gradient(135deg,#110d0a,#1a1510)' }}>
+        <div
+          style={{
+            position: 'relative',
+            aspectRatio: '3/4',
+            background: 'linear-gradient(135deg,#110d0a,#1a1510)',
+          }}
+        >
           {data.companion_photo_url && (
             <Image
               src={data.companion_photo_url}
@@ -581,29 +613,32 @@ export default function CompanionsPage() {
   const router = useRouter()
   const geo = useGeolocation()
 
-  const [cities, setCities]             = useState<{ slug: string; name: string }[]>([])
-  const [selectedCity, setSelectedCity] = useState('')          // '' = all cities
+  const [cities, setCities] = useState<{ slug: string; name: string }[]>([])
+  const [selectedCity, setSelectedCity] = useState('') // '' = all cities
   const [ageRangeIndex, setAgeRangeIndex] = useState(0)
-  const [geoSlug, setGeoSlug]           = useState<string | null>(null)  // detected city slug
-  const geoCheckedRef                   = useRef(false)         // ref avoids effect deps
-  const sentinelRef                     = useRef<HTMLDivElement>(null)
+  const [geoSlug, setGeoSlug] = useState<string | null>(null) // detected city slug
+  const geoCheckedRef = useRef(false) // ref avoids effect deps
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const cfg =
-    community && community in COMMUNITY_CONFIG
-      ? COMMUNITY_CONFIG[community as Community]
-      : null
+    community && community in COMMUNITY_CONFIG ? COMMUNITY_CONFIG[community as Community] : null
 
   const selectedAge = AGE_RANGES[ageRangeIndex]
 
-  const { companions, isLoading: isLoadingCards, hasNextPage, fetchNextPage, isFetchingMore } =
-    useDiscoverCompanions({
-      lat: null,
-      lng: null,
-      community: community ?? null,
-      minAge: selectedAge.min,
-      maxAge: selectedAge.max,
-      enabled: !!community,   // don't fire until community is resolved
-    })
+  const {
+    companions,
+    isLoading: isLoadingCards,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingMore,
+  } = useDiscoverCompanions({
+    lat: null,
+    lng: null,
+    community: community ?? null,
+    minAge: selectedAge.min,
+    maxAge: selectedAge.max,
+    enabled: !!community, // don't fire until community is resolved
+  })
 
   const { headerBanner, featuredBoosts, midGridBoost } = useActiveBoosts(community ?? null)
 
@@ -622,14 +657,16 @@ export default function CompanionsPage() {
     if (!community) return
     if (geo.latitude === null || geo.longitude === null) return
 
-    geoCheckedRef.current = true   // ref — doesn't trigger re-render
+    geoCheckedRef.current = true // ref — doesn't trigger re-render
 
-    fetch(`/api/companions/nearby-city?lat=${geo.latitude}&lng=${geo.longitude}&community=${community}`)
+    fetch(
+      `/api/companions/nearby-city?lat=${geo.latitude}&lng=${geo.longitude}&community=${community}`
+    )
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { slug: string | null; name: string | null } | null) => {
         if (data?.slug) {
           setGeoSlug(data.slug)
-          setSelectedCity(data.slug)  // pre-select in dropdown — user navigates manually
+          setSelectedCity(data.slug) // pre-select in dropdown — user navigates manually
         }
       })
       .catch(() => {})
@@ -710,8 +747,7 @@ export default function CompanionsPage() {
             lineHeight: 1.25,
           }}
         >
-          Browse{' '}
-          <em style={{ fontStyle: 'italic', color: cfg.accentColor }}>{cfg.label}</em>{' '}
+          Browse <em style={{ fontStyle: 'italic', color: cfg.accentColor }}>{cfg.label}</em>{' '}
           Companions
         </h1>
         <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
@@ -720,7 +756,6 @@ export default function CompanionsPage() {
 
         {/* ── Filters ── */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-
           {/* City dropdown */}
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
             <select
@@ -729,9 +764,7 @@ export default function CompanionsPage() {
               value={selectedCity}
               onChange={(e) => handleCityChange(e.target.value)}
             >
-              <option value="">
-                {geo.loading ? 'Detecting city…' : 'All cities'}
-              </option>
+              <option value="">{geo.loading ? 'Detecting city…' : 'All cities'}</option>
               {/* Detected city at top if it's not already in the fetched list */}
               {geoSlug && !cities.find((c) => c.slug === geoSlug) && (
                 <option value={geoSlug}>
@@ -740,7 +773,8 @@ export default function CompanionsPage() {
               )}
               {cities.map((c) => (
                 <option key={c.slug} value={c.slug}>
-                  {c.name}{geoSlug === c.slug ? ' (near you)' : ''}
+                  {c.name}
+                  {geoSlug === c.slug ? ' (near you)' : ''}
                 </option>
               ))}
             </select>
@@ -760,7 +794,9 @@ export default function CompanionsPage() {
               onChange={(e) => setAgeRangeIndex(Number(e.target.value))}
             >
               {AGE_RANGES.map((r, i) => (
-                <option key={i} value={i}>{r.label}</option>
+                <option key={i} value={i}>
+                  {r.label}
+                </option>
               ))}
             </select>
             <ChevronDown
@@ -788,8 +824,12 @@ export default function CompanionsPage() {
                 fontFamily: "'DM Sans', sans-serif",
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => { ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}20` }}
-              onMouseLeave={(e) => { ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}10` }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}20`
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLElement).style.background = `${cfg.accentColor}10`
+              }}
             >
               <Navigation size={12} />
               Near me
@@ -888,9 +928,7 @@ export default function CompanionsPage() {
           {/* Regular companions with mid-grid ad injected at position 3 */}
           {companions.map((c, i) => (
             <>
-              {i === 3 && midGridBoost && (
-                <MidGridAd key="mid-grid" data={midGridBoost} />
-              )}
+              {i === 3 && midGridBoost && <MidGridAd key="mid-grid" data={midGridBoost} />}
               <CompanionCard
                 key={c.id}
                 companion={c}

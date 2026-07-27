@@ -13,17 +13,10 @@ interface Props {
 
 const LikedGrid = memo(function LikedGrid({ items, isLoading }: Props) {
   const openProfileViewer = useUIStore((s) => s.openProfileViewer)
-  const openModal = useUIStore((s) => s.openModal)
 
   function handleItemTap(idx: number) {
     const item = items[idx]
     if (!item) return
-
-    // For companion-type items: open the ProfileDrawer instead
-    if (item.authorType === 'companion') {
-      openModal(item.id)
-      return
-    }
 
     const storiesArray: ProfileViewerStory[] = items
       .filter((i) => i.authorType !== 'companion')

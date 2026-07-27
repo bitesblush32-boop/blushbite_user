@@ -11,7 +11,9 @@ import BottomNav from '@/components/layout/BottomNav'
 const ProfilePostViewer = dynamic(() => import('@/components/ui/ProfilePostViewer'), { ssr: false })
 const LocationBanner = dynamic(() => import('@/components/ui/LocationBanner'), { ssr: false })
 const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: false })
-const DreamerSessionInit = dynamic(() => import('@/components/ui/DreamerSessionInit'), { ssr: false })
+const DreamerSessionInit = dynamic(() => import('@/components/ui/DreamerSessionInit'), {
+  ssr: false,
+})
 const TourOverlay = dynamic(
   () => import('@/components/ui/TourOverlay').then((m) => ({ default: m.TourOverlay })),
   { ssr: false }

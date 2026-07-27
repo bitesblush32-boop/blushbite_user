@@ -6,9 +6,9 @@ import * as schema from './schema'
 // TODO: replace with connection pooler (PgBouncer / Neon serverless) in production
 const client = postgres(process.env.DATABASE_URL!, {
   max: 10,
-  idle_timeout: 10,      // recycle idle connections after 10s — well before Railway's ~60s TCP kill
-  connect_timeout: 10,   // Railway remote DB needs more headroom than 3s
-  max_lifetime: 180,     // force-recycle connections every 3 min regardless of activity
+  idle_timeout: 10, // recycle idle connections after 10s — well before Railway's ~60s TCP kill
+  connect_timeout: 10, // Railway remote DB needs more headroom than 3s
+  max_lifetime: 180, // force-recycle connections every 3 min regardless of activity
 
   // Custom socket factory: adds a 25-second idle timeout on each TCP socket.
   // Railway's proxy silently drops connections (no TCP RST), so Node.js would
@@ -21,9 +21,7 @@ const client = postgres(process.env.DATABASE_URL!, {
     // postgres.js v3 passes host/port as arrays; net.createConnection needs scalars
     const host = Array.isArray(opt.host) ? opt.host[0] : (opt.hostname ?? opt.host)
     const port = Array.isArray(opt.port) ? opt.port[0] : opt.port
-    const s = net.createConnection(
-      opt.path ? { path: opt.path } : { host, port }
-    )
+    const s = net.createConnection(opt.path ? { path: opt.path } : { host, port })
     s.setTimeout(25_000, () => {
       s.destroy(Object.assign(new Error('SOCKET_IDLE_TIMEOUT'), { code: 'SOCKET_IDLE_TIMEOUT' }))
     })

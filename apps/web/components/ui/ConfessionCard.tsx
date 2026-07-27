@@ -87,7 +87,6 @@ const ConfessionCard = memo(function ConfessionCard({ story, isActive }: Props) 
 
   const isLiked = story.userHasLiked
   const likeMutation = useLikeMutation()
-  const openModal = useUIStore((s) => s.openModal)
   const { isCompanion, bridgeStatus, loading: bridgeLoading, bridge } = useBridgeMutation(story.id)
 
   // Fetch bridge companions — only when this card is active (avoids mass requests)

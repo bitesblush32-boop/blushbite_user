@@ -63,7 +63,16 @@ async function fetchDiscoverPage(
   return res.json()
 }
 
-export function useDiscoverCompanions({ lat, lng, radius = 100, sessionKey = 0, community, minAge, maxAge, enabled = true }: Props) {
+export function useDiscoverCompanions({
+  lat,
+  lng,
+  radius = 100,
+  sessionKey = 0,
+  community,
+  minAge,
+  maxAge,
+  enabled = true,
+}: Props) {
   const query = useInfiniteQuery<
     DiscoverPage,
     Error,
@@ -71,8 +80,19 @@ export function useDiscoverCompanions({ lat, lng, radius = 100, sessionKey = 0, 
     readonly unknown[],
     string | null
   >({
-    queryKey: ['companions', 'discover', lat, lng, radius, sessionKey, community, minAge, maxAge] as const,
-    queryFn: ({ pageParam }) => fetchDiscoverPage({ pageParam }, lat, lng, radius, community, minAge, maxAge),
+    queryKey: [
+      'companions',
+      'discover',
+      lat,
+      lng,
+      radius,
+      sessionKey,
+      community,
+      minAge,
+      maxAge,
+    ] as const,
+    queryFn: ({ pageParam }) =>
+      fetchDiscoverPage({ pageParam }, lat, lng, radius, community, minAge, maxAge),
     initialPageParam: null,
     getNextPageParam: (lastPage: DiscoverPage) => lastPage.nextCursor ?? null,
     staleTime: 5 * 60 * 1000,

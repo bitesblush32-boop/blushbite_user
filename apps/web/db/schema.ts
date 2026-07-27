@@ -863,10 +863,10 @@ export const analyticsEvents = pgTable(
 
 export const deviceCommunityBindings = pgTable('device_community_bindings', {
   fingerprint_hash: varchar('fingerprint_hash', { length: 64 }).primaryKey().notNull(),
-  community:        varchar('community', { length: 20 }).notNull(),
-  companion_id:     uuid('companion_id').references(() => companions.id, { onDelete: 'set null' }),
-  created_at:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  last_seen:        timestamp('last_seen', { withTimezone: true }).defaultNow().notNull(),
+  community: varchar('community', { length: 20 }).notNull(),
+  companion_id: uuid('companion_id').references(() => companions.id, { onDelete: 'set null' }),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  last_seen: timestamp('last_seen', { withTimezone: true }).defaultNow().notNull(),
 })
 
 // ─── DIDIT EXTRACTED DATA ─────────────────────────────────────────────────────
@@ -922,8 +922,12 @@ export const boostSettings = pgTable('boost_settings', {
   mid_grid_enabled: boolean('mid_grid_enabled').notNull().default(true),
   featured_enabled: boolean('featured_enabled').notNull().default(true),
   price_featured_eur: numeric('price_featured_eur', { precision: 8, scale: 2 }).default('15.00'),
-  price_header_banner_eur: numeric('price_header_banner_eur', { precision: 8, scale: 2 }).default('25.00'),
-  price_right_rail_eur: numeric('price_right_rail_eur', { precision: 8, scale: 2 }).default('15.00'),
+  price_header_banner_eur: numeric('price_header_banner_eur', { precision: 8, scale: 2 }).default(
+    '25.00'
+  ),
+  price_right_rail_eur: numeric('price_right_rail_eur', { precision: 8, scale: 2 }).default(
+    '15.00'
+  ),
   price_mid_grid_eur: numeric('price_mid_grid_eur', { precision: 8, scale: 2 }).default('10.00'),
   max_weeks_advance: integer('max_weeks_advance').default(4),
 })

@@ -48,9 +48,14 @@ export default function CityCompanionGrid({
       <div style={{ padding: '32px 20px 20px', maxWidth: 960, margin: '0 auto' }}>
         {/* Breadcrumb */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
-          <Link href="/" style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}>BlushBite</Link>
+          <Link href="/" style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}>
+            BlushBite
+          </Link>
           <span style={{ fontSize: 12, color: '#4b5563' }}>/</span>
-          <Link href={`/${community}`} style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}>
+          <Link
+            href={`/${community}`}
+            style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}
+          >
             {cfg.label}
           </Link>
           <span style={{ fontSize: 12, color: '#4b5563' }}>/</span>
@@ -92,7 +97,12 @@ export default function CityCompanionGrid({
           }}
         >
           {companions.map((c) => (
-            <CompanionCard key={c.profileId} companion={c} community={community} accentColor={cfg.accentColor} />
+            <CompanionCard
+              key={c.profileId}
+              companion={c}
+              community={community}
+              accentColor={cfg.accentColor}
+            />
           ))}
         </div>
       ) : (
@@ -166,7 +176,14 @@ export default function CityCompanionGrid({
           }}
         >
           <div>
-            <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: '#eeeef0', marginBottom: 4 }}>
+            <p
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 18,
+                color: '#eeeef0',
+                marginBottom: 4,
+              }}
+            >
               Are you a companion in {cityName}?
             </p>
             <p style={{ fontSize: 13, color: '#6b7280' }}>
@@ -243,60 +260,78 @@ function CompanionCard({
         )}
 
         {/* Deep gradient — bottom half */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(to top, rgba(7,9,15,0.96) 0%, rgba(7,9,15,0.5) 38%, transparent 60%)',
-          pointerEvents: 'none',
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(to top, rgba(7,9,15,0.96) 0%, rgba(7,9,15,0.5) 38%, transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
 
         {/* Verified dot — top right */}
         {companion.isVerified && (
-          <div style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: 'rgba(7,9,15,0.75)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 9,
-            color: '#c9a96e',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: 'rgba(7,9,15,0.75)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 9,
+              color: '#c9a96e',
+            }}
+          >
             ✦
           </div>
         )}
 
         {/* Name + age + city — pinned to bottom */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 12px 14px' }}>
-          <p style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 15,
-            fontStyle: 'italic',
-            color: '#eeeef0',
-            lineHeight: 1.2,
-            marginBottom: 4,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}>
-            {companion.name}{companion.age ? `, ${companion.age}` : ''}
+          <p
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 15,
+              fontStyle: 'italic',
+              color: '#eeeef0',
+              lineHeight: 1.2,
+              marginBottom: 4,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {companion.name}
+            {companion.age ? `, ${companion.age}` : ''}
           </p>
           {companion.city && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{
-                width: 5,
-                height: 5,
-                borderRadius: '50%',
-                background: accentColor,
-                flexShrink: 0,
-                display: 'inline-block',
-              }} />
-              <span style={{ fontSize: 10.5, color: '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  background: accentColor,
+                  flexShrink: 0,
+                  display: 'inline-block',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10.5,
+                  color: '#9ca3af',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
                 {companion.city}
               </span>
             </div>

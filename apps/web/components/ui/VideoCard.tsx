@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useUIStore } from '@/store/uiStore'
 
 export interface PlatformVideo {
   id: string
@@ -22,7 +21,6 @@ function fmtDuration(sec: number | null): string {
 }
 
 const VideoCard = React.memo(function VideoCard({ video }: { video: PlatformVideo }) {
-  const openModal = useUIStore((s) => s.openModal)
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -31,13 +29,11 @@ const VideoCard = React.memo(function VideoCard({ video }: { video: PlatformVide
       style={{
         transition: 'transform 250ms ease, box-shadow 250ms ease',
         transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: hovered
-          ? '0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2)'
-          : 'none',
+        boxShadow: hovered ? '0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2)' : 'none',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => openModal(video.profileId)}
+      onClick={() => (window.location.href = '/companions/' + video.profileId)}
     >
       {/* Thumbnail */}
       <div

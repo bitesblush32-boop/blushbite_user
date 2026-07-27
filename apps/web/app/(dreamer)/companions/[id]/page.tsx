@@ -20,10 +20,28 @@ export const dynamicParams = true
 
 type Props = { params: Promise<{ id: string }> }
 
-const COMMUNITY_CONFIG: Record<string, { label: string; color: string; href: string; gradient: string }> = {
-  female:  { label: 'Female Companions', color: '#e8607a', href: '/female',  gradient: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)' },
-  male:    { label: 'Male Companions',   color: '#60a5fa', href: '/male',    gradient: 'linear-gradient(135deg,#0f1a28,#1f2840,#2a1020)' },
-  shemale: { label: 'Trans Companions',  color: '#c084fc', href: '/shemale', gradient: 'linear-gradient(135deg,#201228,#1a2030,#2a1a18)' },
+const COMMUNITY_CONFIG: Record<
+  string,
+  { label: string; color: string; href: string; gradient: string }
+> = {
+  female: {
+    label: 'Female Companions',
+    color: '#e8607a',
+    href: '/female',
+    gradient: 'linear-gradient(135deg,#1a1228,#2a1535,#1a2240)',
+  },
+  male: {
+    label: 'Male Companions',
+    color: '#60a5fa',
+    href: '/male',
+    gradient: 'linear-gradient(135deg,#0f1a28,#1f2840,#2a1020)',
+  },
+  shemale: {
+    label: 'Trans Companions',
+    color: '#c084fc',
+    href: '/shemale',
+    gradient: 'linear-gradient(135deg,#201228,#1a2030,#2a1a18)',
+  },
 }
 
 const GRADIENTS = [
@@ -81,65 +99,84 @@ async function getData(profileId: string) {
       instagram_handle: companionProfiles.instagram_handle,
     })
     .from(companionProfiles)
-    .where(and(eq(companionProfiles.id, profileId), eq(companionProfiles.is_visible_to_users, true)))
+    .where(
+      and(eq(companionProfiles.id, profileId), eq(companionProfiles.is_visible_to_users, true))
+    )
     .limit(1)
 
   if (!profileRow) return null
 
-  const [companionRow, photoRows, videoRows, sessionCardRows, vibeTagRows, langResult] = await Promise.all([
-    db
-      .select({ id: companions.id, name: companions.name, date_of_birth: companions.date_of_birth, gender_community: companions.gender_community })
-      .from(companions)
-      .where(eq(companions.id, profileRow.companionId))
-      .limit(1)
-      .then((r) => r[0] ?? null),
+  const [companionRow, photoRows, videoRows, sessionCardRows, vibeTagRows, langResult] =
+    await Promise.all([
+      db
+        .select({
+          id: companions.id,
+          name: companions.name,
+          date_of_birth: companions.date_of_birth,
+          gender_community: companions.gender_community,
+        })
+        .from(companions)
+        .where(eq(companions.id, profileRow.companionId))
+        .limit(1)
+        .then((r) => r[0] ?? null),
 
-    db
-      .select({ url: companionPhotos.url, is_primary: companionPhotos.is_primary })
-      .from(companionPhotos)
-      .where(and(
-        eq(companionPhotos.companion_profile_id, profileId),
-        eq(companionPhotos.is_approved, true),
-        isNull(companionPhotos.deleted_at)
-      ))
-      .orderBy(asc(companionPhotos.sort_order)),
+      db
+        .select({ url: companionPhotos.url, is_primary: companionPhotos.is_primary })
+        .from(companionPhotos)
+        .where(
+          and(
+            eq(companionPhotos.companion_profile_id, profileId),
+            eq(companionPhotos.is_approved, true),
+            isNull(companionPhotos.deleted_at)
+          )
+        )
+        .orderBy(asc(companionPhotos.sort_order)),
 
-    db
-      .select({ id: companionVideos.id, url: companionVideos.url, thumbnail_url: companionVideos.thumbnail_url, duration_seconds: companionVideos.duration_seconds })
-      .from(companionVideos)
-      .where(and(
-        eq(companionVideos.companion_profile_id, profileId),
-        eq(companionVideos.is_approved, true),
-        isNull(companionVideos.deleted_at)
-      )),
+      db
+        .select({
+          id: companionVideos.id,
+          url: companionVideos.url,
+          thumbnail_url: companionVideos.thumbnail_url,
+          duration_seconds: companionVideos.duration_seconds,
+        })
+        .from(companionVideos)
+        .where(
+          and(
+            eq(companionVideos.companion_profile_id, profileId),
+            eq(companionVideos.is_approved, true),
+            isNull(companionVideos.deleted_at)
+          )
+        ),
 
-    db
-      .select({
-        id: sessionCards.id,
-        title: sessionCards.title,
-        description: sessionCards.description,
-        price: sessionCards.price,
-        currency: sessionCards.currency,
-        duration_minutes: sessionCards.duration_minutes,
-        session_type: sessionCards.session_type,
-      })
-      .from(sessionCards)
-      .where(and(
-        eq(sessionCards.companion_profile_id, profileId),
-        eq(sessionCards.is_active, true),
-        isNull(sessionCards.deleted_at)
-      ))
-      .orderBy(asc(sessionCards.sort_order)),
+      db
+        .select({
+          id: sessionCards.id,
+          title: sessionCards.title,
+          description: sessionCards.description,
+          price: sessionCards.price,
+          currency: sessionCards.currency,
+          duration_minutes: sessionCards.duration_minutes,
+          session_type: sessionCards.session_type,
+        })
+        .from(sessionCards)
+        .where(
+          and(
+            eq(sessionCards.companion_profile_id, profileId),
+            eq(sessionCards.is_active, true),
+            isNull(sessionCards.deleted_at)
+          )
+        )
+        .orderBy(asc(sessionCards.sort_order)),
 
-    db
-      .select({ name: vibeTags.name })
-      .from(companionVibeTags)
-      .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
-      .where(eq(companionVibeTags.companion_profile_id, profileId)),
+      db
+        .select({ name: vibeTags.name })
+        .from(companionVibeTags)
+        .innerJoin(vibeTags, eq(vibeTags.id, companionVibeTags.vibe_tag_id))
+        .where(eq(companionVibeTags.companion_profile_id, profileId)),
 
-    // languages is not in Drizzle schema — query raw JSON column directly
-    db.execute(sql`SELECT languages FROM companion_profiles WHERE id = ${profileId} LIMIT 1`),
-  ])
+      // languages is not in Drizzle schema — query raw JSON column directly
+      db.execute(sql`SELECT languages FROM companion_profiles WHERE id = ${profileId} LIMIT 1`),
+    ])
 
   if (!companionRow || photoRows.length === 0) return null
 
@@ -154,9 +191,15 @@ async function getData(profileId: string) {
 
   const minPrice =
     sessionCardRows.length > 0
-      ? `${currSym}${Math.round(parseFloat(sessionCardRows.reduce((min, sc) =>
-          sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
-          sessionCardRows[0]).price ?? '0'))}`
+      ? `${currSym}${Math.round(
+          parseFloat(
+            sessionCardRows.reduce(
+              (min, sc) =>
+                sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
+              sessionCardRows[0]
+            ).price ?? '0'
+          )
+        )}`
       : profileRow.hourly_rate
         ? `${currSym}${Math.round(parseFloat(String(profileRow.hourly_rate)))}`
         : null
@@ -215,8 +258,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const cityStr = data.city ? ` in ${data.city}` : ''
   const title = `${data.name}${cityStr} — BlushBite`
-  const description = data.tagline
-    ?? `${data.name} — private companion${cityStr}. EU-hosted platform. Discretion guaranteed.`
+  const description =
+    data.tagline ??
+    `${data.name} — private companion${cityStr}. EU-hosted platform. Discretion guaranteed.`
 
   return {
     title,
@@ -244,13 +288,35 @@ export default async function CompanionProfilePage({ params }: Props) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'BlushBite', item: 'https://blushbite.co' },
-      { '@type': 'ListItem', position: 2, name: data.cfg.label, item: `https://blushbite.co${data.cfg.href}` },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: data.cfg.label,
+        item: `https://blushbite.co${data.cfg.href}`,
+      },
       ...(data.city_slug && data.city
         ? [
-            { '@type': 'ListItem', position: 3, name: data.city, item: `https://blushbite.co${data.cfg.href}/${data.city_slug}` },
-            { '@type': 'ListItem', position: 4, name: data.name, item: `https://blushbite.co/companions/${id}` },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: data.city,
+              item: `https://blushbite.co${data.cfg.href}/${data.city_slug}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 4,
+              name: data.name,
+              item: `https://blushbite.co/companions/${id}`,
+            },
           ]
-        : [{ '@type': 'ListItem', position: 3, name: data.name, item: `https://blushbite.co/companions/${id}` }]),
+        : [
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: data.name,
+              item: `https://blushbite.co/companions/${id}`,
+            },
+          ]),
     ],
   }
 
@@ -266,8 +332,14 @@ export default async function CompanionProfilePage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+      />
 
       {/* Breadcrumb — visually hidden, present for in-page SEO and aria */}
       <nav aria-label="Breadcrumb" style={{ display: 'none' }}>
@@ -281,11 +353,9 @@ export default async function CompanionProfilePage({ params }: Props) {
 
       {/* Profile overlay — handles backdrop, close button, entrance animation */}
       <ProfileOverlay accentColor={data.cfg.color}>
-
         {/* ── SECTION A: Hero band ─────────────────────────────────────────── */}
         <div style={{ borderBottom: '1px solid #1c2333' }}>
           <div className="flex flex-col md:flex-row" style={{ position: 'relative' }}>
-
             {/* Image strip */}
             <div
               className="w-full md:w-[220px] md:flex-shrink-0 relative overflow-hidden"
@@ -338,21 +408,54 @@ export default async function CompanionProfilePage({ params }: Props) {
             <div className="flex-1 flex flex-col justify-between p-5 pr-14 md:p-9 md:pr-14">
               <div>
                 {/* Verified chip */}
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  fontSize: 11, color: '#9ca3af', padding: '4px 10px',
-                  borderRadius: 999, border: '1px solid #1c2333',
-                  background: 'rgba(255,255,255,0.03)', marginBottom: 12,
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: data.cfg.color, display: 'inline-block' }} />
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 11,
+                    color: '#9ca3af',
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    border: '1px solid #1c2333',
+                    background: 'rgba(255,255,255,0.03)',
+                    marginBottom: 12,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: data.cfg.color,
+                      display: 'inline-block',
+                    }}
+                  />
                   {data.is_verified ? 'Verified companion' : 'Companion'}
                 </span>
 
                 {/* Name */}
-                <h1 className="text-[26px] md:text-[34px]" style={{ fontFamily: "'Playfair Display', serif", color: '#eeeef0', marginBottom: 4, lineHeight: 1.15 }}>
+                <h1
+                  className="text-[26px] md:text-[34px]"
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: '#eeeef0',
+                    marginBottom: 4,
+                    lineHeight: 1.15,
+                  }}
+                >
                   {data.name}
                   {data.age && (
-                    <span style={{ fontSize: 17, color: '#6b7280', fontFamily: 'inherit', fontWeight: 300 }}>, {data.age}</span>
+                    <span
+                      style={{
+                        fontSize: 17,
+                        color: '#6b7280',
+                        fontFamily: 'inherit',
+                        fontWeight: 300,
+                      }}
+                    >
+                      , {data.age}
+                    </span>
                   )}
                 </h1>
 
@@ -364,38 +467,93 @@ export default async function CompanionProfilePage({ params }: Props) {
                 )}
 
                 {/* Badges row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    flexWrap: 'wrap',
+                    marginBottom: 10,
+                  }}
+                >
                   {data.is_verified && (
-                    <span style={{
-                      fontSize: 11, color: '#c9a96e', padding: '3px 9px', borderRadius: 999,
-                      background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.3)',
-                    }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: '#c9a96e',
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(201,169,110,0.1)',
+                        border: '1px solid rgba(201,169,110,0.3)',
+                      }}
+                    >
                       ✦ Verified
                     </span>
                   )}
                   {data.city && (
-                    <span style={{
-                      fontSize: 11, color: '#e8607a', padding: '3px 9px', borderRadius: 999,
-                      background: 'rgba(232,96,122,0.1)', border: '1px solid rgba(232,96,122,0.25)',
-                    }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: '#e8607a',
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(232,96,122,0.1)',
+                        border: '1px solid rgba(232,96,122,0.25)',
+                      }}
+                    >
                       {data.city}
                     </span>
                   )}
                   {data.minPrice && (
-                    <span style={{ fontSize: 12, color: data.cfg.color }}>From {data.minPrice}</span>
+                    <span style={{ fontSize: 12, color: data.cfg.color }}>
+                      From {data.minPrice}
+                    </span>
                   )}
                 </div>
 
                 {/* Modality */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                   {data.session_modality === 'online' && (
-                    <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)', color: '#60a5fa' }}>Online</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(96,165,250,0.1)',
+                        border: '1px solid rgba(96,165,250,0.25)',
+                        color: '#60a5fa',
+                      }}
+                    >
+                      Online
+                    </span>
                   )}
                   {data.session_modality === 'in_person' && (
-                    <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399' }}>In person</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(52,211,153,0.1)',
+                        border: '1px solid rgba(52,211,153,0.25)',
+                        color: '#34d399',
+                      }}
+                    >
+                      In person
+                    </span>
                   )}
                   {data.session_modality === 'both' && (
-                    <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399' }}>In person · Online</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(52,211,153,0.1)',
+                        border: '1px solid rgba(52,211,153,0.25)',
+                        color: '#34d399',
+                      }}
+                    >
+                      In person · Online
+                    </span>
                   )}
                 </div>
 
@@ -405,8 +563,12 @@ export default async function CompanionProfilePage({ params }: Props) {
                     data.height_cm ? `${data.height_cm}cm` : null,
                     fmtAttr(data.body_type),
                     fmtAttr(data.ethnicity),
-                    data.eye_color && data.eye_color !== 'prefer_not_to_say' ? `${fmtAttr(data.eye_color)} eyes` : null,
-                    data.hair_color && data.hair_color !== 'prefer_not_to_say' ? `${fmtAttr(data.hair_color)} hair` : null,
+                    data.eye_color && data.eye_color !== 'prefer_not_to_say'
+                      ? `${fmtAttr(data.eye_color)} eyes`
+                      : null,
+                    data.hair_color && data.hair_color !== 'prefer_not_to_say'
+                      ? `${fmtAttr(data.hair_color)} hair`
+                      : null,
                   ].filter(Boolean)
                   if (parts.length === 0) return null
                   return (
@@ -420,10 +582,17 @@ export default async function CompanionProfilePage({ params }: Props) {
                 {data.languages.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 8 }}>
                     {data.languages.map((lang) => (
-                      <span key={lang} style={{
-                        fontSize: 11, padding: '3px 9px', borderRadius: 999,
-                        border: '1px solid rgba(201,169,110,0.2)', color: '#c9a96e', background: 'rgba(201,169,110,0.06)',
-                      }}>
+                      <span
+                        key={lang}
+                        style={{
+                          fontSize: 11,
+                          padding: '3px 9px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(201,169,110,0.2)',
+                          color: '#c9a96e',
+                          background: 'rgba(201,169,110,0.06)',
+                        }}
+                      >
                         {lang}
                       </span>
                     ))}
@@ -434,10 +603,17 @@ export default async function CompanionProfilePage({ params }: Props) {
                 {data.tags.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {data.tags.map((tag) => (
-                      <span key={tag} style={{
-                        fontSize: 11, padding: '3px 9px', borderRadius: 999,
-                        border: '1px solid #1c2333', color: '#6b7280', background: 'rgba(255,255,255,0.03)',
-                      }}>
+                      <span
+                        key={tag}
+                        style={{
+                          fontSize: 11,
+                          padding: '3px 9px',
+                          borderRadius: 999,
+                          border: '1px solid #1c2333',
+                          color: '#6b7280',
+                          background: 'rgba(255,255,255,0.03)',
+                        }}
+                      >
                         {tag}
                       </span>
                     ))}
@@ -447,15 +623,30 @@ export default async function CompanionProfilePage({ params }: Props) {
 
               {/* Trust row */}
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 14 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#6b7280' }}>
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 11,
+                    color: '#6b7280',
+                  }}
+                >
                   <span style={{ color: '#c9a96e' }}>🔒</span>Anonymous
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#6b7280' }}>
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 11,
+                    color: '#6b7280',
+                  }}
+                >
                   <span style={{ color: '#c9a96e' }}>✦</span>EU hosted
                 </span>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -475,7 +666,6 @@ export default async function CompanionProfilePage({ params }: Props) {
             accentColor={data.cfg.color}
           />
         </div>
-
       </ProfileOverlay>
     </>
   )

@@ -45,9 +45,16 @@ export async function PATCH(req: NextRequest) {
   if (!session) return UNAUTH
 
   let body: Record<string, unknown>
-  try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request.' }, { status: 400 }) }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
+  }
 
-  const { alias, phone, bio, dateOfBirth, country, city, display_name } = body as Record<string, string | undefined>
+  const { alias, phone, bio, dateOfBirth, country, city, display_name } = body as Record<
+    string,
+    string | undefined
+  >
 
   // Alias uniqueness check
   if (alias !== undefined && alias !== null) {
@@ -57,14 +64,33 @@ export async function PATCH(req: NextRequest) {
       .from(users)
       .where(and(eq(users.alias, clean), ne(users.id, session.sub)))
       .limit(1)
-    if (taken) return NextResponse.json({ error: 'That username is already taken.' }, { status: 409 })
+    if (taken)
+      return NextResponse.json({ error: 'That username is already taken.' }, { status: 409 })
 
-    await db.update(users).set({ alias: clean, updated_at: new Date() }).where(eq(users.id, session.sub))
+    await db
+      .update(users)
+      .set({ alias: clean, updated_at: new Date() })
+      .where(eq(users.id, session.sub))
 
     // Re-issue cookie with updated alias
-    const cookie = await buildSessionCookie({ sub: session.sub, email: session.email, alias: clean })
+    const cookie = await buildSessionCookie({
+      sub: session.sub,
+      email: session.email,
+      alias: clean,
+    })
     const [updated] = await db
-      .select({ id: users.id, email: users.email, alias: users.alias, phone: users.phone, display_name: userProfiles.display_name, avatar_url: userProfiles.avatar_url, bio: userProfiles.bio, date_of_birth: userProfiles.date_of_birth, country: userProfiles.country, city: userProfiles.city })
+      .select({
+        id: users.id,
+        email: users.email,
+        alias: users.alias,
+        phone: users.phone,
+        display_name: userProfiles.display_name,
+        avatar_url: userProfiles.avatar_url,
+        bio: userProfiles.bio,
+        date_of_birth: userProfiles.date_of_birth,
+        country: userProfiles.country,
+        city: userProfiles.city,
+      })
       .from(users)
       .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
       .where(eq(users.id, session.sub))
@@ -73,7 +99,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (phone !== undefined) {
-    await db.update(users).set({ phone: (phone as string) || null, updated_at: new Date() }).where(eq(users.id, session.sub))
+    await db
+      .update(users)
+      .set({ phone: (phone as string) || null, updated_at: new Date() })
+      .where(eq(users.id, session.sub))
   }
 
   // Update user_profiles fields
@@ -87,7 +116,11 @@ export async function PATCH(req: NextRequest) {
   if (Object.keys(profileUpdates).length > 0) {
     profileUpdates.updated_at = new Date()
     // Upsert profile row
-    const [existing] = await db.select({ id: userProfiles.id }).from(userProfiles).where(eq(userProfiles.user_id, session.sub)).limit(1)
+    const [existing] = await db
+      .select({ id: userProfiles.id })
+      .from(userProfiles)
+      .where(eq(userProfiles.user_id, session.sub))
+      .limit(1)
     if (existing) {
       await db.update(userProfiles).set(profileUpdates).where(eq(userProfiles.user_id, session.sub))
     } else {
@@ -96,7 +129,18 @@ export async function PATCH(req: NextRequest) {
   }
 
   const [data] = await db
-    .select({ id: users.id, email: users.email, alias: users.alias, phone: users.phone, display_name: userProfiles.display_name, avatar_url: userProfiles.avatar_url, bio: userProfiles.bio, date_of_birth: userProfiles.date_of_birth, country: userProfiles.country, city: userProfiles.city })
+    .select({
+      id: users.id,
+      email: users.email,
+      alias: users.alias,
+      phone: users.phone,
+      display_name: userProfiles.display_name,
+      avatar_url: userProfiles.avatar_url,
+      bio: userProfiles.bio,
+      date_of_birth: userProfiles.date_of_birth,
+      country: userProfiles.country,
+      city: userProfiles.city,
+    })
     .from(users)
     .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
     .where(eq(users.id, session.sub))

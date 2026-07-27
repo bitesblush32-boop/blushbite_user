@@ -25,85 +25,113 @@ export async function GET(req: NextRequest) {
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)
 
-  let rDreamers, rCompanionsLive, rCompanionsPending, rCompanionsAll, rStoriesPending,
-      rStoriesApproved, rStoriesTotal, rAudioPending, rBookingsOpen, rBookingsTotal,
-      rBookingsCompleted, rNewDreamers, rNewCompanions, rNewStories, rLikes, rSaves, rComments
+  let rDreamers,
+    rCompanionsLive,
+    rCompanionsPending,
+    rCompanionsAll,
+    rStoriesPending,
+    rStoriesApproved,
+    rStoriesTotal,
+    rAudioPending,
+    rBookingsOpen,
+    rBookingsTotal,
+    rBookingsCompleted,
+    rNewDreamers,
+    rNewCompanions,
+    rNewStories,
+    rLikes,
+    rSaves,
+    rComments
   try {
     ;[
-      rDreamers, rCompanionsLive, rCompanionsPending, rCompanionsAll, rStoriesPending,
-      rStoriesApproved, rStoriesTotal, rAudioPending, rBookingsOpen, rBookingsTotal,
-      rBookingsCompleted, rNewDreamers, rNewCompanions, rNewStories, rLikes, rSaves, rComments,
+      rDreamers,
+      rCompanionsLive,
+      rCompanionsPending,
+      rCompanionsAll,
+      rStoriesPending,
+      rStoriesApproved,
+      rStoriesTotal,
+      rAudioPending,
+      rBookingsOpen,
+      rBookingsTotal,
+      rBookingsCompleted,
+      rNewDreamers,
+      rNewCompanions,
+      rNewStories,
+      rLikes,
+      rSaves,
+      rComments,
     ] = await Promise.all([
-    // Platform totals
-    db.select({ n: sql`count(*)` }).from(users),
-    db
-      .select({ n: sql`count(*)` })
-      .from(companionProfiles)
-      .where(eq(companionProfiles.is_live, true)),
-    db
-      .select({ n: sql`count(*)` })
-      .from(companions)
-      .where(eq(companions.companion_stage, 3)),
-    db.select({ n: sql`count(*)` }).from(companions),
+      // Platform totals
+      db.select({ n: sql`count(*)` }).from(users),
+      db
+        .select({ n: sql`count(*)` })
+        .from(companionProfiles)
+        .where(eq(companionProfiles.is_live, true)),
+      db
+        .select({ n: sql`count(*)` })
+        .from(companions)
+        .where(eq(companions.companion_stage, 3)),
+      db.select({ n: sql`count(*)` }).from(companions),
 
-    // Content counts
-    db
-      .select({ n: sql`count(*)` })
-      .from(stories)
-      .where(and(eq(stories.moderation_status, 'pending'), isNull(stories.deleted_at))),
-    db
-      .select({ n: sql`count(*)` })
-      .from(stories)
-      .where(
-        and(
-          eq(stories.moderation_status, 'approved'),
-          eq(stories.is_published, true),
-          isNull(stories.deleted_at)
-        )
-      ),
-    db
-      .select({ n: sql`count(*)` })
-      .from(stories)
-      .where(isNull(stories.deleted_at)),
-    db
-      .select({ n: sql`count(*)` })
-      .from(audioRecordings)
-      .where(
-        and(eq(audioRecordings.moderation_status, 'pending'), isNull(audioRecordings.deleted_at))
-      ),
+      // Content counts
+      db
+        .select({ n: sql`count(*)` })
+        .from(stories)
+        .where(and(eq(stories.moderation_status, 'pending'), isNull(stories.deleted_at))),
+      db
+        .select({ n: sql`count(*)` })
+        .from(stories)
+        .where(
+          and(
+            eq(stories.moderation_status, 'approved'),
+            eq(stories.is_published, true),
+            isNull(stories.deleted_at)
+          )
+        ),
+      db
+        .select({ n: sql`count(*)` })
+        .from(stories)
+        .where(isNull(stories.deleted_at)),
+      db
+        .select({ n: sql`count(*)` })
+        .from(audioRecordings)
+        .where(
+          and(eq(audioRecordings.moderation_status, 'pending'), isNull(audioRecordings.deleted_at))
+        ),
 
-    // Bookings
-    db
-      .select({ n: sql`count(*)` })
-      .from(bookingRequests)
-      .where(eq(bookingRequests.status, 'pending')),
-    db.select({ n: sql`count(*)` }).from(bookingRequests),
-    db
-      .select({ n: sql`count(*)` })
-      .from(bookingRequests)
-      .where(eq(bookingRequests.status, 'completed')),
+      // Bookings
+      db
+        .select({ n: sql`count(*)` })
+        .from(bookingRequests)
+        .where(eq(bookingRequests.status, 'pending')),
+      db.select({ n: sql`count(*)` }).from(bookingRequests),
+      db
+        .select({ n: sql`count(*)` })
+        .from(bookingRequests)
+        .where(eq(bookingRequests.status, 'completed')),
 
-    // New today
-    db
-      .select({ n: sql`count(*)` })
-      .from(users)
-      .where(gte(users.created_at, todayStart)),
-    db
-      .select({ n: sql`count(*)` })
-      .from(companions)
-      .where(gte(companions.created_at, todayStart)),
-    db
-      .select({ n: sql`count(*)` })
-      .from(stories)
-      .where(and(gte(stories.created_at, todayStart), isNull(stories.deleted_at))),
+      // New today
+      db
+        .select({ n: sql`count(*)` })
+        .from(users)
+        .where(gte(users.created_at, todayStart)),
+      db
+        .select({ n: sql`count(*)` })
+        .from(companions)
+        .where(gte(companions.created_at, todayStart)),
+      db
+        .select({ n: sql`count(*)` })
+        .from(stories)
+        .where(and(gte(stories.created_at, todayStart), isNull(stories.deleted_at))),
 
-    // Engagement totals
-    db.select({ n: sql`count(*)` }).from(likes),
-    db.select({ n: sql`count(*)` }).from(saves),
-    db
-      .select({ n: sql`count(*)` })
-      .from(comments)
-      .where(isNull(comments.deleted_at)),
+      // Engagement totals
+      db.select({ n: sql`count(*)` }).from(likes),
+      db.select({ n: sql`count(*)` }).from(saves),
+      db
+        .select({ n: sql`count(*)` })
+        .from(comments)
+        .where(isNull(comments.deleted_at)),
     ])
   } catch (err) {
     console.error('[admin/stats/overview] DB error:', err)

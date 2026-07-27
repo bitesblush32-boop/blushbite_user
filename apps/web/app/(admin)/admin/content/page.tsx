@@ -63,8 +63,7 @@ function relativeTime(iso: string) {
 function authorLabel(item: StoryListItem) {
   if (item.is_anonymous) return 'Anonymous'
   if (item.author_type === 'admin') return 'Admin'
-  if (item.author_type === 'companion')
-    return item.companion_name ?? 'Companion'
+  if (item.author_type === 'companion') return item.companion_name ?? 'Companion'
   return item.user_alias ?? 'User'
 }
 

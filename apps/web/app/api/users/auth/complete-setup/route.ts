@@ -53,8 +53,5 @@ export async function POST(req: NextRequest) {
     alias: cleanAlias,
   })
 
-  return NextResponse.json(
-    { ok: true, alias: cleanAlias },
-    { headers: { 'Set-Cookie': cookie } }
-  )
+  return NextResponse.json({ ok: true, alias: cleanAlias }, { headers: { 'Set-Cookie': cookie } })
 }

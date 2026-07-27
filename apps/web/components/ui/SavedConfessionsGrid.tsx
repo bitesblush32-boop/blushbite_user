@@ -12,17 +12,10 @@ interface Props {
 
 const SavedConfessionsGrid = memo(function SavedConfessionsGrid({ items }: Props) {
   const openProfileViewer = useUIStore((s) => s.openProfileViewer)
-  const openModal = useUIStore((s) => s.openModal)
 
   function handleItemTap(idx: number) {
     const item = items[idx]
     if (!item) return
-
-    // Companion saves: open ProfileDrawer
-    if (item.authorType === 'companion') {
-      openModal(item.id)
-      return
-    }
 
     const storiesArray: ProfileViewerStory[] = items
       .filter((i) => i.authorType !== 'companion')

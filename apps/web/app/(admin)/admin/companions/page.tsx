@@ -237,7 +237,10 @@ function BulkDeleteCompanionsModal({
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}
+                style={{
+                  background: 'rgba(239,68,68,0.12)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                }}
               >
                 <Trash2 size={16} color="#ef4444" />
               </div>
@@ -257,8 +260,10 @@ function BulkDeleteCompanionsModal({
           </div>
           <p className="text-[13px] text-[#6b7280] leading-[1.6] mb-1">
             This will permanently delete{' '}
-            <span className="text-[#eeeef0]">{count} selected companion{count !== 1 ? 's' : ''}</span> and wipe all
-            associated data:
+            <span className="text-[#eeeef0]">
+              {count} selected companion{count !== 1 ? 's' : ''}
+            </span>{' '}
+            and wipe all associated data:
           </p>
           <ul className="text-[12px] text-[#6b7280] leading-[1.7] mb-5 ml-2">
             <li>· Profiles, photos, videos, and session cards</li>
@@ -413,8 +418,7 @@ export default function AdminCompanionsPage() {
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
-  const toggleAll = () =>
-    setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.id)))
+  const toggleAll = () => setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.id)))
 
   return (
     <motion.div
@@ -552,8 +556,8 @@ export default function AdminCompanionsPage() {
                         background: selectedIds.has(c.id)
                           ? 'rgba(239,68,68,0.05)'
                           : idx % 2 === 0
-                          ? '#0d1117'
-                          : '#07090f',
+                            ? '#0d1117'
+                            : '#07090f',
                       }}
                       className="hover:bg-[#111620] transition-colors group"
                     >
@@ -744,9 +748,7 @@ export default function AdminCompanionsPage() {
             className="sticky bottom-6 flex items-center gap-3 mt-6 px-4 py-[10px] rounded-[12px] border border-[#1c2333] w-fit mx-auto"
             style={{ background: '#111620', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
           >
-            <span className="text-[13px] text-[#eeeef0]">
-              {selectedIds.size} selected
-            </span>
+            <span className="text-[13px] text-[#eeeef0]">{selectedIds.size} selected</span>
             <button
               onClick={() => setSelectedIds(new Set())}
               className="text-[12px] text-[#6b7280] hover:text-[#eeeef0] transition-colors px-3 py-[6px] rounded-[8px] border border-[#1c2333] cursor-pointer"

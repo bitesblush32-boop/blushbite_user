@@ -13,10 +13,7 @@ export async function GET(req: NextRequest) {
   const limit = 20
   const offset = (page - 1) * limit
 
-  const statusFilter =
-    status === 'all'
-      ? sql`TRUE`
-      : sql`cb.status = ${status}`
+  const statusFilter = status === 'all' ? sql`TRUE` : sql`cb.status = ${status}`
 
   try {
     const [rows, [countRow], [headerRow], [railRow], [featuredRow], [revenueRow]] =

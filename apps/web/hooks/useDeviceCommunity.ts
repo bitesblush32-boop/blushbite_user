@@ -23,7 +23,11 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
   useEffect(() => {
     if (forced) {
       // Bind device to this community in the background — no UI needed
-      try { localStorage.setItem(LS_KEY, forced) } catch { /* ignore */ }
+      try {
+        localStorage.setItem(LS_KEY, forced)
+      } catch {
+        /* ignore */
+      }
       getFingerprint()
         .then((fp) =>
           fetch('/api/device/bind', {
@@ -32,7 +36,9 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
             body: JSON.stringify({ fingerprint_hash: fp, community: forced }),
           })
         )
-        .catch(() => { /* best effort */ })
+        .catch(() => {
+          /* best effort */
+        })
       return
     }
 
@@ -43,7 +49,10 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
       try {
         const cached = localStorage.getItem(LS_KEY)
         if (cached && VALID.has(cached)) {
-          if (!cancelled) { setCommunity(cached); setLoading(false) }
+          if (!cancelled) {
+            setCommunity(cached)
+            setLoading(false)
+          }
           return
         }
       } catch {
@@ -61,8 +70,15 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
         if (res.ok) {
           const data = await res.json()
           if (data.found && VALID.has(data.community)) {
-            try { localStorage.setItem(LS_KEY, data.community) } catch { /* ignore */ }
-            if (!cancelled) { setCommunity(data.community); setLoading(false) }
+            try {
+              localStorage.setItem(LS_KEY, data.community)
+            } catch {
+              /* ignore */
+            }
+            if (!cancelled) {
+              setCommunity(data.community)
+              setLoading(false)
+            }
             return
           }
         }
@@ -71,11 +87,16 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
       }
 
       // Layer 3 — no binding found → show gender picker
-      if (!cancelled) { setNeedsPicker(true); setLoading(false) }
+      if (!cancelled) {
+        setNeedsPicker(true)
+        setLoading(false)
+      }
     }
 
     resolve()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [forced])
 
   const bindCommunity = useCallback(async (chosen: string) => {
@@ -85,7 +106,11 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
     setCommunity(chosen)
     setNeedsPicker(false)
 
-    try { localStorage.setItem(LS_KEY, chosen) } catch { /* ignore */ }
+    try {
+      localStorage.setItem(LS_KEY, chosen)
+    } catch {
+      /* ignore */
+    }
 
     try {
       const fp = await getFingerprint()
@@ -94,7 +119,9 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fingerprint_hash: fp, community: chosen }),
       })
-    } catch { /* best effort */ }
+    } catch {
+      /* best effort */
+    }
   }, [])
 
   return { community, loading, needsPicker, bindCommunity }

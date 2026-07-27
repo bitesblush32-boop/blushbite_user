@@ -3,10 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import { sql } from 'drizzle-orm'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 
@@ -36,10 +33,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin(req)
   if (!guard.ok) return guard.response
 

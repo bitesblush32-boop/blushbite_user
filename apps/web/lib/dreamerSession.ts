@@ -9,7 +9,7 @@ const COOKIE_NAME =
 const TTL_DAYS = 30
 
 export interface DreamerSession {
-  sub: string   // users.id (UUID)
+  sub: string // users.id (UUID)
   email: string
   alias: string | null
 }
