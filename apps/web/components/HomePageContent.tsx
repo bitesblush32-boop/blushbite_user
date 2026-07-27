@@ -15,13 +15,11 @@ import { useInfiniteConfessions } from '@/hooks/useInfiniteConfessions'
 import { usePlatformVideos } from '@/hooks/usePlatformVideos'
 import { useActiveBoosts } from '@/hooks/useActiveBoosts'
 import type { ActiveBoostItem } from '@/hooks/useActiveBoosts'
-import { useMoodStore } from '@/store/moodStore'
 import { usePlayerStore } from '@/store/playerStore'
 import CompanionCard from '@/components/ui/CompanionCard'
 import StoryCard from '@/components/ui/StoryCard'
 import AudioCard from '@/components/ui/AudioCard'
 import VideoCard from '@/components/ui/VideoCard'
-import DesiresDrawer from '@/components/ui/DesiresDrawer'
 import GenderPickerOverlay from '@/components/GenderPickerOverlay'
 import type { Story as ApiStory } from '@/hooks/useInfiniteConfessions'
 
@@ -74,7 +72,6 @@ function mapToCard(s: ApiStory, type: 'Story' | 'Confession'): StaticStory {
 // to pre-bind the device and skip the community picker.
 
 export default function HomePageContent({ forceCommunity }: { forceCommunity?: string }) {
-  const { intensity, setIntensity } = useMoodStore()
   const play = usePlayerStore((s) => s.play)
   const { community, needsPicker, bindCommunity } = useDeviceCommunity(forceCommunity)
   const { companionCards, isLoading: companionsLoading } = useRecommendedCompanions(community)
@@ -88,8 +85,6 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
   const [heroShadow, setHeroShadow] = useState(false)
-  const [desiresOpen, setDesiresOpen] = useState(false)
-
   // Map to static card shape
   const platformStoryCards = platformStoriesRaw.map((s) => mapToCard(s, 'Story'))
   const confessionCards = confessionsRaw.map((s) => mapToCard(s, 'Confession'))
@@ -159,63 +154,6 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
         {/* Flex layout: main content left + optional sticky right rail on xl screens */}
         <div className="flex gap-6 items-start">
           <div className="flex-1 min-w-0">
-            {/* ── BLOCK 1: Mood Slider + Desires button ─────────────────────────── */}
-            <div className="flex items-center gap-3 mb-8 flex-wrap">
-              <div
-                className="flex items-center gap-[14px] flex-1 min-w-[260px]"
-                style={{
-                  background: '#111620',
-                  border: '1px solid #1c2333',
-                  borderRadius: 40,
-                  padding: '10px 20px',
-                }}
-              >
-                <span
-                  style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}
-                >
-                  Tonight I want:
-                </span>
-                <span
-                  style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}
-                >
-                  Softer
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={intensity}
-                  onChange={(e) => setIntensity(Number(e.target.value))}
-                  style={{
-                    flex: 1,
-                    accentColor: '#e8607a',
-                    cursor: 'pointer',
-                    margin: 0,
-                    padding: 0,
-                    height: 4,
-                  }}
-                />
-                <span
-                  style={{ fontSize: 11, color: '#eeeef0', whiteSpace: 'nowrap', flexShrink: 0 }}
-                >
-                  Spicier
-                </span>
-              </div>
-              <button
-                onClick={() => setDesiresOpen(true)}
-                className="text-[12.5px] font-medium px-[16px] py-[10px] rounded-full border cursor-pointer transition-all duration-200 whitespace-nowrap flex-shrink-0"
-                style={{
-                  borderColor: 'rgba(232,96,122,0.35)',
-                  background: 'rgba(232,96,122,0.06)',
-                  color: '#e8607a',
-                }}
-              >
-                ✦ Tune your desires
-              </button>
-            </div>
-
-            <DesiresDrawer open={desiresOpen} onClose={() => setDesiresOpen(false)} />
-
             {/* ── BLOCK 2: Hero ────────────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 mb-14">
               {/* Featured companion card — unique large layout, built inline */}
