@@ -123,7 +123,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
           <motion.div
             key={`sponsored-${midGridBoost.id}`}
             variants={cardItem}
-            style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+            style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 198 }}
           >
             <MidGridAd data={midGridBoost} />
           </motion.div>
@@ -435,7 +435,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                       <motion.div
                         key={`featured-${boost.id}`}
                         variants={cardItem}
-                        style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+                        style={{ scrollSnapAlign: 'start', flexShrink: 0, width: 198 }}
                       >
                         <FeaturedBoostCard data={boost} />
                       </motion.div>

@@ -15,7 +15,7 @@ function CompanionCard({ companion, style }: Props) {
     <Link
       href={`/companions/${companion.id}`}
       prefetch={false}
-      style={{ textDecoration: 'none', display: 'block', flexShrink: 0, width: 200, ...style }}
+      style={{ textDecoration: 'none', display: 'block', flexShrink: 0, width: 190, ...style }}
     >
       <div
         style={{
@@ -48,7 +48,7 @@ function CompanionCard({ companion, style }: Props) {
             alt={companion.name}
             fill
             style={{ objectFit: 'cover', objectPosition: 'top' }}
-            sizes="(max-width: 640px) 50vw, 220px"
+            sizes="(max-width: 640px) 50vw, 190px"
           />
         ) : (
           <div

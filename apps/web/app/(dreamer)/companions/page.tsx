@@ -17,7 +17,7 @@ import type { DiscoverCompanionItem } from '@/hooks/useDiscoverCompanions'
 const COMMUNITY_CONFIG = {
   female: { label: 'Female', accentColor: '#e8607a' },
   male: { label: 'Men', accentColor: '#60a5fa' },
-  shemale: { label: 'Trans', accentColor: '#c084fc' },
+  shemale: { label: 'Shemale/TS', accentColor: '#c084fc' },
 } as const
 type Community = keyof typeof COMMUNITY_CONFIG
 
@@ -48,6 +48,8 @@ const CompanionCard = memo(function CompanionCard({
       style={{
         textDecoration: 'none',
         display: 'block',
+        width: 190,
+        flexShrink: 0,
         animationName: 'bb-card-in',
         animationDuration: '0.3s',
         animationTimingFunction: 'ease',
@@ -85,7 +87,7 @@ const CompanionCard = memo(function CompanionCard({
             alt={companion.name ?? 'Companion'}
             fill
             style={{ objectFit: 'cover', objectPosition: 'top' }}
-            sizes="(max-width: 480px) 50vw, (max-width: 960px) 25vw, 220px"
+            sizes="190px"
           />
         )}
 
@@ -141,8 +143,8 @@ function GridSkeleton() {
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+        display: 'flex',
+        flexWrap: 'wrap',
         gap: 16,
       }}
     >
@@ -150,7 +152,8 @@ function GridSkeleton() {
         <div
           key={i}
           style={{
-            borderRadius: 14, aspectRatio: '3/4', background: '#0d1117', border: '1px solid #1c2333',
+            width: 190, flexShrink: 0,
+            borderRadius: 14, aspectRatio: '2/3', background: '#0d1117', border: '1px solid #1c2333',
             animationName: 'bb-pulse', animationDuration: '1.5s', animationTimingFunction: 'ease',
             animationIterationCount: 'infinite', animationDelay: `${i * 50}ms`,
           }}
@@ -275,7 +278,7 @@ export default function CompanionsPage() {
       {/* ── Outer wrapper — wider when rail is present so rail sits in the right margin ── */}
       <div
         style={{
-          maxWidth: hasRail ? 1300 : 960,
+          maxWidth: hasRail ? 1300 : 1060,
           margin: '0 auto',
           padding: '0 20px',
         }}
@@ -287,7 +290,7 @@ export default function CompanionsPage() {
       {/* ── Outer flex: main content + right rail ── */}
       <div
         style={{
-          maxWidth: hasRail ? 1300 : 960,
+          maxWidth: hasRail ? 1300 : 1060,
           margin: '0 auto',
           padding: '0 20px',
           display: 'flex',
@@ -295,8 +298,8 @@ export default function CompanionsPage() {
           justifyContent: 'space-between',
         }}
       >
-        {/* ── Main column — capped at 960px, rail uses remaining right space ── */}
-        <div style={{ flex: '0 1 960px', minWidth: 0 }}>
+        {/* ── Main column — 1020px fits 5 × 190px cards + gaps; rail uses remaining right space ── */}
+        <div style={{ flex: '0 1 1020px', minWidth: 0 }}>
 
           {/* Page header + filters */}
           <div style={{ padding: '32px 0 24px' }}>
@@ -421,19 +424,25 @@ export default function CompanionsPage() {
           ) : (
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                display: 'flex',
+                flexWrap: 'wrap',
                 gap: 16,
               }}
             >
               {/* Featured boost cards appear first */}
               {featuredBoosts.map((boost) => (
-                <FeaturedBoostCard key={`featured-${boost.boost_type}`} data={boost} />
+                <div key={`featured-${boost.boost_type}`} style={{ width: 198, flexShrink: 0 }}>
+                  <FeaturedBoostCard data={boost} />
+                </div>
               ))}
               {/* Regular companions with mid-grid ad injected at position 3 */}
               {companions.map((c, i) => (
                 <>
-                  {i === 3 && midGridBoost && <MidGridAd key="mid-grid" data={midGridBoost} />}
+                  {i === 3 && midGridBoost && (
+                    <div key="mid-grid" style={{ width: 198, flexShrink: 0 }}>
+                      <MidGridAd data={midGridBoost} />
+                    </div>
+                  )}
                   <CompanionCard
                     key={c.id}
                     companion={c}

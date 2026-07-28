@@ -64,6 +64,9 @@ export async function PATCH(req: NextRequest) {
     desiredGenders,
   } = body as Record<string, unknown>
 
+  // Track whether we need to re-issue the session cookie (alias changed)
+  let updatedSessionCookie: string | null = null
+
   // Alias uniqueness check
   if (alias !== undefined && alias !== null) {
     const clean = (alias as string).startsWith('@') ? (alias as string).slice(1) : (alias as string)
@@ -86,30 +89,12 @@ export async function PATCH(req: NextRequest) {
       .set({ alias: clean, updated_at: new Date() })
       .where(eq(users.id, session.sub))
 
-    // Re-issue cookie with updated alias
-    const cookie = await buildSessionCookie({
+    // Build updated session cookie — applied on the final response below
+    updatedSessionCookie = await buildSessionCookie({
       sub: session.sub,
       email: session.email,
       alias: clean,
     })
-    const [updated] = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        alias: users.alias,
-        phone: users.phone,
-        display_name: userProfiles.display_name,
-        avatar_url: userProfiles.avatar_url,
-        bio: userProfiles.bio,
-        date_of_birth: userProfiles.date_of_birth,
-        country: userProfiles.country,
-        city: userProfiles.city,
-      })
-      .from(users)
-      .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))
-      .where(eq(users.id, session.sub))
-      .limit(1)
-    return NextResponse.json({ data: updated }, { headers: { 'Set-Cookie': cookie } })
   }
 
   if (phone !== undefined) {
@@ -177,5 +162,6 @@ export async function PATCH(req: NextRequest) {
     .where(eq(users.id, session.sub))
     .limit(1)
 
-  return NextResponse.json({ data })
+  const responseHeaders = updatedSessionCookie ? { 'Set-Cookie': updatedSessionCookie } : undefined
+  return NextResponse.json({ data }, { headers: responseHeaders })
 }

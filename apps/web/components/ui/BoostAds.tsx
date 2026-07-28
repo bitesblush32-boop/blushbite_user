@@ -115,7 +115,7 @@ export function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'block', width: 220, transform: 'scale(1.04)', transformOrigin: 'center' }}>
+    <Link href={href} style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
       <div
         style={{
           borderRadius: 14, overflow: 'hidden',
@@ -128,7 +128,7 @@ export function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
       >
         <div style={{ position: 'relative', aspectRatio: '3/4', background: gradient }}>
           {data.companion_photo_url && (
-            <Image src={data.companion_photo_url} alt={data.companion_name ?? 'Featured companion'} fill style={{ objectFit: 'cover', objectPosition: 'top' }} sizes="220px" />
+            <Image src={data.companion_photo_url} alt={data.companion_name ?? 'Featured companion'} fill style={{ objectFit: 'cover', objectPosition: 'top' }} sizes="(max-width: 640px) 50vw, 220px" />
           )}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(7,9,15,0.9) 0%, transparent 50%)' }} />
           <div style={{ position: 'absolute', top: 8, left: 8, fontSize: 10, padding: '3px 8px', borderRadius: 999, background: 'rgba(232,96,122,0.18)', border: '1px solid rgba(232,96,122,0.5)', color: '#e8607a', fontWeight: 500, letterSpacing: '0.03em' }}>
@@ -168,7 +168,7 @@ export function MidGridAd({ data }: { data: ActiveBoostItem }) {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'block', width: 220, transform: 'scale(1.04)', transformOrigin: 'center' }}>
+    <Link href={href} style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
       <div
         style={{
           borderRadius: 14, overflow: 'hidden',
@@ -181,7 +181,7 @@ export function MidGridAd({ data }: { data: ActiveBoostItem }) {
       >
         <div style={{ position: 'relative', aspectRatio: '3/4', background: gradient }}>
           {data.companion_photo_url && (
-            <Image src={data.companion_photo_url} alt={data.companion_name ?? 'Companion'} fill style={{ objectFit: 'cover', objectPosition: 'top' }} sizes="220px" />
+            <Image src={data.companion_photo_url} alt={data.companion_name ?? 'Companion'} fill style={{ objectFit: 'cover', objectPosition: 'top' }} sizes="(max-width: 640px) 50vw, 220px" />
           )}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(7,9,15,0.9) 0%, transparent 50%)' }} />
           <div style={{ position: 'absolute', top: 8, left: 8, fontSize: 10, padding: '3px 8px', borderRadius: 999, background: 'rgba(201,169,110,0.18)', border: '1px solid rgba(201,169,110,0.5)', color: '#c9a96e', fontWeight: 500, letterSpacing: '0.03em' }}>
