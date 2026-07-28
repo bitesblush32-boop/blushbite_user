@@ -155,13 +155,13 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-10 pt-[95px] pb-20"
+        className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-6 pt-[95px] pb-20"
       >
         {/* ── Header Banner ad placement ──────────────────────────────────────── */}
         {headerBanner && <HeaderBannerAd data={headerBanner} />}
 
         {/* Flex layout: main content left + optional sticky right rail on xl screens */}
-        <div className="flex gap-6 items-start">
+        <div className="flex items-start">
           <div className="flex-1 min-w-0">
             {/* ── BLOCK 2: Hero ────────────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-6 mb-14">
@@ -731,7 +731,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
           {rightRailBoosts.length > 0 && (
             <div
               className="hidden xl:flex flex-col flex-shrink-0 w-[200px] gap-3"
-              style={{ position: 'sticky', top: 80, alignSelf: 'flex-start' }}
+              style={{ position: 'sticky', top: 80, alignSelf: 'flex-start', marginLeft: 15 }}
             >
               {rightRailBoosts.map((boost) => (
                 <RightRailAd key={boost.id} data={boost} />

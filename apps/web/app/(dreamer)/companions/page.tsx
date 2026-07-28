@@ -275,12 +275,12 @@ export default function CompanionsPage() {
         .bb-sel option { background: #111620; }
       `}</style>
 
-      {/* ── Outer wrapper — wider when rail is present so rail sits in the right margin ── */}
+      {/* ── Outer wrapper — matches /community max-w-[1400px] px-10 ── */}
       <div
         style={{
-          maxWidth: hasRail ? 1440 : 1060,
+          maxWidth: hasRail ? 1400 : 1060,
           margin: '0 auto',
-          padding: '0 20px',
+          padding: hasRail ? '0 40px' : '0 20px',
         }}
       >
         {/* ── Header banner ad (constrained to main content width) ── */}
@@ -290,16 +290,16 @@ export default function CompanionsPage() {
       {/* ── Outer flex: main content + right rail ── */}
       <div
         style={{
-          maxWidth: hasRail ? 1440 : 1060,
+          maxWidth: hasRail ? 1400 : 1060,
           margin: '0 auto',
-          padding: '0 20px',
+          padding: hasRail ? '0 40px' : '0 20px',
           display: 'flex',
           alignItems: 'flex-start',
-          justifyContent: 'space-between',
+          gap: hasRail ? 24 : 0,
         }}
       >
-        {/* ── Main column — grows to fill container; CSS grid auto-fills 190px columns (5 per row at ≥1014px) ── */}
-        <div style={{ flex: '1 1 0', minWidth: 0, maxWidth: 1020 }}>
+        {/* ── Main column — flex-1 fills remaining space (matches /community flex-1 min-w-0) ── */}
+        <div style={{ flex: '1 1 0', minWidth: 0 }}>
 
           {/* Page header + filters */}
           <div style={{ padding: '32px 0 24px' }}>
@@ -501,7 +501,7 @@ export default function CompanionsPage() {
         {/* ── Right rail ad placement (desktop ≥1280px) ── */}
         {hasRail && (
           <div
-            className="hidden xl:flex flex-col flex-shrink-0 w-[180px] gap-3"
+            className="hidden xl:flex flex-col flex-shrink-0 w-[200px] gap-3"
             style={{ position: 'sticky', top: 80, alignSelf: 'flex-start' }}
           >
             {rightRailBoosts.map((boost) => (
