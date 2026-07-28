@@ -115,7 +115,7 @@ export function FeaturedBoostCard({ data }: { data: ActiveBoostItem }) {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'block', transform: 'scale(1.04)', transformOrigin: 'center' }}>
+    <Link href={href} style={{ textDecoration: 'none', display: 'block', width: 220, transform: 'scale(1.04)', transformOrigin: 'center' }}>
       <div
         style={{
           borderRadius: 14, overflow: 'hidden',
@@ -168,7 +168,7 @@ export function MidGridAd({ data }: { data: ActiveBoostItem }) {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'block', transform: 'scale(1.04)', transformOrigin: 'center' }}>
+    <Link href={href} style={{ textDecoration: 'none', display: 'block', width: 220, transform: 'scale(1.04)', transformOrigin: 'center' }}>
       <div
         style={{
           borderRadius: 14, overflow: 'hidden',

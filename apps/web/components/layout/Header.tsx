@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
@@ -13,6 +13,7 @@ import {
   HelpCircle,
   ImagePlus,
   Loader2,
+  MapPin,
   Menu,
   Pencil,
   PenLine,
@@ -479,20 +480,27 @@ function PostMenu({ onClose }: { onClose: () => void }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LOCATIONS: Record<string, string[]> = {
-  Netherlands: ['Amsterdam', 'Rotterdam', 'The Hague', 'Utrecht', 'Eindhoven'],
-  France: ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Bordeaux'],
-  Germany: ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne'],
-  'United Kingdom': ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Bristol'],
-  Spain: ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Bilbao'],
-  Other: [],
-}
-const COUNTRY_LIST = Object.keys(LOCATIONS)
+const USERNAME_RE = /^[a-zA-Z0-9_.\-]+$/
 
 const editProfileSchema = z.object({
-  alias: z.string().max(100).optional(),
+  alias: z
+    .string()
+    .min(2, 'At least 2 characters.')
+    .max(30, 'Max 30 characters.')
+    .regex(USERNAME_RE, 'Only letters, numbers, _ - . — no spaces or emojis.')
+    .optional()
+    .or(z.literal('')),
   bio: z.string().max(300).optional(),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true
+      const dob = new Date(val)
+      const cutoff = new Date()
+      cutoff.setFullYear(cutoff.getFullYear() - 18)
+      return dob <= cutoff
+    }, 'You must be 18 or older.'),
   country: z.string().max(100).optional(),
   city: z.string().max(100).optional(),
 })
@@ -529,6 +537,9 @@ export default function Header() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [aliasWarning, setAliasWarning] = useState<string | null>(null)
+  const [locationDetecting, setLocationDetecting] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
   const avatarUrl = useUIStore((s) => s.avatarUrl)
   const setAvatarUrl = useUIStore((s) => s.setAvatarUrl)
   const dreamer = useUIStore((s) => s.dreamer)
@@ -558,16 +569,24 @@ export default function Header() {
   })
 
   useEffect(() => {
-    if (editProfileOpen && profile) {
-      reset({
-        alias: profile.alias ?? undefined,
-        bio: profile.bio ?? undefined,
-        dateOfBirth: profile.date_of_birth ?? undefined,
-        country: profile.country ?? undefined,
-        city: profile.city ?? undefined,
+    if (!editProfileOpen || !dreamer) return
+    setAliasWarning(null)
+    setLocationError(null)
+    fetch('/api/users/profile')
+      .then((r) => r.json())
+      .then((json) => {
+        if (!json.data) return
+        setProfile(json.data)
+        reset({
+          alias: json.data.alias ?? undefined,
+          bio: json.data.bio ?? undefined,
+          dateOfBirth: json.data.date_of_birth ?? undefined,
+          country: json.data.country ?? undefined,
+          city: json.data.city ?? undefined,
+        })
       })
-    }
-  }, [editProfileOpen, profile, reset])
+      .catch(() => {})
+  }, [editProfileOpen, dreamer, reset])
   const router = useRouter()
   const pathname = usePathname()
   const isProfile = pathname === '/profile' || (isCompanion && pathname === '/companion/profile')
@@ -634,18 +653,75 @@ export default function Header() {
         color: '#fff',
       }
 
-  const selectedCountry = watch('country') ?? ''
-  const cityOptions = LOCATIONS[selectedCountry] ?? []
+  const aliasValue = watch('alias') ?? ''
+  const locationCountry = watch('country') ?? ''
+  const locationCity = watch('city') ?? ''
   const bioLength = watch('bio')?.length ?? 0
+
+  const maxDob = useMemo(() => {
+    const d = new Date()
+    d.setFullYear(d.getFullYear() - 18)
+    return d.toISOString().slice(0, 10)
+  }, [])
+
+  useEffect(() => {
+    if (!aliasValue) {
+      setAliasWarning(null)
+      return
+    }
+    if (/\s/.test(aliasValue)) {
+      setAliasWarning('No spaces allowed.')
+    } else if (/[^a-zA-Z0-9_.\-]/.test(aliasValue)) {
+      setAliasWarning('Only letters, numbers, _ - . are allowed — no emojis or special characters.')
+    } else {
+      setAliasWarning(null)
+    }
+  }, [aliasValue])
+
+  async function detectLocation() {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation not supported on this device.')
+      return
+    }
+    setLocationDetecting(true)
+    setLocationError(null)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch('/api/users/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          })
+          if (!res.ok) throw new Error('Failed to detect location.')
+          const json = await res.json()
+          if (json.data?.country) setValue('country', json.data.country)
+          if (json.data?.city) setValue('city', json.data.city)
+        } catch {
+          setLocationError('Could not detect location. Try again.')
+        } finally {
+          setLocationDetecting(false)
+        }
+      },
+      () => {
+        setLocationError('Location access denied. Please allow access and try again.')
+        setLocationDetecting(false)
+      }
+    )
+  }
 
   async function onSubmitEditProfile(values: EditProfileFormValues) {
     setSubmitting(true)
     setSubmitError(null)
     try {
+      const payload = {
+        ...values,
+        alias: values.alias ? values.alias.replace(/^@/, '') : undefined,
+      }
       const res = await fetch('/api/users/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({}))
@@ -712,25 +788,27 @@ export default function Header() {
                   fontSize: 12,
                   fontWeight: 500,
                   letterSpacing: 0.2,
-                  border: community === 'female'
-                    ? '1px solid rgba(232,96,122,0.35)'
-                    : community === 'male'
-                      ? '1px solid rgba(96,165,250,0.35)'
-                      : '1px solid rgba(192,132,252,0.35)',
-                  color: community === 'female'
-                    ? '#e8607a'
-                    : community === 'male'
-                      ? '#60a5fa'
-                      : '#c084fc',
-                  background: community === 'female'
-                    ? 'rgba(232,96,122,0.08)'
-                    : community === 'male'
-                      ? 'rgba(96,165,250,0.08)'
-                      : 'rgba(192,132,252,0.08)',
+                  border:
+                    community === 'female'
+                      ? '1px solid rgba(232,96,122,0.35)'
+                      : community === 'male'
+                        ? '1px solid rgba(96,165,250,0.35)'
+                        : '1px solid rgba(192,132,252,0.35)',
+                  color:
+                    community === 'female'
+                      ? '#e8607a'
+                      : community === 'male'
+                        ? '#60a5fa'
+                        : '#c084fc',
+                  background:
+                    community === 'female'
+                      ? 'rgba(232,96,122,0.08)'
+                      : community === 'male'
+                        ? 'rgba(96,165,250,0.08)'
+                        : 'rgba(192,132,252,0.08)',
                 }}
               >
-                {community === 'female' ? '♀' : community === 'male' ? '♂' : '⚧'}
-                {' '}
+                {community === 'female' ? '♀' : community === 'male' ? '♂' : '⚧'}{' '}
                 {community === 'female' ? 'Female' : community === 'male' ? 'Male' : 'TS'}
               </span>
             )}
@@ -1109,17 +1187,21 @@ export default function Header() {
           widthClassName="md:w-[480px]"
         >
           <form onSubmit={handleSubmit(onSubmitEditProfile)} className="flex flex-col gap-5">
-            {/* Alias */}
+            {/* Username */}
             <div className="flex flex-col gap-[6px]">
               <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                Private alias
+                Username
               </label>
               <input
                 {...register('alias')}
-                placeholder="Your anonymous name (e.g., @midnight-wanderer)"
+                placeholder="yourname"
+                maxLength={30}
                 className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
               />
-              {errors.alias && (
+              {aliasWarning && (
+                <span style={{ fontSize: 11, color: '#e87070' }}>{aliasWarning}</span>
+              )}
+              {!aliasWarning && errors.alias && (
                 <span style={{ fontSize: 11, color: '#e87070' }}>{errors.alias.message}</span>
               )}
             </div>
@@ -1154,6 +1236,7 @@ export default function Header() {
               <input
                 {...register('dateOfBirth')}
                 type="date"
+                max={maxDob}
                 className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
                 style={{ colorScheme: 'dark' }}
               />
@@ -1162,68 +1245,56 @@ export default function Header() {
               )}
             </div>
 
-            {/* Country */}
+            {/* Location — auto-detected only */}
             <div className="flex flex-col gap-[6px]">
               <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                Country
+                Location
               </label>
-              <div className="relative">
-                <select
-                  {...register('country')}
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
-                  style={{ colorScheme: 'dark', appearance: 'none', paddingRight: 36 }}
-                >
-                  <option value="">Select your country</option>
-                  {COUNTRY_LIST.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">
-                  ▾
-                </div>
-              </div>
-              {errors.country && (
-                <span style={{ fontSize: 11, color: '#e87070' }}>{errors.country.message}</span>
-              )}
-            </div>
+              {/* Hidden fields so RHF submits country/city values */}
+              <input type="hidden" {...register('country')} />
+              <input type="hidden" {...register('city')} />
 
-            {/* City */}
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">City</label>
-              {cityOptions.length > 0 ? (
-                <div className="relative">
-                  <select
-                    {...register('city')}
-                    className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
-                    style={{ colorScheme: 'dark', appearance: 'none', paddingRight: 36 }}
-                    disabled={!selectedCountry}
+              {locationCountry || locationCity ? (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-[10px] bg-[#161d2a] border border-[#1c2333]">
+                  <MapPin size={14} color="#e8607a" style={{ flexShrink: 0 }} />
+                  <span className="text-[13px] text-[#eeeef0] flex-1">
+                    {[locationCity, locationCountry].filter(Boolean).join(', ')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={detectLocation}
+                    disabled={locationDetecting}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: locationDetecting ? 'not-allowed' : 'pointer',
+                      color: '#6b7280',
+                      fontSize: 11,
+                      padding: 0,
+                      opacity: locationDetecting ? 0.5 : 1,
+                      flexShrink: 0,
+                    }}
                   >
-                    <option value="">Select your city</option>
-                    {cityOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                    <option value="Other">Other</option>
-                  </select>
-                  <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-[11px]">
-                    ▾
-                  </div>
+                    {locationDetecting ? 'Detecting…' : 'Update'}
+                  </button>
                 </div>
               ) : (
-                <input
-                  {...register('city')}
-                  type="text"
-                  placeholder={selectedCountry ? 'Enter your city' : 'Select a country first'}
-                  disabled={!selectedCountry}
-                  className="bg-[#161d2a] border border-[#1c2333] rounded-[10px] px-4 py-3 text-[13px] text-[#eeeef0] outline-none transition-colors duration-150 focus:border-[#e8607a] placeholder:text-[#4b5563] w-full"
-                  style={{ opacity: selectedCountry ? 1 : 0.5 }}
-                />
+                <button
+                  type="button"
+                  onClick={detectLocation}
+                  disabled={locationDetecting}
+                  className="flex items-center justify-center gap-2 rounded-[10px] border border-dashed border-[#1c2333] bg-[#161d2a] px-4 py-3 text-[13px] w-full transition-colors duration-150 hover:border-[rgba(232,96,122,0.3)]"
+                  style={{
+                    color: locationDetecting ? '#6b7280' : '#9ca3af',
+                    cursor: locationDetecting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <MapPin size={14} color={locationDetecting ? '#6b7280' : '#e8607a'} />
+                  {locationDetecting ? 'Detecting your location…' : 'Detect my location'}
+                </button>
               )}
-              {errors.city && (
-                <span style={{ fontSize: 11, color: '#e87070' }}>{errors.city.message}</span>
+              {locationError && (
+                <span style={{ fontSize: 11, color: '#e87070' }}>{locationError}</span>
               )}
             </div>
 

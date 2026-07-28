@@ -18,7 +18,6 @@ import {
   MapPin,
   LogIn,
 } from 'lucide-react'
-import EditProfileDrawer from '@/components/ui/EditProfileDrawer'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
 import { ConfessionsCollectionCard } from '@/components/ui/ConfessionsCollectionCard'
@@ -417,7 +416,6 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<MainTab>('posts')
   const [likedSubTab, setLikedSubTab] = useState<LikedSubTab>('all')
   const [savedSubTab, setSavedSubTab] = useState<SavedSubTab>('all')
-  const [editOpen, setEditOpen] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [profileOverride, setProfileOverride] = useState<Partial<UserProfile> | null>(null)
@@ -692,25 +690,6 @@ export default function ProfilePage() {
                 {profile.display_name}
               </div>
             )} */}
-
-            <button
-              onClick={() => setEditOpen(true)}
-              style={{
-                fontSize: 12,
-                color: '#e8607a',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: 0,
-                marginTop: -2,
-              }}
-            >
-              <Pencil size={11} />
-              Edit profile
-            </button>
 
             {profile?.bio && (
               <p
@@ -1036,24 +1015,6 @@ export default function ProfilePage() {
           vibes: profile?.vibes ?? [],
           gender: profile?.gender ?? '',
           desiredGenders: profile?.desired_genders ?? [],
-        }}
-      />
-
-      {/* ── Edit profile drawer ───────────────────────────────── */}
-      <EditProfileDrawer
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        defaults={{
-          alias: profile?.alias ?? undefined,
-          bio: profile?.bio ?? undefined,
-          dateOfBirth: profile?.date_of_birth ?? undefined,
-          country: profile?.country ?? undefined,
-          city: profile?.city ?? undefined,
-        }}
-        currentAvatar={profile?.avatar_url ?? null}
-        onSaved={(data) => {
-          setProfileOverride((o) => ({ ...(o ?? {}), ...data }))
-          setEditOpen(false)
         }}
       />
     </>
