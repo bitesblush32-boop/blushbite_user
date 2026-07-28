@@ -143,16 +143,16 @@ function GridSkeleton() {
   return (
     <div
       style={{
-        display: 'flex',
-        flexWrap: 'wrap',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, 190px)',
         gap: 16,
+        justifyContent: 'start',
       }}
     >
       {Array.from({ length: 12 }).map((_, i) => (
         <div
           key={i}
           style={{
-            width: 190, flexShrink: 0,
             borderRadius: 14, aspectRatio: '2/3', background: '#0d1117', border: '1px solid #1c2333',
             animationName: 'bb-pulse', animationDuration: '1.5s', animationTimingFunction: 'ease',
             animationIterationCount: 'infinite', animationDelay: `${i * 50}ms`,
@@ -266,7 +266,7 @@ export default function CompanionsPage() {
   const hasRail = rightRailBoosts.length > 0
 
   return (
-    <div style={{ minHeight: '100vh', background: '#07090f', paddingTop: 76, paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: '#07090f', paddingTop: 95, paddingBottom: 80 }}>
       <style>{`
         @keyframes bb-card-in { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
         @keyframes bb-pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -278,7 +278,7 @@ export default function CompanionsPage() {
       {/* ── Outer wrapper — wider when rail is present so rail sits in the right margin ── */}
       <div
         style={{
-          maxWidth: hasRail ? 1300 : 1060,
+          maxWidth: hasRail ? 1440 : 1060,
           margin: '0 auto',
           padding: '0 20px',
         }}
@@ -290,7 +290,7 @@ export default function CompanionsPage() {
       {/* ── Outer flex: main content + right rail ── */}
       <div
         style={{
-          maxWidth: hasRail ? 1300 : 1060,
+          maxWidth: hasRail ? 1440 : 1060,
           margin: '0 auto',
           padding: '0 20px',
           display: 'flex',
@@ -298,8 +298,8 @@ export default function CompanionsPage() {
           justifyContent: 'space-between',
         }}
       >
-        {/* ── Main column — 1020px fits 5 × 190px cards + gaps; rail uses remaining right space ── */}
-        <div style={{ flex: '0 1 1020px', minWidth: 0 }}>
+        {/* ── Main column — grows to fill container; CSS grid auto-fills 190px columns (5 per row at ≥1014px) ── */}
+        <div style={{ flex: '1 1 0', minWidth: 0, maxWidth: 1020 }}>
 
           {/* Page header + filters */}
           <div style={{ padding: '32px 0 24px' }}>
@@ -424,9 +424,10 @@ export default function CompanionsPage() {
           ) : (
             <div
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, 190px)',
                 gap: 16,
+                justifyContent: 'start',
               }}
             >
               {/* Featured boost cards appear first */}
