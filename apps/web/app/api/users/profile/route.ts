@@ -51,14 +51,28 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { alias, phone, bio, dateOfBirth, country, city, display_name } = body as Record<
-    string,
-    string | undefined
-  >
+  const {
+    alias,
+    phone,
+    bio,
+    dateOfBirth,
+    country,
+    city,
+    display_name,
+    vibes,
+    gender,
+    desiredGenders,
+  } = body as Record<string, unknown>
 
   // Alias uniqueness check
   if (alias !== undefined && alias !== null) {
     const clean = (alias as string).startsWith('@') ? (alias as string).slice(1) : (alias as string)
+
+    const USERNAME_RE = /^[a-zA-Z0-9_.\-]+$/
+    if (!clean || clean.length < 2 || clean.length > 30 || !USERNAME_RE.test(clean)) {
+      return NextResponse.json({ error: 'Invalid username format.' }, { status: 400 })
+    }
+
     const [taken] = await db
       .select({ id: users.id })
       .from(users)
@@ -108,10 +122,24 @@ export async function PATCH(req: NextRequest) {
   // Update user_profiles fields
   const profileUpdates: Record<string, unknown> = {}
   if (bio !== undefined) profileUpdates.bio = (bio as string) || null
-  if (dateOfBirth !== undefined) profileUpdates.date_of_birth = (dateOfBirth as string) || null
+  if (dateOfBirth !== undefined) {
+    if (dateOfBirth) {
+      const dob = new Date(dateOfBirth as string)
+      const cutoff = new Date()
+      cutoff.setFullYear(cutoff.getFullYear() - 18)
+      if (dob > cutoff) {
+        return NextResponse.json({ error: 'You must be 18 or older.' }, { status: 400 })
+      }
+    }
+    profileUpdates.date_of_birth = (dateOfBirth as string) || null
+  }
   if (country !== undefined) profileUpdates.country = (country as string) || null
   if (city !== undefined) profileUpdates.city = (city as string) || null
   if (display_name !== undefined) profileUpdates.display_name = (display_name as string) || null
+  if (gender !== undefined) profileUpdates.gender = (gender as string) || null
+  if (vibes !== undefined) profileUpdates.vibes = Array.isArray(vibes) ? vibes : null
+  if (desiredGenders !== undefined)
+    profileUpdates.desired_genders = Array.isArray(desiredGenders) ? desiredGenders : null
 
   if (Object.keys(profileUpdates).length > 0) {
     profileUpdates.updated_at = new Date()
@@ -140,6 +168,9 @@ export async function PATCH(req: NextRequest) {
       date_of_birth: userProfiles.date_of_birth,
       country: userProfiles.country,
       city: userProfiles.city,
+      gender: userProfiles.gender,
+      desired_genders: userProfiles.desired_genders,
+      vibes: userProfiles.vibes,
     })
     .from(users)
     .leftJoin(userProfiles, eq(userProfiles.user_id, users.id))

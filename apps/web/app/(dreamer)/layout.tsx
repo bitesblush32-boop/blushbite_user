@@ -14,6 +14,7 @@ const AuthModal = dynamic(() => import('@/components/ui/AuthModal'), { ssr: fals
 const DreamerSessionInit = dynamic(() => import('@/components/ui/DreamerSessionInit'), {
   ssr: false,
 })
+const CommunityInit = dynamic(() => import('@/components/ui/CommunityInit'), { ssr: false })
 const TourOverlay = dynamic(
   () => import('@/components/ui/TourOverlay').then((m) => ({ default: m.TourOverlay })),
   { ssr: false }
@@ -52,6 +53,7 @@ export default function DreamerLayout({ children }: { children: React.ReactNode 
       <LocationBanner />
       <TourOverlay />
       <AuthModal />
+      <CommunityInit />
       <DreamerSessionInit />
     </div>
   )

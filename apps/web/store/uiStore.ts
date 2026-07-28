@@ -42,6 +42,17 @@ interface UIStore {
   dreamerLoading: boolean
   setDreamer: (d: DreamerUser | null) => void
   setDreamerLoading: (v: boolean) => void
+
+  // Community binding (device-level — resolved once in CommunityInit)
+  community: string | null // 'female' | 'male' | 'shemale' | null
+  communityLoading: boolean
+  setCommunity: (c: string | null) => void
+  setCommunityLoading: (v: boolean) => void
+
+  // Username gate — true when logged-in user has no alias yet
+  requiresSetup: boolean
+  setRequiresSetup: (v: boolean) => void
+
   // Auth modal
   authModalOpen: boolean
   authModalIntent: 'contact' | 'interact' | null
@@ -83,6 +94,17 @@ export const useUIStore = create<UIStore>((set, get) => ({
   dreamerLoading: true,
   setDreamer: (d) => set({ dreamer: d }),
   setDreamerLoading: (v) => set({ dreamerLoading: v }),
+
+  // Community binding
+  community: null,
+  communityLoading: true,
+  setCommunity: (c) => set({ community: c }),
+  setCommunityLoading: (v) => set({ communityLoading: v }),
+
+  // Username gate
+  requiresSetup: false,
+  setRequiresSetup: (v) => set({ requiresSetup: v }),
+
   authModalOpen: false,
   authModalIntent: null,
   openAuthModal: (intent) => set({ authModalOpen: true, authModalIntent: intent ?? null }),

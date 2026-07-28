@@ -18,12 +18,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  if (!alias || alias.length < 2 || alias.length > 50) {
-    return NextResponse.json({ error: 'Username must be 2–50 characters.' }, { status: 400 })
+  if (!alias || alias.length < 2 || alias.length > 30) {
+    return NextResponse.json({ error: 'Username must be 2–30 characters.' }, { status: 400 })
   }
 
   // Strip @ prefix if provided
   const cleanAlias = alias.startsWith('@') ? alias.slice(1) : alias
+
+  const USERNAME_RE = /^[a-zA-Z0-9_.\-]+$/
+  if (!USERNAME_RE.test(cleanAlias)) {
+    return NextResponse.json(
+      { error: 'Username can only contain letters, numbers, _ - . (no spaces or emojis).' },
+      { status: 400 }
+    )
+  }
 
   // Uniqueness check (exclude current user)
   const [taken] = await db

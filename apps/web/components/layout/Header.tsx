@@ -534,6 +534,7 @@ export default function Header() {
   const dreamer = useUIStore((s) => s.dreamer)
   const dreamerLoading = useUIStore((s) => s.dreamerLoading)
   const openAuthModal = useUIStore((s) => s.openAuthModal)
+  const community = useUIStore((s) => s.community)
   const { unreadCount } = useNotifications()
 
   const {
@@ -697,9 +698,66 @@ export default function Header() {
             />
           </Link>
 
-          {/* ── Center — "For Companions" (desktop, logged-out only) ──────── */}
-          {!dreamer && !dreamerLoading && (
-            <div className="hidden md:flex flex-1 justify-center">
+          {/* ── Center — nav links (desktop) ─────────────────────────────── */}
+          <div className="hidden md:flex flex-1 justify-center items-center gap-6">
+            {/* Community pill — shows active device community */}
+            {community && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '4px 11px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: 0.2,
+                  border: community === 'female'
+                    ? '1px solid rgba(232,96,122,0.35)'
+                    : community === 'male'
+                      ? '1px solid rgba(96,165,250,0.35)'
+                      : '1px solid rgba(192,132,252,0.35)',
+                  color: community === 'female'
+                    ? '#e8607a'
+                    : community === 'male'
+                      ? '#60a5fa'
+                      : '#c084fc',
+                  background: community === 'female'
+                    ? 'rgba(232,96,122,0.08)'
+                    : community === 'male'
+                      ? 'rgba(96,165,250,0.08)'
+                      : 'rgba(192,132,252,0.08)',
+                }}
+              >
+                {community === 'female' ? '♀' : community === 'male' ? '♂' : '⚧'}
+                {' '}
+                {community === 'female' ? 'Female' : community === 'male' ? 'Male' : 'TS'}
+              </span>
+            )}
+
+            {/* Advertise — always visible */}
+            <Link
+              href="/advertise"
+              style={{
+                color: '#6b7280',
+                fontSize: 13,
+                textDecoration: 'none',
+                letterSpacing: 0.2,
+                transition: 'color 0.15s',
+                padding: '6px 0',
+              }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLAnchorElement).style.color = '#e8607a'
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'
+              }}
+            >
+              Advertise
+            </Link>
+
+            {/* For Companions — logged-out only */}
+            {!dreamer && !dreamerLoading && (
               <Link
                 href="https://blushbite.live"
                 target="_blank"
@@ -739,11 +797,8 @@ export default function Header() {
                   />
                 </svg>
               </Link>
-            </div>
-          )}
-
-          {/* spacer to push right actions to edge when signed in */}
-          {(dreamer || dreamerLoading) && <div className="flex-1" />}
+            )}
+          </div>
 
           {/* ── Right — auth buttons / icon actions ──────────────────────── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>

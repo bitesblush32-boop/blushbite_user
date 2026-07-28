@@ -120,10 +120,27 @@ const COUNTRY_LIST = Object.keys(LOCATIONS)
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+const USERNAME_RE = /^[a-zA-Z0-9_.\\-]+$/
+
 const schema = z.object({
-  alias: z.string().max(100).optional(),
+  alias: z
+    .string()
+    .min(2, 'At least 2 characters.')
+    .max(30, 'Max 30 characters.')
+    .regex(USERNAME_RE, 'Only letters, numbers, _ - . — no spaces or emojis.')
+    .optional()
+    .or(z.literal('')),
   bio: z.string().max(300).optional(),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: z
+    .string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true
+      const dob = new Date(val)
+      const cutoff = new Date()
+      cutoff.setFullYear(cutoff.getFullYear() - 18)
+      return dob <= cutoff
+    }, 'You must be 18 or older.'),
   country: z.string().max(100).optional(),
   city: z.string().max(100).optional(),
 })
@@ -241,10 +258,15 @@ export default function EditProfileDrawer({
     setSubmitting(true)
     setSubmitError(null)
     try {
+      // Strip @ prefix if user typed it
+      const payload = {
+        ...values,
+        alias: values.alias ? values.alias.replace(/^@/, '') : values.alias,
+      }
       const res = await fetch('/api/users/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({}))
@@ -454,14 +476,14 @@ export default function EditProfileDrawer({
                 />
               </div>
 
-              {/* ── Alias ───────────────────────────────────── */}
+              {/* ── Username ────────────────────────────────── */}
               <div className="flex flex-col gap-[6px]">
                 <label className="text-[11px] text-[#6b7280] uppercase tracking-widest">
-                  Alias Name
+                  Username
                 </label>
                 <input
                   {...register('alias')}
-                  placeholder="Your anonymous name (e.g., @midnight-wanderer)"
+                  placeholder="e.g. midnight_wanderer — letters, numbers, _ - . only"
                   className={inputClass}
                 />
                 {errors.alias && (

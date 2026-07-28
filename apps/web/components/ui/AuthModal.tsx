@@ -23,8 +23,11 @@ const CARD = {
   exit: { opacity: 0, scale: 0.97, y: 4, transition: { duration: 0.14 } },
 }
 
+const USERNAME_RE = /^[a-zA-Z0-9_.\\-]+$/
+
 export default function AuthModal() {
-  const { authModalOpen, closeAuthModal, setDreamer } = useUIStore()
+  const { authModalOpen, closeAuthModal, setDreamer, requiresSetup, setRequiresSetup } =
+    useUIStore()
 
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
@@ -39,10 +42,14 @@ export default function AuthModal() {
   const emailRef = useRef<HTMLInputElement>(null)
   const aliasRef = useRef<HTMLInputElement>(null)
 
-  // Reset on open
+  // Reset on open — jump straight to setup if requiresSetup
   useEffect(() => {
     if (authModalOpen) {
-      setStep('email')
+      if (requiresSetup) {
+        setStep('setup')
+      } else {
+        setStep('email')
+      }
       setEmail('')
       setOtp('')
       setAlias('')
@@ -50,9 +57,12 @@ export default function AuthModal() {
       setError('')
       setLoading(false)
       setResendCooldown(0)
-      setTimeout(() => emailRef.current?.focus(), 120)
+      setTimeout(() => {
+        if (requiresSetup) aliasRef.current?.focus()
+        else emailRef.current?.focus()
+      }, 120)
     }
-  }, [authModalOpen])
+  }, [authModalOpen, requiresSetup])
 
   // Resend countdown
   useEffect(() => {
@@ -116,8 +126,17 @@ export default function AuthModal() {
   }
 
   async function completeSetup() {
-    if (!alias.trim() || alias.trim().length < 2) {
+    const cleanAlias = alias.trim().replace(/^@/, '')
+    if (!cleanAlias || cleanAlias.length < 2) {
       setError('Username must be at least 2 characters.')
+      return
+    }
+    if (cleanAlias.length > 30) {
+      setError('Max 30 characters.')
+      return
+    }
+    if (!USERNAME_RE.test(cleanAlias)) {
+      setError('Only letters, numbers, _ - . — no spaces or emojis.')
       return
     }
     setError('')
@@ -126,13 +145,14 @@ export default function AuthModal() {
       const res = await fetch('/api/users/auth/complete-setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alias: alias.trim(), phone: phone.trim() || undefined }),
+        body: JSON.stringify({ alias: cleanAlias, phone: phone.trim() || undefined }),
       })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error ?? 'Could not save. Try again.')
         return
       }
+      setRequiresSetup(false)
       await refreshSession()
       closeAuthModal()
     } finally {
@@ -179,7 +199,7 @@ export default function AuthModal() {
         initial="hidden"
         animate="visible"
         exit="exit"
-        onClick={closeAuthModal}
+        onClick={requiresSetup ? undefined : closeAuthModal}
         style={{
           position: 'fixed',
           inset: 0,
@@ -221,26 +241,28 @@ export default function AuthModal() {
             }}
           />
 
-          {/* Close */}
-          <button
-            onClick={closeAuthModal}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#4b5563',
-              padding: 4,
-            }}
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
+          {/* Close — hidden when requiresSetup (non-dismissable) */}
+          {!requiresSetup && (
+            <button
+              onClick={closeAuthModal}
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#4b5563',
+                padding: 4,
+              }}
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+          )}
 
-          {/* Back (otp/setup) */}
-          {(step === 'otp' || step === 'setup') && (
+          {/* Back (otp/setup) — not shown when requiresSetup on setup step */}
+          {(step === 'otp' || (step === 'setup' && !requiresSetup)) && (
             <button
               onClick={() => {
                 setStep(step === 'setup' ? 'otp' : 'email')
@@ -503,7 +525,9 @@ export default function AuthModal() {
                 Set up your <em style={{ fontStyle: 'italic', color: '#e8607a' }}>profile.</em>
               </h2>
               <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>
-                Pick a username so companions can recognise you.
+                {requiresSetup
+                  ? 'Choose a username to continue — this is required before you can access the app.'
+                  : 'Pick a username so companions can recognise you.'}
               </p>
 
               <label
@@ -536,11 +560,12 @@ export default function AuthModal() {
                   type="text"
                   value={alias}
                   onChange={(e) => {
-                    setAlias(e.target.value.replace(/\s/g, ''))
+                    // Only allow valid username chars (strip everything else)
+                    setAlias(e.target.value.replace(/[^a-zA-Z0-9_.\-]/g, ''))
                     setError('')
                   }}
                   placeholder="yourname"
-                  maxLength={50}
+                  maxLength={30}
                   required
                   style={{
                     width: '100%',
@@ -599,17 +624,21 @@ export default function AuthModal() {
 
               <button
                 type="submit"
-                disabled={loading || alias.trim().length < 2}
+                disabled={loading || alias.trim().replace(/^@/, '').length < 2}
                 style={{
                   width: '100%',
-                  background: loading || alias.trim().length < 2 ? '#1c2333' : '#e8607a',
-                  color: loading || alias.trim().length < 2 ? '#4b5563' : '#fff',
+                  background:
+                    loading || alias.trim().replace(/^@/, '').length < 2 ? '#1c2333' : '#e8607a',
+                  color: loading || alias.trim().replace(/^@/, '').length < 2 ? '#4b5563' : '#fff',
                   border: 'none',
                   borderRadius: 10,
                   padding: '13px 20px',
                   fontSize: 14,
                   fontWeight: 500,
-                  cursor: loading || alias.trim().length < 2 ? 'not-allowed' : 'pointer',
+                  cursor:
+                    loading || alias.trim().replace(/^@/, '').length < 2
+                      ? 'not-allowed'
+                      : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

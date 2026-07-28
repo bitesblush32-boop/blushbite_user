@@ -7,21 +7,27 @@ import { useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
 
 export default function DreamerSessionInit() {
-  const { setDreamer, setDreamerLoading } = useUIStore()
+  const { setDreamer, setDreamerLoading, setRequiresSetup, openAuthModal } = useUIStore()
 
   useEffect(() => {
     fetch('/api/users/me')
       .then((r) => r.json())
       .then((data) => {
-        setDreamer(
-          data.user
-            ? { id: data.user.id, email: data.user.email, alias: data.user.alias ?? null }
-            : null
-        )
+        if (data.user) {
+          const alias = data.user.alias ?? null
+          setDreamer({ id: data.user.id, email: data.user.email, alias })
+          // Gate: logged-in user with no alias must pick one before proceeding
+          if (!alias) {
+            setRequiresSetup(true)
+            openAuthModal()
+          }
+        } else {
+          setDreamer(null)
+        }
       })
       .catch(() => setDreamer(null))
       .finally(() => setDreamerLoading(false))
-  }, [setDreamer, setDreamerLoading])
+  }, [setDreamer, setDreamerLoading, setRequiresSetup, openAuthModal])
 
   return null
 }

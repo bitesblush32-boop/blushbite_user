@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useUIStore } from '@/store/uiStore'
 
 // ─── Options (mirrors onboarding) ────────────────────────────────────────────
 
@@ -41,6 +42,12 @@ const ALL_GENDERS = [
   'Androgynous',
 ]
 
+const COMMUNITY_TO_GENDER: Record<string, string> = {
+  female: 'Female',
+  male: 'Male',
+  shemale: 'Shemale/TS',
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface TasteData {
@@ -69,6 +76,9 @@ export default function TasteDrawer({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const storeCommunity = useUIStore((s) => s.community)
+  // The single gender option for Desires — derived from device community binding
+  const communityGender = storeCommunity ? (COMMUNITY_TO_GENDER[storeCommunity] ?? null) : null
 
   const [vibes, setVibes] = useState<string[]>(defaults?.vibes ?? [])
   const [gender, setGender] = useState(defaults?.gender ?? '')
@@ -79,7 +89,16 @@ export default function TasteDrawer({
     if (open) {
       setVibes(defaults?.vibes ?? [])
       setGender(defaults?.gender ?? '')
-      setDesiredGenders(defaults?.desiredGenders ?? [])
+
+      // Always lock Desires to the community-bound gender
+      if (communityGender) {
+        setDesiredGenders([communityGender])
+      } else if (defaults?.desiredGenders?.length) {
+        setDesiredGenders(defaults.desiredGenders)
+      } else {
+        setDesiredGenders([])
+      }
+
       setError(null)
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -292,22 +311,24 @@ export default function TasteDrawer({
                   Desires
                 </label>
                 <p style={{ fontSize: 12, color: '#4b5563', marginBottom: 12 }}>
-                  Who draws you in — select everyone who does.
+                  {communityGender
+                    ? `Your community preference — locked to ${communityGender}.`
+                    : 'Who draws you in — select everyone who does.'}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {ALL_GENDERS.map((g) => {
+                  {(communityGender ? [communityGender] : ALL_GENDERS).map((g) => {
                     const on = desiredGenders.includes(g)
                     return (
                       <button
                         key={g}
                         type="button"
-                        onClick={() => toggleDesire(g)}
+                        onClick={communityGender ? undefined : () => toggleDesire(g)}
                         className="text-[13px] py-[10px] px-4 rounded-[10px] text-left border transition-all flex justify-between items-center"
                         style={{
                           borderColor: on ? 'rgba(232,96,122,0.45)' : '#1c2333',
                           background: on ? 'rgba(232,96,122,0.1)' : '#161d2a',
                           color: on ? '#e8607a' : '#6b7280',
-                          cursor: 'pointer',
+                          cursor: communityGender ? 'default' : 'pointer',
                         }}
                       >
                         <span>{g}</span>
@@ -329,18 +350,6 @@ export default function TasteDrawer({
                     )
                   })}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setDesiredGenders([...ALL_GENDERS])}
-                  className="text-[12px] text-[#6b7280] cursor-pointer mt-3 w-full text-center hover:text-[#eeeef0] transition-colors bg-transparent border-none"
-                  style={{
-                    textDecoration: 'underline',
-                    textDecorationStyle: 'dotted',
-                    textUnderlineOffset: 3,
-                  }}
-                >
-                  I&apos;m open to everyone
-                </button>
               </div>
 
               {/* ── Error / Save ───────────────────────────────────── */}
