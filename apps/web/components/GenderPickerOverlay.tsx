@@ -7,24 +7,24 @@ interface Props {
 }
 
 const OPTIONS = [
-  {
-    id: 'female',
-    label: 'Women',
-    emoji: '✦',
-    desc: 'Female companions',
-    color: '#e8607a',
-    bg: 'rgba(232,96,122,0.08)',
-    border: 'rgba(232,96,122,0.3)',
-  },
-  {
-    id: 'male',
-    label: 'Men',
-    emoji: '◆',
-    desc: 'Male companions',
-    color: '#60a5fa',
-    bg: 'rgba(96,165,250,0.08)',
-    border: 'rgba(96,165,250,0.3)',
-  },
+  // {
+  //   id: 'female',
+  //   label: 'Women',
+  //   emoji: '✦',
+  //   desc: 'Female companions',
+  //   color: '#e8607a',
+  //   bg: 'rgba(232,96,122,0.08)',
+  //   border: 'rgba(232,96,122,0.3)',
+  // },
+  // {
+  //   id: 'male',
+  //   label: 'Men',
+  //   emoji: '◆',
+  //   desc: 'Male companions',
+  //   color: '#60a5fa',
+  //   bg: 'rgba(96,165,250,0.08)',
+  //   border: 'rgba(96,165,250,0.3)',
+  // },
   {
     id: 'shemale',
     label: 'Trans',

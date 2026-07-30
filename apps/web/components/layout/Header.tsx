@@ -817,7 +817,7 @@ export default function Header() {
             <Link
               href="/advertise"
               style={{
-                color: '#6b7280',
+                color: '#eeeef0',
                 fontSize: 13,
                 textDecoration: 'none',
                 letterSpacing: 0.2,
@@ -841,7 +841,7 @@ export default function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: '#6b7280',
+                  color: '#eeeef0',
                   fontSize: 13,
                   textDecoration: 'none',
                   letterSpacing: 0.2,
