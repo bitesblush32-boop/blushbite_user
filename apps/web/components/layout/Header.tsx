@@ -530,6 +530,7 @@ export default function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
   const [showPostMenu, setShowPostMenu] = useState(false)
 
@@ -933,6 +934,7 @@ export default function Header() {
                 >
                   Sign in
                 </button>
+                
                 {/* "Enter" — always visible, filled rose */}
                 <button
                   type="button"
@@ -965,6 +967,34 @@ export default function Header() {
                 >
                   Enter
                 </button>
+
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="flex md:hidden items-center justify-center rounded-full border"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    background: 'transparent',
+                    borderColor: '#1c2333',
+                    color: '#eeeef0',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      'rgba(232,96,122,0.35)'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#e8607a'
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#1c2333'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
+                  }}
+                >
+                  <Menu size={18} strokeWidth={1.8} />
+                </button>
+
               </>
             ) : isProfile ? (
               /* ── Signed in + profile page — Plus + Menu ── */
@@ -1109,6 +1139,99 @@ export default function Header() {
             )}
           </div>
         </div>
+
+        <SlidePanel
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          title="Menu"
+        >
+          <div className="flex flex-col gap-3">
+            {community && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '4px 11px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: 0.2,
+                  border:
+                    community === 'female'
+                      ? '1px solid rgba(232,96,122,0.35)'
+                      : community === 'male'
+                        ? '1px solid rgba(96,165,250,0.35)'
+                        : '1px solid rgba(192,132,252,0.35)',
+                  color:
+                    community === 'female'
+                      ? '#e8607a'
+                      : community === 'male'
+                        ? '#60a5fa'
+                        : '#c084fc',
+                  background:
+                    community === 'female'
+                      ? 'rgba(232,96,122,0.08)'
+                      : community === 'male'
+                        ? 'rgba(96,165,250,0.08)'
+                        : 'rgba(192,132,252,0.08)',
+                  alignSelf: 'flex-start',
+                }}
+              >
+                {community === 'female' ? '♀' : community === 'male' ? '♂' : '⚧'}{' '}
+                {community === 'female' ? 'Female' : community === 'male' ? 'Male' : 'TS'}
+              </div>
+            )}
+
+            <Link
+              href="/advertise"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '4px 11px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 500,
+                letterSpacing: 0.2,
+                textDecoration: 'none',
+                color: '#f3f4f6',
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.04)',
+                alignSelf: 'flex-start',
+              }}
+            >
+              Advertise
+            </Link>
+
+            {!dreamer && !dreamerLoading && (
+              <Link
+                href="https://blushbite.live"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '4px 11px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: 0.2,
+                  textDecoration: 'none',
+                  color: '#f3f4f6',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  background: 'rgba(255,255,255,0.04)',
+                  alignSelf: 'flex-start',
+                }}
+              >
+                For Companions
+              </Link>
+            )}
+          </div>
+        </SlidePanel>
 
         <SlidePanel
           open={settingsOpen}

@@ -408,25 +408,48 @@ export default async function AdvertisePage() {
               Your profile in front of thousands of clients — every week.
             </p>
           </div>
-          <a
-            href={LIVE_BOOST_URL}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '13px 28px',
-              background: '#e8607a',
-              color: '#fff',
-              borderRadius: 10,
-              fontWeight: 600,
-              fontSize: 14,
-              textDecoration: 'none',
-              flexShrink: 0,
-              boxShadow: '0 6px 24px rgba(232,96,122,0.3)',
-            }}
-          >
-            Book a placement →
-          </a>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-end' }}>
+            <a
+              href="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 44,
+                padding: '0 20px',
+                background: 'transparent',
+                border: '1px solid #1c2333',
+                borderRadius: 10,
+                color: '#eeeef0',
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                letterSpacing: 0.1,
+              }}
+            >
+              Back to Platform
+            </a>
+            <a
+              href={LIVE_BOOST_URL}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '13px 28px',
+                background: '#e8607a',
+                color: '#fff',
+                borderRadius: 10,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: 'none',
+                flexShrink: 0,
+                boxShadow: '0 6px 24px rgba(232,96,122,0.3)',
+              }}
+            >
+              Book a placement →
+            </a>
+          </div>
         </div>
       </div>
 
