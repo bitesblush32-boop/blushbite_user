@@ -189,38 +189,62 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
             )}
 
             {/* ── Trust & Privacy Highlights Bar ──────────────────────────────────── */}
-            <div className="mb-10 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#111620]/90 via-[#151c2a]/80 to-[#111620]/90 border border-[#1c2333] shadow-lg backdrop-blur-md">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
-                <div className="flex items-center gap-3 justify-center sm:justify-start">
-                  <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
-                    <ShieldCheck size={20} />
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-semibold text-[#eeeef0] flex items-center gap-1.5 justify-center sm:justify-start">
-                      <span>Verified Identities</span>
-                      <Sparkles size={12} className="text-[#e8607a]" />
+            <div className="mb-8">
+              {/* Mobile Scrollable Pill Row (< sm) */}
+              <div
+                className="sm:hidden flex gap-2.5 overflow-x-auto pb-1 scroll-smooth"
+                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+              >
+                <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111620]/90 border border-[#e8607a]/25 text-[11.5px] text-[#eeeef0] shadow-md">
+                  <ShieldCheck size={15} className="text-[#e8607a]" />
+                  <span><strong className="font-semibold text-[#eeeef0]">Verified Profiles</strong> · 100% Authenticated</span>
+                </div>
+
+                <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111620]/90 border border-[#e8607a]/25 text-[11.5px] text-[#eeeef0] shadow-md">
+                  <EyeOff size={15} className="text-[#e8607a]" />
+                  <span><strong className="font-semibold text-[#eeeef0]">Anonymous Alias</strong> · Real names protected</span>
+                </div>
+
+                <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111620]/90 border border-[#e8607a]/25 text-[11.5px] text-[#eeeef0] shadow-md">
+                  <Lock size={15} className="text-[#e8607a]" />
+                  <span><strong className="font-semibold text-[#eeeef0]">Discreet Sessions</strong> · EU Private Platform</span>
+                </div>
+              </div>
+
+              {/* Desktop 3-Column Glassmorphic Card (≥ sm) */}
+              <div className="hidden sm:block p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#111620]/90 via-[#151c2a]/80 to-[#111620]/90 border border-[#1c2333] shadow-lg backdrop-blur-md">
+                <div className="grid grid-cols-3 gap-4 text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                      <ShieldCheck size={18} />
                     </div>
-                    <div className="text-[11px] text-[#9ca3af] mt-0.5">100% ID authenticated profiles</div>
+                    <div>
+                      <div className="text-[13px] font-semibold text-[#eeeef0] flex items-center gap-1.5">
+                        <span>Verified Identities</span>
+                        <Sparkles size={12} className="text-[#e8607a]" />
+                      </div>
+                      <div className="text-[11px] text-[#9ca3af] mt-0.5">100% ID authenticated profiles</div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3 justify-center sm:justify-start">
-                  <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
-                    <EyeOff size={20} />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                      <EyeOff size={18} />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-semibold text-[#eeeef0]">Anonymous Alias</div>
+                      <div className="text-[11px] text-[#9ca3af] mt-0.5">Real names never stored or revealed</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[13px] font-semibold text-[#eeeef0]">Anonymous Alias</div>
-                    <div className="text-[11px] text-[#9ca3af] mt-0.5">Real names never stored or revealed</div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3 justify-center sm:justify-start">
-                  <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
-                    <Lock size={20} />
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-semibold text-[#eeeef0]">Discreet Sessions</div>
-                    <div className="text-[11px] text-[#9ca3af] mt-0.5">Strictly private EU-hosted platform</div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                      <Lock size={18} />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-semibold text-[#eeeef0]">Discreet Sessions</div>
+                      <div className="text-[11px] text-[#9ca3af] mt-0.5">Strictly private EU-hosted platform</div>
+                    </div>
                   </div>
                 </div>
               </div>

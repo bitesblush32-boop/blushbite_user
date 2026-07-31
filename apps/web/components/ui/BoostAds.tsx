@@ -35,7 +35,7 @@ export function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
   const bgPhotoUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-[#c9a96e]/30 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 gap-4 min-h-[90px] shadow-xl backdrop-blur-md bg-gradient-to-r from-[#161220] via-[#1f162a] to-[#121624]">
+    <div className="relative rounded-2xl overflow-hidden border border-[#c9a96e]/30 mb-5 flex flex-row items-center justify-between p-3.5 sm:p-5 gap-3 min-h-[75px] shadow-xl backdrop-blur-md bg-gradient-to-r from-[#161220] via-[#1f162a] to-[#121624]">
       {bgPhotoUrl && (
         <>
           {isGif ? (
@@ -58,18 +58,18 @@ export function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
         </>
       )}
 
-      <div className="relative z-10 min-w-0">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c9a96e]/15 border border-[#c9a96e]/40 text-[#c9a96e] text-[10px] font-semibold tracking-wider uppercase mb-1.5">
-          <span>✦ Featured Companion Spotlight</span>
+      <div className="relative z-10 min-w-0 flex-1">
+        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c9a96e]/15 border border-[#c9a96e]/40 text-[#c9a96e] text-[9.5px] font-semibold tracking-wider uppercase mb-1">
+          <span>✦ Featured Spotlight</span>
         </div>
-        <div className="font-serif text-[17px] sm:text-[19px] text-[#eeeef0] leading-tight mb-1">
+        <div className="font-serif text-[15px] sm:text-[19px] text-[#eeeef0] leading-tight truncate">
           {data.banner_headline ?? data.companion_name ?? 'Featured companion'}
           {data.banner_headline || isProfileCard ? '' : (
             <em className="text-[#e8607a] italic"> awaits.</em>
           )}
         </div>
         {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
-          <p className="text-[12px] text-[#9ca3af] line-clamp-2">
+          <p className="text-[11px] sm:text-[12px] text-[#9ca3af] truncate">
             {data.banner_tagline_text ?? data.companion_tagline}
           </p>
         )}
@@ -77,9 +77,9 @@ export function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
 
       <Link
         href={href}
-        className="relative z-10 flex-shrink-0 text-[12.5px] font-medium px-4 py-2.5 rounded-xl bg-[#e8607a]/15 border border-[#e8607a]/40 text-[#e8607a] hover:bg-[#e8607a] hover:text-white transition-all shadow-[0_0_15px_rgba(232,96,122,0.25)] whitespace-nowrap self-stretch sm:self-auto text-center"
+        className="relative z-10 flex-shrink-0 text-[11.5px] sm:text-[12.5px] font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#e8607a]/15 border border-[#e8607a]/40 text-[#e8607a] hover:bg-[#e8607a] hover:text-white transition-all shadow-[0_0_15px_rgba(232,96,122,0.25)] whitespace-nowrap text-center"
       >
-        {isProfileCard ? 'View Profile →' : hasCustomImage ? 'Explore Now →' : 'View Profile →'}
+        {isProfileCard ? 'View Profile →' : hasCustomImage ? 'Explore →' : 'View →'}
       </Link>
     </div>
   )
