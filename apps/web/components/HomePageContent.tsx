@@ -18,6 +18,7 @@ import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
 import CompanionCard from '@/components/ui/CompanionCard'
 import AutoCompanionCarousel from '@/components/ui/AutoCompanionCarousel'
+import Footer from '@/components/layout/Footer'
 import { ShieldCheck, Lock, EyeOff, Sparkles } from 'lucide-react'
 import StoryCard from '@/components/ui/StoryCard'
 import AudioCard from '@/components/ui/AudioCard'
@@ -621,34 +622,6 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
               </div>
             )}
 
-            {/* ── Footer ───────────────────────────────────────────────────────────── */}
-            <footer className="mt-20 pt-10 border-t border-[#1c2333]">
-              <div className="flex items-center justify-between flex-wrap gap-5">
-                <div className="flex gap-5 flex-wrap">
-                  {[
-                    'Safety & Consent',
-                    'Privacy & Anonymity',
-                    'Legal information',
-                    'Report an issue',
-                  ].map((label) => (
-                    <span
-                      key={label}
-                      className="text-[12px] text-[#6b7280] cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-4 flex-wrap text-[12px] text-[#6b7280]">
-                  <span>🔒 Anonymous IDs</span>
-                  <span>✦ Clear consent &amp; boundaries</span>
-                  <span>💳 Transparent pricing</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-[#6b7280] mt-6" style={{ opacity: 0.5 }}>
-                © 2025 BlushBite · All companions verified · 18+
-              </p>
-            </footer>
           </div>
           {/* end main content column */}
 
@@ -665,6 +638,9 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
           )}
         </div>
         {/* end flex wrapper */}
+
+        {/* ── Full-Width Responsive Footer ────────────────────────────────────── */}
+        <Footer />
       </motion.main>
     </>
   )
