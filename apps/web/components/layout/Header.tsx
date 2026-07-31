@@ -754,7 +754,7 @@ export default function Header() {
       >
         {/* max-width container with design-system padding */}
         <div
-          className="max-w-[1400px] mx-auto px-5 md:px-10"
+          className="max-w-[1400px] mx-auto px-3.5 sm:px-6 md:px-10"
           style={{
             display: 'flex',
             alignItems: 'center',

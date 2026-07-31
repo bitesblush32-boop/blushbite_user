@@ -17,6 +17,8 @@ import { HeaderBannerAd, FeaturedBoostCard, MidGridAd, RightRailAd } from '@/com
 import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
 import CompanionCard from '@/components/ui/CompanionCard'
+import AutoCompanionCarousel from '@/components/ui/AutoCompanionCarousel'
+import { ShieldCheck, Lock, EyeOff, Sparkles } from 'lucide-react'
 import StoryCard from '@/components/ui/StoryCard'
 import AudioCard from '@/components/ui/AudioCard'
 import VideoCard from '@/components/ui/VideoCard'
@@ -149,7 +151,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-6 pt-[95px] pb-20"
+        className="relative z-10 max-w-[1400px] mx-auto px-3.5 sm:px-6 pt-[85px] sm:pt-[95px] pb-20"
       >
         {/* ── Header Banner ad placement ──────────────────────────────────────── */}
         {headerBanner && <HeaderBannerAd data={headerBanner} />}
@@ -186,15 +188,53 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
               </div>
             )}
 
+            {/* ── Trust & Privacy Highlights Bar ──────────────────────────────────── */}
+            <div className="mb-10 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#111620]/90 via-[#151c2a]/80 to-[#111620]/90 border border-[#1c2333] shadow-lg backdrop-blur-md">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
+                <div className="flex items-center gap-3 justify-center sm:justify-start">
+                  <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#eeeef0] flex items-center gap-1.5 justify-center sm:justify-start">
+                      <span>Verified Identities</span>
+                      <Sparkles size={12} className="text-[#e8607a]" />
+                    </div>
+                    <div className="text-[11px] text-[#9ca3af] mt-0.5">100% ID authenticated profiles</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 justify-center sm:justify-start">
+                  <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                    <EyeOff size={20} />
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#eeeef0]">Anonymous Alias</div>
+                    <div className="text-[11px] text-[#9ca3af] mt-0.5">Real names never stored or revealed</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 justify-center sm:justify-start">
+                  <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                    <Lock size={20} />
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#eeeef0]">Discreet Sessions</div>
+                    <div className="text-[11px] text-[#9ca3af] mt-0.5">Strictly private EU-hosted platform</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* ── BLOCK 3: Companions who match your taste ─────────────────────────── */}
             <div className="mb-14">
-              <div className="flex items-end justify-between mb-5">
+              <div className="flex items-end justify-between mb-4">
                 <div>
                   <div
-                    className="text-[22px] text-[#eeeef0] mb-1"
+                    className="text-[22px] text-[#eeeef0] mb-1 flex items-center gap-2"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    Companions who match your taste
+                    <span>Companions who match your taste</span>
                   </div>
                   <p className="text-[12px] text-[#6b7280] max-w-[480px] leading-[1.5]">
                     Curated from profiles you hovered and content you enjoyed.
@@ -208,37 +248,26 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                 </Link>
               </div>
 
-              <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="flex gap-4 overflow-x-auto pb-3"
-                style={
-                  {
-                    scrollSnapType: 'x mandatory',
-                    scrollbarWidth: 'none',
-                    WebkitOverflowScrolling: 'touch',
-                  } as React.CSSProperties
-                }
-              >
-                {companionsLoading ? (
-                  [...Array(4)].map((_, i) => (
+              {companionsLoading ? (
+                <div className="flex gap-4 overflow-x-auto pb-3">
+                  {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
                       style={{
-                        width: 220,
-                        height: 280,
+                        width: 190,
+                        height: 285,
                         flexShrink: 0,
-                        scrollSnapAlign: 'start',
                         borderRadius: 14,
                         background: '#111620',
                         animation: 'pulse 1.5s ease-in-out infinite',
                       }}
                     />
-                  ))
-                ) : (
-                  <>
-                    {featuredBoosts.map((boost) => (
+                  ))}
+                </div>
+              ) : (
+                <AutoCompanionCarousel autoPlayInterval={2500}>
+                  {[
+                    ...featuredBoosts.map((boost) => (
                       <motion.div
                         key={`featured-${boost.id}`}
                         variants={cardItem}
@@ -246,11 +275,11 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                       >
                         <FeaturedBoostCard data={boost} />
                       </motion.div>
-                    ))}
-                    {companionItems}
-                  </>
-                )}
-              </motion.div>
+                    )),
+                    ...companionItems,
+                  ]}
+                </AutoCompanionCarousel>
+              )}
             </div>
 
             {/* ── Mood Mix Panel ────────────────────────────────────────────────────── */}

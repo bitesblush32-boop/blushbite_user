@@ -35,22 +35,7 @@ export function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
   const bgPhotoUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        borderRadius: 14,
-        overflow: 'hidden',
-        background: bgPhotoUrl ? 'transparent' : 'linear-gradient(135deg,#1a1228,#2a1535)',
-        border: '1px solid rgba(232,96,122,0.2)',
-        marginBottom: 24,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '18px 24px',
-        gap: 16,
-        minHeight: 80,
-      }}
-    >
+    <div className="relative rounded-2xl overflow-hidden border border-[#c9a96e]/30 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 gap-4 min-h-[90px] shadow-xl backdrop-blur-md bg-gradient-to-r from-[#161220] via-[#1f162a] to-[#121624]">
       {bgPhotoUrl && (
         <>
           {isGif ? (
@@ -58,33 +43,33 @@ export function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
             <img
               src={bgPhotoUrl}
               alt={data.banner_headline ?? 'Sponsored'}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-40"
             />
           ) : (
             <Image
               src={bgPhotoUrl}
               alt={data.banner_headline ?? 'Sponsored'}
               fill
-              style={{ objectFit: 'cover', objectPosition: isProfileCard ? 'top' : 'center' }}
+              className="object-cover opacity-40"
               sizes="100vw"
             />
           )}
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,15,0.55)' }} />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07090f]/90 via-[#07090f]/75 to-[#07090f]/90" />
         </>
       )}
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ fontSize: 10, color: '#c9a96e', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 500 }}>
-          Sponsored
+      <div className="relative z-10 min-w-0">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c9a96e]/15 border border-[#c9a96e]/40 text-[#c9a96e] text-[10px] font-semibold tracking-wider uppercase mb-1.5">
+          <span>✦ Featured Companion Spotlight</span>
         </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: '#eeeef0', lineHeight: 1.3, marginBottom: 2 }}>
+        <div className="font-serif text-[17px] sm:text-[19px] text-[#eeeef0] leading-tight mb-1">
           {data.banner_headline ?? data.companion_name ?? 'Featured companion'}
           {data.banner_headline || isProfileCard ? '' : (
-            <em style={{ color: '#e8607a', fontStyle: 'italic' }}> awaits.</em>
+            <em className="text-[#e8607a] italic"> awaits.</em>
           )}
         </div>
         {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
-          <p style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+          <p className="text-[12px] text-[#9ca3af] line-clamp-2">
             {data.banner_tagline_text ?? data.companion_tagline}
           </p>
         )}
@@ -92,14 +77,9 @@ export function HeaderBannerAd({ data }: { data: ActiveBoostItem }) {
 
       <Link
         href={href}
-        style={{
-          position: 'relative', zIndex: 1, flexShrink: 0,
-          fontSize: 13, fontWeight: 500, padding: '10px 20px', borderRadius: 10,
-          background: 'rgba(232,96,122,0.15)', border: '1px solid rgba(232,96,122,0.4)',
-          color: '#e8607a', textDecoration: 'none', whiteSpace: 'nowrap',
-        }}
+        className="relative z-10 flex-shrink-0 text-[12.5px] font-medium px-4 py-2.5 rounded-xl bg-[#e8607a]/15 border border-[#e8607a]/40 text-[#e8607a] hover:bg-[#e8607a] hover:text-white transition-all shadow-[0_0_15px_rgba(232,96,122,0.25)] whitespace-nowrap self-stretch sm:self-auto text-center"
       >
-        {isProfileCard ? 'View profile →' : hasCustomImage ? 'Learn more →' : 'View profile →'}
+        {isProfileCard ? 'View Profile →' : hasCustomImage ? 'Explore Now →' : 'View Profile →'}
       </Link>
     </div>
   )

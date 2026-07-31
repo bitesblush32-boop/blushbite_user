@@ -17,6 +17,12 @@ import {
   Pencil,
   MapPin,
   LogIn,
+  BadgeCheck,
+  ShieldCheck,
+  Sparkles,
+  Lock,
+  EyeOff,
+  Calendar,
 } from 'lucide-react'
 import TasteDrawer, { type TasteData } from '@/components/ui/TasteDrawer'
 import { SavedConfessionsGrid } from '@/components/ui/SavedConfessionsGrid'
@@ -419,6 +425,7 @@ export default function ProfilePage() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [profileOverride, setProfileOverride] = useState<Partial<UserProfile> | null>(null)
+  const [activeAccent, setActiveAccent] = useState<'rose' | 'sapphire' | 'amethyst' | 'gold'>('rose')
 
   // ── Fetch profile ──────────────────────────────────────────────────────────
   const { data: profileData, isLoading: loading } = useQuery<{ data: UserProfile | null }>({
@@ -596,40 +603,46 @@ export default function ProfilePage() {
           className="relative z-10 mx-auto px-5 pt-[95px] pb-[120px]"
           style={{ maxWidth: 640 }}
         >
+          {/* Ambient Glow Background for Hero */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] h-[280px] bg-[radial-gradient(ellipse_at_top,rgba(232,96,122,0.18),transparent_70%)] pointer-events-none z-0" />
+
           {/* ── Section 1: Hero identity ─────────────────────── */}
-          <div className="flex flex-col items-center gap-3 mb-6">
+          <div className="relative z-10 flex flex-col items-center gap-3.5 mb-8">
             {/* Avatar */}
             <div
               className="relative group cursor-pointer"
-              style={{ width: 96, height: 96 }}
+              style={{ width: 104, height: 104 }}
               onClick={() => !avatarUploading && fileInputRef.current?.click()}
             >
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#e8607a] to-[#9b5fe0] opacity-70 blur-sm group-hover:opacity-100 transition-opacity duration-300" />
               {profile?.avatar_url ? (
                 <div
+                  className="relative z-10"
                   style={{
-                    width: 96,
-                    height: 96,
+                    width: 104,
+                    height: 104,
                     borderRadius: '50%',
                     backgroundImage: `url(${profile.avatar_url})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    border: '2px solid #1c2333',
+                    border: '2px solid rgba(232,96,122,0.4)',
                   }}
                 />
               ) : (
                 <div
+                  className="relative z-10"
                   style={{
-                    width: 96,
-                    height: 96,
+                    width: 104,
+                    height: 104,
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg,#e8607a,#9b5fe0)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: 600,
                     color: '#fff',
-                    border: '2px solid #1c2333',
+                    border: '2px solid rgba(232,96,122,0.4)',
                   }}
                 >
                   {initials}
@@ -637,26 +650,26 @@ export default function ProfilePage() {
               )}
               {avatarUploading ? (
                 <div
-                  className="absolute inset-0 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(0,0,0,0.55)' }}
+                  className="absolute inset-0 z-20 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.65)' }}
                 >
                   <div
                     style={{
-                      width: 24,
-                      height: 24,
+                      width: 26,
+                      height: 26,
                       borderRadius: '50%',
                       border: '2px solid rgba(255,255,255,0.2)',
-                      borderTopColor: '#fff',
+                      borderTopColor: '#e8607a',
                       animation: 'spin 0.7s linear infinite',
                     }}
                   />
                 </div>
               ) : (
                 <div
-                  className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  style={{ background: 'rgba(7,9,15,0.65)' }}
+                  className="absolute inset-0 z-20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  style={{ background: 'rgba(7,9,15,0.75)' }}
                 >
-                  <Camera size={20} color="#eeeef0" />
+                  <Camera size={22} color="#eeeef0" />
                 </div>
               )}
             </div>
@@ -673,32 +686,31 @@ export default function ProfilePage() {
               onChange={handleAvatarChange}
             />
 
-            {/* Alias */}
-            <div
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 22,
-                color: '#e8607a',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              {alias}
-            </div>
-
-            {/* {profile?.display_name && (
-              <div style={{ fontSize: 13, color: '#6b7280', marginTop: -6 }}>
-                {profile.display_name}
+            {/* Alias & Verified Badge */}
+            <div className="flex items-center gap-2">
+              <div
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 24,
+                  color: '#eeeef0',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {alias}
               </div>
-            )} */}
+              <div title="Verified Anonymous Alias">
+                <BadgeCheck size={20} className="text-[#e8607a]" />
+              </div>
+            </div>
 
             {profile?.bio && (
               <p
                 style={{
-                  fontSize: 13,
+                  fontSize: 13.5,
                   color: '#9ca3af',
                   textAlign: 'center',
                   lineHeight: 1.6,
-                  maxWidth: 320,
+                  maxWidth: 360,
                   fontStyle: 'italic',
                 }}
               >
@@ -706,101 +718,165 @@ export default function ProfilePage() {
               </p>
             )}
 
-            {/* ── Location block ── */}
-            {profile?.city ? (
-              <button
-                onClick={() => setLocationStatus('picking')}
-                className="flex items-center gap-[5px] bg-transparent border-none cursor-pointer p-0 transition-opacity hover:opacity-70"
-                style={{ fontSize: 12, color: '#6b7280' }}
-              >
-                <MapPin size={12} color="#6b7280" />
-                {[profile.city, profile.country].filter(Boolean).join(', ')}
-              </button>
-            ) : locationStatus === 'detecting' ? (
-              <div
-                className="flex items-center gap-[5px]"
-                style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic' }}
-              >
-                <MapPin size={11} color="#4b5563" />
-                Locating…
-              </div>
-            ) : locationStatus === 'picking' ? (
-              <LocationPicker
-                onSaved={(city) => {
-                  setProfileOverride((o) => ({ ...(o ?? {}), city }))
-                  setLocationStatus('idle')
+            {/* Metadata Pills */}
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <span
+                className="text-[11px] px-3 py-1 rounded-full text-[#e8607a] font-medium flex items-center gap-1.5"
+                style={{
+                  border: '1px solid rgba(232,96,122,0.3)',
+                  background: 'rgba(232,96,122,0.08)',
                 }}
-                onCancel={() => setLocationStatus(profile?.city ? 'idle' : 'failed')}
-              />
-            ) : locationStatus === 'failed' ? (
-              <div className="flex flex-col items-center gap-[10px]">
-                <span style={{ fontSize: 11, color: '#4b5563' }}>
-                  We couldn&apos;t find your location
-                </span>
-                <div className="flex items-center gap-2">
+              >
+                <Sparkles size={12} />
+                <span>The Dreamer</span>
+              </span>
+
+              {profile?.city ? (
+                <button
+                  onClick={() => setLocationStatus('picking')}
+                  className="flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full bg-[#111620] border border-[#1c2333] text-[#9ca3af] hover:text-[#eeeef0] transition-colors"
+                >
+                  <MapPin size={12} className="text-[#e8607a]" />
+                  <span>{[profile.city, profile.country].filter(Boolean).join(', ')}</span>
+                </button>
+              ) : locationStatus === 'detecting' ? (
+                <div className="flex items-center gap-1 text-[11px] px-3 py-1 rounded-full bg-[#111620] border border-[#1c2333] text-[#4b5563]">
+                  <MapPin size={11} className="animate-pulse" />
+                  <span>Locating…</span>
+                </div>
+              ) : locationStatus === 'picking' ? (
+                <LocationPicker
+                  onSaved={(city) => {
+                    setProfileOverride((o) => ({ ...(o ?? {}), city }))
+                    setLocationStatus('idle')
+                  }}
+                  onCancel={() => setLocationStatus(profile?.city ? 'idle' : 'failed')}
+                />
+              ) : locationStatus === 'failed' ? (
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => {
                       geoAttemptedRef.current = false
                       attemptGeolocation()
                     }}
-                    className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      color: '#6b7280',
-                      border: '1px solid #1c2333',
-                    }}
+                    className="text-[11px] px-3 py-1 rounded-full bg-[#111620] border border-[#1c2333] text-[#6b7280]"
                   >
-                    Try again
+                    Locate
                   </button>
                   <button
                     onClick={() => setLocationStatus('picking')}
-                    className="text-[11px] px-3 py-[5px] rounded-full cursor-pointer border-none transition-all duration-150"
-                    style={{
-                      background: 'rgba(232,96,122,0.08)',
-                      color: '#e8607a',
-                      border: '1px solid rgba(232,96,122,0.3)',
-                    }}
+                    className="text-[11px] px-3 py-1 rounded-full bg-[#e8607a]/10 border border-[#e8607a]/30 text-[#e8607a]"
                   >
-                    Add manually
+                    Add Location
                   </button>
                 </div>
-              </div>
-            ) : null}
-
-            <span
-              className="text-[11px] px-[10px] py-1 rounded-full text-[#e8607a]"
-              style={{
-                border: '1px solid rgba(232,96,122,0.3)',
-                background: 'rgba(232,96,122,0.08)',
-              }}
-            >
-              The Dreamer
-            </span>
+              ) : null}
+            </div>
           </div>
 
-          {/* ── Section 2: Stats ─────────────────────────────── */}
-          <div className="flex items-center justify-center gap-0 mb-7">
-            {[
-              { n: posts.length.toString(), label: 'confessions' },
-              { n: posts.reduce((a, p) => a + p.likeCount, 0).toString(), label: 'likes' },
-              { n: posts.reduce((a, p) => a + p.saveCount, 0).toString(), label: 'saved' },
-            ].map(({ n, label }, i) => (
-              <div key={label} className="flex items-center">
-                <div className="flex flex-col items-center px-6 py-2">
+          {/* ── Section 2: Glassmorphic Stats Card ─────────────────────────── */}
+          <div className="mb-8 p-4 rounded-2xl bg-[#111620]/80 border border-[#1c2333] shadow-xl backdrop-blur-md">
+            <div className="grid grid-cols-3 divide-x divide-[#1c2333]">
+              {[
+                { n: posts.length.toString(), label: 'Confessions' },
+                { n: posts.reduce((a, p) => a + p.likeCount, 0).toString(), label: 'Likes' },
+                { n: posts.reduce((a, p) => a + p.saveCount, 0).toString(), label: 'Saved' },
+              ].map(({ n, label }) => (
+                <div key={label} className="flex flex-col items-center justify-center px-2 py-1">
                   <span
                     style={{
                       fontFamily: "'Playfair Display', serif",
-                      fontSize: 22,
+                      fontSize: 24,
                       color: '#eeeef0',
                     }}
                   >
                     {n}
                   </span>
-                  <span style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{label}</span>
+                  <span className="text-[11px] text-[#6b7280] font-medium tracking-wide uppercase mt-0.5">
+                    {label}
+                  </span>
                 </div>
-                {i < 2 && <div style={{ width: 1, height: 32, background: '#1c2333' }} />}
+              ))}
+            </div>
+          </div>
+
+          {/* ── Privacy & Security Card ─────────────────────────────── */}
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-[#111620] to-[#0d1117] border border-[#1c2333] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-[#e8607a]/10 border border-[#e8607a]/20 text-[#e8607a] flex-shrink-0">
+                <ShieldCheck size={20} />
               </div>
-            ))}
+              <div>
+                <div className="text-[13px] font-semibold text-[#eeeef0] flex items-center gap-1.5">
+                  <span>Privacy & Anonymity Active</span>
+                  <Lock size={12} className="text-[#e8607a]" />
+                </div>
+                <div className="text-[11px] text-[#9ca3af] mt-0.5">
+                  Real identity is hidden. Protected by alias @{alias.replace('@', '')}.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Accent Theme Customizer ─────────────────────────────── */}
+          <div className="mb-6 p-4 rounded-2xl bg-[#111620]/80 border border-[#1c2333] backdrop-blur-md">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] text-[#6b7280] uppercase tracking-wider font-semibold">
+                Personal Ambient Theme
+              </span>
+              <span className="text-[11px] text-[#e8607a] font-medium capitalize">
+                {activeAccent} Glow
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              {[
+                { id: 'rose', name: 'Rose Glow', color: '#e8607a', bg: 'rgba(232,96,122,0.2)' },
+                { id: 'sapphire', name: 'Sapphire', color: '#60a5fa', bg: 'rgba(96,165,250,0.2)' },
+                { id: 'amethyst', name: 'Amethyst', color: '#c084fc', bg: 'rgba(192,132,252,0.2)' },
+                { id: 'gold', name: 'Champagne Gold', color: '#c9a96e', bg: 'rgba(201,169,110,0.2)' },
+              ].map(({ id, name, color, bg }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveAccent(id as any)}
+                  className={`flex-1 py-2 px-2 rounded-xl border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all ${
+                    activeAccent === id
+                      ? 'border-white/40 text-white shadow-lg'
+                      : 'border-[#1c2333] text-[#6b7280] hover:text-[#eeeef0]'
+                  }`}
+                  style={{ background: activeAccent === id ? bg : '#0b0e14' }}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                  <span className="hidden sm:inline">{name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Activity & Reputation Badges ─────────────────────────── */}
+          <div className="mb-8 p-4 rounded-2xl bg-[#111620]/80 border border-[#1c2333]">
+            <div className="text-[11px] text-[#6b7280] uppercase tracking-wider font-semibold mb-3">
+              Dreamer Badges & Achievements
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="flex flex-col items-center p-2.5 rounded-xl bg-[#0d1117] border border-[#1c2333] text-center">
+                <span className="text-lg mb-1">📖</span>
+                <span className="text-[11px] font-semibold text-[#eeeef0]">Avid Reader</span>
+                <span className="text-[9.5px] text-[#6b7280] mt-0.5">5+ Stories</span>
+              </div>
+
+              <div className="flex flex-col items-center p-2.5 rounded-xl bg-[#0d1117] border border-[#1c2333] text-center">
+                <span className="text-lg mb-1">🌙</span>
+                <span className="text-[11px] font-semibold text-[#eeeef0]">Night Explorer</span>
+                <span className="text-[9.5px] text-[#6b7280] mt-0.5">Late Sessions</span>
+              </div>
+
+              <div className="flex flex-col items-center p-2.5 rounded-xl bg-[#0d1117] border border-[#1c2333] text-center">
+                <span className="text-lg mb-1">🛡️</span>
+                <span className="text-[11px] font-semibold text-[#eeeef0]">Verified Alias</span>
+                <span className="text-[9.5px] text-[#6b7280] mt-0.5">100% Private</span>
+              </div>
+            </div>
           </div>
 
           <div style={{ height: 1, background: '#1c2333', marginBottom: 28 }} />

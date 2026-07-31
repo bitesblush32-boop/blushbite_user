@@ -46,8 +46,9 @@ body {
   font-size: 14px;
   line-height: 1.6;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
-  padding-bottom: 60px; /* BottomNav clearance on mobile */
+  padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); /* Safe BottomNav & MiniPlayer clearance on mobile */
 }
 
 @media (min-width: 768px) {

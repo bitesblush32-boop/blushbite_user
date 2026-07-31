@@ -87,14 +87,7 @@ export default function CityCompanionGrid({
       {/* Grid */}
       {companions.length > 0 ? (
         <div
-          style={{
-            maxWidth: 960,
-            margin: '0 auto',
-            padding: '0 20px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: 16,
-          }}
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 px-4 sm:px-5 max-w-[960px] mx-auto"
         >
           {companions.map((c) => (
             <CompanionCard
