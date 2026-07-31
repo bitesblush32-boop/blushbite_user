@@ -48,8 +48,7 @@ const CompanionCard = memo(function CompanionCard({
       style={{
         textDecoration: 'none',
         display: 'block',
-        width: 190,
-        flexShrink: 0,
+        width: '100%',
         animationName: 'bb-card-in',
         animationDuration: '0.3s',
         animationTimingFunction: 'ease',
@@ -141,14 +140,7 @@ const CompanionCard = memo(function CompanionCard({
 
 function GridSkeleton() {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, 190px)',
-        gap: 16,
-        justifyContent: 'start',
-      }}
-    >
+    <div className="bb-companion-grid">
       {Array.from({ length: 12 }).map((_, i) => (
         <div
           key={i}
@@ -273,6 +265,18 @@ export default function CompanionsPage() {
         .bb-sel:focus { border-color: ${cfg.accentColor}80 !important; outline: none; }
         .bb-sel:hover { border-color: #374151 !important; }
         .bb-sel option { background: #111620; }
+        .bb-companion-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          justify-content: start;
+        }
+        @media (min-width: 480px) {
+          .bb-companion-grid {
+            grid-template-columns: repeat(auto-fill, 190px);
+            gap: 16px;
+          }
+        }
       `}</style>
 
       {/* ── Outer wrapper — matches /community max-w-[1400px] px-10 ── */}
@@ -422,17 +426,10 @@ export default function CompanionsPage() {
               </div>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, 190px)',
-                gap: 16,
-                justifyContent: 'start',
-              }}
-            >
+            <div className="bb-companion-grid">
               {/* Featured boost cards appear first */}
               {featuredBoosts.map((boost) => (
-                <div key={`featured-${boost.boost_type}`} style={{ width: 198, flexShrink: 0 }}>
+                <div key={`featured-${boost.boost_type}`}>
                   <FeaturedBoostCard data={boost} />
                 </div>
               ))}
@@ -440,7 +437,7 @@ export default function CompanionsPage() {
               {companions.map((c, i) => (
                 <>
                   {i === 3 && midGridBoost && (
-                    <div key="mid-grid" style={{ width: 198, flexShrink: 0 }}>
+                    <div key="mid-grid">
                       <MidGridAd data={midGridBoost} />
                     </div>
                   )}

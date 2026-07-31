@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 import { useUploadToCloudinary } from '@/hooks/useUploadToCloudinary'
 import SlidePanel from '@/components/ui/SlidePanel'
+import MobileMenu from '@/components/layout/MobileMenu'
 import NotificationsPanel from '@/components/ui/NotificationsPanel'
 import { useNotifications } from '@/hooks/useNotifications'
 
@@ -1140,98 +1141,13 @@ export default function Header() {
           </div>
         </div>
 
-        <SlidePanel
+        <MobileMenu
           open={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
-          title="Menu"
-        >
-          <div className="flex flex-col gap-3">
-            {community && (
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '4px 11px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  letterSpacing: 0.2,
-                  border:
-                    community === 'female'
-                      ? '1px solid rgba(232,96,122,0.35)'
-                      : community === 'male'
-                        ? '1px solid rgba(96,165,250,0.35)'
-                        : '1px solid rgba(192,132,252,0.35)',
-                  color:
-                    community === 'female'
-                      ? '#e8607a'
-                      : community === 'male'
-                        ? '#60a5fa'
-                        : '#c084fc',
-                  background:
-                    community === 'female'
-                      ? 'rgba(232,96,122,0.08)'
-                      : community === 'male'
-                        ? 'rgba(96,165,250,0.08)'
-                        : 'rgba(192,132,252,0.08)',
-                  alignSelf: 'flex-start',
-                }}
-              >
-                {community === 'female' ? '♀' : community === 'male' ? '♂' : '⚧'}{' '}
-                {community === 'female' ? 'Female' : community === 'male' ? 'Male' : 'TS'}
-              </div>
-            )}
-
-            <Link
-              href="/advertise"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '4px 11px',
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 500,
-                letterSpacing: 0.2,
-                textDecoration: 'none',
-                color: '#f3f4f6',
-                border: '1px solid rgba(255,255,255,0.14)',
-                background: 'rgba(255,255,255,0.04)',
-                alignSelf: 'flex-start',
-              }}
-            >
-              Advertise
-            </Link>
-
-            {!dreamer && !dreamerLoading && (
-              <Link
-                href="https://blushbite.live"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '4px 11px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  letterSpacing: 0.2,
-                  textDecoration: 'none',
-                  color: '#f3f4f6',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  background: 'rgba(255,255,255,0.04)',
-                  alignSelf: 'flex-start',
-                }}
-              >
-                For Companions
-              </Link>
-            )}
-          </div>
-        </SlidePanel>
+          community={community}
+          isDreamer={!!dreamer}
+          onSignIn={openAuthModal}
+        />
 
         <SlidePanel
           open={settingsOpen}

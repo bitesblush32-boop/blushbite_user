@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 
 interface SlidePanelProps {
   open: boolean
@@ -111,10 +112,10 @@ export default function SlidePanel({
                 type="button"
                 aria-label={`Close ${title}`}
                 onClick={onClose}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#1c2333] text-[16px] text-[#6b7280] transition-colors duration-150"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] transition-colors duration-150 hover:border-[rgba(232,96,122,0.3)] hover:text-[#e8607a]"
+                style={{ background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}
               >
-                x
+                <X size={15} strokeWidth={2} />
               </button>
             </div>
 
