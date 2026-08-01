@@ -9,7 +9,7 @@ import { useDiscoverCompanions } from '@/hooks/useDiscoverCompanions'
 import { useUIStore } from '@/store/uiStore'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useActiveBoosts } from '@/hooks/useActiveBoosts'
-import { HeaderBannerAd, FeaturedBoostCard, MidGridAd, RightRailAd } from '@/components/ui/BoostAds'
+import { HeaderBannerAd, FeaturedBoostCard, MidGridAd, RightRailAd, SectionDividerAd } from '@/components/ui/BoostAds'
 import type { DiscoverCompanionItem } from '@/hooks/useDiscoverCompanions'
 
 // ── Config ───────────────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ export default function CompanionsPage() {
       enabled: !!community && !communityLoading,
     })
 
-  const { headerBanner, featuredBoosts, midGridBoost, rightRailBoosts } = useActiveBoosts(community ?? null)
+  const { headerBanner, featuredBoosts, midGridBoost, rightRailBoosts, sectionDividerBoost } = useActiveBoosts(community ?? null)
 
   useEffect(() => {
     if (!community) return
@@ -393,6 +393,9 @@ export default function CompanionsPage() {
               )}
             </div>
           </div>
+
+          {/* ── Section Divider Ad — above companion grid ── */}
+          {sectionDividerBoost && <SectionDividerAd data={sectionDividerBoost} />}
 
           {/* ── Grid ── */}
           {isLoadingCards ? (

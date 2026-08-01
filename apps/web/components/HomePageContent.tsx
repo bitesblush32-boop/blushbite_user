@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { audios } from '@/lib/data'
+import { usePlatformAudio } from '@/hooks/usePlatformAudio'
 import type { Story as StaticStory, Companion } from '@/lib/types'
 import { useRecommendedCompanions } from '@/hooks/useRecommendedCompanions'
 import { useDeviceCommunity } from '@/hooks/useDeviceCommunity'
@@ -13,7 +13,7 @@ import { useInfiniteStories } from '@/hooks/useInfiniteStories'
 import { useInfiniteConfessions } from '@/hooks/useInfiniteConfessions'
 import { usePlatformMedia } from '@/hooks/usePlatformMedia'
 import { useActiveBoosts } from '@/hooks/useActiveBoosts'
-import { HeaderBannerAd, FeaturedBoostCard, MidGridAd, RightRailAd } from '@/components/ui/BoostAds'
+import { HeaderBannerAd, FeaturedBoostCard, MidGridAd, RightRailAd, SectionDividerAd } from '@/components/ui/BoostAds'
 import { usePlayerStore } from '@/store/playerStore'
 import { useUIStore } from '@/store/uiStore'
 import CompanionCard from '@/components/ui/CompanionCard'
@@ -87,7 +87,8 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
   const { stories: platformStoriesRaw, status: storiesStatus } = useInfiniteStories()
   const { stories: confessionsRaw, status: confessionsStatus } = useInfiniteConfessions()
   const { items: platformVideos, videoCount, photoCount, status: videosStatus } = usePlatformMedia()
-  const { headerBanner, featuredBoosts, rightRailBoosts, midGridBoost } = useActiveBoosts(community)
+  const { items: audioItems } = usePlatformAudio()
+  const { headerBanner, featuredBoosts, rightRailBoosts, midGridBoost, sectionDividerBoost } = useActiveBoosts(community)
 
   const router = useRouter()
 
@@ -131,6 +132,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
   ])
 
   const storiesLoading = storiesStatus === 'pending' || confessionsStatus === 'pending'
+  const hasAnyStories = platformStoryCards.length > 0 || confessionCards.length > 0
 
   // Pre-build companion carousel items with optional mid-grid sponsored card at position 3
   const companionItems: ReactNode[] = []
@@ -236,6 +238,9 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
           </div>
         )}
 
+        {/* ── Section Divider Ad — below Hot Media Feed, above companion listings ── */}
+        {sectionDividerBoost && <SectionDividerAd data={sectionDividerBoost} />}
+
         {/* Flex layout: main content left + optional sticky right rail on xl screens */}
         <div className="flex items-start">
           <div className="flex-1 min-w-0">
@@ -335,7 +340,8 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
               </motion.div>
             </div>
 
-            {/* ── Mood Mix Panel ────────────────────────────────────────────────────── */}
+            {/* ── Mood Mix Panel — only shown when there's at least one real content item ── */}
+            {(moodStory !== null || audioItems.length > 0) && (
             <div className="bg-[#111620] border border-[#1c2333] rounded-[20px] p-7 flex flex-col mb-14">
               <div
                 className="text-[20px] text-[#eeeef0] mb-1"
@@ -368,28 +374,30 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
               {/* Mood items */}
               <div className="flex flex-col gap-3">
-                <MoodItem
-                  type="Story"
-                  title={moodStory?.title ?? 'An intimate story awaits'}
-                  meta={`${moodStory?.duration ?? '—'} · ${moodStory?.vibe ?? 'gentle tension'}`}
-                  onAction={() =>
-                    moodStory ? router.push(`/stories/${moodStory.id}`) : router.push('/stories')
-                  }
-                  actionLabel="Read & listen"
-                />
-                <MoodItem
-                  type="Audio"
-                  title={audios[0].title}
-                  meta={`${audios[0].duration} · warm & intimate`}
-                  onAction={() =>
-                    play({
-                      id: audios[0].id,
-                      title: audios[0].title,
-                      meta: `${audios[0].voice} · ${audios[0].duration} · ${audios[0].vibe}`,
-                    })
-                  }
-                  actionLabel="Preview"
-                />
+                {moodStory && (
+                  <MoodItem
+                    type="Story"
+                    title={moodStory.title}
+                    meta={`${moodStory.duration} · ${moodStory.vibe}`}
+                    onAction={() => router.push(`/stories/${moodStory.id}`)}
+                    actionLabel="Read & listen"
+                  />
+                )}
+                {audioItems.length > 0 && (
+                  <MoodItem
+                    type="Audio"
+                    title={audioItems[0].title}
+                    meta={`${audioItems[0].voice}${audioItems[0].duration ? ` · ${audioItems[0].duration}` : ''} · ${audioItems[0].vibe}`}
+                    onAction={() =>
+                      play({
+                        id: audioItems[0].id,
+                        title: audioItems[0].title,
+                        meta: `${audioItems[0].voice} · ${audioItems[0].duration} · ${audioItems[0].vibe}`,
+                      })
+                    }
+                    actionLabel="Preview"
+                  />
+                )}
                 <MoodItem
                   type="Confessions"
                   title="Confessions like yours"
@@ -399,8 +407,10 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                 />
               </div>
             </div>
+            )}
 
-            {/* ── BLOCK 4: Stories for your current mood ───────────────────────────── */}
+            {/* ── BLOCK 4: Stories for your current mood — hidden when no data ─────── */}
+            {(storiesLoading || hasAnyStories) && (
             <div className="mb-14">
               <div className="flex items-end justify-between mb-5">
                 <div>
@@ -486,9 +496,10 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                 </motion.div>
               )}
             </div>
+            )}
 
-
-            {/* ── BLOCK 5: Audio for tonight ───────────────────────────────────────── */}
+            {/* ── BLOCK 5: Audio for tonight — hidden when no approved audio in DB ── */}
+            {audioItems.length > 0 && (
             <div className="mb-14">
               <div className="flex items-end justify-between mb-5">
                 <div>
@@ -523,7 +534,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                   } as React.CSSProperties
                 }
               >
-                {audios.map((a) => (
+                {audioItems.map((a) => (
                   <motion.div
                     key={a.id}
                     variants={cardItem}
@@ -534,6 +545,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                 ))}
               </motion.div>
             </div>
+            )}
 
             {/* ── BLOCK 6: Confession → Companion bridge ───────────────────────────── */}
             {bridgeItems.length > 0 && (

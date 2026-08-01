@@ -28,6 +28,7 @@ export function useActiveBoosts(community: string | null) {
     featuredBoosts: boosts.filter((b) => FEATURED_TYPES.includes(b.boost_type)),
     rightRailBoosts: boosts.filter((b) => b.boost_type === 'right_rail'),
     midGridBoost: boosts.find((b) => b.boost_type === 'mid_grid') ?? null,
+    sectionDividerBoost: boosts.find((b) => b.boost_type === 'section_divider') ?? null,
     isLoading,
   }
 }

@@ -211,6 +211,149 @@ export function MidGridAd({ data }: { data: ActiveBoostItem }) {
   )
 }
 
+// ─── SectionDividerAd ────────────────────────────────────────────────────────
+// Full-width banner injected between the Hot Media Feed and companion listings.
+// Mirrors the mid-page ad strip seen on shemalelisting.com below their feed.
+// 1 slot per community per week. Supports profile_card | custom_image | animated_gif.
+
+export function SectionDividerAd({ data }: { data: ActiveBoostItem }) {
+  const href = data.profile_id ? `/companions/${data.profile_id}` : '/companions'
+  const mode = data.promo_mode ?? 'profile_card'
+  const isGif = mode === 'animated_gif'
+  const isProfileCard = mode === 'profile_card'
+  const bgUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        minHeight: 120,
+        overflow: 'hidden',
+        borderTop: '1px solid rgba(232,96,122,0.18)',
+        borderBottom: '1px solid rgba(232,96,122,0.18)',
+        background: bgUrl ? 'transparent' : 'linear-gradient(135deg,#0d1117,#111620)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        padding: '20px 24px',
+        margin: '0 0 40px',
+      }}
+    >
+      {/* Background image / gif */}
+      {bgUrl && (
+        <>
+          {isGif ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={bgUrl}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+            />
+          ) : (
+            <Image
+              src={bgUrl}
+              alt=""
+              fill
+              style={{ objectFit: 'cover', objectPosition: isProfileCard ? 'top center' : 'center' }}
+              sizes="100vw"
+            />
+          )}
+          {/* Dark overlay — stronger for profile_card (face-heavy) */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: isProfileCard
+                ? 'linear-gradient(90deg,rgba(7,9,15,0.88) 0%,rgba(7,9,15,0.55) 60%,rgba(7,9,15,0.3) 100%)'
+                : 'rgba(7,9,15,0.65)',
+            }}
+          />
+        </>
+      )}
+
+      {/* Left — text block */}
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: '#c9a96e',
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            marginBottom: 6,
+            fontWeight: 500,
+          }}
+        >
+          Sponsored
+        </div>
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(16px, 2.5vw, 22px)',
+            color: '#eeeef0',
+            lineHeight: 1.25,
+            marginBottom: 4,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {data.banner_headline ?? data.companion_name ?? 'Private Companion'}
+          {!data.banner_headline && (
+            <em style={{ fontStyle: 'italic', color: '#e8607a' }}> awaits.</em>
+          )}
+        </div>
+        {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
+          <p
+            style={{
+              fontSize: 13,
+              color: '#9ca3af',
+              margin: 0,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {data.banner_tagline_text ?? data.companion_tagline}
+          </p>
+        )}
+        {isProfileCard && data.companion_city && (
+          <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{data.companion_city}</p>
+        )}
+      </div>
+
+      {/* Right — CTA */}
+      <Link
+        href={href}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+          fontSize: 13,
+          fontWeight: 500,
+          padding: '10px 22px',
+          borderRadius: 10,
+          background: 'rgba(232,96,122,0.15)',
+          border: '1px solid rgba(232,96,122,0.45)',
+          color: '#e8607a',
+          textDecoration: 'none',
+          whiteSpace: 'nowrap',
+          transition: 'background 0.15s, border-color 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(232,96,122,0.25)'
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(232,96,122,0.15)'
+        }}
+      >
+        {isProfileCard ? 'View profile \u2192' : 'Learn more \u2192'}
+      </Link>
+    </div>
+  )
+}
+
 // ─── RightRailAd ─────────────────────────────────────────────────────────────
 // 200px sticky companion card shown on xl screens (desktop right rail)
 
