@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -11,7 +11,7 @@ import { useRecommendedCompanions } from '@/hooks/useRecommendedCompanions'
 import { useDeviceCommunity } from '@/hooks/useDeviceCommunity'
 import { useInfiniteStories } from '@/hooks/useInfiniteStories'
 import { useInfiniteConfessions } from '@/hooks/useInfiniteConfessions'
-import { usePlatformVideos } from '@/hooks/usePlatformVideos'
+import { usePlatformMedia } from '@/hooks/usePlatformMedia'
 import { useActiveBoosts } from '@/hooks/useActiveBoosts'
 import { HeaderBannerAd, FeaturedBoostCard, MidGridAd, RightRailAd } from '@/components/ui/BoostAds'
 import { usePlayerStore } from '@/store/playerStore'
@@ -86,10 +86,30 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
   const { stories: platformStoriesRaw, status: storiesStatus } = useInfiniteStories()
   const { stories: confessionsRaw, status: confessionsStatus } = useInfiniteConfessions()
-  const { videos: platformVideos, status: videosStatus } = usePlatformVideos()
+  const { items: platformVideos, videoCount, photoCount, status: videosStatus } = usePlatformMedia()
   const { headerBanner, featuredBoosts, rightRailBoosts, midGridBoost } = useActiveBoosts(community)
 
   const router = useRouter()
+
+  const hotFeedRef = useRef<HTMLDivElement>(null)
+  const hotFeedPaused = useRef(false)
+
+  useEffect(() => {
+    const el = hotFeedRef.current
+    if (!el || platformVideos.length === 0) return
+    const id = setInterval(() => {
+      if (hotFeedPaused.current) return
+      const card = el.firstElementChild as HTMLElement
+      const cardW = card ? card.offsetWidth + 12 : 240
+      const maxScroll = el.scrollWidth - el.clientWidth
+      if (el.scrollLeft >= maxScroll - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' })
+      } else {
+        el.scrollTo({ left: el.scrollLeft + cardW, behavior: 'smooth' })
+      }
+    }, 3000)
+    return () => clearInterval(id)
+  }, [platformVideos])
 
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
   // Map to static card shape
@@ -153,6 +173,68 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
       >
         {/* ── Header Banner ad placement ──────────────────────────────────────── */}
         {headerBanner && <HeaderBannerAd data={headerBanner} />}
+
+        {/* ── 🔥 Hot Media Feed — auto-scroll carousel ─────────────────────────── */}
+        {(videosStatus === 'pending' || platformVideos.length > 0) && (
+          <div className="mb-14">
+            <div className="mb-5">
+              <div
+                className="text-[22px] text-[#eeeef0] mb-1"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                🔥 Hot Media Feed
+              </div>
+              {videosStatus !== 'pending' && (videoCount > 0 || photoCount > 0) && (
+                <p className="text-[11px] text-[#4b5563] mt-[6px]">
+                  {videoCount > 0 && <span>{videoCount} video{videoCount !== 1 ? 's' : ''}</span>}
+                  {videoCount > 0 && photoCount > 0 && <span className="mx-[6px]">·</span>}
+                  {photoCount > 0 && <span>{photoCount} photo{photoCount !== 1 ? 's' : ''}</span>}
+                </p>
+              )}
+            </div>
+
+            {videosStatus === 'pending' ? (
+              <div className="flex gap-3 overflow-hidden">
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+                    style={{
+                      aspectRatio: '4 / 5',
+                      borderRadius: 14,
+                      background: '#111620',
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div
+                ref={hotFeedRef}
+                className="flex gap-3 overflow-x-auto pb-1"
+                style={
+                  {
+                    scrollbarWidth: 'none',
+                    scrollSnapType: 'x mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                  } as React.CSSProperties
+                }
+                onMouseEnter={() => { hotFeedPaused.current = true }}
+                onMouseLeave={() => { hotFeedPaused.current = false }}
+              >
+                {platformVideos.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex-shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+                    style={{ scrollSnapAlign: 'start' }}
+                  >
+                    <VideoCard video={v} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Flex layout: main content left + optional sticky right rail on xl screens */}
         <div className="flex items-start">
@@ -405,69 +487,6 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
               )}
             </div>
 
-            {/* ── BLOCK 4.5: Private glimpses (videos) ─────────────────────────────── */}
-            {(videosStatus === 'pending' || platformVideos.length > 0) && (
-              <div className="mb-14">
-                <div className="flex items-end justify-between mb-5">
-                  <div>
-                    <div
-                      className="text-[22px] text-[#eeeef0] mb-1"
-                      style={{ fontFamily: "'Playfair Display', serif" }}
-                    >
-                      Private glimpses
-                    </div>
-                    <p className="text-[12px] text-[#6b7280] max-w-[480px] leading-[1.5]">
-                      Short moments. A window into their world.
-                    </p>
-                  </div>
-                </div>
-
-                {videosStatus === 'pending' ? (
-                  <div
-                    className="flex gap-4 overflow-x-auto pb-3"
-                    style={{ scrollbarWidth: 'none' } as React.CSSProperties}
-                  >
-                    {[...Array(4)].map((_, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          width: 220,
-                          height: 240,
-                          flexShrink: 0,
-                          borderRadius: 14,
-                          background: '#111620',
-                          animation: 'pulse 1.5s ease-in-out infinite',
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <motion.div
-                    variants={container}
-                    initial="hidden"
-                    animate="show"
-                    className="flex gap-4 overflow-x-auto pb-3"
-                    style={
-                      {
-                        scrollSnapType: 'x mandatory',
-                        scrollbarWidth: 'none',
-                        WebkitOverflowScrolling: 'touch',
-                      } as React.CSSProperties
-                    }
-                  >
-                    {platformVideos.map((v) => (
-                      <motion.div
-                        key={v.id}
-                        variants={cardItem}
-                        style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
-                      >
-                        <VideoCard video={v} />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </div>
-            )}
 
             {/* ── BLOCK 5: Audio for tonight ───────────────────────────────────────── */}
             <div className="mb-14">

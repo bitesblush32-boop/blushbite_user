@@ -339,7 +339,8 @@
       "Bash(rm -rf \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\.next\" && cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && npx next build 2>&1 | tail -30)",
       "Bash(grep -r \"useSession\\\\|SessionProvider\\\\|from 'next-auth\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" --include=\"*.ts\" --include=\"*.tsx\" -l)",
       "Bash(awk '{print $2}')",
-      "Bash(rm *)"
+      "Bash(rm *)",
+      "WebFetch(domain:www.shemalelisting.com)"
     ]
   }
 }
