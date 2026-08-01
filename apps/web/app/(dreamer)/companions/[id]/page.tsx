@@ -189,20 +189,20 @@ async function getData(profileId: string) {
   const age = ageFromDob(companionRow.date_of_birth)
   const primaryPhoto = photoRows.find((p) => p.is_primary)?.url ?? photoRows[0]?.url ?? null
 
-  const minPrice =
-    sessionCardRows.length > 0
-      ? `${currSym}${Math.round(
-          parseFloat(
-            sessionCardRows.reduce(
-              (min, sc) =>
-                sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
-              sessionCardRows[0]
-            ).price ?? '0'
-          )
-        )}`
-      : profileRow.hourly_rate
-        ? `${currSym}${Math.round(parseFloat(String(profileRow.hourly_rate)))}`
-        : null
+  const minPrice = (() => {
+    if (sessionCardRows.length > 0) {
+      const cheapest = sessionCardRows.reduce(
+        (min, sc) =>
+          sc.price && parseFloat(sc.price) < parseFloat(min.price ?? '9999') ? sc : min,
+        sessionCardRows[0]
+      )
+      return `${sym(cheapest.currency ?? 'EUR')}${Math.round(parseFloat(cheapest.price ?? '0'))}`
+    }
+    if (profileRow.hourly_rate) {
+      return `${currSym}${Math.round(parseFloat(String(profileRow.hourly_rate)))}`
+    }
+    return null
+  })()
 
   const community = companionRow.gender_community ?? 'female'
   const cfg = COMMUNITY_CONFIG[community] ?? COMMUNITY_CONFIG.female
@@ -233,7 +233,7 @@ async function getData(profileId: string) {
       id: sc.id,
       title: sc.title,
       description: sc.description,
-      price: sc.price ? `${currSym}${Math.round(parseFloat(sc.price))}` : null,
+      price: sc.price ? `${sym(sc.currency ?? 'EUR')}${Math.round(parseFloat(sc.price))}` : null,
       durationMinutes: sc.duration_minutes,
     })),
     tags: vibeTagRows.map((v) => v.name),

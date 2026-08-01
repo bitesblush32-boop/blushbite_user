@@ -19,7 +19,6 @@ const TABS = [
   { key: 'all', label: 'All' },
   { key: 'new_today', label: 'New Today' },
   { key: 'live', label: 'Live' },
-  { key: 'rejected', label: 'Rejected' },
   { key: 'incomplete', label: 'Incomplete' },
 ]
 
