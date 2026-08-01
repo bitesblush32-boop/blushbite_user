@@ -224,132 +224,170 @@ export function SectionDividerAd({ data }: { data: ActiveBoostItem }) {
   const bgUrl = isProfileCard ? data.companion_photo_url : data.banner_image_url
 
   return (
+    // 700×400 large rectangle — matches the reference site's below-feed placement
     <div
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: 120,
+        maxWidth: 700,
+        height: 400,
+        margin: '0 auto 40px',
         overflow: 'hidden',
-        borderTop: '1px solid rgba(232,96,122,0.18)',
-        borderBottom: '1px solid rgba(232,96,122,0.18)',
-        background: bgUrl ? 'transparent' : 'linear-gradient(135deg,#0d1117,#111620)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        padding: '20px 24px',
-        margin: '0 0 40px',
+        borderRadius: 14,
+        border: '1px solid rgba(232,96,122,0.18)',
+        background: bgUrl ? 'transparent' : 'linear-gradient(160deg,#1a1228 0%,#0d1117 60%,#111620 100%)',
       }}
     >
-      {/* Background image / gif */}
-      {bgUrl && (
-        <>
-          {isGif ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={bgUrl}
-              alt=""
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-            />
-          ) : (
-            <Image
-              src={bgUrl}
-              alt=""
-              fill
-              style={{ objectFit: 'cover', objectPosition: isProfileCard ? 'top center' : 'center' }}
-              sizes="100vw"
-            />
-          )}
-          {/* Dark overlay — stronger for profile_card (face-heavy) */}
+      {/* Background image / gif — fills entire 700×400 canvas */}
+      {bgUrl ? (
+        isGif ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={bgUrl}
+            alt={data.companion_name ?? 'Sponsored'}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
+        ) : (
+          <Image
+            src={bgUrl}
+            alt={data.companion_name ?? 'Sponsored'}
+            fill
+            style={{ objectFit: 'cover', objectPosition: isProfileCard ? 'top center' : 'center' }}
+            sizes="700px"
+          />
+        )
+      ) : null}
+
+      {/* Gradient overlay — bottom-heavy so text at bottom stays readable, face stays visible */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: bgUrl
+            ? 'linear-gradient(to top, rgba(7,9,15,0.96) 0%, rgba(7,9,15,0.55) 45%, rgba(7,9,15,0.15) 100%)'
+            : undefined,
+        }}
+      />
+
+      {/* Sponsored badge — top-left */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 14,
+          left: 16,
+          zIndex: 2,
+          fontSize: 10,
+          color: '#c9a96e',
+          background: 'rgba(7,9,15,0.6)',
+          border: '1px solid rgba(201,169,110,0.35)',
+          borderRadius: 6,
+          padding: '3px 9px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          fontWeight: 600,
+          backdropFilter: 'blur(4px)',
+        }}
+      >
+        Sponsored
+      </div>
+
+      {/* Text block — bottom of the banner */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 2,
+          padding: '0 24px 22px',
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Name / headline */}
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
-              background: isProfileCard
-                ? 'linear-gradient(90deg,rgba(7,9,15,0.88) 0%,rgba(7,9,15,0.55) 60%,rgba(7,9,15,0.3) 100%)'
-                : 'rgba(7,9,15,0.65)',
-            }}
-          />
-        </>
-      )}
-
-      {/* Left — text block */}
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 10,
-            color: '#c9a96e',
-            textTransform: 'uppercase',
-            letterSpacing: '0.12em',
-            marginBottom: 6,
-            fontWeight: 500,
-          }}
-        >
-          Sponsored
-        </div>
-        <div
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(16px, 2.5vw, 22px)',
-            color: '#eeeef0',
-            lineHeight: 1.25,
-            marginBottom: 4,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {data.banner_headline ?? data.companion_name ?? 'Private Companion'}
-          {!data.banner_headline && (
-            <em style={{ fontStyle: 'italic', color: '#e8607a' }}> awaits.</em>
-          )}
-        </div>
-        {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
-          <p
-            style={{
-              fontSize: 13,
-              color: '#9ca3af',
-              margin: 0,
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 'clamp(22px, 3.5vw, 30px)',
+              color: '#eeeef0',
+              lineHeight: 1.15,
+              marginBottom: 6,
               overflow: 'hidden',
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
             }}
           >
-            {data.banner_tagline_text ?? data.companion_tagline}
-          </p>
-        )}
-        {isProfileCard && data.companion_city && (
-          <p style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{data.companion_city}</p>
-        )}
-      </div>
+            {data.banner_headline ?? data.companion_name ?? 'Private Companion'}
+            {!data.banner_headline && (
+              <em style={{ fontStyle: 'italic', color: '#e8607a' }}> awaits.</em>
+            )}
+          </div>
 
-      {/* Right — CTA */}
-      <Link
-        href={href}
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          flexShrink: 0,
-          fontSize: 13,
-          fontWeight: 500,
-          padding: '10px 22px',
-          borderRadius: 10,
-          background: 'rgba(232,96,122,0.15)',
-          border: '1px solid rgba(232,96,122,0.45)',
-          color: '#e8607a',
-          textDecoration: 'none',
-          whiteSpace: 'nowrap',
-          transition: 'background 0.15s, border-color 0.15s',
-        }}
-        onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(232,96,122,0.25)'
-        }}
-        onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(232,96,122,0.15)'
-        }}
-      >
-        {isProfileCard ? 'View profile \u2192' : 'Learn more \u2192'}
-      </Link>
+          {/* Tagline */}
+          {(data.banner_tagline_text ?? (isProfileCard ? data.companion_tagline : null)) && (
+            <p
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontStyle: 'italic',
+                fontSize: 15,
+                color: '#b0aab8',
+                margin: '0 0 6px',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {data.banner_tagline_text ?? data.companion_tagline}
+            </p>
+          )}
+
+          {/* City + rate pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {isProfileCard && data.companion_city && (
+              <span style={{ fontSize: 13, color: '#9ca3af' }}>{data.companion_city}</span>
+            )}
+            {data.companion_min_rate && (
+              <span
+                style={{
+                  fontSize: 12,
+                  color: '#e8607a',
+                  background: 'rgba(232,96,122,0.12)',
+                  border: '1px solid rgba(232,96,122,0.3)',
+                  borderRadius: 999,
+                  padding: '2px 10px',
+                }}
+              >
+                from {data.companion_min_rate}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* CTA button */}
+        <Link
+          href={href}
+          style={{
+            flexShrink: 0,
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '12px 24px',
+            borderRadius: 10,
+            background: '#e8607a',
+            color: '#fff',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            transition: 'opacity 0.15s',
+            letterSpacing: '0.02em',
+          }}
+          onMouseEnter={(e) => { ;(e.currentTarget as HTMLAnchorElement).style.opacity = '0.85' }}
+          onMouseLeave={(e) => { ;(e.currentTarget as HTMLAnchorElement).style.opacity = '1' }}
+        >
+          {isProfileCard ? 'View profile' : 'Learn more'}
+        </Link>
+      </div>
     </div>
   )
 }

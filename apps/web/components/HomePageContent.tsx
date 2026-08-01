@@ -112,6 +112,26 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
     return () => clearInterval(id)
   }, [platformVideos])
 
+  // Auto-slide for promoted right-rail carousel (mobile)
+  const railRef = useRef<HTMLDivElement>(null)
+  const railPaused = useRef(false)
+
+  useEffect(() => {
+    const el = railRef.current
+    if (!el || rightRailBoosts.length <= 1) return
+    const id = setInterval(() => {
+      if (railPaused.current) return
+      const cardW = 200 + 16 // card width + gap
+      const maxScroll = el.scrollWidth - el.clientWidth
+      if (el.scrollLeft >= maxScroll - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' })
+      } else {
+        el.scrollTo({ left: el.scrollLeft + cardW, behavior: 'smooth' })
+      }
+    }, 3000)
+    return () => clearInterval(id)
+  }, [rightRailBoosts])
+
   const [activeFilter, setActiveFilter] = useState<'All' | 'Story' | 'Confession'>('All')
   // Map to static card shape
   const platformStoryCards = platformStoriesRaw.map((s) => mapToCard(s, 'Story'))
@@ -244,10 +264,42 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
         {/* Flex layout: main content left + optional sticky right rail on xl screens */}
         <div className="flex items-start">
           <div className="flex-1 min-w-0">
-            {/* ── Mobile Right Rail Ad placement (phone/tablet < xl) ───────────────── */}
+            {/* ── Promoted companions carousel (mobile/tablet < xl) ───────────────── */}
             {rightRailBoosts.length > 0 && (
               <div className="xl:hidden mb-10">
+                {/* Heading */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div
+                      className="text-[22px] text-[#eeeef0] mb-1"
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      Promoted<em style={{ fontStyle: 'italic', color: '#e8607a' }}> companions</em>
+                    </div>
+                    <p className="text-[11px] text-[#4b5563]">
+                      {rightRailBoosts.length} featured this week
+                    </p>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: '#c9a96e',
+                      background: 'rgba(201,169,110,0.08)',
+                      border: '1px solid rgba(201,169,110,0.25)',
+                      borderRadius: 6,
+                      padding: '3px 9px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Advertisement
+                  </span>
+                </div>
+
+                {/* Auto-sliding carousel */}
                 <div
+                  ref={railRef}
                   className="flex gap-4 overflow-x-auto pb-2"
                   style={
                     {
@@ -256,15 +308,15 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
                       WebkitOverflowScrolling: 'touch',
                     } as React.CSSProperties
                   }
+                  onMouseEnter={() => { railPaused.current = true }}
+                  onMouseLeave={() => { railPaused.current = false }}
+                  onTouchStart={() => { railPaused.current = true }}
+                  onTouchEnd={() => { railPaused.current = false }}
                 >
                   {rightRailBoosts.map((boost) => (
                     <div
                       key={`mobile-rail-${boost.id}`}
-                      style={{
-                        width: 200,
-                        flexShrink: 0,
-                        scrollSnapAlign: 'start',
-                      }}
+                      style={{ width: 200, flexShrink: 0, scrollSnapAlign: 'start' }}
                     >
                       <RightRailAd data={boost} />
                     </div>
@@ -636,6 +688,32 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
               className="hidden xl:flex flex-col flex-shrink-0 w-[200px] gap-3"
               style={{ position: 'sticky', top: 80, alignSelf: 'flex-start', marginLeft: 15 }}
             >
+              {/* Advertisement label */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <span
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 13,
+                    color: '#eeeef0',
+                  }}
+                >
+                  Promoted
+                </span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    color: '#c9a96e',
+                    background: 'rgba(201,169,110,0.08)',
+                    border: '1px solid rgba(201,169,110,0.2)',
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                  }}
+                >
+                  Ad
+                </span>
+              </div>
               {rightRailBoosts.map((boost) => (
                 <RightRailAd key={boost.id} data={boost} />
               ))}
