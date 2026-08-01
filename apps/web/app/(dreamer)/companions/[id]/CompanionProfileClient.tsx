@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
+
+const VideoPlayerModal = dynamic(() => import('@/components/ui/VideoPlayerModal'), { ssr: false })
 
 interface SessionCardData {
   id: string
@@ -82,6 +85,7 @@ export default function CompanionProfileClient({
 }: Props) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const { dreamer, openAuthModal } = useUIStore()
 
   const sessionSelected = sessionCards.length === 0 || selectedIdx !== null
@@ -205,11 +209,9 @@ export default function CompanionProfileClient({
             }
           >
             {videos.map((v) => (
-              <a
+              <button
                 key={v.id}
-                href={v.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => setVideoUrl(v.url)}
                 style={{
                   flexShrink: 0,
                   width: 120,
@@ -221,6 +223,8 @@ export default function CompanionProfileClient({
                   display: 'block',
                   position: 'relative',
                   scrollSnapAlign: 'start',
+                  padding: 0,
+                  cursor: 'pointer',
                 }}
               >
                 {v.thumbnailUrl ? (
@@ -288,7 +292,7 @@ export default function CompanionProfileClient({
                     {String(v.durationSeconds % 60).padStart(2, '0')}
                   </span>
                 )}
-              </a>
+              </button>
             ))}
           </div>
         </div>
@@ -500,6 +504,17 @@ export default function CompanionProfileClient({
         This companion advertises their time and companionship independently. BlushBite is a
         classified platform — not a booking service.
       </p>
+
+      {/* Video player overlay */}
+      {videoUrl && (
+        <VideoPlayerModal
+          url={videoUrl}
+          companionName={companionName}
+          city={null}
+          profileId={profileId}
+          onClose={() => setVideoUrl(null)}
+        />
+      )}
 
       {/* Lightbox */}
       <AnimatePresence>

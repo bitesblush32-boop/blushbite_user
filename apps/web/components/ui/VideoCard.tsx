@@ -15,6 +15,7 @@ export interface PlatformVideo {
   companionPhoto?: string | null
 }
 
+
 function fmtDuration(sec: number | null): string {
   if (!sec) return ''
   const m = Math.floor(sec / 60)
@@ -42,27 +43,24 @@ const VideoCard = React.memo(function VideoCard({ video }: { video: PlatformVide
     ? toImageSrc(video.thumbnailUrl ?? video.companionPhoto ?? null)
     : video.url
 
-  return (
-    <Link
-      href={`/companions/${video.profileId}`}
-      prefetch={false}
-      style={{ textDecoration: 'none', display: 'block' }}
-    >
+  const cardStyle = {
+    position: 'relative' as const,
+    borderRadius: 14,
+    overflow: 'hidden',
+    aspectRatio: '4 / 5',
+    background: 'linear-gradient(135deg,#1a0e20,#2a1540,#1a1220)',
+    border: `1px solid ${hovered ? 'rgba(232,96,122,0.35)' : '#1c2333'}`,
+    cursor: 'pointer',
+    transition: 'transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease',
+    transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+    boxShadow: hovered
+      ? '0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2)'
+      : 'none',
+  }
+
+  const inner = (
     <div
-      style={{
-        position: 'relative',
-        borderRadius: 14,
-        overflow: 'hidden',
-        aspectRatio: '4 / 5',
-        background: 'linear-gradient(135deg,#1a0e20,#2a1540,#1a1220)',
-        border: `1px solid ${hovered ? 'rgba(232,96,122,0.35)' : '#1c2333'}`,
-        cursor: 'pointer',
-        transition: 'transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: hovered
-          ? '0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(232,96,122,0.2)'
-          : 'none',
-      }}
+      style={cardStyle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -187,6 +185,11 @@ const VideoCard = React.memo(function VideoCard({ video }: { video: PlatformVide
         )}
       </div>
     </div>
+  )
+
+  return (
+    <Link href={`/companions/${video.profileId}`} prefetch={false} style={{ textDecoration: 'none', display: 'block' }}>
+      {inner}
     </Link>
   )
 })
