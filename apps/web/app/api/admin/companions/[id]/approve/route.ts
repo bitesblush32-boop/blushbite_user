@@ -78,17 +78,17 @@ function buildApprovalEmail(firstName: string): string {
           <!-- logo -->
           <p style="margin:0 0 32px;font-family:Georgia,'Times New Roman',serif;font-size:18px;color:#eeeef0;letter-spacing:0.03em;">BlushBite</p>
           <!-- eyebrow -->
-          <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#e8607a;">Application update</p>
+          <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#e8607a;">Account update</p>
           <!-- heading -->
           <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:#eeeef0;line-height:1.35;">
-            Welcome, <em style="font-style:italic;color:#e8607a;">${firstName}.</em>
+            Your profile is <em style="font-style:italic;color:#e8607a;">verified.</em>
           </h1>
           <!-- body copy -->
           <p style="margin:0 0 16px;font-size:15px;color:#9ca3af;line-height:1.7;">
-            Your BlushBite companion application has been reviewed and <strong style="color:#eeeef0;">approved.</strong>
+            Hi ${firstName} — our team has reviewed your profile and marked it as <strong style="color:#eeeef0;">verified.</strong>
           </p>
           <p style="margin:0 0 28px;font-size:15px;color:#9ca3af;line-height:1.7;">
-            You can now sign in to your companion portal to complete your profile, upload photos, and go live whenever you're ready.
+            Your verified badge is now visible. Sign in to your companion portal to complete your profile, upload photos, and go live whenever you're ready.
           </p>
           <!-- CTA button -->
           <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">

@@ -18,6 +18,7 @@ import {
   Tags,
   Link2,
   Megaphone,
+  Image as ImageIcon,
   ExternalLink,
   LogOut,
   Menu,
@@ -187,6 +188,7 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
           onClick={onNav}
         />
         <NavItem href="/admin/content/create" icon={PenLine} label="Write Story" onClick={onNav} />
+        <NavItem href="/admin/generate" icon={ImageIcon} label="Story Images" onClick={onNav} />
 
         {/* Operations */}
         <NavGroup label="Operations" />
