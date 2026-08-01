@@ -651,34 +651,103 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
               </div>
             )}
 
-            {/* ── Footer ───────────────────────────────────────────────────────────── */}
-            <footer className="mt-20 pt-10 border-t border-[#1c2333]">
-              <div className="flex items-center justify-between flex-wrap gap-5">
+            {/* ── Footer (commented out) ──────────────────────────────────────────── */}
+            {/* <footer className="mt-24 pt-14 border-t border-[#1c2333]">
+
+              <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 pb-12">
+
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <Image
+                    src="/logo_light_croped.png"
+                    alt="BlushBite"
+                    width={130}
+                    height={38}
+                    className="mb-4"
+                    style={{ objectFit: 'contain', objectPosition: 'left' }}
+                  />
+                  <p className="text-[13px] text-[#6b7280] leading-[1.75] mb-6 max-w-[230px]">
+                    A private world of companionship.<br />
+                    Verified, discreet, always on your terms.
+                  </p>
+                  <div className="flex gap-2">
+                    <a href="https://instagram.com/blushbite" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
+                      className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1c2333] text-[#6b7280] hover:text-[#e8607a] hover:bg-[rgba(232,96,122,0.08)] transition-all duration-150">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                      </svg>
+                    </a>
+                    <a href="https://x.com/blushbite" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)"
+                      className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1c2333] text-[#6b7280] hover:text-[#e8607a] hover:bg-[rgba(232,96,122,0.08)] transition-all duration-150">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                      </svg>
+                    </a>
+                    <a href="https://t.me/blushbite" target="_blank" rel="noopener noreferrer" aria-label="Telegram"
+                      className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1c2333] text-[#6b7280] hover:text-[#e8607a] hover:bg-[rgba(232,96,122,0.08)] transition-all duration-150">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.08 13.918l-2.967-.924c-.645-.202-.658-.645.136-.953l11.57-4.461c.537-.194 1.006.131.075.64z"/>
+                      </svg>
+                    </a>
+                    <a href="https://reddit.com/r/blushbite" target="_blank" rel="noopener noreferrer" aria-label="Reddit"
+                      className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1c2333] text-[#6b7280] hover:text-[#e8607a] hover:bg-[rgba(232,96,122,0.08)] transition-all duration-150">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4b5563] mb-5">Discover</h5>
+                  <ul className="space-y-[10px]">
+                    {[
+                      { label: 'Browse Companions', href: '/companions' },
+                      { label: 'Female Companions', href: '/female' },
+                      { label: 'Male Companions', href: '/male' },
+                      { label: 'TS Companions', href: '/shemale' },
+                      { label: 'Stories', href: '/stories' },
+                      { label: 'Confessions', href: '/confessions' },
+                    ].map(({ label, href }) => (
+                      <li key={href}>
+                        <Link href={href} className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">{label}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4b5563] mb-5">Company</h5>
+                  <ul className="space-y-[10px]">
+                    <li><Link href="/advertise" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">Advertise with us</Link></li>
+                    <li><a href="https://blushbite.live" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">Become a Companion</a></li>
+                    <li><a href="mailto:hello@blushbite.co" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">Contact us</a></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4b5563] mb-5">Legal &amp; Safety</h5>
+                  <ul className="space-y-[10px]">
+                    <li><Link href="/terms" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">Terms of Service</Link></li>
+                    <li><Link href="/privacy" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">Privacy Policy</Link></li>
+                    <li><Link href="/terms#content-policy" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">18+ Content Policy</Link></li>
+                    <li><a href="mailto:abuse@blushbite.co" className="text-[13px] text-[#6b7280] hover:text-[#eeeef0] transition-colors duration-150">Report an issue</a></li>
+                  </ul>
+                </div>
+
+              </div>
+
+              <div className="border-t border-[#1c2333] pt-6 pb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex gap-5 flex-wrap">
-                  {[
-                    'Safety & Consent',
-                    'Privacy & Anonymity',
-                    'Legal information',
-                    'Report an issue',
-                  ].map((label) => (
-                    <span
-                      key={label}
-                      className="text-[12px] text-[#6b7280] cursor-pointer transition-colors duration-150 hover:text-[#eeeef0]"
-                    >
-                      {label}
-                    </span>
+                  {['🔒 Anonymous IDs', '✦ Clear consent & boundaries', '🇪🇺 EU Hosted · GDPR', '💳 Transparent pricing'].map((badge) => (
+                    <span key={badge} className="text-[12px] text-[#6b7280]">{badge}</span>
                   ))}
                 </div>
-                <div className="flex gap-4 flex-wrap text-[12px] text-[#6b7280]">
-                  <span>🔒 Anonymous IDs</span>
-                  <span>✦ Clear consent &amp; boundaries</span>
-                  <span>💳 Transparent pricing</span>
-                </div>
+                <p className="text-[11px] text-[#4b5563] whitespace-nowrap">© 2026 BlushBite · All rights reserved · 18+</p>
               </div>
-              <p className="text-[11px] text-[#6b7280] mt-6" style={{ opacity: 0.5 }}>
-                © 2025 BlushBite · All companions verified · 18+
-              </p>
-            </footer>
+
+            </footer> */}
           </div>
           {/* end main content column */}
 
