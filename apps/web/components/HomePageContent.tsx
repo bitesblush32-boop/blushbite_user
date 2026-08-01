@@ -191,7 +191,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-6 pt-[95px] pb-20"
+        className="relative z-10 max-w-[1400px] mx-auto px-5 md:px-6 pt-[95px] pb-16"
       >
         {/* ── Header Banner ad placement ──────────────────────────────────────── */}
         {headerBanner && <HeaderBannerAd data={headerBanner} />}
@@ -263,10 +263,10 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
         {/* Flex layout: main content left + optional sticky right rail on xl screens */}
         <div className="flex items-start">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex flex-col gap-14">
             {/* ── Promoted companions carousel (mobile/tablet < xl) ───────────────── */}
             {rightRailBoosts.length > 0 && (
-              <div className="xl:hidden mb-10">
+              <div className="xl:hidden">
                 {/* Heading */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -326,7 +326,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
             )}
 
             {/* ── BLOCK 3: Companions who match your taste ─────────────────────────── */}
-            <div className="mb-14">
+            <div>
               <div className="flex items-end justify-between mb-5">
                 <div>
                   <div
@@ -463,7 +463,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
             {/* ── BLOCK 4: Stories for your current mood — hidden when no data ─────── */}
             {(storiesLoading || hasAnyStories) && (
-            <div className="mb-14">
+            <div>
               <div className="flex items-end justify-between mb-5">
                 <div>
                   <div
@@ -552,7 +552,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
             {/* ── BLOCK 5: Audio for tonight — hidden when no approved audio in DB ── */}
             {audioItems.length > 0 && (
-            <div className="mb-14">
+            <div>
               <div className="flex items-end justify-between mb-5">
                 <div>
                   <div
@@ -601,7 +601,7 @@ export default function HomePageContent({ forceCommunity }: { forceCommunity?: s
 
             {/* ── BLOCK 6: Confession → Companion bridge ───────────────────────────── */}
             {bridgeItems.length > 0 && (
-              <div className="mb-14">
+              <div>
                 <div className="flex items-end justify-between mb-5">
                   <div>
                     <div
