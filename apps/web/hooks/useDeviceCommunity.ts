@@ -86,10 +86,22 @@ export function useDeviceCommunity(forceCommunity?: string): DeviceCommunity {
         // Network error — fall through
       }
 
-      // Layer 3 — no binding found → show gender picker
+      // Layer 3 — no binding found → default to shemale and skip the picker
       if (!cancelled) {
-        setNeedsPicker(true)
+        const defaultCommunity = 'shemale'
+        setCommunity(defaultCommunity)
+        setNeedsPicker(false)
         setLoading(false)
+        try { localStorage.setItem(LS_KEY, defaultCommunity) } catch { /* ignore */ }
+        getFingerprint()
+          .then((fp) =>
+            fetch('/api/device/bind', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fingerprint_hash: fp, community: defaultCommunity }),
+            })
+          )
+          .catch(() => { /* best effort */ })
       }
     }
 

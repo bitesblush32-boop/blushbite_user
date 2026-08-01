@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/store/uiStore'
 import { useUploadToCloudinary } from '@/hooks/useUploadToCloudinary'
 import SlidePanel from '@/components/ui/SlidePanel'
+import MobileMenu from '@/components/layout/MobileMenu'
 import NotificationsPanel from '@/components/ui/NotificationsPanel'
 import { useNotifications } from '@/hooks/useNotifications'
 
@@ -530,6 +531,7 @@ export default function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [plusHover, setPlusHover] = useState(false)
   const [showPostMenu, setShowPostMenu] = useState(false)
 
@@ -817,18 +819,29 @@ export default function Header() {
             <Link
               href="/advertise"
               style={{
-                color: '#6b7280',
-                fontSize: 13,
-                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '4px 11px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 500,
                 letterSpacing: 0.2,
-                transition: 'color 0.15s',
-                padding: '6px 0',
+                textDecoration: 'none',
+                color: '#f3f4f6',
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.04)',
+                transition: 'color 0.15s, border-color 0.15s, background 0.15s',
               }}
               onMouseEnter={(e) => {
                 ;(e.currentTarget as HTMLAnchorElement).style.color = '#e8607a'
+                ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(232,96,122,0.35)'
+                ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(232,96,122,0.08)'
               }}
               onMouseLeave={(e) => {
-                ;(e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'
+                ;(e.currentTarget as HTMLAnchorElement).style.color = '#f3f4f6'
+                ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.14)'
+                ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'
               }}
             >
               Advertise
@@ -841,21 +854,29 @@ export default function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: '#6b7280',
-                  fontSize: 13,
-                  textDecoration: 'none',
-                  letterSpacing: 0.2,
-                  transition: 'color 0.15s',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  padding: '6px 0',
+                  padding: '4px 11px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: 0.2,
+                  textDecoration: 'none',
+                  color: '#f3f4f6',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  background: 'rgba(255,255,255,0.04)',
+                  transition: 'color 0.15s, border-color 0.15s, background 0.15s',
                 }}
                 onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLAnchorElement).style.color = '#9ca3af'
+                  ;(e.currentTarget as HTMLAnchorElement).style.color = '#e8607a'
+                  ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(232,96,122,0.35)'
+                  ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(232,96,122,0.08)'
                 }}
                 onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLAnchorElement).style.color = '#6b7280'
+                  ;(e.currentTarget as HTMLAnchorElement).style.color = '#f3f4f6'
+                  ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.14)'
+                  ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'
                 }}
               >
                 For Companions
@@ -894,7 +915,7 @@ export default function Header() {
                     background: 'transparent',
                     border: '1px solid #1c2333',
                     borderRadius: 8,
-                    color: '#6b7280',
+                    color: '#eeeef0',
                     fontSize: 13,
                     fontWeight: 400,
                     cursor: 'pointer',
@@ -905,15 +926,16 @@ export default function Header() {
                   onMouseEnter={(e) => {
                     ;(e.currentTarget as HTMLButtonElement).style.borderColor =
                       'rgba(232,96,122,0.35)'
-                    ;(e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#e8607a'
                   }}
                   onMouseLeave={(e) => {
                     ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#1c2333'
-                    ;(e.currentTarget as HTMLButtonElement).style.color = '#6b7280'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
                   }}
                 >
                   Sign in
                 </button>
+                
                 {/* "Enter" — always visible, filled rose */}
                 <button
                   type="button"
@@ -946,6 +968,34 @@ export default function Header() {
                 >
                   Enter
                 </button>
+
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="flex md:hidden items-center justify-center rounded-full border"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    background: 'transparent',
+                    borderColor: '#1c2333',
+                    color: '#eeeef0',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                      'rgba(232,96,122,0.35)'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#e8607a'
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#1c2333'
+                    ;(e.currentTarget as HTMLButtonElement).style.color = '#eeeef0'
+                  }}
+                >
+                  <Menu size={18} strokeWidth={1.8} />
+                </button>
+
               </>
             ) : isProfile ? (
               /* ── Signed in + profile page — Plus + Menu ── */
@@ -1090,6 +1140,14 @@ export default function Header() {
             )}
           </div>
         </div>
+
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          community={community}
+          isDreamer={!!dreamer}
+          onSignIn={openAuthModal}
+        />
 
         <SlidePanel
           open={settingsOpen}

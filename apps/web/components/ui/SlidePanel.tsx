@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 
 interface SlidePanelProps {
   open: boolean
@@ -23,21 +24,10 @@ export default function SlidePanel({
   bodyClassName = 'px-5 py-6',
   headerSlot,
 }: SlidePanelProps) {
-  const [isMobile, setIsMobile] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    function checkViewport() {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkViewport()
-    window.addEventListener('resize', checkViewport)
-    return () => window.removeEventListener('resize', checkViewport)
   }, [])
 
   useEffect(() => {
@@ -57,19 +47,12 @@ export default function SlidePanel({
     }
   }, [open, onClose])
 
-  const motionProps = isMobile
-    ? {
-        initial: { y: '100%' },
-        animate: { y: 0 },
-        exit: { y: '100%' },
-        transition: { type: 'spring' as const, stiffness: 380, damping: 38 },
-      }
-    : {
-        initial: { x: '100%' },
-        animate: { x: 0 },
-        exit: { x: '100%' },
-        transition: { type: 'spring' as const, stiffness: 380, damping: 38 },
-      }
+  const motionProps = {
+    initial: { x: '100%' },
+    animate: { x: 0 },
+    exit: { x: '100%' },
+    transition: { type: 'spring' as const, stiffness: 380, damping: 38 },
+  }
 
   if (!mounted) return null
 
@@ -95,17 +78,15 @@ export default function SlidePanel({
             role="dialog"
             aria-label={title}
             className={[
-              'fixed z-[2110] overflow-y-auto',
-              'bottom-0 left-0 right-0',
-              `md:bottom-0 md:top-0 md:left-auto md:right-0 ${widthClassName}`,
+              'fixed z-[2110] overflow-y-auto top-0 right-0 bottom-0 left-auto',
+              `w-full max-w-[420px] ${widthClassName}`,
             ].join(' ')}
             style={{
               background: '#0d1117',
-              borderTop: isMobile ? '1px solid #1c2333' : 'none',
-              borderLeft: isMobile ? 'none' : '1px solid #1c2333',
-              borderRadius: isMobile ? '20px 20px 0 0' : 0,
-              maxHeight: isMobile ? '92vh' : '100vh',
-              boxShadow: isMobile ? '0 -18px 48px rgba(0,0,0,0.45)' : '0 0 48px rgba(0,0,0,0.4)',
+              borderLeft: '1px solid #1c2333',
+              borderRadius: 0,
+              maxHeight: '100vh',
+              boxShadow: '0 0 48px rgba(0,0,0,0.4)',
               willChange: 'transform',
             }}
           >
@@ -131,10 +112,10 @@ export default function SlidePanel({
                 type="button"
                 aria-label={`Close ${title}`}
                 onClick={onClose}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#1c2333] text-[16px] text-[#6b7280] transition-colors duration-150"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#1c2333] text-[#6b7280] transition-colors duration-150 hover:border-[rgba(232,96,122,0.3)] hover:text-[#e8607a]"
+                style={{ background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}
               >
-                x
+                <X size={15} strokeWidth={2} />
               </button>
             </div>
 
