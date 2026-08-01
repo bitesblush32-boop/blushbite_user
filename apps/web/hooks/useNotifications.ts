@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import { useUIStore } from '@/store/uiStore'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -39,14 +40,19 @@ interface NotificationsResponse {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useNotificationCount() {
-  const { data } = useQuery<{ unread: number }>({
+  const dreamer = useUIStore((s) => s.dreamer)
+  const dreamerLoading = useUIStore((s) => s.dreamerLoading)
+
+  const { data } = useQuery<{ count: number }>({
     queryKey: ['notifications', 'count'],
     queryFn: () =>
       fetch('/api/notifications/count', { credentials: 'include' }).then((r) => r.json()),
+    enabled: !dreamerLoading && !!dreamer,
     staleTime: 30_000,
     refetchInterval: 30_000,
+    retry: false,
   })
-  return (data?.unread ?? 0) as number
+  return (data?.count ?? 0) as number
 }
 
 // alias kept for callers that imported the old name
@@ -58,12 +64,16 @@ export { useNotificationCount as useNotificationCountQ }
 
 export function useNotificationsWithMarkRead() {
   const queryClient = useQueryClient()
+  const dreamer = useUIStore((s) => s.dreamer)
+  const dreamerLoading = useUIStore((s) => s.dreamerLoading)
 
   const { data, isLoading } = useQuery<NotificationsResponse>({
     queryKey: ['notifications'],
     queryFn: () => fetch('/api/notifications', { credentials: 'include' }).then((r) => r.json()),
+    enabled: !dreamerLoading && !!dreamer,
     staleTime: 60_000,
     refetchInterval: 60_000,
+    retry: false,
   })
 
   const markRead = useCallback(
@@ -104,11 +114,16 @@ export function useNotificationsWithMarkRead() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useNotifications() {
+  const dreamer = useUIStore((s) => s.dreamer)
+  const dreamerLoading = useUIStore((s) => s.dreamerLoading)
+
   const { data, isLoading } = useQuery<NotificationsResponse>({
     queryKey: ['notifications'],
     queryFn: () => fetch('/api/notifications', { credentials: 'include' }).then((r) => r.json()),
+    enabled: !dreamerLoading && !!dreamer,
     staleTime: 30_000,
     refetchInterval: 60_000,
+    retry: false,
   })
 
   return {
