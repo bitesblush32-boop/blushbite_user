@@ -363,7 +363,15 @@
       "Bash(curl -s -I \"http://localhost:3000/female\" 2>&1 | grep \"Location\")",
       "Bash(curl -v \"http://localhost:3000/female\" 2>&1 | grep -E \"< HTTP|< location|< Location\")",
       "Bash(curl -s -b /tmp/bb_admin.txt -X PATCH \"http://localhost:3001/api/admin/boost-settings\" \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"female_enabled\":true,\"male_enabled\":true}' | grep -o '\"female_enabled\":[^,}]*,\"male_enabled\":[^,}]*')",
-      "Bash(curl -s -I \"http://localhost:3001/female\" 2>&1 | grep \"HTTP\" && \\\\\ncurl -s -I \"http://localhost:3001/male\" 2>&1 | grep \"HTTP\")"
+      "Bash(curl -s -I \"http://localhost:3001/female\" 2>&1 | grep \"HTTP\" && \\\\\ncurl -s -I \"http://localhost:3001/male\" 2>&1 | grep \"HTTP\")",
+      "Bash(curl -s -b /tmp/bb_admin2.txt \"http://localhost:3001/api/admin/boost-settings\")",
+      "Bash(sleep 18 && curl -s --max-time 5 \"http://localhost:3001/api/health\" 2>&1)",
+      "Bash(taskkill /F /IM node.exe /T 2>/dev/null; sleep 2; echo \"killed\")",
+      "Bash(sleep 8 && curl -s --max-time 5 \"http://localhost:3001/api/health\")",
+      "Bash(netstat -ano | findstr \":3001\" 2>/dev/null | head -5)",
+      "Bash(taskkill /F /PID 29408 2>&1; sleep 2; echo \"killed PID 29408\")",
+      "Bash(taskkill //F //PID 29408 2>&1 && sleep 2 && echo \"done\")",
+      "Bash(taskkill //F //IM node.exe //T 2>/dev/null; sleep 2\ncd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm build 2>&1 | grep -E \"✓|✗|error|Error|warning|warn\" | head -20)"
     ]
   }
 }

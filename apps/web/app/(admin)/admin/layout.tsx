@@ -23,6 +23,7 @@ import {
   LogOut,
   Menu,
   X,
+  Settings2,
 } from 'lucide-react'
 
 interface BadgeCounts {
@@ -208,6 +209,10 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
         />
         <NavItem href="/admin/tags" icon={Tags} label="Tag Library" onClick={onNav} />
         <NavItem href="/admin/ads" icon={Megaphone} label="Ad Slots" onClick={onNav} />
+
+        {/* Platform */}
+        <NavGroup label="Platform" />
+        <NavItem href="/admin/settings" icon={Settings2} label="Settings" onClick={onNav} />
       </nav>
 
       {/* Separator */}

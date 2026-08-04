@@ -6,13 +6,19 @@ export interface CommunityFlags {
   male_enabled: boolean
 }
 
-// Module-level cache — no Edge-incompatible imports, just a JS object
-let _cache: { flags: CommunityFlags; at: number } | null = null
+// Use Node.js global so the cache is shared across all webpack module instances
+// (API route handlers and page Server Components are separate chunks in prod)
+declare global {
+  // eslint-disable-next-line no-var
+  var __bb_community_flags: { flags: CommunityFlags; at: number } | null
+}
+
 const TTL_MS = 60_000 // 60 seconds
 
 export async function getCommunityFlags(): Promise<CommunityFlags> {
   const now = Date.now()
-  if (_cache && now - _cache.at < TTL_MS) return _cache.flags
+  const cached = global.__bb_community_flags
+  if (cached && now - cached.at < TTL_MS) return cached.flags
 
   try {
     const [row] = await db.execute(sql`
@@ -22,15 +28,15 @@ export async function getCommunityFlags(): Promise<CommunityFlags> {
       female_enabled: (row as Record<string, unknown>)?.female_enabled !== false,
       male_enabled: (row as Record<string, unknown>)?.male_enabled !== false,
     }
-    _cache = { flags, at: now }
+    global.__bb_community_flags = { flags, at: now }
     return flags
   } catch {
-    // On DB error, default to enabled (safe fallback)
+    // Safe fallback — show all communities on DB error
     return { female_enabled: true, male_enabled: true }
   }
 }
 
-/** Call this after admin PATCH to bust the in-process cache immediately */
+/** Call after admin PATCH to bust the shared in-process cache immediately */
 export function bustCommunityFlagsCache() {
-  _cache = null
+  global.__bb_community_flags = null
 }
