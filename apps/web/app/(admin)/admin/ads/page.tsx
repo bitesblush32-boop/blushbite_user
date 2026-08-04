@@ -57,6 +57,8 @@ interface SettingsRow {
   right_rail_enabled: boolean
   mid_grid_enabled: boolean
   featured_enabled: boolean
+  female_enabled: boolean
+  male_enabled: boolean
   price_featured_eur: string
   price_header_banner_eur: string
   price_right_rail_eur: string
@@ -432,6 +434,52 @@ function SettingsPanel() {
                               border: `1px solid ${enabled ? 'rgba(74,222,128,0.4)' : '#1c2333'}`,
                               color: enabled ? '#4ade80' : '#6b7280',
                               background: enabled ? 'rgba(74,222,128,0.08)' : 'transparent',
+                            }}
+                          >
+                            {enabled ? '● ' : '○ '}
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Community Access */}
+                  <div>
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        marginBottom: 4,
+                      }}
+                    >
+                      Community Access
+                    </p>
+                    <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 12 }}>
+                      Disable a community to redirect all traffic to TS/Shemale.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {(
+                        [
+                          { key: 'female_enabled' as const, label: 'Female', color: '#e8607a' },
+                          { key: 'male_enabled' as const, label: 'Male', color: '#60a5fa' },
+                        ] as { key: 'female_enabled' | 'male_enabled'; label: string; color: string }[]
+                      ).map(({ key, label, color }) => {
+                        const enabled = merged[key] as boolean | undefined
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => setDraft((p) => ({ ...p, [key]: !enabled }))}
+                            style={{
+                              fontSize: 12,
+                              padding: '6px 14px',
+                              borderRadius: 99,
+                              cursor: 'pointer',
+                              border: `1px solid ${enabled ? `${color}66` : '#1c2333'}`,
+                              color: enabled ? color : '#6b7280',
+                              background: enabled ? `${color}14` : 'transparent',
                             }}
                           >
                             {enabled ? '● ' : '○ '}

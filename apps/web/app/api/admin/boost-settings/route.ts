@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { db } from '@/db'
 import { sql } from 'drizzle-orm'
+import { bustCommunityFlagsCache } from '@/lib/community-flags'
 
 export async function GET(req: NextRequest) {
   const guard = await requireAdmin(req)
@@ -14,6 +15,8 @@ export async function GET(req: NextRequest) {
         right_rail_enabled,
         mid_grid_enabled,
         featured_enabled,
+        female_enabled,
+        male_enabled,
         price_featured_eur::text       AS price_featured_eur,
         price_header_banner_eur::text  AS price_header_banner_eur,
         price_right_rail_eur::text     AS price_right_rail_eur,
@@ -39,6 +42,8 @@ export async function PATCH(req: NextRequest) {
     right_rail_enabled,
     mid_grid_enabled,
     featured_enabled,
+    female_enabled,
+    male_enabled,
     price_featured_eur,
     price_header_banner_eur,
     price_right_rail_eur,
@@ -53,6 +58,8 @@ export async function PATCH(req: NextRequest) {
         right_rail_enabled      = COALESCE(${right_rail_enabled ?? null}::boolean,     right_rail_enabled),
         mid_grid_enabled        = COALESCE(${mid_grid_enabled ?? null}::boolean,       mid_grid_enabled),
         featured_enabled        = COALESCE(${featured_enabled ?? null}::boolean,       featured_enabled),
+        female_enabled          = COALESCE(${female_enabled ?? null}::boolean,         female_enabled),
+        male_enabled            = COALESCE(${male_enabled ?? null}::boolean,           male_enabled),
         price_featured_eur      = COALESCE(${price_featured_eur ?? null}::numeric,     price_featured_eur),
         price_header_banner_eur = COALESCE(${price_header_banner_eur ?? null}::numeric,price_header_banner_eur),
         price_right_rail_eur    = COALESCE(${price_right_rail_eur ?? null}::numeric,   price_right_rail_eur),
@@ -61,11 +68,13 @@ export async function PATCH(req: NextRequest) {
       WHERE id = 1
       RETURNING
         header_banner_enabled, right_rail_enabled, mid_grid_enabled, featured_enabled,
+        female_enabled, male_enabled,
         price_featured_eur::text, price_header_banner_eur::text,
         price_right_rail_eur::text, price_mid_grid_eur::text,
         max_weeks_advance
     `)
     if (!row) return NextResponse.json({ error: 'Settings not found' }, { status: 404 })
+    bustCommunityFlagsCache()
     return NextResponse.json({ ok: true, data: row })
   } catch (err) {
     console.error('[admin/boost-settings/patch] DB error:', err)

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { getCityCompanions, getCitySlugsForGender, slugToTitle } from '@/lib/cityPage'
+import { getCommunityFlags } from '@/lib/community-flags'
 import CityCompanionGrid from '@/components/CityCompanionGrid'
 
 export const revalidate = 3600
@@ -32,6 +34,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function FemaleCityPage({ params }: Props) {
+  const flags = await getCommunityFlags()
+  if (!flags.female_enabled) redirect('/shemale')
   const { city } = await params
   const cityName = slugToTitle(city)
   const companions = await getCityCompanions(city, 'female')
