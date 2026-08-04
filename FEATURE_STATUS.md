@@ -106,6 +106,7 @@ into a filtered view.
 | File upload | `incomplete` | `app/api/upload/{file,presigned-url}` — 401 stubs | `lib/r2.ts` + `useUploadToR2` unused until wired |
 | Geolocation | `built` | `hooks/useGeolocation.ts` | |
 | Gender-personalized home + geo SEO | `built` | `hooks/useDeviceCommunity.ts`, `app/{female,male,shemale}/[country]/[city]` | |
+| Community feature flags (admin) | `built` | `lib/community-flags.ts`, `app/(admin)/admin/settings/page.tsx`, `boost_settings.female_enabled/male_enabled` | Admin can disable female/male; both redirect to /shemale. Needs `add_community_flags.sql` migration to run. |
 | graphify knowledge graph | `incomplete` | CLAUDE.md references `graphify-out/` — doesn't exist | Dead instruction until `graphify update .` runs |
 
 ---

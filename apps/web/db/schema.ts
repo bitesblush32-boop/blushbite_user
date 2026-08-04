@@ -934,4 +934,6 @@ export const boostSettings = pgTable('boost_settings', {
   ),
   price_mid_grid_eur: numeric('price_mid_grid_eur', { precision: 8, scale: 2 }).default('10.00'),
   max_weeks_advance: integer('max_weeks_advance').default(4),
+  female_enabled: boolean('female_enabled').notNull().default(true),
+  male_enabled: boolean('male_enabled').notNull().default(true),
 })
